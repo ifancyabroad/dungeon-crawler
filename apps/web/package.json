@@ -1,0 +1,42 @@
+{
+	"name": "@app/web",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Gameplay + landing page frontend (Vite + React + TS + Phaser).",
+	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=18.18"
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b --pretty false && vite build",
+		"preview": "vite preview",
+		"typecheck": "tsc -b --pretty false",
+		"lint": "eslint ."
+	},
+	"dependencies": {
+		"@app/shared": "workspace:*",
+		"@tanstack/react-query": "^5.87.4",
+		"phaser": "^3.90.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.33.0",
+		"@tailwindcss/vite": "^4.1.13",
+		"@tanstack/react-query-devtools": "^5.87.4",
+		"@types/node": "^24.3.1",
+		"@types/react": "^19.1.10",
+		"@types/react-dom": "^19.1.7",
+		"@vitejs/plugin-react": "^5.0.0",
+		"eslint": "^9.33.0",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-react-refresh": "^0.4.20",
+		"globals": "^16.3.0",
+		"tailwindcss": "^4.1.13",
+		"typescript": "~5.8.3",
+		"typescript-eslint": "^8.39.1",
+		"vite": "^7.1.2"
+	}
+}

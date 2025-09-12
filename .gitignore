@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+.pnpm-debug.log*
+
+# build outputs
+**/dist/
+**/build/
+
+# vite (rare outside node_modules, but safe to ignore)
+**/.vite/
+
+# typescript artifacts
+**/*.tsbuildinfo
+
+# environment files (keep templates)
+**/.env
+**/.env.*
+!**/.env.example
+
+# logs
+*.log
+
+# editor/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

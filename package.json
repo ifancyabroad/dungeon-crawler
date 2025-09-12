@@ -1,0 +1,31 @@
+{
+	"name": "mern-phaser-monorepo",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Monorepo for a MERN + React + Vite + Phaser game with an Express + Mongoose API.",
+	"license": "MIT",
+	"type": "module",
+	"packageManager": "pnpm@10.14.0",
+	"engines": {
+		"node": ">=18.18"
+	},
+	"scripts": {
+		"dev": "pnpm -r --parallel run dev",
+		"build": "pnpm -r run build",
+		"typecheck": "pnpm -r run typecheck",
+		"lint": "pnpm -r run lint",
+		"format": "prettier -w .",
+		"clean": "git clean -xfd -e node_modules",
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.35.0",
+		"eslint": "^9.35.0",
+		"eslint-config-prettier": "^10.1.8",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.1.6",
+		"prettier": "^3",
+		"typescript": "^5",
+		"typescript-eslint": "^8.43.0"
+	}
+}
