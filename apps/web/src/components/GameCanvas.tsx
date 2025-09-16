@@ -22,10 +22,9 @@ export default function GameCanvas({ className, children }: Props) {
 
 	return (
 		<div
-			className={[
-				"relative w-full h-full overflow-hidden bg-slate-950",
-				className || "",
-			].join(" ")}
+			className={["relative w-full h-full overflow-hidden bg-black", className || ""].join(
+				" ",
+			)}
 		>
 			<div ref={hostRef} className="absolute inset-0" />
 			{children ? (

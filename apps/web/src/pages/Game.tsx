@@ -6,7 +6,7 @@ export default function Game() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div className="h-screen w-screen bg-slate-950 text-slate-100">
+		<div className="h-screen w-screen bg-neutral-950 text-neutral-100">
 			<div className="flex h-full">
 				<Sidebar open={open} onClose={() => setOpen(false)} />
 
@@ -17,7 +17,7 @@ export default function Game() {
 
 					<button
 						onClick={() => setOpen(true)}
-						className="md:hidden absolute top-3 left-3 rounded-lg bg-slate-800/80 px-3 py-2 text-sm text-slate-100 backdrop-blur hover:bg-slate-700/80"
+						className="md:hidden absolute top-3 left-3 bg-neutral-800/80 px-3 py-2 text-sm text-neutral-100 backdrop-blur hover:bg-neutral-700/80"
 						aria-label="Open sidebar"
 					>
 						☰ Menu
