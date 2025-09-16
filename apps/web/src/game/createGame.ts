@@ -1,18 +1,16 @@
 import Phaser from "phaser";
 import MainScene from "./scenes/MainScene";
 
-export type GameSize = { width: number; height: number };
-
-export function createGame(parent: HTMLElement, size: GameSize = { width: 800, height: 600 }) {
+export function createGame(parent: HTMLElement) {
 	return new Phaser.Game({
 		type: Phaser.AUTO,
 		parent,
-		width: size.width,
-		height: size.height,
+		width: 800,
+		height: 600,
 		backgroundColor: "#0b1220",
 		scene: [MainScene],
 		scale: {
-			mode: Phaser.Scale.NONE,
+			mode: Phaser.Scale.RESIZE,
 			autoCenter: Phaser.Scale.NO_CENTER,
 		},
 	});

@@ -10,10 +10,6 @@ export default class MainScene extends Phaser.Scene {
 	create() {
 		const { width: w, height: h } = this.scale;
 
-		this.add
-			.text(w / 2, 300, "Phaser + React 🎮", { fontSize: "28px", color: "#e2e8f0" })
-			.setOrigin(0.5);
-
 		const STAR_COUNT = 120;
 
 		for (let i = 0; i < STAR_COUNT; i++) {
