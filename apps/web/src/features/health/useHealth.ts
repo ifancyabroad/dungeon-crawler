@@ -6,7 +6,7 @@ type Health = { ok: boolean };
 export function useHealth() {
 	return useQuery({
 		queryKey: ["health"],
-		queryFn: ({ signal }) => api.get<Health>("health", { signal }),
+		queryFn: ({ signal }) => api.get<Health>("health", { signal }).json<Health>(),
 		enabled: false,
 	});
 }

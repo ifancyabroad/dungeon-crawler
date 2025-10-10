@@ -6,7 +6,7 @@ export type Score = { player: string; points: number; _id?: string };
 export function useScores() {
 	return useQuery({
 		queryKey: ["scores"],
-		queryFn: ({ signal }) => api.get<Score[]>("scores", { signal }),
+		queryFn: ({ signal }) => api.get<Score[]>("scores", { signal }).json<Score[]>(),
 	});
 }
 
