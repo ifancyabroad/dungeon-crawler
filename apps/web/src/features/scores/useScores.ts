@@ -1,20 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ScoreInput, ScoreResponse } from "@app/shared";
 import { api } from "../../lib/api";
-
-export type Score = { player: string; points: number; _id?: string };
 
 export function useScores() {
 	return useQuery({
 		queryKey: ["scores"],
-		queryFn: ({ signal }) => api.get<Score[]>("scores", { signal }).json<Score[]>(),
+		queryFn: ({ signal }) => api.get("scores", { signal }).json<ScoreResponse[]>(),
 	});
 }
 
 export function useCreateScore() {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: (body: { player: string; points: number }) =>
-			api.post<Score>("scores", { json: body }).json<Score>(),
+		mutationFn: (body: ScoreInput) => api.post("scores", { json: body }).json<ScoreResponse>(),
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["scores"] });
 		},
