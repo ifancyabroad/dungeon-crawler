@@ -4,12 +4,12 @@ A starter template for building games with **React 19 + Vite + Tailwind v4 + Pha
 
 ## Tech Stack
 
-| Layer           | Technologies                                               |
-| --------------- | ---------------------------------------------------------- |
-| Frontend        | React 19, Vite 7, Tailwind CSS 4, Phaser 3, TanStack Query |
-| Backend         | Express 5, Mongoose 9, Zod validation                      |
-| Tooling         | TypeScript 5.9, ESLint 9, Prettier, Vitest, Husky          |
-| Package Manager | pnpm workspaces                                            |
+| Layer           | Technologies                                                        |
+| --------------- | ------------------------------------------------------------------- |
+| Frontend        | React 19, Vite 7, Tailwind CSS 4, Phaser 3, TanStack Query, Zustand |
+| Backend         | Express 5, Mongoose 9, Zod validation                               |
+| Tooling         | TypeScript 5.9, ESLint 9, Prettier, Vitest, Husky                   |
+| Package Manager | pnpm workspaces                                                     |
 
 ## Prerequisites
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import GameCanvas from "../components/GameCanvas";
+import GameOverlay from "../components/GameOverlay";
 
 export default function Game() {
 	const [open, setOpen] = useState(false);
@@ -14,6 +15,9 @@ export default function Game() {
 					<div className="h-full">
 						<GameCanvas />
 					</div>
+
+					{/* Game UI overlay */}
+					<GameOverlay />
 
 					<button
 						onClick={() => setOpen(true)}
