@@ -1,180 +1,142 @@
 import Phaser from "phaser";
-import { useGameStore } from "../../stores/gameStore";
+import {
+	buildGroundLayer,
+	buildWallLayer,
+	DEFAULT_MAP_HEIGHT,
+	DEFAULT_MAP_WIDTH,
+	TILE_TYPE,
+} from "@app/shared";
+import {
+	COLLIDING_INDICES,
+	ENTITIES,
+	TILE_HEIGHT,
+	TILE_WIDTH,
+	TILESET_KEY,
+	TERRAIN,
+} from "../tilesetRegistry";
 
-const TARGET_COLORS = [0xff6b6b, 0x4ecdc4, 0xffe66d, 0x95e1d3, 0xf38181];
-const TARGET_SPAWN_INTERVAL = 800; // ms between spawns
-const TARGET_LIFETIME = 2000; // ms before target disappears
-const POINTS_PER_TARGET = 10;
+const MAP_WIDTH = DEFAULT_MAP_WIDTH;
+const MAP_HEIGHT = DEFAULT_MAP_HEIGHT;
+
+/** Map shared layer data (logical tile types) to tileset indices for Phaser. */
+function toGroundTileIndices(layer: number[][]): number[][] {
+	const floorIndex = TERRAIN.FLOOR[0];
+	return layer.map((row) => row.map(() => floorIndex));
+}
+
+function toWallTileIndices(layer: number[][]): number[][] {
+	const wallIndex = TERRAIN.WALL[0];
+	return layer.map((row) =>
+		row.map((cell) => (cell === TILE_TYPE.WALL ? wallIndex : TILE_TYPE.EMPTY)),
+	);
+}
 
 export default class MainScene extends Phaser.Scene {
-	private stars: Phaser.GameObjects.Rectangle[] = [];
-	private targets: Phaser.GameObjects.Arc[] = [];
-	private spawnTimer?: Phaser.Time.TimerEvent;
-	private countdownTimer?: Phaser.Time.TimerEvent;
-	private unsubscribe?: () => void;
-	private wasPlaying = false;
+	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+	private wallLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+	private player!: Phaser.GameObjects.Sprite;
+	private playerTileX = 0;
+	private playerTileY = 0;
+	private isMoving = false;
 
 	constructor() {
 		super("Main");
 	}
 
 	create() {
-		this.createStarfield();
-		this.setupStoreSubscription();
-	}
+		const groundData = toGroundTileIndices(buildGroundLayer(MAP_WIDTH, MAP_HEIGHT));
+		const wallData = toWallTileIndices(buildWallLayer(MAP_WIDTH, MAP_HEIGHT));
 
-	private createStarfield() {
-		const { width: w, height: h } = this.scale;
-		const STAR_COUNT = 120;
-
-		for (let i = 0; i < STAR_COUNT; i++) {
-			const x = Phaser.Math.Between(0, w);
-			const y = Phaser.Math.Between(0, h);
-			const size = Phaser.Math.FloatBetween(1, 2.5);
-			const alpha = Phaser.Math.FloatBetween(0.3, 1);
-
-			const star = this.add.rectangle(x, y, size, size, 0xffffff).setAlpha(alpha);
-			this.stars.push(star);
+		// Ground: one tilemap from data, one layer
+		const map = this.make.tilemap({
+			data: groundData,
+			tileWidth: TILE_WIDTH,
+			tileHeight: TILE_HEIGHT,
+		});
+		const tileset = map.addTilesetImage(TILESET_KEY);
+		if (!tileset) {
+			console.error("Tileset not found:", TILESET_KEY);
+			return;
 		}
-	}
 
-	private setupStoreSubscription() {
-		// Subscribe to store changes
-		this.unsubscribe = useGameStore.subscribe((state) => {
-			if (state.isPlaying && !this.wasPlaying) {
-				this.onGameStart();
-			} else if (!state.isPlaying && this.wasPlaying) {
-				this.onGameEnd();
-			}
-			this.wasPlaying = state.isPlaying;
-		});
-
-		// Check initial state
-		this.wasPlaying = useGameStore.getState().isPlaying;
-	}
-
-	private onGameStart() {
-		this.clearTargets();
-
-		// Start spawning targets
-		this.spawnTimer = this.time.addEvent({
-			delay: TARGET_SPAWN_INTERVAL,
-			callback: this.spawnTarget,
-			callbackScope: this,
-			loop: true,
-		});
-
-		// Start countdown timer
-		this.countdownTimer = this.time.addEvent({
-			delay: 1000,
-			callback: this.tickTimer,
-			callbackScope: this,
-			loop: true,
-		});
-	}
-
-	private onGameEnd() {
-		this.spawnTimer?.destroy();
-		this.countdownTimer?.destroy();
-		this.clearTargets();
-	}
-
-	private tickTimer() {
-		const { timeLeft, endGame, setTimeLeft } = useGameStore.getState();
-		if (timeLeft <= 0) {
-			endGame();
-		} else {
-			setTimeLeft(timeLeft - 1);
+		this.groundLayer = map.createLayer(0, tileset, 0, 0);
+		if (!this.groundLayer) {
+			console.error("Failed to create ground layer");
+			return;
 		}
+
+		// Walls: second tilemap so we can use -1 for empty; create layer from wall data
+		const wallMap = this.make.tilemap({
+			data: wallData,
+			tileWidth: TILE_WIDTH,
+			tileHeight: TILE_HEIGHT,
+		});
+		const wallTileset = wallMap.addTilesetImage(TILESET_KEY);
+		if (!wallTileset) {
+			console.error("Tileset not found for wall layer");
+			return;
+		}
+
+		this.wallLayer = wallMap.createLayer(0, wallTileset, 0, 0);
+		if (!this.wallLayer) {
+			console.error("Failed to create wall layer");
+			return;
+		}
+
+		// Collision: walls block movement. setCollision is on the map, not the layer.
+		wallMap.setCollision(COLLIDING_INDICES);
+
+		// Player: sprite from tileset using ENTITIES.HERO frame (one tile per move)
+		this.playerTileX = MAP_WIDTH >> 1;
+		this.playerTileY = MAP_HEIGHT >> 1;
+		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
+		const startY = this.playerTileY * TILE_HEIGHT + TILE_HEIGHT / 2;
+		this.player = this.add.sprite(startX, startY, TILESET_KEY, ENTITIES.HERO);
+		this.player.setOrigin(0.5, 0.5);
+
+		// Camera: center on player (DCSS / ToME style), bounds clamped to map
+		this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT);
+		this.cameras.main.startFollow(this.player, true);
+
+		this.input.keyboard?.on("keydown-W", () => this.tryMove(0, -1));
+		this.input.keyboard?.on("keydown-S", () => this.tryMove(0, 1));
+		this.input.keyboard?.on("keydown-A", () => this.tryMove(-1, 0));
+		this.input.keyboard?.on("keydown-D", () => this.tryMove(1, 0));
 	}
 
-	private spawnTarget() {
-		const { width: w, height: h } = this.scale;
-		const padding = 50;
-		const x = Phaser.Math.Between(padding, w - padding);
-		const y = Phaser.Math.Between(padding, h - padding);
-		const radius = Phaser.Math.Between(20, 35);
-		const color = Phaser.Math.RND.pick(TARGET_COLORS);
+	/** Returns true if (tileX, tileY) is walkable (in bounds and not a wall). */
+	private isWalkable(tileX: number, tileY: number): boolean {
+		if (tileX < 0 || tileX >= MAP_WIDTH || tileY < 0 || tileY >= MAP_HEIGHT) return false;
+		if (!this.wallLayer) return true;
+		const tile = this.wallLayer.getTileAt(tileX, tileY);
+		if (!tile) return true;
+		// -1 or empty means no wall; otherwise check collision list
+		if (tile.index === -1) return true;
+		return !COLLIDING_INDICES.includes(tile.index);
+	}
 
-		const target = this.add.circle(x, y, radius, color);
-		target.setInteractive({ useHandCursor: true });
-		target.setAlpha(0);
+	/** Move player one tile in direction (dx, dy) if the cell is walkable. */
+	private tryMove(dx: number, dy: number) {
+		if (this.isMoving) return;
+		const targetX = this.playerTileX + dx;
+		const targetY = this.playerTileY + dy;
+		if (!this.isWalkable(targetX, targetY)) return;
 
-		// Fade in
+		this.isMoving = true;
+		this.playerTileX = targetX;
+		this.playerTileY = targetY;
+		const worldX = targetX * TILE_WIDTH + TILE_WIDTH / 2;
+		const worldY = targetY * TILE_HEIGHT + TILE_HEIGHT / 2;
+
 		this.tweens.add({
-			targets: target,
-			alpha: 1,
-			scale: { from: 0.5, to: 1 },
-			duration: 150,
-			ease: "Back.easeOut",
+			targets: this.player,
+			x: worldX,
+			y: worldY,
+			duration: 120,
+			ease: "Power2",
+			onComplete: () => {
+				this.isMoving = false;
+			},
 		});
-
-		// Click handler
-		target.on("pointerdown", () => this.onTargetClick(target));
-
-		this.targets.push(target);
-
-		// Auto-remove after lifetime
-		this.time.delayedCall(TARGET_LIFETIME, () => {
-			this.removeTarget(target, false);
-		});
-	}
-
-	private onTargetClick(target: Phaser.GameObjects.Arc) {
-		if (!useGameStore.getState().isPlaying) return;
-
-		useGameStore.getState().addPoints(POINTS_PER_TARGET);
-		this.removeTarget(target, true);
-	}
-
-	private removeTarget(target: Phaser.GameObjects.Arc, wasClicked: boolean) {
-		const index = this.targets.indexOf(target);
-		if (index === -1) return;
-
-		this.targets.splice(index, 1);
-
-		if (wasClicked) {
-			// Pop effect when clicked
-			this.tweens.add({
-				targets: target,
-				scale: 1.5,
-				alpha: 0,
-				duration: 100,
-				onComplete: () => target.destroy(),
-			});
-		} else {
-			// Fade out when expired
-			this.tweens.add({
-				targets: target,
-				alpha: 0,
-				duration: 200,
-				onComplete: () => target.destroy(),
-			});
-		}
-	}
-
-	private clearTargets() {
-		this.targets.forEach((t) => t.destroy());
-		this.targets = [];
-	}
-
-	update(_time: number, delta: number) {
-		// Animate starfield
-		const { width: w, height: h } = this.scale;
-
-		for (let i = 0; i < this.stars.length; i++) {
-			const star = this.stars[i];
-			const speed = i % 7 === 0 ? 140 : i % 3 === 0 ? 80 : 40;
-			star.y += (speed * delta) / 1000;
-
-			if (star.y > h + 2) {
-				star.y = -2;
-				star.x = Phaser.Math.Between(0, w);
-			}
-		}
-	}
-
-	shutdown() {
-		this.unsubscribe?.();
 	}
 }

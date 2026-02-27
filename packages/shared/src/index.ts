@@ -1,32 +1,16 @@
-import { z } from "zod";
+/**
+ * Shared package: deterministic game engine and schemas for API and client.
+ * Import from "@app/shared". Structure: map/ (dungeon generation), api/ (request/response schemas).
+ */
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Score
-// ─────────────────────────────────────────────────────────────────────────────
+export {
+	buildGroundLayer,
+	buildWallLayer,
+	DEFAULT_MAP_HEIGHT,
+	DEFAULT_MAP_WIDTH,
+	TILE_TYPE,
+} from "./map";
 
-/** Schema for validating score creation input */
-export const ScoreSchema = z.object({
-	player: z.string(),
-	points: z.number().int().nonnegative(),
-});
-
-/** Input type for creating a score */
-export type ScoreInput = z.infer<typeof ScoreSchema>;
-
-/** API response type for a score (includes MongoDB fields) */
-export interface ScoreResponse {
-	_id: string;
-	player: string;
-	points: number;
-	createdAt: string;
-	updatedAt: string;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Health
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** API response type for health check */
-export interface HealthResponse {
-	ok: boolean;
-}
+export type { HealthResponse } from "./api";
+export type { ScoreInput, ScoreResponse } from "./api";
+export { ScoreSchema } from "./api";

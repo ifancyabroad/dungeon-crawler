@@ -7,6 +7,10 @@ type Props = {
 	children?: React.ReactNode;
 };
 
+/**
+ * Hosts the Phaser game canvas (Preload + Main scene).
+ * Overlay content (HUD) is rendered as children on top.
+ */
 export default function GameCanvas({ className, children }: Props) {
 	const hostRef = useRef<HTMLDivElement>(null);
 	const gameRef = useRef<Phaser.Game | null>(null);
@@ -22,7 +26,7 @@ export default function GameCanvas({ className, children }: Props) {
 
 	return (
 		<div
-			className={["relative w-full h-full overflow-hidden bg-black", className || ""].join(
+			className={["relative w-full h-full overflow-hidden bg-bg-base", className || ""].join(
 				" ",
 			)}
 		>
