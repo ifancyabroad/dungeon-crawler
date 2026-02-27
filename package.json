@@ -1,8 +1,8 @@
 {
-	"name": "mern-phaser-monorepo",
+	"name": "dungeon-crawler",
 	"version": "0.1.0",
 	"private": true,
-	"description": "Monorepo for a MERN + React + Vite + Phaser game with an Express + Mongoose API.",
+	"description": "Dungeon crawler game — MERN monorepo with React, Phaser, Express, and MongoDB.",
 	"license": "MIT",
 	"type": "module",
 	"packageManager": "pnpm@10.14.0",
