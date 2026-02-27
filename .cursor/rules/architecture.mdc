@@ -1,0 +1,100 @@
+---
+description: Core architecture, authority model, stack, and global guardrails
+alwaysApply: true
+---
+
+# Architecture Constitution
+
+## Authority Model (server-authoritative, turn-based)
+
+1. The **server runs the authoritative simulation**.
+2. The client sends **player actions only** (intent, never outcomes).
+3. The server:
+   - validates the action
+   - applies it using `@app/shared`
+   - persists state + action log
+   - returns the new authoritative state
+4. One valid action advances exactly one turn.
+
+The client must never be the source of truth for game state.
+
+---
+
+## Determinism
+
+The shared engine must be deterministic.
+
+Given:
+- initial state
+- RNG seed
+- ordered action list
+
+The result must always be identical.
+
+Therefore:
+- No `Math.random`, `Date.now`, or environment reads in shared transitions.
+- RNG must be injected and seedable.
+- State must be JSON-serializable.
+
+Replay integrity must not be broken.
+
+---
+
+## Stack (do not substitute)
+
+- Frontend: React + TypeScript + Vite
+- UI state: Zustand (no Redux or MobX)
+- Styling: Tailwind
+- Game rendering: Phaser (world + in-world animation only)
+- Backend: Node.js + Express
+- Database: MongoDB via Mongoose
+- Validation: Zod
+
+---
+
+## Monorepo Structure
+
+- `apps/web` — React + Phaser client
+- `apps/api` — Express API + persistence
+- `packages/shared` — deterministic game engine + shared schemas
+
+Shared is imported as `@app/shared`.
+
+---
+
+## Responsibilities
+
+### Client
+- React + Tailwind: menus, HUD, non-world UI.
+- Phaser: rendering dungeon/world and in-world animation only.
+- Converts user input into shared `Action` objects.
+- Does not implement authoritative game rules.
+
+### API
+- Validates untrusted input.
+- Applies actions using shared engine.
+- Persists snapshots + action log.
+- Returns authoritative state.
+
+### Shared
+- Defines `GameState`
+- Defines `Action` union + Zod schemas
+- Implements deterministic state transitions
+
+---
+
+## Dependency Discipline
+
+- Prefer existing dependencies already in the repo.
+- If implementing complex infrastructure, prefer a small, well-maintained library instead of large custom implementations.
+- Add new dependencies only when necessary; avoid large or redundant packages.
+- Do not replace core stack technologies.
+
+---
+
+## Agent Guardrails
+
+- Keep diffs minimal.
+- Do not refactor unrelated files.
+- Follow existing naming and folder conventions.
+- For multi-package changes, outline a short plan before editing.
