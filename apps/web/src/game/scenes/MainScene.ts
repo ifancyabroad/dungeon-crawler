@@ -1,53 +1,97 @@
 import Phaser from "phaser";
 import {
-	buildGroundLayer,
-	buildWallLayer,
+	buildDecorationLayer,
+	buildWaterMask,
+	createRng,
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
-	TILE_TYPE,
+	generateMap,
+	isCellWalkable,
 } from "@app/shared";
 import {
-	COLLIDING_INDICES,
+	DECORATION_WEIGHTS,
 	ENTITIES,
+	getCollidingIndices,
 	TILE_HEIGHT,
 	TILE_WIDTH,
 	TILESET_KEY,
-	TERRAIN,
 } from "../tilesetRegistry";
-
-const MAP_WIDTH = DEFAULT_MAP_WIDTH;
-const MAP_HEIGHT = DEFAULT_MAP_HEIGHT;
-
-/** Map shared layer data (logical tile types) to tileset indices for Phaser. */
-function toGroundTileIndices(layer: number[][]): number[][] {
-	const floorIndex = TERRAIN.FLOOR[0];
-	return layer.map((row) => row.map(() => floorIndex));
-}
-
-function toWallTileIndices(layer: number[][]): number[][] {
-	const wallIndex = TERRAIN.WALL[0];
-	return layer.map((row) =>
-		row.map((cell) => (cell === TILE_TYPE.WALL ? wallIndex : TILE_TYPE.EMPTY)),
-	);
-}
+import { useMapStore } from "../../stores/mapStore";
+import { getMapConfig } from "../mapConfig";
+import {
+	decorationGridToTileIndices,
+	toGroundTileIndices,
+	toWallTileIndices,
+} from "../mapTileMapping";
 
 export default class MainScene extends Phaser.Scene {
 	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 	private wallLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+	private decorationLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+	/** Logical map state for shared isCellWalkable (server-authoritative rule). */
+	private ground: number[][] = [];
+	private wall: number[][] = [];
+	private blockedMask: boolean[][] = [];
 	private player!: Phaser.GameObjects.Sprite;
 	private playerTileX = 0;
 	private playerTileY = 0;
 	private isMoving = false;
+	private mapWidth = DEFAULT_MAP_WIDTH;
+	private mapHeight = DEFAULT_MAP_HEIGHT;
 
 	constructor() {
 		super("Main");
 	}
 
 	create() {
-		const groundData = toGroundTileIndices(buildGroundLayer(MAP_WIDTH, MAP_HEIGHT));
-		const wallData = toWallTileIndices(buildWallLayer(MAP_WIDTH, MAP_HEIGHT));
+		const config = getMapConfig();
+		useMapStore.getState().setMapConfigOverride(config);
+		this.mapWidth = config.width;
+		this.mapHeight = config.height;
+		const rng = createRng(config.seed);
+		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
 
-		// Ground: one tilemap from data, one layer
+		const waterMask = buildWaterMask(ground, wall, spawn, config.seed);
+		const { blockedMask, decorationGrid } = buildDecorationLayer(
+			ground,
+			wall,
+			pathLayer,
+			waterMask,
+			spawn,
+			config.seed,
+			config.decorationWeights ?? DECORATION_WEIGHTS,
+			config.scatterChance ?? 0.28,
+		);
+		this.ground = ground;
+		this.wall = wall;
+		this.blockedMask = blockedMask;
+
+		const groundData = toGroundTileIndices(ground, wall, waterMask, config.theme);
+		const wallData = toWallTileIndices(wall, config.theme);
+		const decorationData = decorationGridToTileIndices(decorationGrid, config.theme);
+
+		this.createGroundLayer(groundData);
+		this.createDecorationLayer(decorationData);
+		this.createWallLayer(wallData);
+
+		this.playerTileX = spawn.x;
+		this.playerTileY = spawn.y;
+		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
+		const startY = this.playerTileY * TILE_HEIGHT + TILE_HEIGHT / 2;
+		this.player = this.add.sprite(startX, startY, TILESET_KEY, ENTITIES.HERO);
+		this.player.setOrigin(0.5, 0.5);
+		this.player.setDepth(10);
+
+		this.cameras.main.setBounds(0, 0, this.mapWidth * TILE_WIDTH, this.mapHeight * TILE_HEIGHT);
+		this.cameras.main.startFollow(this.player, true);
+
+		this.input.keyboard?.on("keydown-W", () => this.tryMove(0, -1));
+		this.input.keyboard?.on("keydown-S", () => this.tryMove(0, 1));
+		this.input.keyboard?.on("keydown-A", () => this.tryMove(-1, 0));
+		this.input.keyboard?.on("keydown-D", () => this.tryMove(1, 0));
+	}
+
+	private createGroundLayer(groundData: number[][]) {
 		const map = this.make.tilemap({
 			data: groundData,
 			tileWidth: TILE_WIDTH,
@@ -58,14 +102,29 @@ export default class MainScene extends Phaser.Scene {
 			console.error("Tileset not found:", TILESET_KEY);
 			return;
 		}
-
 		this.groundLayer = map.createLayer(0, tileset, 0, 0);
 		if (!this.groundLayer) {
 			console.error("Failed to create ground layer");
 			return;
 		}
+		map.setCollision(getCollidingIndices());
+	}
 
-		// Walls: second tilemap so we can use -1 for empty; create layer from wall data
+	private createDecorationLayer(decorationData: number[][]) {
+		const decMap = this.make.tilemap({
+			data: decorationData,
+			tileWidth: TILE_WIDTH,
+			tileHeight: TILE_HEIGHT,
+		});
+		const decTileset = decMap.addTilesetImage(TILESET_KEY);
+		this.decorationLayer = null;
+		if (decTileset) {
+			this.decorationLayer = decMap.createLayer(0, decTileset, 0, 0);
+			if (this.decorationLayer) this.decorationLayer.setDepth(1);
+		}
+	}
+
+	private createWallLayer(wallData: number[][]) {
 		const wallMap = this.make.tilemap({
 			data: wallData,
 			tileWidth: TILE_WIDTH,
@@ -76,46 +135,18 @@ export default class MainScene extends Phaser.Scene {
 			console.error("Tileset not found for wall layer");
 			return;
 		}
-
 		this.wallLayer = wallMap.createLayer(0, wallTileset, 0, 0);
 		if (!this.wallLayer) {
 			console.error("Failed to create wall layer");
 			return;
 		}
-
-		// Collision: walls block movement. setCollision is on the map, not the layer.
-		wallMap.setCollision(COLLIDING_INDICES);
-
-		// Player: sprite from tileset using ENTITIES.HERO frame (one tile per move)
-		this.playerTileX = MAP_WIDTH >> 1;
-		this.playerTileY = MAP_HEIGHT >> 1;
-		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
-		const startY = this.playerTileY * TILE_HEIGHT + TILE_HEIGHT / 2;
-		this.player = this.add.sprite(startX, startY, TILESET_KEY, ENTITIES.HERO);
-		this.player.setOrigin(0.5, 0.5);
-
-		// Camera: center on player (DCSS / ToME style), bounds clamped to map
-		this.cameras.main.setBounds(0, 0, MAP_WIDTH * TILE_WIDTH, MAP_HEIGHT * TILE_HEIGHT);
-		this.cameras.main.startFollow(this.player, true);
-
-		this.input.keyboard?.on("keydown-W", () => this.tryMove(0, -1));
-		this.input.keyboard?.on("keydown-S", () => this.tryMove(0, 1));
-		this.input.keyboard?.on("keydown-A", () => this.tryMove(-1, 0));
-		this.input.keyboard?.on("keydown-D", () => this.tryMove(1, 0));
+		wallMap.setCollision(getCollidingIndices());
 	}
 
-	/** Returns true if (tileX, tileY) is walkable (in bounds and not a wall). */
 	private isWalkable(tileX: number, tileY: number): boolean {
-		if (tileX < 0 || tileX >= MAP_WIDTH || tileY < 0 || tileY >= MAP_HEIGHT) return false;
-		if (!this.wallLayer) return true;
-		const tile = this.wallLayer.getTileAt(tileX, tileY);
-		if (!tile) return true;
-		// -1 or empty means no wall; otherwise check collision list
-		if (tile.index === -1) return true;
-		return !COLLIDING_INDICES.includes(tile.index);
+		return isCellWalkable(this.ground, this.wall, this.blockedMask, tileX, tileY);
 	}
 
-	/** Move player one tile in direction (dx, dy) if the cell is walkable. */
 	private tryMove(dx: number, dy: number) {
 		if (this.isMoving) return;
 		const targetX = this.playerTileX + dx;
