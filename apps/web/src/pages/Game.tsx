@@ -2,12 +2,13 @@ import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import GameCanvas from "../components/GameCanvas";
 import GameOverlay from "../components/GameOverlay";
+import { Button } from "../components/Button";
 
 export default function Game() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div className="h-screen w-screen bg-neutral-950 text-neutral-100">
+		<div className="h-screen w-screen bg-bg-base text-text">
 			<div className="flex h-full">
 				<Sidebar open={open} onClose={() => setOpen(false)} />
 
@@ -19,13 +20,15 @@ export default function Game() {
 					{/* Game UI overlay */}
 					<GameOverlay />
 
-					<button
+					<Button
+						variant="secondary"
+						size="md"
 						onClick={() => setOpen(true)}
-						className="md:hidden absolute top-3 left-3 bg-neutral-800/80 px-3 py-2 text-sm text-neutral-100 backdrop-blur hover:bg-neutral-700/80"
+						className="md:hidden absolute top-3 left-3 backdrop-blur bg-bg-surface/80 hover:bg-bg-elevated/80"
 						aria-label="Open sidebar"
 					>
 						☰ Menu
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>
