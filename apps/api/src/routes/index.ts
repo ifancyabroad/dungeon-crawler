@@ -6,6 +6,6 @@ const router = Router();
 
 router.get("/health", (_req, res) => res.json({ ok: true }));
 router.use("/scores", scoreRoutes);
-router.use("/games", gameRoutes);
+router.use("/game", gameRoutes);
 
 export default router;

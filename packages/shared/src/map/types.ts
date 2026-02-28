@@ -31,6 +31,10 @@ export interface MapGenConfig {
 	caveFloorChance?: number;
 	/** BSP only: room inset from leaf bounds (1–3). Higher = thicker walls between rooms, smaller rooms. Default 1. */
 	bspRoomInset?: number;
+	/** Weights per decoration type for buildDecorationLayer (e.g. grass, plant, bush, rock). */
+	decorationWeights?: Record<string, number>;
+	/** Scatter chance for non-path decorations (0–1). */
+	scatterChance?: number;
 }
 
 /** Result of generateMap: layers (logical tile types), spawn, and path mask for connected path decoration. */

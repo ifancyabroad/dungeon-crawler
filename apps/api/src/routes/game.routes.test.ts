@@ -31,9 +31,9 @@ beforeEach(() => {
 	});
 });
 
-describe("POST /api/games", () => {
+describe("POST /api/game", () => {
 	it("returns 201 with gameId and sets game_token cookie (HttpOnly, SameSite=Lax)", async () => {
-		const res = await request(app).post("/api/games").expect(201);
+		const res = await request(app).post("/api/game").expect(201);
 
 		expect(res.body).toHaveProperty("gameId");
 		expect(typeof res.body.gameId).toBe("string");
@@ -47,59 +47,48 @@ describe("POST /api/games", () => {
 	});
 });
 
-describe("GET /api/games/:gameId", () => {
+describe("GET /api/game", () => {
 	it("returns 401 when cookie is missing", async () => {
-		await request(app).get("/api/games/some-game-id").expect(401);
+		await request(app).get("/api/game").expect(401);
 	});
 
-	it("returns 404 when cookie present but gameId does not exist", async () => {
-		await request(app)
-			.get("/api/games/nonexistent-game-id-12345")
-			.set("Cookie", "game_token=wrong-or-random-token")
-			.expect(404);
-	});
-
-	it("returns 404 when cookie present but token does not match session", async () => {
-		const gameId = "some-game-id";
-		const wrongHash = hashToken("other-token", "test-pepper");
+	it("returns 401 when no session for token", async () => {
 		mockFindOne.mockReturnValueOnce({
-			lean: () => ({
-				exec: vi.fn().mockResolvedValueOnce({
-					gameId,
-					tokenHash: wrongHash,
-					createdAt: new Date(),
-				}),
-			}),
+			lean: () => ({ exec: vi.fn().mockResolvedValueOnce(null) }),
 		});
-
-		await request(app)
-			.get(`/api/games/${gameId}`)
-			.set("Cookie", "game_token=wrong-token-value")
-			.expect(404);
+		await request(app).get("/api/game").set("Cookie", "game_token=any-token").expect(401);
 	});
 
-	it("returns 200 with session info when cookie is valid", async () => {
-		const gameId = "valid-game-id";
-		const token = "valid-token";
+	it("returns 200 with gameId and state when cookie is valid", async () => {
+		const gameId = "my-game-id";
+		const token = "my-token";
 		const tokenHash = hashToken(token, "test-pepper");
-		const createdAt = new Date();
+		const state = {
+			turn: 0,
+			hero: { x: 10, y: 10 },
+			seed: 42,
+			mapConfig: { seed: 42, width: 50, height: 50, theme: "green_forest" },
+			walkable: [] as boolean[][],
+		};
 
 		mockFindOne.mockReturnValueOnce({
 			lean: () => ({
 				exec: vi.fn().mockResolvedValueOnce({
 					gameId,
 					tokenHash,
-					createdAt,
+					state,
 				}),
 			}),
 		});
 
-		const getRes = await request(app)
-			.get(`/api/games/${gameId}`)
+		const res = await request(app)
+			.get("/api/game")
 			.set("Cookie", `game_token=${token}`)
 			.expect(200);
 
-		expect(getRes.body).toHaveProperty("gameId", gameId);
-		expect(getRes.body).toHaveProperty("createdAt");
+		expect(res.body).toHaveProperty("gameId", gameId);
+		expect(res.body).toHaveProperty("state");
+		expect(res.body.state).toHaveProperty("hero");
+		expect(res.body.state.hero).toEqual({ x: 10, y: 10 });
 	});
 });

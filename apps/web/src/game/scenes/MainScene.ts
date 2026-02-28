@@ -8,6 +8,7 @@ import {
 	generateMap,
 	isCellWalkable,
 } from "@app/shared";
+import type { MapGenConfig } from "@app/shared";
 import {
 	DECORATION_WEIGHTS,
 	ENTITIES,
@@ -16,8 +17,10 @@ import {
 	TILE_WIDTH,
 	TILESET_KEY,
 } from "../tilesetRegistry";
+import { useGameStore } from "../../stores/gameStore";
 import { useMapStore } from "../../stores/mapStore";
 import { getMapConfig } from "../mapConfig";
+import type { MapConfig } from "../mapConfig";
 import {
 	decorationGridToTileIndices,
 	toGroundTileIndices,
@@ -38,17 +41,46 @@ export default class MainScene extends Phaser.Scene {
 	private isMoving = false;
 	private mapWidth = DEFAULT_MAP_WIDTH;
 	private mapHeight = DEFAULT_MAP_HEIGHT;
+	private waitingForState = false;
 
 	constructor() {
 		super("Main");
 	}
 
 	create() {
-		const config = getMapConfig();
-		useMapStore.getState().setMapConfigOverride(config);
+		const { gameId, state } = useGameStore.getState();
+		if (gameId && state) {
+			this.buildMapAndHero(state.seed, state.mapConfig, state.hero);
+			this.attachKeyboardOnline();
+		} else if (gameId) {
+			this.waitingForState = true;
+			this.attachKeyboardOnline();
+		} else {
+			const config = getMapConfig();
+			this.buildMapAndHero(config.seed, config, { x: 0, y: 0 }, config);
+			this.attachKeyboardOffline();
+		}
+	}
+
+	update() {
+		if (!this.waitingForState) return;
+		const { state } = useGameStore.getState();
+		if (!state) return;
+		this.waitingForState = false;
+		this.buildMapAndHero(state.seed, state.mapConfig, state.hero);
+	}
+
+	private buildMapAndHero(
+		seed: number,
+		config: MapGenConfig | MapConfig,
+		heroPos: { x: number; y: number },
+		optionalConfigForSpawn?: MapConfig,
+	) {
 		this.mapWidth = config.width;
 		this.mapHeight = config.height;
-		const rng = createRng(config.seed);
+		useMapStore.getState().setMapConfigOverride(config as MapConfig);
+
+		const rng = createRng(seed);
 		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
 
 		const waterMask = buildWaterMask(ground, wall, spawn, config.seed);
@@ -60,7 +92,7 @@ export default class MainScene extends Phaser.Scene {
 			spawn,
 			config.seed,
 			config.decorationWeights ?? DECORATION_WEIGHTS,
-			config.scatterChance ?? 0.28,
+			(config as MapConfig).scatterChance ?? 0.28,
 		);
 		this.ground = ground;
 		this.wall = wall;
@@ -74,8 +106,9 @@ export default class MainScene extends Phaser.Scene {
 		this.createDecorationLayer(decorationData);
 		this.createWallLayer(wallData);
 
-		this.playerTileX = spawn.x;
-		this.playerTileY = spawn.y;
+		const spawnPos = optionalConfigForSpawn ? spawn : heroPos;
+		this.playerTileX = spawnPos.x;
+		this.playerTileY = spawnPos.y;
 		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
 		const startY = this.playerTileY * TILE_HEIGHT + TILE_HEIGHT / 2;
 		this.player = this.add.sprite(startX, startY, TILESET_KEY, ENTITIES.HERO);
@@ -84,11 +117,42 @@ export default class MainScene extends Phaser.Scene {
 
 		this.cameras.main.setBounds(0, 0, this.mapWidth * TILE_WIDTH, this.mapHeight * TILE_HEIGHT);
 		this.cameras.main.startFollow(this.player, true);
+	}
 
+	private attachKeyboardOnline() {
+		const sendAction = useGameStore.getState().sendAction;
+		this.input.keyboard?.on("keydown-W", () => sendAction({ type: "move", direction: "up" }));
+		this.input.keyboard?.on("keydown-S", () => sendAction({ type: "move", direction: "down" }));
+		this.input.keyboard?.on("keydown-A", () => sendAction({ type: "move", direction: "left" }));
+		this.input.keyboard?.on("keydown-D", () =>
+			sendAction({ type: "move", direction: "right" }),
+		);
+	}
+
+	private attachKeyboardOffline() {
 		this.input.keyboard?.on("keydown-W", () => this.tryMove(0, -1));
 		this.input.keyboard?.on("keydown-S", () => this.tryMove(0, 1));
 		this.input.keyboard?.on("keydown-A", () => this.tryMove(-1, 0));
 		this.input.keyboard?.on("keydown-D", () => this.tryMove(1, 0));
+	}
+
+	setHeroPosition(x: number, y: number) {
+		this.playerTileX = x;
+		this.playerTileY = y;
+		const worldX = x * TILE_WIDTH + TILE_WIDTH / 2;
+		const worldY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
+		if (!this.player) return;
+		this.isMoving = true;
+		this.tweens.add({
+			targets: this.player,
+			x: worldX,
+			y: worldY,
+			duration: 120,
+			ease: "Power2",
+			onComplete: () => {
+				this.isMoving = false;
+			},
+		});
 	}
 
 	private createGroundLayer(groundData: number[][]) {

@@ -23,6 +23,17 @@ export {
 } from "./map";
 export { createRng, type Rng } from "./rng";
 
+export {
+	ActionSchema,
+	MoveActionSchema,
+	applyAction,
+	createInitialState,
+	type Action,
+	type ApplyActionResult,
+	type GameState,
+	type MoveAction,
+} from "./game";
+
 export type { HealthResponse } from "./api";
 export type { ScoreInput, ScoreResponse } from "./api";
 export { ScoreSchema } from "./api";
