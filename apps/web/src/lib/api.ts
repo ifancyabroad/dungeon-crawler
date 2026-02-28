@@ -1,10 +1,24 @@
-import ky from "ky";
+import ky, { isHTTPError } from "ky";
 
 export const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
 export const api = ky.create({
 	prefixUrl: API_BASE,
 	credentials: "include",
+	hooks: {
+		beforeError: [
+			(error) => {
+				// ky documents HTTPError.data (parsed response body); typings may not include it
+				const err = error as { data?: unknown; message: string };
+				if (isHTTPError(error) && err.data != null && typeof err.data === "object") {
+					const body = err.data as Record<string, unknown>;
+					const msg = body["error"];
+					if (typeof msg === "string") err.message = msg;
+				}
+				return error;
+			},
+		],
+	},
 });
 
 /**
