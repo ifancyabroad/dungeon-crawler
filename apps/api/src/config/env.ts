@@ -6,8 +6,22 @@ function required(name: string): string {
 	return v;
 }
 
+const nodeEnv = process.env.NODE_ENV ?? "development";
+const pepper = process.env.GAME_TOKEN_PEPPER ?? "";
+
+if (nodeEnv === "production" && !pepper) {
+	throw new Error("GAME_TOKEN_PEPPER is required in production");
+}
+
+let pepperWarningLogged = false;
+if (nodeEnv !== "production" && !pepper && !pepperWarningLogged) {
+	pepperWarningLogged = true;
+	console.warn("[env] GAME_TOKEN_PEPPER is empty; token hashing is insecure in dev/test.");
+}
+
 export const env = {
-	NODE_ENV: process.env.NODE_ENV ?? "development",
+	NODE_ENV: nodeEnv,
 	PORT: Number(process.env.PORT ?? 4000),
 	MONGO_URI: required("MONGO_URI"),
+	GAME_TOKEN_PEPPER: pepper,
 };

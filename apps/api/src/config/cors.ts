@@ -6,7 +6,7 @@ const prodOrigin = process.env.WEB_ORIGIN;
 
 const corsOptions: CorsOptions = {
 	origin: DEV ? viteOrigin : prodOrigin || false,
-	credentials: false,
+	credentials: true,
 };
 
 export const corsMiddleware = cors(corsOptions);
