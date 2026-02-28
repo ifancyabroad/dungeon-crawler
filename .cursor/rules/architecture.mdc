@@ -44,6 +44,8 @@ Replay integrity must not be broken.
 
 - Frontend: React + TypeScript + Vite
 - UI state: Zustand (no Redux or MobX)
+- Server state / data fetching: TanStack (e.g. TanStack Query)
+- HTTP client: ky
 - Styling: Tailwind
 - Game rendering: Phaser (world + in-world animation only)
 - Backend: Node.js + Express
