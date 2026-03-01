@@ -1,9 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
-import { useContinueGame, useCreateGame } from "../features/games/useGames";
-import { useGameStore } from "../stores/gameStore";
-import { useErrorStore } from "../stores/errorStore";
+import { useContinueGame, useCreateGame } from "../features/game/useGames";
+import { useGameStore } from "../features/game/gameStore";
+import { useErrorStore } from "../features/error/errorStore";
 import { getApiErrorMessage } from "../lib/errors";
 
 export default function Landing() {

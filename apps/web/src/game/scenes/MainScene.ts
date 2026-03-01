@@ -17,8 +17,8 @@ import {
 	TILE_WIDTH,
 	TILESET_KEY,
 } from "../tiles/tilesetRegistry";
-import { useGameStore } from "../../stores/gameStore";
-import { useMapStore } from "../../stores/mapStore";
+import { useGameStore } from "../../features/game/gameStore";
+import { useMapStore } from "../../features/map/mapStore";
 import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
 import { getMapConfig } from "../config/mapConfig";
 import type { MapConfig } from "../config/mapConfig";

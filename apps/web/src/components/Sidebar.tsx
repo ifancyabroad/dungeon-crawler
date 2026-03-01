@@ -1,6 +1,6 @@
 import { Button } from "./Button";
 import DebugMapForm from "./DebugMapForm";
-import { useMapStore } from "../stores/mapStore";
+import { useMapStore } from "../features/map/mapStore";
 
 type SidebarProps = {
 	open: boolean;

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { GameState } from "@app/shared";
 import { io } from "socket.io-client";
 import { getSocketUrl } from "../../lib/api";
-import { useGameStore, setGameSocket } from "../../stores/gameStore";
+import { useGameStore, setGameSocket } from "./gameStore";
 
 /**
  * Connect socket when gameId is present; emit join; on state/error update store.

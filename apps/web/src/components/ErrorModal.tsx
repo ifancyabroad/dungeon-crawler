@@ -1,6 +1,6 @@
 import { Button } from "./Button";
 import { Modal } from "./Modal";
-import { useErrorStore } from "../stores/errorStore";
+import { useErrorStore } from "../features/error/errorStore";
 
 export function ErrorModal() {
 	const error = useErrorStore((s) => s.error);

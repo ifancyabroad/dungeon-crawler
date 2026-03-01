@@ -5,30 +5,10 @@
  */
 
 import type { Action } from "./actions";
-import type { FloorConfig, GameState, HeroState, RngState } from "./types";
+import type { FloorConfig, GameState, HeroState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
+import { createInitialRngState, createRngFromState } from "../rng";
 import { regenerateBaseMaps, getWalkableForFloor } from "./reconstruct";
-
-function createInitialRngState(seed: number): RngState {
-	return { algo: "xorshift32", s: seed >>> 0 || 1 };
-}
-
-function createRngFromState(initial: RngState): { rng: () => number; getState: () => RngState } {
-	if (initial.algo !== "xorshift32") {
-		throw new Error(`Unsupported RngState algo: ${(initial as { algo: string }).algo}`);
-	}
-	let s = initial.s >>> 0;
-	return {
-		rng: function next(): number {
-			s ^= s << 13;
-			s ^= s >>> 17;
-			s ^= s << 5;
-			s = s >>> 0;
-			return s / 4294967296;
-		},
-		getState: (): RngState => ({ algo: "xorshift32", s }),
-	};
-}
 
 const DIRECTION_DELTA: Record<"up" | "down" | "left" | "right", { dx: number; dy: number }> = {
 	up: { dx: 0, dy: -1 },

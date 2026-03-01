@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import type Phaser from "phaser";
 import { createGame } from "../game/createGame";
-import { useMapStore } from "../stores/mapStore";
-import { useGameStore } from "../stores/gameStore";
+import { useMapStore } from "../features/map/mapStore";
+import { useGameStore } from "../features/game/gameStore";
 
 type Props = {
 	className?: string;

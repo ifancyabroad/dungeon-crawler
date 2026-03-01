@@ -4,8 +4,8 @@ import Sidebar from "../components/Sidebar";
 import GameCanvas from "../components/GameCanvas";
 import GameOverlay from "../components/GameOverlay";
 import { Button } from "../components/Button";
-import { useGameSocket } from "../features/games/useGameSocket";
-import { useGameStore } from "../stores/gameStore";
+import { useGameSocket } from "../features/game/useGameSocket";
+import { useGameStore } from "../features/game/gameStore";
 
 export default function Game() {
 	const navigate = useNavigate();
