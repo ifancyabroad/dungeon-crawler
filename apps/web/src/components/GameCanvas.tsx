@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type Phaser from "phaser";
 import { createGame } from "../game/createGame";
 import { useMapStore } from "../features/map/mapStore";
 import { useGameStore } from "../features/game/gameStore";
+import { Loader } from "./Loader";
 
 type Props = {
 	className?: string;
@@ -16,9 +17,12 @@ type MainSceneWithHero = Phaser.Scene & { setHeroPosition?(x: number, y: number)
  * Hosts the Phaser game canvas (Preload + Main scene).
  * Registers the game instance in mapStore; syncs authoritative hero position from gameStore into Main scene.
  */
+const PRELOAD_COMPLETE_KEY = "onPreloadComplete";
+
 export default function GameCanvas({ className, children }: Props) {
 	const hostRef = useRef<HTMLDivElement>(null);
 	const gameRef = useRef<Phaser.Game | null>(null);
+	const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
 	const setGameRef = useMapStore((s) => s.setGameRef);
 	const hero = useGameStore((s) => s.hero);
 
@@ -28,6 +32,7 @@ export default function GameCanvas({ className, children }: Props) {
 		const game = createGame(hostRef.current);
 		gameRef.current = game;
 		setGameRef(game);
+		game.registry.set(PRELOAD_COMPLETE_KEY, () => setShowLoadingOverlay(false));
 		return () => {
 			setGameRef(null);
 			gameRef.current?.destroy(true);
@@ -49,6 +54,11 @@ export default function GameCanvas({ className, children }: Props) {
 			)}
 		>
 			<div ref={hostRef} className="absolute inset-0" />
+			{showLoadingOverlay ? (
+				<div className="absolute inset-0 flex items-center justify-center bg-bg-base">
+					<Loader />
+				</div>
+			) : null}
 			{children ? (
 				<div className="absolute inset-0 pointer-events-none">
 					<div className="pointer-events-auto">{children}</div>
