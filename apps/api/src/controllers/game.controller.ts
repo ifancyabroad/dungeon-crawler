@@ -6,6 +6,7 @@ import { GameSnapshot } from "../models/gameSnapshot.model";
 import { getSessionState, reconstructState, setSessionState } from "../services/gameState.service";
 import { hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
+import { createGameBodySchema } from "@app/shared";
 
 const COOKIE_NAME = "game_token";
 const COOKIE_OPTS = {
@@ -26,14 +27,16 @@ const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
 /**
  * Creates a new game session. Writes snapshot at turn 0 (full dynamic state + rngState),
  * session metadata (no embedded state). Overwrites any existing game_token cookie.
+ * Optional body: { seed?: number } to use a specific RNG seed (e.g. for debug/replay).
  */
-export const createGame: RequestHandler = async (_req, res) => {
+export const createGame: RequestHandler = async (req, res) => {
+	const body = createGameBodySchema.parse(req.body ?? {});
 	const gameId = randomBytes(16).toString("hex");
 	const token = randomBytes(32).toString("hex");
 	const tokenHash = hashToken(token, env.GAME_TOKEN_PEPPER);
 	const now = new Date();
 
-	const seed = randomBytes(4).readUInt32BE(0);
+	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
 	const floorConfig = {
 		width: DEFAULT_MAP_WIDTH,
 		height: DEFAULT_MAP_HEIGHT,

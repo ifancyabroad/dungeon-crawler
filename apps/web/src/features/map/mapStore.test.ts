@@ -6,7 +6,6 @@ describe("mapStore", () => {
 		useMapStore.setState({
 			mapConfigOverride: null,
 			gameRef: null,
-			debugMode: false,
 		});
 	});
 
@@ -14,7 +13,6 @@ describe("mapStore", () => {
 		const state = useMapStore.getState();
 		expect(state.mapConfigOverride).toBeNull();
 		expect(state.gameRef).toBeNull();
-		expect(state.debugMode).toBe(false);
 	});
 
 	it("should set map config override", () => {
@@ -23,8 +21,7 @@ describe("mapStore", () => {
 		expect(useMapStore.getState().mapConfigOverride).toEqual(config);
 	});
 
-	it("should set debug mode", () => {
-		useMapStore.getState().setDebugMode(true);
-		expect(useMapStore.getState().debugMode).toBe(true);
+	it("should not throw when restartMainScene is called with no gameRef", () => {
+		expect(() => useMapStore.getState().restartMainScene()).not.toThrow();
 	});
 });

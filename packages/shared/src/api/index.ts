@@ -4,3 +4,4 @@
  */
 
 export type { HealthResponse } from "./health";
+export { createGameBodySchema, type CreateGameBody } from "./game";

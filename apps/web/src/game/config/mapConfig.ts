@@ -1,6 +1,6 @@
 /**
  * Map config resolution: store override, URL params, or defaults.
- * Used by MainScene and aligned with DebugMapForm / mapStore.
+ * Used by MainScene and mapStore.
  */
 
 import { DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH } from "@app/shared";

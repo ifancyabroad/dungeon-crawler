@@ -1,10 +1,11 @@
 import { useMutation } from "@tanstack/react-query";
 import { api } from "../../lib/api";
-import type { CreateGameResponse, CurrentGameResponse } from "./types";
+import type { CreateGameOptions, CreateGameResponse, CurrentGameResponse } from "./types";
 
 export function useCreateGame() {
 	return useMutation({
-		mutationFn: () => api.post("game").json<CreateGameResponse>(),
+		mutationFn: (options?: CreateGameOptions) =>
+			api.post("game", { json: options ?? {} }).json<CreateGameResponse>(),
 	});
 }
 

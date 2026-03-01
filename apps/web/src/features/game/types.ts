@@ -1,5 +1,10 @@
 import type { GameState } from "@app/shared";
 
+/** Optional body for POST /api/game (e.g. seed for debug). */
+export interface CreateGameOptions {
+	seed?: number;
+}
+
 export interface CreateGameResponse {
 	gameId: string;
 	seed: number;

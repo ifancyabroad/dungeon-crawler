@@ -45,4 +45,4 @@ export {
 	type MoveAction,
 } from "./game";
 
-export type { HealthResponse } from "./api";
+export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";
