@@ -21,15 +21,25 @@ export {
 	type MapGenAlgorithm,
 	type MapGenConfig,
 } from "./map";
-export { createRng, type Rng } from "./rng";
+export { createRng, createInitialRngState, createRngFromState, type Rng } from "./rng";
 
 export {
 	ActionSchema,
 	MoveActionSchema,
 	applyAction,
+	buildGameStateFromPersisted,
 	createInitialState,
+	getWalkableForFloor,
+	regenerateBaseMaps,
+	FloorStateSchema,
+	PersistedDynamicStateSchema,
+	RngStateSchema,
 	type Action,
+	type ActionLogEntry,
 	type ApplyActionResult,
+	type BaseLayerFloor,
+	type GameSessionDoc,
+	type GameSnapshotDoc,
 	type GameState,
 	type MoveAction,
 } from "./game";

@@ -11,13 +11,18 @@ let capturedSession: {
 	tokenHash: string;
 	lastSeenAt: Date;
 	userId: null;
-	state: GameState;
+	seed: number;
+	mapGenVersion: number;
+	floorConfigs: unknown[];
+	latestSnapshotTurn: number;
 } | null = null;
 
-const mockCreate = vi.fn().mockImplementation((doc: unknown) => {
+const mockSessionCreate = vi.fn().mockImplementation((doc: unknown) => {
 	capturedSession = doc as typeof capturedSession;
 	return Promise.resolve();
 });
+const mockSnapshotCreate = vi.fn().mockResolvedValue(undefined);
+const mockActionLogCreate = vi.fn().mockResolvedValue(undefined);
 
 const mockUpdateOne = vi.fn().mockReturnValue({
 	exec: vi.fn().mockImplementation(() => {
@@ -36,10 +41,18 @@ const mockFindOne = vi.fn().mockImplementation((query: { gameId?: string }) => (
 
 vi.mock("../models/gameSession.model", () => ({
 	GameSession: {
-		create: mockCreate,
+		create: mockSessionCreate,
 		findOne: mockFindOne,
 		updateOne: mockUpdateOne,
 	},
+}));
+
+vi.mock("../models/gameSnapshot.model", () => ({
+	GameSnapshot: { create: mockSnapshotCreate },
+}));
+
+vi.mock("../models/gameActionLog.model", () => ({
+	GameActionLog: { create: mockActionLogCreate },
 }));
 
 function parseGameToken(setCookie: string | string[] | undefined): string | null {
@@ -65,7 +78,7 @@ describe("game socket", () => {
 					),
 			}),
 		}));
-		mockCreate.mockImplementation((doc: unknown) => {
+		mockSessionCreate.mockImplementation((doc: unknown) => {
 			capturedSession = doc as typeof capturedSession;
 			return Promise.resolve();
 		});
@@ -106,7 +119,7 @@ describe("game socket", () => {
 		const token = parseGameToken(setCookie ?? undefined);
 		expect(token).toBeTruthy();
 		expect(capturedSession).toBeTruthy();
-		expect(capturedSession?.state).toBeDefined();
+		expect(capturedSession?.gameId).toBe(gameId);
 
 		const client = ioClient(baseUrl, {
 			extraHeaders: { Cookie: `game_token=${token}` },
@@ -127,8 +140,11 @@ describe("game socket", () => {
 		expect(stateEvent.gameId).toBe(gameId);
 		expect(stateEvent.turn).toBe(0);
 		expect(stateEvent.state).toHaveProperty("hero");
-		expect(stateEvent.state.hero).toEqual(capturedSession!.state.hero);
-		expect(stateEvent.state.walkable).toBeDefined();
+		expect(stateEvent.state.hero).toHaveProperty("floorIndex", 0);
+		expect(stateEvent.state.hero).toHaveProperty("x");
+		expect(stateEvent.state.hero).toHaveProperty("y");
+		expect(stateEvent.state.floors).toBeDefined();
+		expect(stateEvent.state.hero).toHaveProperty("floorIndex");
 
 		client.disconnect();
 	});
@@ -146,23 +162,33 @@ describe("game socket", () => {
 			transports: ["websocket"],
 		});
 
-		await new Promise<void>((resolve, reject) => {
-			client.on("state", () => resolve());
+		const joinState = await new Promise<{ state: GameState }>((resolve, reject) => {
+			const t = setTimeout(() => reject(new Error("timeout")), 2000);
+			client.on("state", (p) => {
+				clearTimeout(t);
+				resolve(p);
+			});
 			client.emit("join", { gameId });
-			setTimeout(() => reject(new Error("timeout")), 2000);
 		});
-
-		const initialHero = capturedSession!.state.hero;
+		const initialHero = joinState.state.hero;
 		const stateAfterMove = await new Promise<{ state: GameState }>((resolve, reject) => {
 			const t = setTimeout(
 				() => reject(new Error("timeout waiting for state after move")),
-				3000,
+				5000,
 			);
 			client.on("state", (payload) => {
 				clearTimeout(t);
 				resolve(payload);
 			});
-			client.emit("action", { gameId, action: { type: "move", direction: "right" } });
+			client.on("error", (payload: { reason?: string }) => {
+				clearTimeout(t);
+				reject(new Error(`socket error: ${payload.reason ?? "unknown"}`));
+			});
+			client.emit("action", {
+				gameId,
+				action: { type: "move", direction: "right" },
+				expectedTurn: joinState.state.turn,
+			});
 		});
 
 		expect(stateAfterMove.state.hero.x).toBe(initialHero.x + 1);

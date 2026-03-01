@@ -6,10 +6,8 @@ const GAME_ID_KEY = "dungeon_gameId";
 interface GameStoreState {
 	gameId: string | null;
 	turn: number;
-	hero: { x: number; y: number };
-	seed: number | null;
-	mapConfig: GameState["mapConfig"] | null;
-	/** Full state from server (for Phaser mapConfig override and walkable if needed). */
+	hero: { floorIndex: number; x: number; y: number };
+	/** Full state from server (for Phaser and map). Derived: turn, hero. */
 	state: GameState | null;
 }
 
@@ -27,30 +25,29 @@ export type GameStore = GameStoreState & GameStoreActions;
 const initialState: GameStoreState = {
 	gameId: null,
 	turn: 0,
-	hero: { x: 0, y: 0 },
-	seed: null,
-	mapConfig: null,
+	hero: { floorIndex: 0, x: 0, y: 0 },
 	state: null,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
 	...initialState,
 
-	setState: (payload) =>
+	setState: (payload) => {
+		const state = payload.state;
 		set({
 			gameId: payload.gameId,
 			turn: payload.turn,
-			hero: payload.state.hero,
-			seed: payload.state.seed,
-			mapConfig: payload.state.mapConfig,
-			state: payload.state,
-		}),
+			hero: state.hero,
+			state,
+		});
+	},
 
 	setGameId: (id) => set({ gameId: id }),
 
 	sendAction: (action) => {
-		const { gameId } = get();
-		if (gameId && gameSocketRef) gameSocketRef.emit("action", { gameId, action });
+		const { gameId, turn } = get();
+		if (gameId && gameSocketRef)
+			gameSocketRef.emit("action", { gameId, action, expectedTurn: turn });
 	},
 
 	getStoredGameId: () => {

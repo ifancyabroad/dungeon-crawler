@@ -4,8 +4,8 @@
  */
 
 import { DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH } from "@app/shared";
-import { DECORATION_WEIGHTS } from "./tilesetRegistry";
-import { useMapStore } from "../stores/mapStore";
+import { DECORATION_WEIGHTS } from "../tiles/tilesetRegistry";
+import { useMapStore } from "../../stores/mapStore";
 
 const DEFAULT_SEED = 12345;
 const DEFAULT_THEME = "green_forest";

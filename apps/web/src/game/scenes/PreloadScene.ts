@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { TILE_HEIGHT, TILE_WIDTH, TILESET_KEY } from "../tilesetRegistry";
+import { TILE_HEIGHT, TILE_WIDTH, TILESET_KEY } from "../tiles/tilesetRegistry";
 
 export default class PreloadScene extends Phaser.Scene {
 	constructor() {

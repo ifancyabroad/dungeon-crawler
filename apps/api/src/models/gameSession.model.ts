@@ -1,14 +1,7 @@
 import { Schema, model, Document } from "mongoose";
-import type { GameState } from "@app/shared";
+import type { GameSessionDoc as IGameSessionDoc } from "@app/shared";
 
-export interface GameSessionDoc extends Document {
-	gameId: string;
-	tokenHash: string;
-	lastSeenAt: Date;
-	userId: unknown | null;
-	/** Canonical game state snapshot (turn, hero, seed, mapConfig, walkable). */
-	state: GameState;
-}
+export interface GameSessionDoc extends Document, IGameSessionDoc {}
 
 const GameSessionSchema = new Schema<GameSessionDoc>(
 	{
@@ -16,7 +9,10 @@ const GameSessionSchema = new Schema<GameSessionDoc>(
 		tokenHash: { type: String, required: true },
 		lastSeenAt: { type: Date, required: true },
 		userId: { type: Schema.Types.ObjectId, default: null },
-		state: { type: Schema.Types.Mixed, required: true },
+		seed: { type: Number, required: true },
+		mapGenVersion: { type: Number, required: true },
+		floorConfigs: { type: Schema.Types.Mixed, required: true },
+		latestSnapshotTurn: { type: Number, required: true },
 	},
 	{ timestamps: true },
 );

@@ -21,6 +21,22 @@ vi.mock("../models/gameSession.model", () => ({
 	},
 }));
 
+vi.mock("../models/gameSnapshot.model", () => ({
+	GameSnapshot: { create: vi.fn().mockResolvedValue(undefined) },
+}));
+
+vi.mock("../models/gameActionLog.model", () => ({
+	GameActionLog: { create: vi.fn().mockResolvedValue(undefined) },
+}));
+
+const mockReconstructState = vi.fn().mockResolvedValue(null);
+vi.mock("../services/gameState.service", () => ({
+	reconstructState: (...args: unknown[]) => mockReconstructState(...args),
+	getSessionState: vi.fn(),
+	setSessionState: vi.fn(),
+	deleteSessionState: vi.fn(),
+}));
+
 const { buildApp } = await import("../app");
 const app = buildApp();
 
@@ -40,10 +56,11 @@ describe("POST /api/game", () => {
 		expect(res.body.gameId.length).toBeGreaterThan(0);
 
 		const setCookie = res.headers["set-cookie"];
-		expect(Array.isArray(setCookie)).toBe(true);
-		expect(setCookie.some((c: string) => c.includes("game_token="))).toBe(true);
-		expect(setCookie.some((c: string) => c.includes("HttpOnly"))).toBe(true);
-		expect(setCookie.some((c: string) => c.includes("SameSite=Lax"))).toBe(true);
+		const cookies = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+		expect(cookies.length).toBeGreaterThan(0);
+		expect(cookies.some((c: string) => c.includes("game_token="))).toBe(true);
+		expect(cookies.some((c: string) => c.includes("HttpOnly"))).toBe(true);
+		expect(cookies.some((c: string) => c.includes("SameSite=Lax"))).toBe(true);
 	});
 });
 
@@ -65,21 +82,19 @@ describe("GET /api/game", () => {
 		const tokenHash = hashToken(token, "test-pepper");
 		const state = {
 			turn: 0,
-			hero: { x: 10, y: 10 },
+			hero: { floorIndex: 0, x: 10, y: 10 },
 			seed: 42,
-			mapConfig: { seed: 42, width: 50, height: 50, theme: "green_forest" },
-			walkable: [] as boolean[][],
+			mapGenVersion: 1,
+			floors: [],
+			rngState: { algo: "xorshift32" as const, s: 42 },
 		};
 
 		mockFindOne.mockReturnValueOnce({
 			lean: () => ({
-				exec: vi.fn().mockResolvedValueOnce({
-					gameId,
-					tokenHash,
-					state,
-				}),
+				exec: vi.fn().mockResolvedValueOnce({ gameId, tokenHash }),
 			}),
 		});
+		mockReconstructState.mockResolvedValueOnce(state);
 
 		const res = await request(app)
 			.get("/api/game")
@@ -89,6 +104,6 @@ describe("GET /api/game", () => {
 		expect(res.body).toHaveProperty("gameId", gameId);
 		expect(res.body).toHaveProperty("state");
 		expect(res.body.state).toHaveProperty("hero");
-		expect(res.body.state.hero).toEqual({ x: 10, y: 10 });
+		expect(res.body.state.hero).toEqual({ floorIndex: 0, x: 10, y: 10 });
 	});
 });

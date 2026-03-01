@@ -16,16 +16,17 @@ import {
 	TILE_HEIGHT,
 	TILE_WIDTH,
 	TILESET_KEY,
-} from "../tilesetRegistry";
+} from "../tiles/tilesetRegistry";
 import { useGameStore } from "../../stores/gameStore";
 import { useMapStore } from "../../stores/mapStore";
-import { getMapConfig } from "../mapConfig";
-import type { MapConfig } from "../mapConfig";
+import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
+import { getMapConfig } from "../config/mapConfig";
+import type { MapConfig } from "../config/mapConfig";
 import {
 	decorationGridToTileIndices,
 	toGroundTileIndices,
 	toWallTileIndices,
-} from "../mapTileMapping";
+} from "../tiles/mapTileMapping";
 
 export default class MainScene extends Phaser.Scene {
 	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -41,7 +42,8 @@ export default class MainScene extends Phaser.Scene {
 	private isMoving = false;
 	private mapWidth = DEFAULT_MAP_WIDTH;
 	private mapHeight = DEFAULT_MAP_HEIGHT;
-	private waitingForState = false;
+	/** One-shot unsubscribe when we're waiting for state; cleaned up in shutdown(). */
+	private unsubWaitForState: (() => void) | null = null;
 
 	constructor() {
 		super("Main");
@@ -49,38 +51,44 @@ export default class MainScene extends Phaser.Scene {
 
 	create() {
 		const { gameId, state } = useGameStore.getState();
-		if (gameId && state) {
-			this.buildMapAndHero(state.seed, state.mapConfig, state.hero);
-			this.attachKeyboardOnline();
-		} else if (gameId) {
-			this.waitingForState = true;
+		const fromState = state ? getMapConfigAndHeroFromState(state) : null;
+
+		if (gameId) {
+			if (fromState) this.buildMapAndHero(fromState.config, fromState.hero);
+			else this.subscribeUntilStateArrives();
 			this.attachKeyboardOnline();
 		} else {
 			const config = getMapConfig();
-			this.buildMapAndHero(config.seed, config, { x: 0, y: 0 }, config);
+			this.buildMapAndHero(config, { floorIndex: 0, x: 0, y: 0 }, config);
 			this.attachKeyboardOffline();
 		}
 	}
 
-	update() {
-		if (!this.waitingForState) return;
-		const { state } = useGameStore.getState();
-		if (!state) return;
-		this.waitingForState = false;
-		this.buildMapAndHero(state.seed, state.mapConfig, state.hero);
+	/** Subscribe to game store; when state arrives, build map once and unsubscribe. */
+	private subscribeUntilStateArrives() {
+		this.unsubWaitForState = useGameStore.subscribe((s) => {
+			const fromState = s.state ? getMapConfigAndHeroFromState(s.state) : null;
+			if (!fromState) return;
+			this.unsubWaitForState?.();
+			this.unsubWaitForState = null;
+			if (this.scene.isActive()) this.buildMapAndHero(fromState.config, fromState.hero);
+		});
+		this.events.once("shutdown", () => {
+			this.unsubWaitForState?.();
+			this.unsubWaitForState = null;
+		});
 	}
 
 	private buildMapAndHero(
-		seed: number,
 		config: MapGenConfig | MapConfig,
-		heroPos: { x: number; y: number },
+		heroPos: { floorIndex: number; x: number; y: number },
 		optionalConfigForSpawn?: MapConfig,
 	) {
 		this.mapWidth = config.width;
 		this.mapHeight = config.height;
 		useMapStore.getState().setMapConfigOverride(config as MapConfig);
 
-		const rng = createRng(seed);
+		const rng = createRng(config.seed);
 		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
 
 		const waterMask = buildWaterMask(ground, wall, spawn, config.seed);
@@ -106,7 +114,7 @@ export default class MainScene extends Phaser.Scene {
 		this.createDecorationLayer(decorationData);
 		this.createWallLayer(wallData);
 
-		const spawnPos = optionalConfigForSpawn ? spawn : heroPos;
+		const spawnPos = optionalConfigForSpawn ? { x: spawn.x, y: spawn.y } : heroPos;
 		this.playerTileX = spawnPos.x;
 		this.playerTileY = spawnPos.y;
 		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "./Button";
 import { Input } from "./Input";
 import type { MapGenConfigOverride } from "../stores/mapStore";
-import { DECORATION_WEIGHTS, getThemes } from "../game/tilesetRegistry";
+import { DECORATION_WEIGHTS, getThemes } from "../game/tiles/tilesetRegistry";
 import { DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH } from "@app/shared";
 
 const DEFAULT_SEED = 12345;
