@@ -1,0 +1,19 @@
+{
+	"id": "mage",
+	"name": "Mage",
+	"description": "A spellcaster who wields arcane power. High intelligence, low armor.",
+	"baseAttributes": {
+		"strength": 8,
+		"dexterity": 12,
+		"constitution": 10,
+		"intelligence": 16,
+		"wisdom": 14,
+		"charisma": 10
+	},
+	"startingHp": 8,
+	"startingEquipment": ["staff-basic", "robe-cloth"],
+	"startingSkills": ["arcane-lore", "spellcasting"],
+	"weaponProficiencies": ["staff", "dagger"],
+	"armorProficiencies": ["cloth"],
+	"resource": "mana"
+}

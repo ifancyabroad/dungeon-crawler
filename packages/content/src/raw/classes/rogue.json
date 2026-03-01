@@ -1,0 +1,19 @@
+{
+	"id": "rogue",
+	"name": "Rogue",
+	"description": "A swift striker who relies on stealth and precision.",
+	"baseAttributes": {
+		"strength": 10,
+		"dexterity": 16,
+		"constitution": 12,
+		"intelligence": 12,
+		"wisdom": 10,
+		"charisma": 14
+	},
+	"startingHp": 10,
+	"startingEquipment": ["dagger-basic", "leather-jacket"],
+	"startingSkills": ["stealth", "lockpick"],
+	"weaponProficiencies": ["dagger", "shortbow", "short-sword"],
+	"armorProficiencies": ["light"],
+	"resource": "stamina"
+}

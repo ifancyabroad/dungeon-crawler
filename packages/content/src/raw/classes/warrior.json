@@ -1,0 +1,19 @@
+{
+	"id": "warrior",
+	"name": "Warrior",
+	"description": "A durable frontline fighter with high strength and armor.",
+	"baseAttributes": {
+		"strength": 16,
+		"dexterity": 10,
+		"constitution": 14,
+		"intelligence": 8,
+		"wisdom": 10,
+		"charisma": 12
+	},
+	"startingHp": 14,
+	"startingEquipment": ["sword-basic", "shield-wood", "mail-hauberk"],
+	"startingSkills": ["weapon-mastery", "shield-block"],
+	"weaponProficiencies": ["sword", "axe", "mace", "polearm"],
+	"armorProficiencies": ["light", "medium", "heavy", "shield"],
+	"resource": "stamina"
+}

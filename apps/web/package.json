@@ -18,6 +18,7 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@app/content": "workspace:*",
 		"@app/shared": "workspace:*",
 		"@tanstack/react-query": "^5.90.20",
 		"ky": "^1.14.3",

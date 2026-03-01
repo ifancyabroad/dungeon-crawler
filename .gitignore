@@ -4,7 +4,6 @@ node_modules/
 
 # build outputs
 **/dist/
-**/build/
 
 # vite (rare outside node_modules, but safe to ignore)
 **/.vite/

@@ -1,0 +1,41 @@
+{
+	"name": "@app/content",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Validated JSON content (character classes, etc.) with Zod and generated typed lookup.",
+	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=18.18"
+	},
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"generate": "tsx src/build/buildContent.ts",
+		"generate:watch": "tsx src/build/buildContent.ts --watch",
+		"dev": "concurrently \"pnpm run generate:watch\" \"tsc -w -p tsconfig.build.json\"",
+		"build": "pnpm run generate && tsc -p tsconfig.build.json",
+		"typecheck": "pnpm run typecheck:main && pnpm run typecheck:build",
+		"typecheck:main": "tsc -p tsconfig.build.json --noEmit",
+		"typecheck:build": "tsc -p tsconfig.build-scripts.json --noEmit",
+		"lint": "eslint ."
+	},
+	"dependencies": {
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.10",
+		"concurrently": "^9.1.2",
+		"tsx": "^4.21.0",
+		"typescript": "~5.9.3"
+	}
+}
