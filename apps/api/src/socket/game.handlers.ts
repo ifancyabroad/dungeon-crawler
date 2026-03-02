@@ -1,18 +1,30 @@
 /**
  * Game socket handlers: join (auth + state load) and action (validate, apply, persist, broadcast).
- * Action log turn = turn BEFORE apply (expectedTurn). Uses gameState.service for session state.
+ * Auth is stored on socket after join; action does not query GameSession.
+ * Action log turn = turn BEFORE apply (expectedTurn).
  */
 
 import type { Server } from "socket.io";
 import type { Socket } from "socket.io";
-import { ActionSchema, applyAction } from "@app/shared";
+import { ActionSchema } from "@app/shared";
 import type { GameState } from "@app/shared";
 import { GameSession } from "../models/gameSession.model";
 import { GameActionLog } from "../models/gameActionLog.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
-import { getSessionState, setSessionState, reconstructState } from "../services/gameState.service";
+import {
+	getSessionState,
+	setSessionState,
+	reconstructState,
+	applyAuthoritativeAction,
+} from "../services/gameState.service";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
+
+/** Auth context set on socket after successful join. */
+interface GameSocketData {
+	gameId?: string;
+	authed?: boolean;
+}
 
 const SNAPSHOT_INTERVAL = 50;
 
@@ -54,6 +66,8 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 			return;
 		}
 
+		(socket.data as GameSocketData).gameId = gameId;
+		(socket.data as GameSocketData).authed = true;
 		socket.join(gameId);
 		socket.emit("state", { gameId, turn: state.turn, state });
 	});
@@ -80,14 +94,8 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				return;
 			}
 
-			const token = getToken(socket);
-			if (!token) {
-				socket.emit("error", { reason: "unauthorized" });
-				return;
-			}
-
-			const session = await GameSession.findOne({ gameId }).lean().exec();
-			if (!session || !verifyToken(token, session.tokenHash, env.GAME_TOKEN_PEPPER)) {
+			const data = socket.data as GameSocketData;
+			if (!data.authed || data.gameId !== gameId) {
 				socket.emit("error", { reason: "forbidden" });
 				return;
 			}
@@ -107,7 +115,14 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				return;
 			}
 
-			const result = applyAction(state, parsed.data);
+			let result;
+			try {
+				result = applyAuthoritativeAction(gameId, state, parsed.data);
+			} catch (err) {
+				console.error("[action] applyAuthoritativeAction failed:", err);
+				socket.emit("error", { reason: "state_not_found" });
+				return;
+			}
 			if (!result.ok) {
 				socket.emit("error", { reason: result.reason });
 				return;
@@ -142,7 +157,8 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 			if (newTurn % SNAPSHOT_INTERVAL === 0) {
 				const persistedState = {
 					turn: newTurn,
-					hero: result.state.hero,
+					heroId: result.state.heroId,
+					heroFloorIndex: result.state.heroFloorIndex,
 					floors: result.state.floors.map((f) => f.state),
 					rngState: result.state.rngState,
 				};

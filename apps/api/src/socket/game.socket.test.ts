@@ -139,12 +139,11 @@ describe("game socket", () => {
 
 		expect(stateEvent.gameId).toBe(gameId);
 		expect(stateEvent.turn).toBe(0);
-		expect(stateEvent.state).toHaveProperty("hero");
-		expect(stateEvent.state.hero).toHaveProperty("floorIndex", 0);
-		expect(stateEvent.state.hero).toHaveProperty("x");
-		expect(stateEvent.state.hero).toHaveProperty("y");
+		expect(stateEvent.state).toHaveProperty("heroId", "hero");
+		expect(stateEvent.state).toHaveProperty("heroFloorIndex", 0);
 		expect(stateEvent.state.floors).toBeDefined();
-		expect(stateEvent.state.hero).toHaveProperty("floorIndex");
+		expect(stateEvent.state.floors[0].state.actorsById).toHaveProperty("hero");
+		expect(stateEvent.state.floors[0].state.actorsById.hero).toHaveProperty("idx");
 
 		client.disconnect();
 	});
@@ -162,6 +161,7 @@ describe("game socket", () => {
 			transports: ["websocket"],
 		});
 
+		const { getHero, idxToXY } = await import("@app/shared");
 		const joinState = await new Promise<{ state: GameState }>((resolve, reject) => {
 			const t = setTimeout(() => reject(new Error("timeout")), 2000);
 			client.on("state", (p) => {
@@ -170,7 +170,10 @@ describe("game socket", () => {
 			});
 			client.emit("join", { gameId });
 		});
-		const initialHero = joinState.state.hero;
+		const initialHero = getHero(joinState.state);
+		expect(initialHero).toBeDefined();
+		const width = joinState.state.floors[0].config.width;
+		const initialPos = idxToXY(initialHero!.idx, width);
 		const stateAfterMove = await new Promise<{ state: GameState }>((resolve, reject) => {
 			const t = setTimeout(
 				() => reject(new Error("timeout waiting for state after move")),
@@ -191,8 +194,11 @@ describe("game socket", () => {
 			});
 		});
 
-		expect(stateAfterMove.state.hero.x).toBe(initialHero.x + 1);
-		expect(stateAfterMove.state.hero.y).toBe(initialHero.y);
+		const heroAfter = getHero(stateAfterMove.state);
+		expect(heroAfter).toBeDefined();
+		const posAfter = idxToXY(heroAfter!.idx, width);
+		expect(posAfter.x).toBe(initialPos.x + 1);
+		expect(posAfter.y).toBe(initialPos.y);
 		expect(stateAfterMove.state.turn).toBe(1);
 
 		client.disconnect();

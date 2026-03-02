@@ -6,6 +6,7 @@ import {
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	generateMap,
+	idxToXY,
 } from "@app/shared";
 import type { MapGenConfig } from "@app/shared";
 import {
@@ -70,7 +71,7 @@ export default class MainScene extends Phaser.Scene {
 
 	private buildMapAndHero(
 		config: MapGenConfig | MapConfig,
-		heroPos: { floorIndex: number; x: number; y: number },
+		heroPos: { floorIndex: number; idx: number },
 		optionalConfigForSpawn?: MapConfig,
 	) {
 		this.mapWidth = config.width;
@@ -100,7 +101,9 @@ export default class MainScene extends Phaser.Scene {
 		this.createDecorationLayer(decorationData);
 		this.createWallLayer(wallData);
 
-		const spawnPos = optionalConfigForSpawn ? { x: spawn.x, y: spawn.y } : heroPos;
+		const spawnPos = optionalConfigForSpawn
+			? { x: spawn.x, y: spawn.y }
+			: idxToXY(heroPos.idx, config.width);
 		this.playerTileX = spawnPos.x;
 		this.playerTileY = spawnPos.y;
 		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
@@ -123,7 +126,9 @@ export default class MainScene extends Phaser.Scene {
 		);
 	}
 
-	setHeroPosition(x: number, y: number) {
+	/** Sync hero position from authoritative state. Converts idx to tile x,y then to pixel position. */
+	setHeroPosition(idx: number) {
+		const { x, y } = idxToXY(idx, this.mapWidth);
 		this.playerTileX = x;
 		this.playerTileY = y;
 		const worldX = x * TILE_WIDTH + TILE_WIDTH / 2;

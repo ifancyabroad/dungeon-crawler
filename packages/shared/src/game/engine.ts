@@ -1,14 +1,19 @@
 /**
  * Deterministic game engine: create initial state and apply actions.
- * Walkability derived from base map + overrides (no walkable grid persisted).
- * RNG state is part of state and updated by applyAction for replay.
+ * Walkability: pass via context.getWalkableMask (caller can cache); otherwise computed from state (no cache).
+ * RNG state is only advanced when an action actually uses RNG (e.g. future spawns/combat).
  */
 
 import type { Action } from "./actions";
-import type { FloorConfig, GameState, HeroState } from "./types";
+import type { Actor, FloorConfig, GameState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
-import { createInitialRngState, createRngFromState } from "../rng";
-import { regenerateBaseMaps, getWalkableForFloor } from "./reconstruct";
+import { createInitialRngState } from "../rng";
+import { regenerateBaseMaps, getWalkableMaskForFloor } from "./reconstruct";
+
+/** Optional context: idx-based walkability mask per floor. mask[idx] === 1 means walkable. */
+export interface ApplyActionContext {
+	getWalkableMask(floorIndex: number): Uint8Array;
+}
 
 const DIRECTION_DELTA: Record<"up" | "down" | "left" | "right", { dx: number; dy: number }> = {
 	up: { dx: 0, dy: -1 },
@@ -19,66 +24,141 @@ const DIRECTION_DELTA: Record<"up" | "down" | "left" | "right", { dx: number; dy
 
 export type ApplyActionResult = { ok: true; state: GameState } | { ok: false; reason: string };
 
+/** Convert linear index to x,y. idx = y * width + x. */
+export function idxToXY(idx: number, width: number): { x: number; y: number } {
+	const x = idx % width;
+	const y = Math.floor(idx / width);
+	return { x, y };
+}
+
+/** Convert x,y to linear index. idx = y * width + x. */
+export function xyToIdx(x: number, y: number, width: number): number {
+	return y * width + x;
+}
+
+/** Get the hero actor from state. Hero floor is state.heroFloorIndex; hero id is state.heroId. */
+export function getHero(state: GameState): Actor | undefined {
+	return state.floors[state.heroFloorIndex]?.state.actorsById[state.heroId];
+}
+
+/** Actor "kind" is def.type. Use this instead of a removed .kind field. */
+export function actorKind(a: Actor): "hero" | "monster" {
+	return a.def.type;
+}
+
+const DEFAULT_ATTRIBUTES = {
+	strength: 10,
+	dexterity: 10,
+	constitution: 10,
+	intelligence: 10,
+	wisdom: 10,
+	charisma: 10,
+} as const;
+
 /**
- * Create initial game state: one floor, hero at spawn, rngState from seed.
- * Uses regenerateBaseMaps for deterministic base layers; walkableByFloor derived (not persisted).
+ * Create initial game state: one floor, hero actor at spawn, rngState from seed.
+ * No walkableByFloor on state; engine computes when needed.
  */
 export function createInitialState(seed: number, floorConfig: FloorConfig): GameState {
 	const rngState = createInitialRngState(seed);
 	const floorConfigs: FloorConfig[] = [floorConfig];
 	const baseLayers = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION);
 	const floor0 = baseLayers[0];
-	const walkable0 = getWalkableForFloor(floor0, {});
+	const width = floorConfig.width;
+	const spawnIdx = xyToIdx(floor0.spawn.x, floor0.spawn.y, width);
+
+	const heroActor: Actor = {
+		id: "hero",
+		name: "Hero",
+		idx: spawnIdx,
+		alive: true,
+		hp: 100,
+		maxHp: 100,
+		attributes: { ...DEFAULT_ATTRIBUTES },
+		skills: {},
+		def: { type: "hero", classId: "warrior" },
+	};
+
 	const floorState = {
 		tileOverrides: {} as Record<number, number>,
-		entities: {} as Record<string, import("./types").Entity>,
-		items: {} as Record<string, import("./types").Item>,
+		actorsById: { hero: heroActor } as Record<import("./types").ActorId, Actor>,
 	};
+
 	return {
 		turn: 0,
-		hero: { floorIndex: 0, x: floor0.spawn.x, y: floor0.spawn.y },
+		heroId: "hero",
+		heroFloorIndex: 0,
 		seed,
 		mapGenVersion: MAP_GEN_VERSION,
 		floors: [{ config: floorConfig, state: floorState }],
 		rngState,
-		walkableByFloor: [walkable0],
 	};
 }
 
 /**
- * Apply one action to state. Move uses walkableByFloor (derived at load).
- * Advances state.rngState deterministically; returned state includes updated rngState.
+ * Apply one action to state. Move uses context.getWalkableMask if provided (idx-based mask),
+ * otherwise computes from state (regenerateBaseMaps + getWalkableMaskForFloor).
+ * RNG is only advanced when an action uses it (move does not).
  */
-export function applyAction(state: GameState, action: Action, _rng?: unknown): ApplyActionResult {
-	const { rng: rngFn, getState } = createRngFromState(state.rngState);
-	// Advance RNG at least once per turn so replay is deterministic regardless of draws used
-	rngFn();
-
+export function applyAction(
+	state: GameState,
+	action: Action,
+	context?: ApplyActionContext,
+): ApplyActionResult {
 	if (action.type === "move") {
-		const fi = state.hero.floorIndex;
-		const walkable = state.walkableByFloor?.[fi];
-		if (!walkable) {
-			return { ok: false, reason: "move_no_walkable" };
+		const hero = getHero(state);
+		if (!hero) {
+			return { ok: false, reason: "move_no_hero" };
 		}
-		const height = walkable.length;
-		const width = walkable[0]?.length ?? 0;
+		const fi = state.heroFloorIndex;
+		const floor = state.floors[fi];
+		if (!floor) {
+			return { ok: false, reason: "move_no_floor" };
+		}
+		const width = floor.config.width;
+		const height = floor.config.height;
+		const size = width * height;
+
+		let mask: Uint8Array;
+		if (context?.getWalkableMask) {
+			mask = context.getWalkableMask(fi);
+		} else {
+			const baseLayers = regenerateBaseMaps(
+				state.seed,
+				state.floors.map((f) => f.config),
+				state.mapGenVersion,
+			);
+			const base = baseLayers[fi];
+			if (!base) {
+				return { ok: false, reason: "move_no_walkable" };
+			}
+			mask = getWalkableMaskForFloor(base, floor.state.tileOverrides ?? {});
+		}
+
+		const { x, y } = idxToXY(hero.idx, width);
 		const { dx, dy } = DIRECTION_DELTA[action.direction];
-		const nx = state.hero.x + dx;
-		const ny = state.hero.y + dy;
+		const nx = x + dx;
+		const ny = y + dy;
 		if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
 			return { ok: false, reason: "move_out_of_bounds" };
 		}
-		if (!walkable[ny][nx]) {
+		const newIdx = xyToIdx(nx, ny, width);
+		if (newIdx < 0 || newIdx >= size || mask[newIdx] !== 1) {
 			return { ok: false, reason: "move_blocked" };
 		}
-		const newHero: HeroState = { ...state.hero, x: nx, y: ny };
+		const updatedHero: Actor = { ...hero, idx: newIdx };
+		const newActorsById = { ...floor.state.actorsById, [state.heroId]: updatedHero };
+		const newFloorState = { ...floor.state, actorsById: newActorsById };
+		const newFloors = state.floors.slice();
+		newFloors[fi] = { ...floor, state: newFloorState };
+
 		return {
 			ok: true,
 			state: {
 				...state,
 				turn: state.turn + 1,
-				hero: newHero,
-				rngState: getState(),
+				floors: newFloors,
+				rngState: state.rngState,
 			},
 		};
 	}
@@ -86,9 +166,8 @@ export function applyAction(state: GameState, action: Action, _rng?: unknown): A
 }
 
 /**
- * Helper: build full GameState from persisted dynamic state + session metadata.
- * Caller provides floorConfigs and replayed state (turn, hero, floors, rngState); this adds
- * walkableByFloor from regenerateBaseMaps + getWalkableForFloor.
+ * Build full GameState from persisted dynamic state + session metadata.
+ * No walkableByFloor on returned state.
  */
 export function buildGameStateFromPersisted(
 	seed: number,
@@ -96,30 +175,27 @@ export function buildGameStateFromPersisted(
 	floorConfigs: FloorConfig[],
 	persisted: {
 		turn: number;
-		hero: HeroState;
+		heroId: import("./types").ActorId;
+		heroFloorIndex: number;
 		floors: import("./types").FloorState[];
 		rngState: import("./types").RngState;
 	},
 ): GameState {
-	const baseLayers = regenerateBaseMaps(seed, floorConfigs, mapGenVersion);
-	const walkableByFloor = baseLayers.map((base, i) =>
-		getWalkableForFloor(base, persisted.floors[i]?.tileOverrides ?? {}),
-	);
+	const defaultFloorState: import("./types").FloorState = {
+		tileOverrides: {},
+		actorsById: {},
+	};
 	const floors = floorConfigs.map((config, i) => ({
 		config,
-		state: persisted.floors[i] ?? {
-			tileOverrides: {},
-			entities: {},
-			items: {},
-		},
+		state: persisted.floors[i] ?? defaultFloorState,
 	}));
 	return {
 		turn: persisted.turn,
-		hero: persisted.hero,
+		heroId: persisted.heroId,
+		heroFloorIndex: persisted.heroFloorIndex,
 		seed,
 		mapGenVersion,
 		floors,
 		rngState: persisted.rngState,
-		walkableByFloor,
 	};
 }

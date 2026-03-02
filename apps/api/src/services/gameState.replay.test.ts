@@ -10,6 +10,7 @@ import {
 	createInitialState,
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
+	getHero,
 } from "@app/shared";
 
 const SEED = 12345;
@@ -27,7 +28,8 @@ describe("gameState replay", () => {
 		const state0 = createInitialState(SEED, floorConfig);
 		const persisted0 = {
 			turn: state0.turn,
-			hero: state0.hero,
+			heroId: state0.heroId,
+			heroFloorIndex: state0.heroFloorIndex,
 			floors: state0.floors.map((f) => f.state),
 			rngState: state0.rngState,
 		};
@@ -50,7 +52,8 @@ describe("gameState replay", () => {
 		const state2 = r2.ok ? r2.state : state1;
 
 		expect(state2.turn).toBe(2);
-		const expectedHero = state2.hero;
+		const expectedHero = getHero(state2);
+		expect(expectedHero).toBeDefined();
 		const expectedRngState = state2.rngState;
 
 		let replayed = buildGameStateFromPersisted(
@@ -67,7 +70,9 @@ describe("gameState replay", () => {
 		}
 
 		expect(replayed.turn).toBe(2);
-		expect(replayed.hero).toEqual(expectedHero);
+		const replayedHero = getHero(replayed);
+		expect(replayedHero).toBeDefined();
+		expect(replayedHero).toEqual(expectedHero);
 		expect(replayed.rngState).toEqual(expectedRngState);
 	});
 });

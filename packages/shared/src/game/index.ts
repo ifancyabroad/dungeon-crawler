@@ -1,14 +1,16 @@
 export type {
 	ActionLogEntry,
-	Entity,
+	Actor,
+	ActorAttributes,
+	ActorDef,
+	ActorId,
+	ActorSkillState,
 	Floor,
 	FloorConfig,
 	FloorState,
 	GameSessionDoc,
 	GameSnapshotDoc,
 	GameState,
-	HeroState,
-	Item,
 	PersistedDynamicState,
 	RngState,
 	TileId,
@@ -16,10 +18,29 @@ export type {
 export { MAP_GEN_VERSION } from "./types";
 export { ActionSchema, MoveActionSchema, type Action, type MoveAction } from "./actions";
 export {
+	actorKind,
 	applyAction,
 	buildGameStateFromPersisted,
 	createInitialState,
+	getHero,
+	idxToXY,
+	xyToIdx,
+	type ApplyActionContext,
 	type ApplyActionResult,
 } from "./engine";
-export { getWalkableForFloor, regenerateBaseMaps, type BaseLayerFloor } from "./reconstruct";
-export { FloorStateSchema, PersistedDynamicStateSchema, RngStateSchema } from "./schemas";
+export {
+	getWalkableForFloor,
+	getWalkableMaskForFloor,
+	regenerateBaseMaps,
+	type BaseLayerFloor,
+} from "./reconstruct";
+export {
+	ActorDefSchema,
+	ActorSchema,
+	ActorsByIdSchema,
+	ActorAttributesSchema,
+	ActorSkillStateSchema,
+	FloorStateSchema,
+	PersistedDynamicStateSchema,
+	RngStateSchema,
+} from "./schemas";

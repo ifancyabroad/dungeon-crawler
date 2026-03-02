@@ -89,6 +89,25 @@ export function getWalkableForFloor(
 	return walkable;
 }
 
+/**
+ * Same as getWalkableForFloor but returns a flat mask: Uint8Array of length width*height, 1 = walkable, 0 = blocked.
+ * Use for ApplyActionContext.getWalkableMask to avoid passing boolean[][].
+ */
+export function getWalkableMaskForFloor(
+	base: BaseLayerFloor,
+	tileOverrides: Record<number | string, number>,
+): Uint8Array {
+	const { width, height } = base;
+	const grid = getWalkableForFloor(base, tileOverrides);
+	const mask = new Uint8Array(width * height);
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			mask[y * width + x] = grid[y][x] ? 1 : 0;
+		}
+	}
+	return mask;
+}
+
 /** Tile-definition: walkability by TileId. Stage 4 adds full table; for now no override tiles. */
 function isTileIdWalkable(_tileId: number): boolean {
 	return false;

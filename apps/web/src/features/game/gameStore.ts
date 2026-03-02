@@ -1,12 +1,13 @@
 import { create } from "zustand";
-import type { GameState } from "@app/shared";
+import { getHero, type GameState } from "@app/shared";
 
 const GAME_ID_KEY = "dungeon_gameId";
 
 interface GameStoreState {
 	gameId: string | null;
 	turn: number;
-	hero: { floorIndex: number; x: number; y: number };
+	/** Hero position: floor index + tile idx. Convert to x,y/pixels only in Phaser. */
+	hero: { floorIndex: number; idx: number };
 	/** Full state from server (for Phaser and map). Derived: turn, hero. */
 	state: GameState | null;
 }
@@ -25,9 +26,15 @@ export type GameStore = GameStoreState & GameStoreActions;
 const initialState: GameStoreState = {
 	gameId: null,
 	turn: 0,
-	hero: { floorIndex: 0, x: 0, y: 0 },
+	hero: { floorIndex: 0, idx: 0 },
 	state: null,
 };
+
+function heroFromState(state: GameState): { floorIndex: number; idx: number } {
+	const hero = getHero(state);
+	if (!hero) return { floorIndex: 0, idx: 0 };
+	return { floorIndex: state.heroFloorIndex, idx: hero.idx };
+}
 
 export const useGameStore = create<GameStore>((set, get) => ({
 	...initialState,
@@ -37,7 +44,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		set({
 			gameId: payload.gameId,
 			turn: payload.turn,
-			hero: state.hero,
+			hero: heroFromState(state),
 			state,
 		});
 	},

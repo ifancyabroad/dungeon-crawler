@@ -48,7 +48,8 @@ export const createGame: RequestHandler = async (req, res) => {
 
 	const persistedState = {
 		turn: 0,
-		hero: state.hero,
+		heroId: state.heroId,
+		heroFloorIndex: state.heroFloorIndex,
 		floors: state.floors.map((f) => f.state),
 		rngState: state.rngState,
 	};

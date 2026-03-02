@@ -82,10 +82,38 @@ describe("GET /api/game", () => {
 		const tokenHash = hashToken(token, "test-pepper");
 		const state = {
 			turn: 0,
-			hero: { floorIndex: 0, x: 10, y: 10 },
+			heroId: "hero",
+			heroFloorIndex: 0,
 			seed: 42,
 			mapGenVersion: 1,
-			floors: [],
+			floors: [
+				{
+					config: { width: 50, height: 50, theme: "green_forest" },
+					state: {
+						tileOverrides: {},
+						actorsById: {
+							hero: {
+								id: "hero",
+								name: "Hero",
+								idx: 10 * 50 + 10,
+								alive: true,
+								hp: 100,
+								maxHp: 100,
+								attributes: {
+									strength: 10,
+									dexterity: 10,
+									constitution: 10,
+									intelligence: 10,
+									wisdom: 10,
+									charisma: 10,
+								},
+								skills: {},
+								def: { type: "hero" as const, classId: "warrior" },
+							},
+						},
+					},
+				},
+			],
 			rngState: { algo: "xorshift32" as const, s: 42 },
 		};
 
@@ -103,7 +131,9 @@ describe("GET /api/game", () => {
 
 		expect(res.body).toHaveProperty("gameId", gameId);
 		expect(res.body).toHaveProperty("state");
-		expect(res.body.state).toHaveProperty("hero");
-		expect(res.body.state.hero).toEqual({ floorIndex: 0, x: 10, y: 10 });
+		expect(res.body.state).toHaveProperty("heroId", "hero");
+		expect(res.body.state).toHaveProperty("heroFloorIndex", 0);
+		expect(res.body.state.floors[0].state.actorsById).toHaveProperty("hero");
+		expect(res.body.state.floors[0].state.actorsById.hero.idx).toBe(510);
 	});
 });

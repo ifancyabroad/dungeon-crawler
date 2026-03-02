@@ -16,39 +16,51 @@ export const RngStateSchema = z.discriminatedUnion("algo", [
 	}),
 ]);
 
-export const HeroStateSchema = z.object({
-	floorIndex: z.number(),
-	x: z.number(),
-	y: z.number(),
+export const ActorAttributesSchema = z.object({
+	strength: z.number(),
+	dexterity: z.number(),
+	constitution: z.number(),
+	intelligence: z.number(),
+	wisdom: z.number(),
+	charisma: z.number(),
 });
 
-export const EntitySchema = z.object({
-	id: z.string(),
-	kind: z.string(),
-	x: z.number(),
-	y: z.number(),
-	data: z.record(z.string(), z.unknown()).optional(),
+export const ActorSkillStateSchema = z.object({
+	level: z.number().optional(),
+	cooldownRemaining: z.number(),
 });
 
-export const ItemSchema = z.object({
+export const ActorDefSchema = z.discriminatedUnion("type", [
+	z.object({ type: z.literal("hero"), classId: z.string() }),
+	z.object({ type: z.literal("monster"), monsterId: z.string() }),
+]);
+
+/** skills may be omitted in legacy snapshots; default to {} so we accept old persisted data. */
+export const ActorSchema = z.object({
 	id: z.string(),
-	kind: z.string(),
-	x: z.number(),
-	y: z.number(),
-	data: z.record(z.string(), z.unknown()).optional(),
+	name: z.string(),
+	idx: z.number(),
+	alive: z.boolean(),
+	hp: z.number(),
+	maxHp: z.number(),
+	attributes: ActorAttributesSchema,
+	skills: z.record(z.string(), ActorSkillStateSchema).default({}),
+	def: ActorDefSchema,
 });
+
+export const ActorsByIdSchema = z.record(z.string(), ActorSchema);
 
 /** tileOverrides: keys are stringified numbers (cell index) when parsed from JSON. */
 export const FloorStateSchema = z.object({
 	tileOverrides: z.record(z.string(), z.number()),
-	entities: z.record(z.string(), EntitySchema),
-	items: z.record(z.string(), ItemSchema),
+	actorsById: ActorsByIdSchema,
 });
 
 /** Persisted dynamic state; validate snapshots with this (includes RngState). */
 export const PersistedDynamicStateSchema = z.object({
 	turn: z.number(),
-	hero: HeroStateSchema,
+	heroId: z.string(),
+	heroFloorIndex: z.number(),
 	floors: z.array(FloorStateSchema),
 	rngState: RngStateSchema,
 });

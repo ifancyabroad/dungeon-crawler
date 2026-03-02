@@ -11,7 +11,7 @@ type Props = {
 };
 
 /** Main scene exposes this when running (for server-authoritative hero sync). */
-type MainSceneWithHero = Phaser.Scene & { setHeroPosition?(x: number, y: number): void };
+type MainSceneWithHero = Phaser.Scene & { setHeroPosition?(idx: number): void };
 
 /**
  * Hosts the Phaser game canvas (Preload + Main scene).
@@ -40,12 +40,12 @@ export default function GameCanvas({ className, children }: Props) {
 		};
 	}, [setGameRef]);
 
-	// When server state updates hero, push position into Main scene (no-op if scene not ready).
+	// When server state updates hero, push idx into Main scene (no-op if scene not ready). Scene converts idx to pixels.
 	useEffect(() => {
 		const game = useMapStore.getState().gameRef;
 		const mainScene = game?.scene?.getScene("Main") as MainSceneWithHero | undefined;
-		mainScene?.setHeroPosition?.(hero.x, hero.y);
-	}, [hero.x, hero.y]);
+		mainScene?.setHeroPosition?.(hero.idx);
+	}, [hero.idx]);
 
 	return (
 		<div

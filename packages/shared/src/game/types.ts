@@ -1,6 +1,6 @@
 /**
  * Game state types. JSON-serializable; no platform-specific imports.
- * No nested 2D arrays in persisted state; walkability derived at load time.
+ * No nested 2D arrays in persisted state; walkability computed at runtime when needed.
  */
 
 import type { MapGenAlgorithm } from "../map/types";
@@ -21,38 +21,50 @@ export interface FloorConfig {
 	seed?: number;
 }
 
-export interface Entity {
-	id: string;
-	kind: string;
-	x: number;
-	y: number;
-	data?: Record<string, unknown>;
+/** Opaque id for an actor (hero or monster). Hero uses constant "hero". */
+export type ActorId = string;
+
+/** Full attribute names (no abbreviations). */
+export interface ActorAttributes {
+	strength: number;
+	dexterity: number;
+	constitution: number;
+	intelligence: number;
+	wisdom: number;
+	charisma: number;
 }
 
-export interface Item {
+/** Per-skill state: optional level and cooldown. */
+export interface ActorSkillState {
+	level?: number;
+	cooldownRemaining: number;
+}
+
+/** Definition reference: hero (classId from content) or monster. */
+export type ActorDef = { type: "hero"; classId: string } | { type: "monster"; monsterId: string };
+
+/** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */
+export interface Actor {
 	id: string;
-	kind: string;
-	x: number;
-	y: number;
-	data?: Record<string, unknown>;
+	name: string;
+	idx: number;
+	alive: boolean;
+	hp: number;
+	maxHp: number;
+	attributes: ActorAttributes;
+	skills: Record<string, ActorSkillState>;
+	def: ActorDef;
 }
 
 export interface FloorState {
 	tileOverrides: Record<number, TileId>;
-	entities: Record<string, Entity>;
-	items: Record<string, Item>;
+	actorsById: Record<ActorId, Actor>;
 }
 
 /** Single floor: config + dynamic state. No parallel arrays. */
 export interface Floor {
 	config: FloorConfig;
 	state: FloorState;
-}
-
-export interface HeroState {
-	floorIndex: number;
-	x: number;
-	y: number;
 }
 
 /** Concrete RNG state: serializable, Zod-validatable. Engine advances it in applyAction. */
@@ -62,16 +74,15 @@ export type RngState =
 
 export const MAP_GEN_VERSION = 1;
 
-/** In-memory game state. walkableByFloor is derived at load, not persisted. */
+/** In-memory game state. No walkableByFloor; engine computes walkability when needed. */
 export interface GameState {
 	turn: number;
-	hero: HeroState;
+	heroId: ActorId;
+	heroFloorIndex: number;
 	seed: number;
 	mapGenVersion: number;
 	floors: Floor[];
 	rngState: RngState;
-	/** Derived at load from base map + overrides; not persisted. */
-	walkableByFloor?: boolean[][][];
 }
 
 // --- Persisted (no 2D arrays) ---
@@ -91,7 +102,8 @@ export interface GameSessionDoc {
 /** Dynamic state only. Snapshot stores floors[].state; session has floorConfigs; reconstruct zips by index. */
 export interface PersistedDynamicState {
 	turn: number;
-	hero: HeroState;
+	heroId: ActorId;
+	heroFloorIndex: number;
 	floors: FloorState[];
 	rngState: RngState;
 }
