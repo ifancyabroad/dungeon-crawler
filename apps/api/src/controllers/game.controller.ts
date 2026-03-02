@@ -1,6 +1,11 @@
 import { randomBytes } from "node:crypto";
 import type { RequestHandler } from "express";
-import { createInitialState, DEFAULT_MAP_HEIGHT, DEFAULT_MAP_WIDTH } from "@app/shared";
+import {
+	createInitialState,
+	DEFAULT_MAP_HEIGHT,
+	DEFAULT_MAP_WIDTH,
+	DEFAULT_DECORATION_WEIGHTS,
+} from "@app/shared";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { getSessionState, reconstructState, setSessionState } from "../services/gameState.service";
@@ -15,13 +20,6 @@ const COOKIE_OPTS = {
 	path: "/",
 	secure: env.NODE_ENV === "production",
 	maxAge: 365 * 24 * 60 * 60 * 1000,
-};
-
-const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
-	grass: 10,
-	plant: 5,
-	bush: 3,
-	rock: 2,
 };
 
 /**

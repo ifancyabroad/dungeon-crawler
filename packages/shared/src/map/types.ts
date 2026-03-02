@@ -16,6 +16,13 @@ export const TILE_TYPE = {
 export const DEFAULT_MAP_WIDTH = 50;
 export const DEFAULT_MAP_HEIGHT = 50;
 
+export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
+	grass: 10,
+	plant: 5,
+	bush: 3,
+	rock: 2,
+};
+
 /** Map generation algorithm: BSP (room-corridor) or cave (cellular automata, organic). */
 export type MapGenAlgorithm = "bsp" | "cave";
 
