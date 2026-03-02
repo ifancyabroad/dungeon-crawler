@@ -3,8 +3,8 @@ import { api } from "../../lib/api";
 import type { CreateGameOptions, CreateGameResponse, CurrentGameResponse } from "./types";
 
 export function useCreateGame() {
-	return useMutation({
-		mutationFn: (options?: CreateGameOptions) =>
+	return useMutation<CreateGameResponse, Error, CreateGameOptions | void>({
+		mutationFn: (options) =>
 			api.post("game", { json: options ?? {} }).json<CreateGameResponse>(),
 	});
 }
