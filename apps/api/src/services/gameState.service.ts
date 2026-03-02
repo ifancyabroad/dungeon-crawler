@@ -7,7 +7,7 @@ import {
 	ActionSchema,
 	applyAction,
 	buildGameStateFromPersisted,
-	getWalkableMaskForFloor,
+	computeWalkableMaskForFloor,
 	PersistedDynamicStateSchema,
 	regenerateBaseMaps,
 	type Action,
@@ -32,7 +32,7 @@ function computeWalkableByFloor(state: GameState): Uint8Array[] {
 		state.mapGenVersion,
 	);
 	return baseLayers.map((base, i) =>
-		getWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
+		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
 	);
 }
 

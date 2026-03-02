@@ -28,12 +28,7 @@ export {
 	type ApplyActionContext,
 	type ApplyActionResult,
 } from "./engine";
-export {
-	getWalkableForFloor,
-	getWalkableMaskForFloor,
-	regenerateBaseMaps,
-	type BaseLayerFloor,
-} from "./reconstruct";
+export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
 	ActorDefSchema,
 	ActorSchema,

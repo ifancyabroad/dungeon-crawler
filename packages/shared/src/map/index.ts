@@ -19,3 +19,5 @@ export { buildWaterMask } from "./water";
 export { buildDecorationLayer, BLOCKING_DECORATION_TYPES } from "./decorations";
 export type { BuildDecorationLayerResult, DecorationType } from "./decorations";
 export { isCellWalkable } from "./walkability";
+export { computeWalkableMaskForFloor } from "./walkableMask";
+export { regenerateBaseMaps, type BaseLayerFloor } from "./baseLayers";

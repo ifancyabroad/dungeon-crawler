@@ -8,7 +8,7 @@ import type { Action } from "./actions";
 import type { Actor, FloorConfig, GameState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
 import { createInitialRngState } from "../rng";
-import { regenerateBaseMaps, getWalkableMaskForFloor } from "./reconstruct";
+import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 
 /** Optional context: idx-based walkability mask per floor. mask[idx] === 1 means walkable. */
 export interface ApplyActionContext {
@@ -97,7 +97,7 @@ export function createInitialState(seed: number, floorConfig: FloorConfig): Game
 
 /**
  * Apply one action to state. Move uses context.getWalkableMask if provided (idx-based mask),
- * otherwise computes from state (regenerateBaseMaps + getWalkableMaskForFloor).
+ * otherwise computes from state (regenerateBaseMaps + computeWalkableMaskForFloor).
  * RNG is only advanced when an action uses it (move does not).
  */
 export function applyAction(
@@ -132,7 +132,7 @@ export function applyAction(
 			if (!base) {
 				return { ok: false, reason: "move_no_walkable" };
 			}
-			mask = getWalkableMaskForFloor(base, floor.state.tileOverrides ?? {});
+			mask = computeWalkableMaskForFloor(base, floor.state.tileOverrides ?? {});
 		}
 
 		const { x, y } = idxToXY(hero.idx, width);
