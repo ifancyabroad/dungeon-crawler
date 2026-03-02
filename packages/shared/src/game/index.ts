@@ -22,6 +22,7 @@ export {
 	applyAction,
 	buildGameStateFromPersisted,
 	createInitialState,
+	gameStateToPersisted,
 	getHero,
 	idxToXY,
 	xyToIdx,

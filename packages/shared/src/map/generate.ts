@@ -4,13 +4,12 @@
  */
 
 import type { Rng } from "../rng";
-import { TILE_TYPE } from "./types";
+import { TILE_TYPE } from "./config";
 import type { GeneratedMap, MapGenConfig } from "./types";
 
 const MIN_ROOM_WIDTH = 4;
 const MIN_ROOM_HEIGHT = 4;
 const MIN_LEAF_SIZE = MIN_ROOM_WIDTH + 2;
-const DEFAULT_ROOM_INSET = 1;
 
 interface Rect {
 	x: number;
@@ -105,7 +104,6 @@ function buildLeaves(rect: Rect, rng: Rng): Rect[] {
 	return result;
 }
 
-const DEFAULT_CA_FLOOR_CHANCE = 0.45;
 const CA_ITERATIONS = 5;
 const CA_BIRTH_THRESHOLD = 4;
 
@@ -160,10 +158,7 @@ function generateCave(config: MapGenConfig, rng: Rng): GeneratedMap {
 		Array.from({ length: width }, () => 0),
 	);
 
-	const floorChance = Math.max(
-		0.35,
-		Math.min(0.55, config.caveFloorChance ?? DEFAULT_CA_FLOOR_CHANCE),
-	);
+	const floorChance = Math.max(0.35, Math.min(0.55, config.caveFloorChance));
 	// 1) Random fill (interior only; border stays wall)
 	for (let y = 1; y < height - 1; y++) {
 		for (let x = 1; x < width - 1; x++) {
@@ -280,7 +275,7 @@ function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 		return { ground, wall, spawn: { x: cx, y: cy }, pathLayer };
 	}
 
-	const roomInset = Math.max(1, Math.min(3, config.bspRoomInset ?? DEFAULT_ROOM_INSET));
+	const roomInset = Math.max(1, Math.min(3, config.bspRoomInset));
 	const rooms = leaves.map((leaf) => roomFromLeaf(leaf, roomInset));
 	const floor = new Set<string>();
 	const corridor = new Set<string>();

@@ -5,7 +5,7 @@
  */
 
 import { createRng } from "../rng";
-import { TILE_TYPE } from "./types";
+import { TILE_TYPE } from "./config";
 import { wouldStayConnected } from "./connectivity";
 
 /** Decoration types that block movement. Must match client tileset metadata (collision === true). */

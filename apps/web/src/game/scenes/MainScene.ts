@@ -8,19 +8,17 @@ import {
 	generateMap,
 	idxToXY,
 } from "@app/shared";
-import type { MapGenConfig } from "@app/shared";
 import {
-	DECORATION_WEIGHTS,
 	ENTITIES,
 	getCollidingIndices,
 	TILE_HEIGHT,
 	TILE_WIDTH,
 	TILESET_KEY,
 } from "../tiles/tilesetRegistry";
+import type { MapGenConfig } from "@app/shared";
 import { useGameStore } from "../../features/game/gameStore";
 import { useMapStore } from "../../features/map/mapStore";
 import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
-import type { MapConfig } from "../config/mapConfig";
 import {
 	decorationGridToTileIndices,
 	toGroundTileIndices,
@@ -70,13 +68,13 @@ export default class MainScene extends Phaser.Scene {
 	}
 
 	private buildMapAndHero(
-		config: MapGenConfig | MapConfig,
+		config: MapGenConfig,
 		heroPos: { floorIndex: number; idx: number },
-		optionalConfigForSpawn?: MapConfig,
+		optionalConfigForSpawn?: MapGenConfig,
 	) {
 		this.mapWidth = config.width;
 		this.mapHeight = config.height;
-		useMapStore.getState().setMapConfigOverride(config as MapConfig);
+		useMapStore.getState().setMapConfigOverride(config);
 
 		const rng = createRng(config.seed);
 		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
@@ -89,8 +87,8 @@ export default class MainScene extends Phaser.Scene {
 			waterMask,
 			spawn,
 			config.seed,
-			config.decorationWeights ?? DECORATION_WEIGHTS,
-			(config as MapConfig).scatterChance ?? 0.28,
+			config.decorationWeights,
+			config.scatterChance,
 		);
 
 		const groundData = toGroundTileIndices(ground, wall, waterMask, config.theme);

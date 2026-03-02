@@ -1,47 +1,26 @@
 /**
- * Map constants and logical tile types.
- * Client maps TILE_TYPE to tileset indices; shared stays platform-agnostic.
+ * Map types. Constants and default config live in config.ts.
  */
-
-/** Logical tile types for map generation. Client maps these to tileset indices. */
-export const TILE_TYPE = {
-	FLOOR: 0,
-	WALL: 1,
-	/** No tile (e.g. empty cell on wall layer) */
-	EMPTY: -1,
-	/** No ground (empty space; walls still border so player cannot leave bounds) */
-	VOID: -2,
-} as const;
-
-export const DEFAULT_MAP_WIDTH = 50;
-export const DEFAULT_MAP_HEIGHT = 50;
-
-export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
-	grass: 10,
-	plant: 5,
-	bush: 3,
-	rock: 2,
-};
 
 /** Map generation algorithm: BSP (room-corridor) or cave (cellular automata, organic). */
 export type MapGenAlgorithm = "bsp" | "cave";
 
-/** Configuration for procedural map generation. Theme is for client tile mapping; shared only uses dimensions. */
+/** Configuration for procedural map generation. All fields required so callers don't need fallbacks. Theme is for client tile mapping; shared only uses dimensions. */
 export interface MapGenConfig {
 	seed: number;
 	width: number;
 	height: number;
 	theme: string;
-	/** Default "bsp". "cave" produces organic, cavern-like layouts with large open spaces. */
-	algorithm?: MapGenAlgorithm;
-	/** Cave only: initial floor chance for cellular automata (0.35–0.55). Lower = more walls/trees. Default 0.45. */
-	caveFloorChance?: number;
-	/** BSP only: room inset from leaf bounds (1–3). Higher = thicker walls between rooms, smaller rooms. Default 1. */
-	bspRoomInset?: number;
+	/** "bsp" (rooms + corridors) or "cave" (cellular automata). */
+	algorithm: MapGenAlgorithm;
+	/** Cave only: initial floor chance for cellular automata (0.35–0.55). */
+	caveFloorChance: number;
+	/** BSP only: room inset from leaf bounds (1–3). */
+	bspRoomInset: number;
 	/** Weights per decoration type for buildDecorationLayer (e.g. grass, plant, bush, rock). */
-	decorationWeights?: Record<string, number>;
+	decorationWeights: Record<string, number>;
 	/** Scatter chance for non-path decorations (0–1). */
-	scatterChance?: number;
+	scatterChance: number;
 }
 
 /** Result of generateMap: layers (logical tile types), spawn, and path mask for connected path decoration. */

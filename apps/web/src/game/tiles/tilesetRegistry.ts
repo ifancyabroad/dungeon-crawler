@@ -112,17 +112,6 @@ export function getDecorationsByTheme(theme: string): { type: string; indices: n
 	return [...byType.entries()].map(([type, indices]) => ({ type, indices }));
 }
 
-/**
- * Weights per decoration type for scatter placement (higher = more common).
- * Path is excluded; use pathLayer for connected paths.
- */
-export const DECORATION_WEIGHTS: Record<string, number> = {
-	grass: 10,
-	plant: 5,
-	bush: 3,
-	rock: 2,
-};
-
 /** Legacy: indices that block movement. Prefer getCollidingIndices(). */
 export const COLLIDING_INDICES: number[] = getCollidingIndices();
 

@@ -1,3 +1,4 @@
+import { DEFAULT_FLOOR_CONFIG } from "@app/shared";
 import { describe, it, expect, beforeEach } from "vitest";
 import { useMapStore } from "./mapStore";
 
@@ -16,7 +17,7 @@ describe("mapStore", () => {
 	});
 
 	it("should set map config override", () => {
-		const config = { width: 20, height: 20, seed: 1, theme: "green_forest" };
+		const config = { ...DEFAULT_FLOOR_CONFIG, width: 20, height: 20, seed: 1 };
 		useMapStore.getState().setMapConfigOverride(config);
 		expect(useMapStore.getState().mapConfigOverride).toEqual(config);
 	});

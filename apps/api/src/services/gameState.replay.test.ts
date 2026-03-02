@@ -8,31 +8,17 @@ import {
 	applyAction,
 	buildGameStateFromPersisted,
 	createInitialState,
-	DEFAULT_MAP_HEIGHT,
-	DEFAULT_MAP_WIDTH,
+	DEFAULT_FLOOR_CONFIG,
+	gameStateToPersisted,
 	getHero,
 } from "@app/shared";
 
 const SEED = 12345;
-const floorConfig = {
-	width: DEFAULT_MAP_WIDTH,
-	height: DEFAULT_MAP_HEIGHT,
-	theme: "green_forest",
-	algorithm: "cave" as const,
-	caveFloorChance: 0.45,
-	scatterChance: 0.28,
-};
 
 describe("gameState replay", () => {
 	it("snapshot turn 0 -> apply 2 actions -> replay reproduces turn, hero, rngState", () => {
-		const state0 = createInitialState(SEED, floorConfig);
-		const persisted0 = {
-			turn: state0.turn,
-			heroId: state0.heroId,
-			heroFloorIndex: state0.heroFloorIndex,
-			floors: state0.floors.map((f) => f.state),
-			rngState: state0.rngState,
-		};
+		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG);
+		const persisted0 = gameStateToPersisted(state0);
 
 		const fullState0 = buildGameStateFromPersisted(
 			SEED,

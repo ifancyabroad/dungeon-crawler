@@ -11,14 +11,6 @@ import { buildWaterMask } from "./water";
 import type { FloorConfig } from "../game/types";
 import { MAP_GEN_VERSION } from "../game/types";
 
-const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
-	grass: 10,
-	plant: 5,
-	bush: 3,
-	rock: 2,
-};
-const DEFAULT_SCATTER_CHANCE = 0.28;
-
 export interface BaseLayerFloor {
 	ground: number[][];
 	wall: number[][];
@@ -49,8 +41,6 @@ export function regenerateBaseMaps(
 		const rng = createRng(config.seed);
 		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
 		const waterMask = buildWaterMask(ground, wall, spawn, config.seed);
-		const weights = config.decorationWeights ?? DEFAULT_DECORATION_WEIGHTS;
-		const scatterChance = config.scatterChance ?? DEFAULT_SCATTER_CHANCE;
 		const { blockedMask } = buildDecorationLayer(
 			ground,
 			wall,
@@ -58,8 +48,8 @@ export function regenerateBaseMaps(
 			waterMask,
 			spawn,
 			config.seed,
-			weights,
-			scatterChance,
+			config.decorationWeights,
+			config.scatterChance,
 		);
 		const width = config.width;
 		const height = config.height;

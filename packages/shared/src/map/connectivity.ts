@@ -3,7 +3,7 @@
  * does not disconnect the playable area from spawn.
  */
 
-import { TILE_TYPE } from "./types";
+import { TILE_TYPE } from "./config";
 
 /**
  * Flood-fill from spawn through (playable - blocked - excludeCell). Returns true if the number of

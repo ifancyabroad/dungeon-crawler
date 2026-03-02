@@ -3,7 +3,7 @@
  * Used by API and client for procedural map data.
  */
 
-import { TILE_TYPE } from "./types";
+import { TILE_TYPE } from "./config";
 
 /** Build ground layer: all cells floor. */
 export function buildGroundLayer(width: number, height: number): number[][] {

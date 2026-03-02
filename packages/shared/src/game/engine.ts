@@ -6,6 +6,7 @@
 
 import type { Action } from "./actions";
 import type { Actor, FloorConfig, GameState } from "./types";
+import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
 import { createInitialRngState } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
@@ -197,5 +198,16 @@ export function buildGameStateFromPersisted(
 		mapGenVersion,
 		floors,
 		rngState: persisted.rngState,
+	};
+}
+
+/** Convert full GameState to persisted dynamic state (for snapshots). Single source of truth for the shape. */
+export function gameStateToPersisted(state: GameState): PersistedDynamicState {
+	return {
+		turn: state.turn,
+		heroId: state.heroId,
+		heroFloorIndex: state.heroFloorIndex,
+		floors: state.floors.map((f) => f.state),
+		rngState: state.rngState,
 	};
 }

@@ -3,23 +3,13 @@
  * No nested 2D arrays in persisted state; walkability computed at runtime when needed.
  */
 
-import type { MapGenAlgorithm } from "../map/types";
+import type { MapGenConfig } from "../map/types";
 import type { Action } from "./actions";
 
 export type TileId = number;
 
-export interface FloorConfig {
-	width: number;
-	height: number;
-	theme: string;
-	algorithm?: MapGenAlgorithm;
-	caveFloorChance?: number;
-	bspRoomInset?: number;
-	decorationWeights?: Record<string, number>;
-	scatterChance?: number;
-	/** Optional; regenerateBaseMaps uses run seed + floor index when not set. */
-	seed?: number;
-}
+/** Per-floor map config (no seed; seed is run seed + floor index). Same shape as MapGenConfig minus seed. */
+export type FloorConfig = Omit<MapGenConfig, "seed">;
 
 /** Opaque id for an actor (hero or monster). Hero uses constant "hero". */
 export type ActorId = string;

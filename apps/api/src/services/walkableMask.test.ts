@@ -7,6 +7,7 @@ import {
 	applyAction,
 	computeWalkableMaskForFloor,
 	createInitialState,
+	DEFAULT_FLOOR_CONFIG,
 	getHero,
 	regenerateBaseMaps,
 	MAP_GEN_VERSION,
@@ -17,11 +18,7 @@ describe("walkable mask", () => {
 	const seed = 42;
 	const width = 10;
 	const height = 8;
-	const floorConfig = {
-		width,
-		height,
-		theme: "dungeon",
-	};
+	const floorConfig = { ...DEFAULT_FLOOR_CONFIG, width, height, theme: "dungeon" };
 
 	it("computeWalkableMaskForFloor returns mask of length width*height", () => {
 		const baseLayers = regenerateBaseMaps(seed, [floorConfig], MAP_GEN_VERSION);

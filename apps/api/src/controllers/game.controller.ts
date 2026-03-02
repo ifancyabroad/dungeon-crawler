@@ -2,16 +2,15 @@ import { randomBytes } from "node:crypto";
 import type { RequestHandler } from "express";
 import {
 	createInitialState,
-	DEFAULT_MAP_HEIGHT,
-	DEFAULT_MAP_WIDTH,
-	DEFAULT_DECORATION_WEIGHTS,
+	createGameBodySchema,
+	DEFAULT_FLOOR_CONFIG,
+	gameStateToPersisted,
 } from "@app/shared";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { getSessionState, reconstructState, setSessionState } from "../services/gameState.service";
 import { hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
-import { createGameBodySchema } from "@app/shared";
 
 const COOKIE_NAME = "game_token";
 const COOKIE_OPTS = {
@@ -35,24 +34,8 @@ export const createGame: RequestHandler = async (req, res) => {
 	const now = new Date();
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
-	const floorConfig = {
-		width: DEFAULT_MAP_WIDTH,
-		height: DEFAULT_MAP_HEIGHT,
-		theme: "green_forest",
-		algorithm: "cave" as const,
-		caveFloorChance: 0.45,
-		decorationWeights: DEFAULT_DECORATION_WEIGHTS,
-		scatterChance: 0.28,
-	};
-	const state = createInitialState(seed, floorConfig);
-
-	const persistedState = {
-		turn: 0,
-		heroId: state.heroId,
-		heroFloorIndex: state.heroFloorIndex,
-		floors: state.floors.map((f) => f.state),
-		rngState: state.rngState,
-	};
+	const state = createInitialState(seed, DEFAULT_FLOOR_CONFIG);
+	const persistedState = gameStateToPersisted(state);
 
 	await GameSnapshot.create({
 		gameId,

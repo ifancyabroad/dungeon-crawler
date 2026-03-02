@@ -4,14 +4,18 @@
  */
 
 export {
+	DEFAULT_BSP_ROOM_INSET,
+	DEFAULT_CAVE_FLOOR_CHANCE,
 	DEFAULT_DECORATION_WEIGHTS,
+	DEFAULT_FLOOR_CONFIG,
+	DEFAULT_FLOOR_THEME,
+	DEFAULT_MAP_ALGORITHM,
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
+	DEFAULT_SCATTER_CHANCE,
 	TILE_TYPE,
-	type GeneratedMap,
-	type MapGenAlgorithm,
-	type MapGenConfig,
-} from "./types";
+} from "./config";
+export type { GeneratedMap, MapGenAlgorithm, MapGenConfig } from "./types";
 export { buildGroundLayer, buildWallLayer } from "./build";
 export { generateMap } from "./generate";
 export { wouldStayConnected } from "./connectivity";

@@ -6,13 +6,12 @@
 
 import type { Server } from "socket.io";
 import type { Socket } from "socket.io";
-import { ActionSchema } from "@app/shared";
-import type { GameState } from "@app/shared";
 import { GameSession } from "../models/gameSession.model";
 import { GameActionLog } from "../models/gameActionLog.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
+import { ActionSchema, gameStateToPersisted } from "@app/shared";
 import {
-	getSessionState,
+	ensureSessionLoaded,
 	setSessionState,
 	reconstructState,
 	applyAuthoritativeAction,
@@ -56,11 +55,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 
 		await GameSession.updateOne({ gameId }, { $set: { lastSeenAt: new Date() } }).exec();
 
-		let state: GameState | undefined = getSessionState(gameId);
-		if (!state) {
-			state = (await reconstructState(gameId)) ?? undefined;
-			if (state) setSessionState(gameId, state);
-		}
+		const state = await ensureSessionLoaded(gameId);
 		if (!state) {
 			socket.emit("error", { reason: "state_not_found" });
 			return;
@@ -100,11 +95,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				return;
 			}
 
-			let state = getSessionState(gameId);
-			if (!state) {
-				state = (await reconstructState(gameId)) ?? undefined;
-				if (state) setSessionState(gameId, state);
-			}
+			const state = await ensureSessionLoaded(gameId);
 			if (!state) {
 				socket.emit("error", { reason: "state_not_found" });
 				return;
@@ -155,13 +146,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 			const newTurn = result.state.turn;
 
 			if (newTurn % SNAPSHOT_INTERVAL === 0) {
-				const persistedState = {
-					turn: newTurn,
-					heroId: result.state.heroId,
-					heroFloorIndex: result.state.heroFloorIndex,
-					floors: result.state.floors.map((f) => f.state),
-					rngState: result.state.rngState,
-				};
+				const persistedState = gameStateToPersisted(result.state);
 				await GameSnapshot.create({
 					gameId,
 					turn: newTurn,
