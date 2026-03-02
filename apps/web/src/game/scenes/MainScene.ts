@@ -6,7 +6,6 @@ import {
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	generateMap,
-	isCellWalkable,
 } from "@app/shared";
 import type { MapGenConfig } from "@app/shared";
 import {
@@ -20,7 +19,6 @@ import {
 import { useGameStore } from "../../features/game/gameStore";
 import { useMapStore } from "../../features/map/mapStore";
 import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
-import { getMapConfig } from "../config/mapConfig";
 import type { MapConfig } from "../config/mapConfig";
 import {
 	decorationGridToTileIndices,
@@ -32,14 +30,9 @@ export default class MainScene extends Phaser.Scene {
 	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 	private wallLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 	private decorationLayer: Phaser.Tilemaps.TilemapLayer | null = null;
-	/** Logical map state for shared isCellWalkable (server-authoritative rule). */
-	private ground: number[][] = [];
-	private wall: number[][] = [];
-	private blockedMask: boolean[][] = [];
 	private player!: Phaser.GameObjects.Sprite;
 	private playerTileX = 0;
 	private playerTileY = 0;
-	private isMoving = false;
 	private mapWidth = DEFAULT_MAP_WIDTH;
 	private mapHeight = DEFAULT_MAP_HEIGHT;
 	/** One-shot unsubscribe when we're waiting for state; cleaned up in shutdown(). */
@@ -57,10 +50,6 @@ export default class MainScene extends Phaser.Scene {
 			if (fromState) this.buildMapAndHero(fromState.config, fromState.hero);
 			else this.subscribeUntilStateArrives();
 			this.attachKeyboardOnline();
-		} else {
-			const config = getMapConfig();
-			this.buildMapAndHero(config, { floorIndex: 0, x: 0, y: 0 }, config);
-			this.attachKeyboardOffline();
 		}
 	}
 
@@ -92,7 +81,7 @@ export default class MainScene extends Phaser.Scene {
 		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
 
 		const waterMask = buildWaterMask(ground, wall, spawn, config.seed);
-		const { blockedMask, decorationGrid } = buildDecorationLayer(
+		const { decorationGrid } = buildDecorationLayer(
 			ground,
 			wall,
 			pathLayer,
@@ -102,9 +91,6 @@ export default class MainScene extends Phaser.Scene {
 			config.decorationWeights ?? DECORATION_WEIGHTS,
 			(config as MapConfig).scatterChance ?? 0.28,
 		);
-		this.ground = ground;
-		this.wall = wall;
-		this.blockedMask = blockedMask;
 
 		const groundData = toGroundTileIndices(ground, wall, waterMask, config.theme);
 		const wallData = toWallTileIndices(wall, config.theme);
@@ -137,29 +123,18 @@ export default class MainScene extends Phaser.Scene {
 		);
 	}
 
-	private attachKeyboardOffline() {
-		this.input.keyboard?.on("keydown-W", () => this.tryMove(0, -1));
-		this.input.keyboard?.on("keydown-S", () => this.tryMove(0, 1));
-		this.input.keyboard?.on("keydown-A", () => this.tryMove(-1, 0));
-		this.input.keyboard?.on("keydown-D", () => this.tryMove(1, 0));
-	}
-
 	setHeroPosition(x: number, y: number) {
 		this.playerTileX = x;
 		this.playerTileY = y;
 		const worldX = x * TILE_WIDTH + TILE_WIDTH / 2;
 		const worldY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
 		if (!this.player) return;
-		this.isMoving = true;
 		this.tweens.add({
 			targets: this.player,
 			x: worldX,
 			y: worldY,
 			duration: 120,
 			ease: "Power2",
-			onComplete: () => {
-				this.isMoving = false;
-			},
 		});
 	}
 
@@ -213,33 +188,5 @@ export default class MainScene extends Phaser.Scene {
 			return;
 		}
 		wallMap.setCollision(getCollidingIndices());
-	}
-
-	private isWalkable(tileX: number, tileY: number): boolean {
-		return isCellWalkable(this.ground, this.wall, this.blockedMask, tileX, tileY);
-	}
-
-	private tryMove(dx: number, dy: number) {
-		if (this.isMoving) return;
-		const targetX = this.playerTileX + dx;
-		const targetY = this.playerTileY + dy;
-		if (!this.isWalkable(targetX, targetY)) return;
-
-		this.isMoving = true;
-		this.playerTileX = targetX;
-		this.playerTileY = targetY;
-		const worldX = targetX * TILE_WIDTH + TILE_WIDTH / 2;
-		const worldY = targetY * TILE_HEIGHT + TILE_HEIGHT / 2;
-
-		this.tweens.add({
-			targets: this.player,
-			x: worldX,
-			y: worldY,
-			duration: 120,
-			ease: "Power2",
-			onComplete: () => {
-				this.isMoving = false;
-			},
-		});
 	}
 }
