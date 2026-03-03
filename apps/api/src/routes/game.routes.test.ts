@@ -37,6 +37,10 @@ vi.mock("../services/gameState.service", () => ({
 	deleteSessionState: vi.fn(),
 }));
 
+vi.mock("../config/db", () => ({
+	runTransaction: (fn: (session: unknown) => Promise<unknown>) => fn({}),
+}));
+
 const { buildApp } = await import("../app");
 const app = buildApp();
 

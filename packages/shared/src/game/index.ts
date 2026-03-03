@@ -20,7 +20,9 @@ export { ActionSchema, MoveActionSchema, type Action, type MoveAction } from "./
 export {
 	actorKind,
 	applyAction,
+	applyActionWithDerivedContext,
 	buildGameStateFromPersisted,
+	createEmptyFloorState,
 	createInitialState,
 	gameStateToPersisted,
 	getHero,

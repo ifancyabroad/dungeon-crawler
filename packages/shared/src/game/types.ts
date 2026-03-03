@@ -47,7 +47,7 @@ export interface Actor {
 }
 
 export interface FloorState {
-	tileOverrides: Record<number, TileId>;
+	tileOverrides: Record<string, TileId>;
 	actorsById: Record<ActorId, Actor>;
 }
 

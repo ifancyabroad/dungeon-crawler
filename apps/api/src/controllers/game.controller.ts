@@ -5,12 +5,14 @@ import {
 	createGameBodySchema,
 	DEFAULT_FLOOR_CONFIG,
 	gameStateToPersisted,
+	PersistedDynamicStateSchema,
 } from "@app/shared";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { getSessionState, reconstructState, setSessionState } from "../services/gameState.service";
 import { hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
+import { runTransaction } from "../config/db";
 
 const COOKIE_NAME = "game_token";
 const COOKIE_OPTS = {
@@ -36,23 +38,27 @@ export const createGame: RequestHandler = async (req, res) => {
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
 	const state = createInitialState(seed, DEFAULT_FLOOR_CONFIG);
 	const persistedState = gameStateToPersisted(state);
+	PersistedDynamicStateSchema.parse(persistedState);
 
-	await GameSnapshot.create({
-		gameId,
-		turn: 0,
-		state: persistedState,
-		createdAt: now,
-	});
-
-	await GameSession.create({
-		gameId,
-		tokenHash,
-		lastSeenAt: now,
-		userId: null,
-		seed,
-		mapGenVersion: state.mapGenVersion,
-		floorConfigs: state.floors.map((f) => f.config),
-		latestSnapshotTurn: 0,
+	await runTransaction(async (session) => {
+		await GameSnapshot.create([{ gameId, turn: 0, state: persistedState, createdAt: now }], {
+			session,
+		});
+		await GameSession.create(
+			[
+				{
+					gameId,
+					tokenHash,
+					lastSeenAt: now,
+					userId: null,
+					seed,
+					mapGenVersion: state.mapGenVersion,
+					floorConfigs: state.floors.map((f) => f.config),
+					latestSnapshotTurn: 0,
+				},
+			],
+			{ session },
+		);
 	});
 
 	setSessionState(gameId, state);

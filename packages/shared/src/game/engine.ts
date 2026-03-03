@@ -1,17 +1,22 @@
 /**
  * Deterministic game engine: create initial state and apply actions.
- * Walkability: pass via context.getWalkableMask (caller can cache); otherwise computed from state (no cache).
+ * Walkability: pass via context.getWalkableMask (required in production; use applyActionWithDerivedContext for dev/test).
  * RNG state is only advanced when an action actually uses RNG (e.g. future spawns/combat).
  */
 
 import type { Action } from "./actions";
-import type { Actor, FloorConfig, GameState } from "./types";
+import type { Actor, FloorConfig, FloorState, GameState } from "./types";
 import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
 import { createInitialRngState } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 
-/** Optional context: idx-based walkability mask per floor. mask[idx] === 1 means walkable. */
+/** Empty floor state (tileOverrides and actorsById). Use when defaulting or building from persisted. */
+export function createEmptyFloorState(): FloorState {
+	return { tileOverrides: {}, actorsById: {} };
+}
+
+/** Context required for applyAction: idx-based walkability mask per floor. mask[idx] === 1 means walkable. */
 export interface ApplyActionContext {
 	getWalkableMask(floorIndex: number): Uint8Array;
 }
@@ -80,8 +85,8 @@ export function createInitialState(seed: number, floorConfig: FloorConfig): Game
 		def: { type: "hero", classId: "warrior" },
 	};
 
-	const floorState = {
-		tileOverrides: {} as Record<number, number>,
+	const floorState: FloorState = {
+		...createEmptyFloorState(),
 		actorsById: { hero: heroActor } as Record<import("./types").ActorId, Actor>,
 	};
 
@@ -97,73 +102,89 @@ export function createInitialState(seed: number, floorConfig: FloorConfig): Game
 }
 
 /**
- * Apply one action to state. Move uses context.getWalkableMask if provided (idx-based mask),
- * otherwise computes from state (regenerateBaseMaps + computeWalkableMaskForFloor).
+ * Apply one action to state. Context is required (use applyActionWithDerivedContext in dev/test only).
  * RNG is only advanced when an action uses it (move does not).
  */
 export function applyAction(
 	state: GameState,
 	action: Action,
-	context?: ApplyActionContext,
+	context: ApplyActionContext,
 ): ApplyActionResult {
-	if (action.type === "move") {
-		const hero = getHero(state);
-		if (!hero) {
-			return { ok: false, reason: "move_no_hero" };
-		}
-		const fi = state.heroFloorIndex;
-		const floor = state.floors[fi];
-		if (!floor) {
-			return { ok: false, reason: "move_no_floor" };
-		}
-		const width = floor.config.width;
-		const height = floor.config.height;
-		const size = width * height;
-
-		let mask: Uint8Array;
-		if (context?.getWalkableMask) {
-			mask = context.getWalkableMask(fi);
-		} else {
-			const baseLayers = regenerateBaseMaps(
-				state.seed,
-				state.floors.map((f) => f.config),
-				state.mapGenVersion,
-			);
-			const base = baseLayers[fi];
-			if (!base) {
-				return { ok: false, reason: "move_no_walkable" };
+	switch (action.type) {
+		case "move": {
+			const hero = getHero(state);
+			if (!hero) {
+				return { ok: false, reason: "move_no_hero" };
 			}
-			mask = computeWalkableMaskForFloor(base, floor.state.tileOverrides ?? {});
-		}
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) {
+				return { ok: false, reason: "move_no_floor" };
+			}
+			const width = floor.config.width;
+			const height = floor.config.height;
+			const size = width * height;
+			const mask = context.getWalkableMask(fi);
 
-		const { x, y } = idxToXY(hero.idx, width);
-		const { dx, dy } = DIRECTION_DELTA[action.direction];
-		const nx = x + dx;
-		const ny = y + dy;
-		if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
-			return { ok: false, reason: "move_out_of_bounds" };
-		}
-		const newIdx = xyToIdx(nx, ny, width);
-		if (newIdx < 0 || newIdx >= size || mask[newIdx] !== 1) {
-			return { ok: false, reason: "move_blocked" };
-		}
-		const updatedHero: Actor = { ...hero, idx: newIdx };
-		const newActorsById = { ...floor.state.actorsById, [state.heroId]: updatedHero };
-		const newFloorState = { ...floor.state, actorsById: newActorsById };
-		const newFloors = state.floors.slice();
-		newFloors[fi] = { ...floor, state: newFloorState };
+			const { x, y } = idxToXY(hero.idx, width);
+			const { dx, dy } = DIRECTION_DELTA[action.direction];
+			const nx = x + dx;
+			const ny = y + dy;
+			if (nx < 0 || nx >= width || ny < 0 || ny >= height) {
+				return { ok: false, reason: "move_out_of_bounds" };
+			}
+			const newIdx = xyToIdx(nx, ny, width);
+			if (newIdx < 0 || newIdx >= size || mask[newIdx] !== 1) {
+				return { ok: false, reason: "move_blocked" };
+			}
+			const updatedHero: Actor = { ...hero, idx: newIdx };
+			const newActorsById = { ...floor.state.actorsById, [state.heroId]: updatedHero };
+			const newFloorState = { ...floor.state, actorsById: newActorsById };
+			const newFloors = state.floors.slice();
+			newFloors[fi] = { ...floor, state: newFloorState };
 
-		return {
-			ok: true,
-			state: {
-				...state,
-				turn: state.turn + 1,
-				floors: newFloors,
-				rngState: state.rngState,
-			},
-		};
+			return {
+				ok: true,
+				state: {
+					...state,
+					turn: state.turn + 1,
+					floors: newFloors,
+					rngState: state.rngState,
+				},
+			};
+		}
+		case "unknown":
+			return { ok: false, reason: "unknown_action" };
+		default: {
+			// Exhaustiveness: unhandled action type
+			const _exhaustive: never = action;
+			void _exhaustive;
+			return { ok: false, reason: "unknown_action" };
+		}
 	}
-	return { ok: false, reason: "unknown_action" };
+}
+
+/**
+ * Dev/test only: build context from state (regenerateBaseMaps + computeWalkableMaskForFloor per floor) and apply action.
+ * Do not use in production API; production must pass context from cache.
+ */
+export function applyActionWithDerivedContext(state: GameState, action: Action): ApplyActionResult {
+	const baseLayers = regenerateBaseMaps(
+		state.seed,
+		state.floors.map((f) => f.config),
+		state.mapGenVersion,
+	);
+	const masks = baseLayers.map((base, i) =>
+		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
+	);
+	const context: ApplyActionContext = {
+		getWalkableMask(fi: number) {
+			const m = masks[fi];
+			if (m === undefined) throw new Error("missing mask for floor " + fi);
+			return m;
+		},
+	};
+	return applyAction(state, action, context);
 }
 
 /**
@@ -182,10 +203,7 @@ export function buildGameStateFromPersisted(
 		rngState: import("./types").RngState;
 	},
 ): GameState {
-	const defaultFloorState: import("./types").FloorState = {
-		tileOverrides: {},
-		actorsById: {},
-	};
+	const defaultFloorState = createEmptyFloorState();
 	const floors = floorConfigs.map((config, i) => ({
 		config,
 		state: persisted.floors[i] ?? defaultFloorState,

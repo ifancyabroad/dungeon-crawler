@@ -3,6 +3,7 @@
  * In-memory session store for active games; walkability cached to avoid regenerating base maps on every action.
  */
 
+import { ZodError } from "zod";
 import {
 	ActionSchema,
 	applyAction,
@@ -22,6 +23,18 @@ import { GameSnapshot } from "../models/gameSnapshot.model";
 interface SessionEntry {
 	state: GameState;
 	walkableByFloor: Uint8Array[];
+}
+
+/** Thrown when snapshot or action log fails Zod parse (distinct from session/snapshot not found). */
+export class StateCorruptError extends Error {
+	readonly code = "STATE_CORRUPT";
+	constructor(
+		message: string,
+		public readonly cause?: unknown,
+	) {
+		super(message);
+		this.name = "StateCorruptError";
+	}
 }
 
 const sessionStore = new Map<string, SessionEntry>();
@@ -46,23 +59,41 @@ export function getSessionWalkable(gameId: string): Uint8Array[] | undefined {
 	return sessionStore.get(gameId)?.walkableByFloor;
 }
 
-export function setSessionState(
-	gameId: string,
-	state: GameState,
-	walkableByFloor?: Uint8Array[],
-): void {
-	const existing = sessionStore.get(gameId);
-	const walkable = walkableByFloor ?? existing?.walkableByFloor ?? computeWalkableByFloor(state);
-	sessionStore.set(gameId, { state, walkableByFloor: walkable });
+/** Set session state and recompute walkability masks for all floors. No optional masks; callers never pass walkableByFloor. */
+export function setSessionState(gameId: string, state: GameState): void {
+	const walkableByFloor = computeWalkableByFloor(state);
+	sessionStore.set(gameId, { state, walkableByFloor });
 }
 
-/** Get or reconstruct and cache state for a game. Returns null if session or snapshot missing. */
+const inFlightLoads = new Map<string, Promise<GameState | null>>();
+
+/** Get or reconstruct and cache state for a game. Returns null if session or snapshot missing. Deduplicates concurrent loads for the same gameId. */
 export async function ensureSessionLoaded(gameId: string): Promise<GameState | null> {
 	const cached = getSessionState(gameId);
 	if (cached) return cached;
-	const state = await reconstructState(gameId);
-	if (state) setSessionState(gameId, state);
-	return state;
+
+	let promise = inFlightLoads.get(gameId);
+	if (!promise) {
+		promise = (async (): Promise<GameState | null> => {
+			try {
+				const state = await reconstructState(gameId);
+				if (state) setSessionState(gameId, state);
+				return state;
+			} catch (err) {
+				if (err instanceof StateCorruptError) throw err;
+				console.error(
+					"[ensureSessionLoaded] reconstructState failed for gameId:",
+					gameId,
+					err,
+				);
+				return null;
+			} finally {
+				inFlightLoads.delete(gameId);
+			}
+		})();
+		inFlightLoads.set(gameId, promise);
+	}
+	return promise;
 }
 
 function makeWalkableContext(masks: Uint8Array[], errorContext?: string): ApplyActionContext {
@@ -102,53 +133,10 @@ export function deleteSessionState(gameId: string): void {
 	sessionStore.delete(gameId);
 }
 
-const asObj = (x: unknown): Record<string, unknown> =>
-	x && typeof x === "object" && !Array.isArray(x) ? (x as Record<string, unknown>) : {};
-
-/** One floor state: strip non-number tileOverrides, drop invalid actors. Schema applies defaults (e.g. actor.skills). */
-function normalizeOneFloor(rawFloor: unknown) {
-	const o = asObj(rawFloor);
-	const rawOverrides = asObj(o.tileOverrides);
-	const tileOverrides: Record<string, number> = {};
-	for (const [k, v] of Object.entries(rawOverrides)) {
-		if (typeof v === "number") tileOverrides[k] = v;
-	}
-	const rawActors = asObj(o.actorsById);
-	const actorsById: Record<string, unknown> = {};
-	for (const [k, v] of Object.entries(rawActors)) {
-		if (v != null && typeof v === "object" && !Array.isArray(v)) actorsById[k] = v;
-	}
-	return { tileOverrides, actorsById };
-}
-
-/** Mongoose Mixed can return floors as array-like or sparse; normalize to a real array of floor objects. */
-function normalizeSnapshotFloors(raw: Record<string, unknown>) {
-	const rawFloors = raw.floors;
-	const arr: unknown[] = Array.isArray(rawFloors)
-		? [...rawFloors]
-		: rawFloors && typeof rawFloors === "object"
-			? Array.from(
-					{ length: Object.keys(rawFloors).length },
-					(_, i) => (rawFloors as Record<string, unknown>)[String(i)],
-				)
-			: [];
-	const floors: { tileOverrides: Record<string, number>; actorsById: Record<string, unknown> }[] =
-		[];
-	for (let i = 0; i < arr.length; i++) {
-		floors.push(normalizeOneFloor(arr[i]));
-	}
-	return {
-		turn: raw.turn,
-		heroId: raw.heroId,
-		heroFloorIndex: raw.heroFloorIndex,
-		floors,
-		rngState: raw.rngState,
-	};
-}
-
 /**
- * Load latest snapshot, replay actions with turn >= snapshotTurn, build full GameState.
- * Action log entry turn = turn BEFORE apply; after apply state.turn = entry.turn + 1.
+ * Load latest snapshot, then replay action log entries where entry.turn > snapshotTurn (each entry's
+ * turn is the state.turn after that action was applied). Build full GameState.
+ * Invalid snapshot or action log entry throws (caller should catch and surface state_corrupt).
  */
 export async function reconstructState(gameId: string): Promise<GameState | null> {
 	const session = await GameSession.findOne({ gameId }).lean().exec();
@@ -169,32 +157,22 @@ export async function reconstructState(gameId: string): Promise<GameState | null
 		return null;
 	}
 
-	const raw = (snapshot as { state: unknown }).state as
-		| Record<string, unknown>
-		| null
-		| undefined;
-	if (!raw || typeof raw !== "object") {
-		console.warn(
-			"[reconstructState] snapshot state missing or not an object for gameId:",
-			gameId,
-		);
-		return null;
+	const raw = (snapshot as { state: unknown }).state;
+	if (raw === null || raw === undefined) {
+		throw new Error(`[reconstructState] snapshot state missing for gameId: ${gameId}`);
 	}
-
-	const parsed = PersistedDynamicStateSchema.safeParse(normalizeSnapshotFloors(raw));
-	if (!parsed.success) {
-		console.warn(
-			"[reconstructState] snapshot schema invalid for gameId:",
-			gameId,
-			parsed.error.flatten(),
-		);
-		return null;
+	let snapshotState;
+	try {
+		snapshotState = PersistedDynamicStateSchema.parse(raw);
+	} catch (err) {
+		const msg = `[reconstructState] snapshot parse failed for gameId: ${gameId}`;
+		console.error(msg, err instanceof ZodError ? err.flatten() : err);
+		throw new StateCorruptError(msg, err);
 	}
-	const snapshotState = parsed.data;
 
 	const logEntries = await GameActionLog.find({
 		gameId,
-		turn: { $gte: snapshotTurn },
+		turn: { $gt: snapshotTurn },
 	})
 		.sort({ turn: 1 })
 		.lean()
@@ -211,9 +189,15 @@ export async function reconstructState(gameId: string): Promise<GameState | null
 	const applyContext = makeWalkableContext(walkableByFloor, "reconstructState");
 
 	for (const entry of logEntries) {
-		const actionParse = ActionSchema.safeParse((entry as { action: unknown }).action);
-		if (!actionParse.success) continue;
-		const result = applyAction(fullState, actionParse.data, applyContext);
+		let action;
+		try {
+			action = ActionSchema.parse((entry as { action: unknown }).action);
+		} catch (err) {
+			const msg = `[reconstructState] action log parse failed for gameId: ${gameId}, turn: ${(entry as { turn?: number }).turn}`;
+			console.error(msg, err instanceof ZodError ? err.flatten() : err);
+			throw new StateCorruptError(msg, err);
+		}
+		const result = applyAction(fullState, action, applyContext);
 		if (!result.ok) continue;
 		fullState = result.state;
 	}

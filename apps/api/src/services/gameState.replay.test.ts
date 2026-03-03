@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import {
 	ActionSchema,
-	applyAction,
+	applyActionWithDerivedContext,
 	buildGameStateFromPersisted,
 	createInitialState,
 	DEFAULT_FLOOR_CONFIG,
@@ -30,10 +30,10 @@ describe("gameState replay", () => {
 		const moveRight = ActionSchema.parse({ type: "move", direction: "right" });
 		const moveDown = ActionSchema.parse({ type: "move", direction: "down" });
 
-		const r1 = applyAction(fullState0, moveRight);
+		const r1 = applyActionWithDerivedContext(fullState0, moveRight);
 		expect(r1.ok).toBe(true);
 		const state1 = r1.ok ? r1.state : fullState0;
-		const r2 = applyAction(state1, moveDown);
+		const r2 = applyActionWithDerivedContext(state1, moveDown);
 		expect(r2.ok).toBe(true);
 		const state2 = r2.ok ? r2.state : state1;
 
@@ -50,7 +50,7 @@ describe("gameState replay", () => {
 		);
 		const actions = [moveRight, moveDown];
 		for (const action of actions) {
-			const result = applyAction(replayed, action);
+			const result = applyActionWithDerivedContext(replayed, action);
 			expect(result.ok).toBe(true);
 			replayed = result.ok ? result.state : replayed;
 		}
@@ -60,5 +60,9 @@ describe("gameState replay", () => {
 		expect(replayedHero).toBeDefined();
 		expect(replayedHero).toEqual(expectedHero);
 		expect(replayed.rngState).toEqual(expectedRngState);
+
+		// Turn invariant: after applying action at expectedTurn, newState.turn === expectedTurn + 1
+		expect(state1.turn).toBe(1);
+		expect(state2.turn).toBe(2);
 	});
 });

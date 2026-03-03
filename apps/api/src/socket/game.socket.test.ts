@@ -18,7 +18,7 @@ let capturedSession: {
 } | null = null;
 
 const mockSessionCreate = vi.fn().mockImplementation((doc: unknown) => {
-	capturedSession = doc as typeof capturedSession;
+	capturedSession = (Array.isArray(doc) ? doc[0] : doc) as typeof capturedSession;
 	return Promise.resolve();
 });
 const mockSnapshotCreate = vi.fn().mockResolvedValue(undefined);
@@ -55,6 +55,10 @@ vi.mock("../models/gameActionLog.model", () => ({
 	GameActionLog: { create: mockActionLogCreate },
 }));
 
+vi.mock("../config/db", () => ({
+	runTransaction: (fn: (session: unknown) => Promise<unknown>) => fn({}),
+}));
+
 function parseGameToken(setCookie: string | string[] | undefined): string | null {
 	const str = Array.isArray(setCookie) ? setCookie[0] : setCookie;
 	const match = str?.match(/game_token=([^;]+)/);
@@ -79,7 +83,7 @@ describe("game socket", () => {
 			}),
 		}));
 		mockSessionCreate.mockImplementation((doc: unknown) => {
-			capturedSession = doc as typeof capturedSession;
+			capturedSession = (Array.isArray(doc) ? doc[0] : doc) as typeof capturedSession;
 			return Promise.resolve();
 		});
 
@@ -149,7 +153,12 @@ describe("game socket", () => {
 	});
 
 	it("action move updates state and emits new state", async () => {
-		const res = await fetch(`${baseUrl}/api/game`, { method: "POST", redirect: "manual" });
+		const res = await fetch(`${baseUrl}/api/game`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ seed: 12345 }),
+			redirect: "manual",
+		});
 		expect(res.status).toBe(201);
 		const body = (await res.json()) as { gameId: string };
 		const gameId = body.gameId;

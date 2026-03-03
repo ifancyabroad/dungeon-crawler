@@ -1,7 +1,7 @@
 /**
  * Game socket handlers: join (auth + state load) and action (validate, apply, persist, broadcast).
  * Auth is stored on socket after join; action does not query GameSession.
- * Action log turn = turn BEFORE apply (expectedTurn).
+ * Action log turn = newState.turn (turn after apply).
  */
 
 import type { Server } from "socket.io";
@@ -15,9 +15,13 @@ import {
 	setSessionState,
 	reconstructState,
 	applyAuthoritativeAction,
+	StateCorruptError,
 } from "../services/gameState.service";
+import { withGameLock } from "../services/gameLock";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
+import { runTransaction } from "../config/db";
+import { PersistedDynamicStateSchema } from "@app/shared";
 
 /** Auth context set on socket after successful join. */
 interface GameSocketData {
@@ -55,7 +59,16 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 
 		await GameSession.updateOne({ gameId }, { $set: { lastSeenAt: new Date() } }).exec();
 
-		const state = await ensureSessionLoaded(gameId);
+		let state;
+		try {
+			state = await ensureSessionLoaded(gameId);
+		} catch (err) {
+			if (err instanceof StateCorruptError) {
+				socket.emit("error", { reason: "state_corrupt" });
+				return;
+			}
+			throw err;
+		}
 		if (!state) {
 			socket.emit("error", { reason: "state_not_found" });
 			return;
@@ -95,76 +108,99 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				return;
 			}
 
-			const state = await ensureSessionLoaded(gameId);
-			if (!state) {
-				socket.emit("error", { reason: "state_not_found" });
-				return;
-			}
-
-			if (expectedTurn !== state.turn) {
-				socket.emit("error", { reason: "turn_mismatch", currentTurn: state.turn });
-				return;
-			}
-
-			let result;
-			try {
-				result = applyAuthoritativeAction(gameId, state, parsed.data);
-			} catch (err) {
-				console.error("[action] applyAuthoritativeAction failed:", err);
-				socket.emit("error", { reason: "state_not_found" });
-				return;
-			}
-			if (!result.ok) {
-				socket.emit("error", { reason: result.reason });
-				return;
-			}
-
-			try {
-				await GameActionLog.create({
-					gameId,
-					turn: expectedTurn,
-					action: parsed.data,
-				});
-			} catch (err: unknown) {
-				const isDuplicate =
-					err &&
-					typeof err === "object" &&
-					"code" in err &&
-					(err as { code: number }).code === 11000;
-				if (isDuplicate) {
-					const current = await reconstructState(gameId);
-					if (current) {
-						setSessionState(gameId, current);
-						io.to(gameId).emit("state", { gameId, turn: current.turn, state: current });
+			await withGameLock(gameId, async () => {
+				let state;
+				try {
+					state = await ensureSessionLoaded(gameId);
+				} catch (err) {
+					if (err instanceof StateCorruptError) {
+						socket.emit("error", { reason: "state_corrupt" });
+						return;
 					}
+					throw err;
+				}
+				if (!state) {
+					socket.emit("error", { reason: "state_not_found" });
 					return;
 				}
-				throw err;
-			}
 
-			setSessionState(gameId, result.state);
-			const newTurn = result.state.turn;
+				if (expectedTurn !== state.turn) {
+					socket.emit("error", { reason: "turn_mismatch", currentTurn: state.turn });
+					return;
+				}
 
-			if (newTurn % SNAPSHOT_INTERVAL === 0) {
+				let result;
+				try {
+					result = applyAuthoritativeAction(gameId, state, parsed.data);
+				} catch (err) {
+					console.error("[action] applyAuthoritativeAction failed:", err);
+					socket.emit("error", { reason: "internal_error" });
+					return;
+				}
+				if (!result.ok) {
+					socket.emit("error", { reason: result.reason });
+					return;
+				}
+
+				const newTurn = result.state.turn;
 				const persistedState = gameStateToPersisted(result.state);
-				await GameSnapshot.create({
-					gameId,
-					turn: newTurn,
-					state: persistedState,
-					createdAt: new Date(),
-				});
-				await GameSession.updateOne(
-					{ gameId },
-					{ $set: { latestSnapshotTurn: newTurn, lastSeenAt: new Date() } },
-				).exec();
-			} else {
-				await GameSession.updateOne(
-					{ gameId },
-					{ $set: { lastSeenAt: new Date() } },
-				).exec();
-			}
+				PersistedDynamicStateSchema.parse(persistedState);
 
-			io.to(gameId).emit("state", { gameId, turn: newTurn, state: result.state });
+				try {
+					await runTransaction(async (session) => {
+						await GameActionLog.create(
+							[{ gameId, turn: newTurn, action: parsed.data }],
+							{ session },
+						);
+						if (newTurn % SNAPSHOT_INTERVAL === 0) {
+							await GameSnapshot.create(
+								[
+									{
+										gameId,
+										turn: newTurn,
+										state: persistedState,
+										createdAt: new Date(),
+									},
+								],
+								{ session },
+							);
+							await GameSession.updateOne(
+								{ gameId },
+								{ $set: { latestSnapshotTurn: newTurn, lastSeenAt: new Date() } },
+								{ session },
+							);
+						} else {
+							await GameSession.updateOne(
+								{ gameId },
+								{ $set: { lastSeenAt: new Date() } },
+								{ session },
+							);
+						}
+					});
+				} catch (err: unknown) {
+					const isDuplicate =
+						err &&
+						typeof err === "object" &&
+						"code" in err &&
+						(err as { code: number }).code === 11000;
+					if (isDuplicate) {
+						const current = await reconstructState(gameId);
+						if (current) {
+							setSessionState(gameId, current);
+							io.to(gameId).emit("state", {
+								gameId,
+								turn: current.turn,
+								state: current,
+							});
+						}
+						return;
+					}
+					throw err;
+				}
+
+				setSessionState(gameId, result.state);
+				io.to(gameId).emit("state", { gameId, turn: newTurn, state: result.state });
+			});
 		},
 	);
 }

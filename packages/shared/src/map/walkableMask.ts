@@ -14,19 +14,19 @@ function isTileIdWalkable(_tileId: number): boolean {
 
 /**
  * Compute the walkable mask for one floor from base layers and optional tile overrides.
- * Cell index = y * width + x. tileOverrides may have number or string keys (JSON).
+ * Cell index = y * width + x. tileOverrides uses string keys only (canonical form).
  * Returns Uint8Array of length width*height; 1 = walkable, 0 = blocked.
  */
 export function computeWalkableMaskForFloor(
 	base: BaseLayerFloor,
-	tileOverrides: Record<number | string, number>,
+	tileOverrides: Record<string, number>,
 ): Uint8Array {
 	const { ground, wall, blockedMask, width, height } = base;
 	const mask = new Uint8Array(width * height);
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			const idx = y * width + x;
-			const overrideTile = tileOverrides[idx] ?? tileOverrides[String(idx)];
+			const overrideTile = tileOverrides[String(idx)];
 			const walkable =
 				overrideTile !== undefined
 					? isTileIdWalkable(overrideTile)
