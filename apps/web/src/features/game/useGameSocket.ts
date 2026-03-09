@@ -3,6 +3,7 @@ import type { GameState } from "@app/shared";
 import { io } from "socket.io-client";
 import { getSocketUrl } from "../../lib/api";
 import { useGameStore, setGameSocket } from "./gameStore";
+import { useErrorStore } from "../error/errorStore";
 
 /**
  * Connect socket when gameId is present; emit join; on state/error update store.
@@ -27,7 +28,7 @@ export function useGameSocket(gameId: string | null) {
 		});
 
 		socket.on("state", (payload: { gameId: string; turn: number; state: GameState }) => {
-			useGameStore.getState().setState({
+			useGameStore.getState().setStateFromServer({
 				gameId: payload.gameId,
 				turn: payload.turn,
 				state: payload.state,
@@ -35,7 +36,10 @@ export function useGameSocket(gameId: string | null) {
 		});
 
 		socket.on("error", (payload: { reason?: string }) => {
-			console.warn("[game socket] error:", payload.reason ?? payload);
+			const reason = payload.reason ?? "Connection or validation issue";
+			console.warn("[game socket] error:", reason);
+			const revertMessage = useGameStore.getState().revertToConfirmed();
+			useErrorStore.getState().showError(revertMessage ?? reason);
 		});
 
 		socket.on("disconnect", () => {

@@ -16,7 +16,7 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 	const [seedInput, setSeedInput] = useState("");
 	const createGame = useCreateGame();
 	const storeGameId = useGameStore((s) => s.storeGameId);
-	const setState = useGameStore((s) => s.setState);
+	const setStateFromServer = useGameStore((s) => s.setStateFromServer);
 	const restartMainScene = useMapStore((s) => s.restartMainScene);
 	const showError = useErrorStore((s) => s.showError);
 
@@ -33,7 +33,7 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 		}
 		try {
 			const data = await createGame.mutateAsync(options);
-			setState({
+			setStateFromServer({
 				gameId: data.gameId,
 				turn: data.state.turn,
 				state: data.state,

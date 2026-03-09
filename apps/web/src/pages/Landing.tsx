@@ -8,7 +8,7 @@ import { getApiErrorMessage } from "../lib/errors";
 
 export default function Landing() {
 	const navigate = useNavigate();
-	const setState = useGameStore((s) => s.setState);
+	const setStateFromServer = useGameStore((s) => s.setStateFromServer);
 	const storeGameId = useGameStore((s) => s.storeGameId);
 	const showError = useErrorStore((s) => s.showError);
 
@@ -20,7 +20,7 @@ export default function Landing() {
 	async function handleNewGame() {
 		try {
 			const data = await createGame.mutateAsync();
-			setState({ gameId: data.gameId, turn: data.state.turn, state: data.state });
+			setStateFromServer({ gameId: data.gameId, turn: data.state.turn, state: data.state });
 			storeGameId(data.gameId);
 			navigate("/game");
 		} catch (e) {
@@ -31,7 +31,7 @@ export default function Landing() {
 	async function handleContinue() {
 		try {
 			const data = await continueGame.mutateAsync();
-			setState({ gameId: data.gameId, turn: data.state.turn, state: data.state });
+			setStateFromServer({ gameId: data.gameId, turn: data.state.turn, state: data.state });
 			storeGameId(data.gameId);
 			navigate("/game");
 		} catch (e) {

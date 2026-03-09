@@ -124,7 +124,10 @@ export default class MainScene extends Phaser.Scene {
 		);
 	}
 
-	/** Sync hero position from authoritative state. Converts idx to tile x,y then to pixel position. */
+	/**
+	 * Sync hero position from state. Converts idx to tile x,y then to pixel position.
+	 * Uses actionInProgress so the next action cannot be sent until this move's tween completes.
+	 */
 	setHeroPosition(idx: number) {
 		const { x, y } = idxToXY(idx, this.mapWidth);
 		this.playerTileX = x;
@@ -132,12 +135,18 @@ export default class MainScene extends Phaser.Scene {
 		const worldX = x * TILE_WIDTH + TILE_WIDTH / 2;
 		const worldY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
 		if (!this.player) return;
+		this.tweens.killTweensOf(this.player);
+		useGameStore.getState().setActionInProgress(false);
+		useGameStore.getState().setActionInProgress(true);
 		this.tweens.add({
 			targets: this.player,
 			x: worldX,
 			y: worldY,
-			duration: 120,
+			duration: 80,
 			ease: "Power2",
+			onComplete: () => {
+				useGameStore.getState().setActionInProgress(false);
+			},
 		});
 	}
 
