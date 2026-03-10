@@ -96,8 +96,8 @@ export default class MainScene extends Phaser.Scene {
 			config.scatterChance,
 		);
 
-		const groundData = toGroundTileIndices(ground, wall, waterMask, config.theme);
-		const wallData = toWallTileIndices(wall, config.theme);
+		const groundData = toGroundTileIndices(ground, wall, waterMask, config.theme, config.seed);
+		const wallData = toWallTileIndices(wall, config.theme, config.seed);
 		const decorationData = decorationGridToTileIndices(decorationGrid, config.theme);
 
 		this.createGroundLayer(groundData);

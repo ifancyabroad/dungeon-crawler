@@ -21,6 +21,8 @@ export interface MapGenConfig {
 	decorationWeights: Record<string, number>;
 	/** Scatter chance for non-path decorations (0–1). */
 	scatterChance: number;
+	/** Target fraction of cells that are void (0–0.5). Higher = more irregular. */
+	shapeVoidTarget: number;
 }
 
 /** Result of generateMap: layers (logical tile types), spawn, and path mask for connected path decoration. */

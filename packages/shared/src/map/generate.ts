@@ -1,11 +1,104 @@
 /**
  * Deterministic map generation: BSP (rooms + corridors) and cave (cellular automata).
- * Uses injected RNG only.
+ * Uses injected RNG only. Supports irregular playable shapes with void regions.
  */
 
 import type { Rng } from "../rng";
 import { TILE_TYPE } from "./config";
 import type { GeneratedMap, MapGenConfig } from "./types";
+
+/**
+ * Builds a playable-shape mask: true = cell may be floor, false = void (always wall-bounded).
+ * Uses value noise + radial falloff so edges tend to be void, then keeps the connected
+ * component containing the map center so the playable area is one contiguous region.
+ */
+function buildShapeMask(width: number, height: number, voidTarget: number, rng: Rng): boolean[][] {
+	const cx = (width - 1) / 2;
+	const cy = (height - 1) / 2;
+	const maxDist = Math.max(
+		Math.hypot(cx, cy),
+		Math.hypot(width - 1 - cx, cy),
+		Math.hypot(cx, height - 1 - cy),
+		Math.hypot(width - 1 - cx, height - 1 - cy),
+		1,
+	);
+
+	// 1) Raw value noise [0, 1] in deterministic order
+	const raw: number[][] = Array.from({ length: height }, () =>
+		Array.from({ length: width }, () => rng()),
+	);
+
+	// 2) Light 2x2-style blur for slight coherence but keep edges rough (no full 3x3)
+	const blur: number[][] = Array.from({ length: height }, () => Array(width).fill(0));
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			let sum = raw[y][x];
+			let n = 1;
+			for (const [dx, dy] of [
+				[0, 1],
+				[1, 0],
+				[1, 1],
+			]) {
+				const nx = x + dx;
+				const ny = y + dy;
+				if (nx < width && ny < height) {
+					sum += raw[ny][nx];
+					n++;
+				}
+			}
+			blur[y][x] = sum / n;
+		}
+	}
+
+	// 3) Playable = value above threshold; threshold rises toward edges. Per-cell jitter adds roughness.
+	const ROUGHNESS_JITTER = 0.28;
+	const playableRaw: boolean[][] = Array.from({ length: height }, () => Array(width).fill(false));
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			const dist = Math.hypot(x - cx, y - cy);
+			const t = Math.max(0, 1 - dist / maxDist);
+			const baseThreshold = 0.2 + (1 - t) * 0.55 * (1 - voidTarget * 2);
+			const jitter = (rng() - 0.5) * ROUGHNESS_JITTER;
+			playableRaw[y][x] = blur[y][x] > baseThreshold + jitter;
+		}
+	}
+
+	// 4) Keep only connected component containing map center
+	const scx = Math.floor(cx);
+	const scy = Math.floor(cy);
+	if (!playableRaw[scy][scx]) {
+		playableRaw[scy][scx] = true;
+	}
+	const component = floodFillMask(playableRaw, scx, scy, width, height);
+	const mask: boolean[][] = Array.from({ length: height }, () => Array(width).fill(false));
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			mask[y][x] = component.has(`${x},${y}`);
+		}
+	}
+	return mask;
+}
+
+function floodFillMask(
+	mask: boolean[][],
+	startX: number,
+	startY: number,
+	w: number,
+	h: number,
+): Set<string> {
+	const out = new Set<string>();
+	const stack: [number, number][] = [[startX, startY]];
+	while (stack.length > 0) {
+		const [x, y] = stack.pop()!;
+		const key = `${x},${y}`;
+		if (out.has(key)) continue;
+		if (x < 0 || x >= w || y < 0 || y >= h) continue;
+		if (!mask[y][x]) continue;
+		out.add(key);
+		stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+	}
+	return out;
+}
 
 const MIN_ROOM_WIDTH = 4;
 const MIN_ROOM_HEIGHT = 4;
@@ -143,11 +236,15 @@ function floodFillFloor(
 
 /**
  * Cave generation: cellular automata for organic, cavern-like layouts with large open spaces.
+ * Playable area is constrained to a noise-based mask; void regions are always wall.
  */
 function generateCave(config: MapGenConfig, rng: Rng): GeneratedMap {
 	const { width, height } = config;
 	const mapCenterX = width / 2;
 	const mapCenterY = height / 2;
+	const voidTarget = Math.max(0.05, Math.min(0.45, config.shapeVoidTarget));
+	const mask = buildShapeMask(width, height, voidTarget, rng);
+
 	const ground: number[][] = Array.from({ length: height }, () =>
 		Array.from({ length: width }, () => TILE_TYPE.FLOOR),
 	);
@@ -158,19 +255,29 @@ function generateCave(config: MapGenConfig, rng: Rng): GeneratedMap {
 		Array.from({ length: width }, () => 0),
 	);
 
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			if (!mask[y][x]) ground[y][x] = TILE_TYPE.VOID;
+		}
+	}
+
 	const floorChance = Math.max(0.35, Math.min(0.55, config.caveFloorChance));
-	// 1) Random fill (interior only; border stays wall)
+	const inBounds = (x: number, y: number) => mask[y][x];
+
+	// 1) Random fill (interior only; border / void stays wall)
 	for (let y = 1; y < height - 1; y++) {
 		for (let x = 1; x < width - 1; x++) {
+			if (!inBounds(x, y)) continue;
 			ground[y][x] = rng() < floorChance ? TILE_TYPE.FLOOR : TILE_TYPE.WALL;
 		}
 	}
 
-	// 2) Cellular automata smoothing
+	// 2) Cellular automata smoothing (void / out-of-mask count as wall for neighbors)
 	for (let iter = 0; iter < CA_ITERATIONS; iter++) {
 		const next = ground.map((row) => [...row]);
 		for (let y = 1; y < height - 1; y++) {
 			for (let x = 1; x < width - 1; x++) {
+				if (!inBounds(x, y)) continue;
 				const neighbors = countFloorNeighbors(ground, x, y, width, height);
 				next[y][x] =
 					neighbors >= CA_BIRTH_THRESHOLD ||
@@ -186,29 +293,34 @@ function generateCave(config: MapGenConfig, rng: Rng): GeneratedMap {
 		}
 	}
 
-	// 3) Ensure border is wall
+	// 3) Ensure border and shape boundary are wall
 	for (let x = 0; x < width; x++) {
-		ground[0][x] = TILE_TYPE.WALL;
-		ground[height - 1][x] = TILE_TYPE.WALL;
+		ground[0][x] = !mask[0][x] ? TILE_TYPE.VOID : TILE_TYPE.WALL;
+		ground[height - 1][x] = !mask[height - 1][x] ? TILE_TYPE.VOID : TILE_TYPE.WALL;
 	}
 	for (let y = 0; y < height; y++) {
-		ground[y][0] = TILE_TYPE.WALL;
-		ground[y][width - 1] = TILE_TYPE.WALL;
+		ground[y][0] = !mask[y][0] ? TILE_TYPE.VOID : TILE_TYPE.WALL;
+		ground[y][width - 1] = !mask[y][width - 1] ? TILE_TYPE.VOID : TILE_TYPE.WALL;
+	}
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			if (!mask[y][x]) ground[y][x] = TILE_TYPE.VOID;
+		}
 	}
 
-	// 4) Keep only connected component containing map center
+	// 4) Keep only connected component containing map center (only through FLOOR)
 	const cx = Math.floor(mapCenterX);
 	const cy = Math.floor(mapCenterY);
 	const component = floodFillFloor(ground, cx, cy, width, height);
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			if (!component.has(`${x},${y}`)) {
-				ground[y][x] = TILE_TYPE.WALL;
+				ground[y][x] = !mask[y][x] ? TILE_TYPE.VOID : TILE_TYPE.WALL;
 			}
 		}
 	}
 
-	// 5) Wall layer: EMPTY where playable (component), WALL elsewhere. Ground stays FLOOR everywhere so walls sit on ground.
+	// 5) Wall layer: EMPTY where playable (component), WALL elsewhere. Void keeps VOID ground.
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			wall[y][x] = component.has(`${x},${y}`) ? TILE_TYPE.EMPTY : TILE_TYPE.WALL;
@@ -216,6 +328,7 @@ function generateCave(config: MapGenConfig, rng: Rng): GeneratedMap {
 	}
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
+			if (ground[y][x] === TILE_TYPE.VOID) continue;
 			ground[y][x] = TILE_TYPE.FLOOR;
 		}
 	}
@@ -249,12 +362,16 @@ export function generateMap(config: MapGenConfig, rng: Rng): GeneratedMap {
 /**
  * BSP: rooms in leaf regions connected by corridors. Ground FLOOR everywhere so walls sit on ground.
  * pathLayer marks corridor cells for path decoration. Spawn = room center nearest map center.
+ * Cells outside the shape mask become void (ground VOID, wall WALL).
  */
 function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 	const { width, height } = config;
 	const mapCenterX = width / 2;
 	const mapCenterY = height / 2;
-	// Ground: FLOOR everywhere so walls always sit on a ground tile
+	const voidTarget = Math.max(0.05, Math.min(0.45, config.shapeVoidTarget));
+	const mask = buildShapeMask(width, height, voidTarget, rng);
+
+	// Ground: FLOOR everywhere so walls always sit on a ground tile (void applied later)
 	const ground: number[][] = Array.from({ length: height }, () =>
 		Array.from({ length: width }, () => TILE_TYPE.FLOOR),
 	);
@@ -270,6 +387,14 @@ function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 	if (leaves.length === 0) {
 		const cx = width >> 1;
 		const cy = height >> 1;
+		if (!mask[cy][cx]) {
+			ground[cy][cx] = TILE_TYPE.VOID;
+			wall[cy][cx] = TILE_TYPE.WALL;
+			const fallback = findSpawnInMask(mask, width, height, mapCenterX, mapCenterY);
+			wall[fallback.y][fallback.x] = TILE_TYPE.EMPTY;
+			pathLayer[fallback.y][fallback.x] = 1;
+			return { ground, wall, spawn: fallback, pathLayer };
+		}
 		wall[cy][cx] = TILE_TYPE.EMPTY;
 		pathLayer[cy][cx] = 1;
 		return { ground, wall, spawn: { x: cx, y: cy }, pathLayer };
@@ -300,11 +425,22 @@ function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 		}
 	}
 
-	// Spawn in the room whose center is closest to the map center
+	// Apply shape: void cells outside mask
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			if (!mask[y][x]) {
+				ground[y][x] = TILE_TYPE.VOID;
+				wall[y][x] = TILE_TYPE.WALL;
+			}
+		}
+	}
+
+	// Spawn: room center closest to map center that remains in mask (and is floor)
 	let bestDist = Infinity;
 	let spawn = getRoomCenter(rooms[0]);
 	for (const room of rooms) {
 		const c = getRoomCenter(room);
+		if (!mask[c.y][c.x]) continue;
 		const dx = c.x - mapCenterX;
 		const dy = c.y - mapCenterY;
 		const dist = dx * dx + dy * dy;
@@ -313,5 +449,30 @@ function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 			spawn = c;
 		}
 	}
+	if (ground[spawn.y][spawn.x] === TILE_TYPE.VOID) {
+		spawn = findSpawnInMask(mask, width, height, mapCenterX, mapCenterY);
+	}
 	return { ground, wall, spawn: { x: spawn.x, y: spawn.y }, pathLayer };
+}
+
+function findSpawnInMask(
+	mask: boolean[][],
+	width: number,
+	height: number,
+	centerX: number,
+	centerY: number,
+): { x: number; y: number } {
+	let bestDist = Infinity;
+	let best = { x: width >> 1, y: height >> 1 };
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			if (!mask[y][x]) continue;
+			const dist = (x - centerX) ** 2 + (y - centerY) ** 2;
+			if (dist < bestDist) {
+				bestDist = dist;
+				best = { x, y };
+			}
+		}
+	}
+	return best;
 }

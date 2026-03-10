@@ -39,6 +39,9 @@ export const DEFAULT_CAVE_FLOOR_CHANCE = 0.45;
 /** BSP only: default room inset from leaf bounds (1–3). */
 export const DEFAULT_BSP_ROOM_INSET = 1;
 
+/** Default target fraction of map cells that are void (0–0.5). Single source of truth for map gen. */
+export const DEFAULT_SHAPE_VOID_TARGET = 0.2;
+
 /** Default floor config for new games (no seed; seed is run seed + floor index). Same shape as FloorConfig. */
 export const DEFAULT_FLOOR_CONFIG: Omit<MapGenConfig, "seed"> = {
 	width: DEFAULT_MAP_WIDTH,
@@ -49,4 +52,5 @@ export const DEFAULT_FLOOR_CONFIG: Omit<MapGenConfig, "seed"> = {
 	bspRoomInset: DEFAULT_BSP_ROOM_INSET,
 	decorationWeights: DEFAULT_DECORATION_WEIGHTS,
 	scatterChance: DEFAULT_SCATTER_CHANCE,
+	shapeVoidTarget: DEFAULT_SHAPE_VOID_TARGET,
 };
