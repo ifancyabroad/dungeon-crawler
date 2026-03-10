@@ -24,6 +24,7 @@ export {
 	buildGameStateFromPersisted,
 	createEmptyFloorState,
 	createInitialState,
+	createWalkableContext,
 	gameStateToPersisted,
 	getHero,
 	idxToXY,

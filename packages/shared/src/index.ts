@@ -40,6 +40,7 @@ export {
 	buildGameStateFromPersisted,
 	createEmptyFloorState,
 	createInitialState,
+	createWalkableContext,
 	gameStateToPersisted,
 	getHero,
 	computeWalkableMaskForFloor,

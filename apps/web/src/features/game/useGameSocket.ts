@@ -38,8 +38,15 @@ export function useGameSocket(gameId: string | null) {
 		socket.on("error", (payload: { reason?: string }) => {
 			const reason = payload.reason ?? "Connection or validation issue";
 			console.warn("[game socket] error:", reason);
-			const revertMessage = useGameStore.getState().revertToConfirmed();
-			useErrorStore.getState().showError(revertMessage ?? reason);
+			// turn_mismatch = we're ahead of server (e.g. holding key). Don't revert; server will catch up via state events.
+			if (reason !== "turn_mismatch") {
+				useGameStore.getState().revertToConfirmed();
+			}
+			// Only show modal for unexpected errors, not for invalid move or server catching up
+			const silentReasons = ["move_blocked", "move_out_of_bounds", "turn_mismatch"];
+			if (!silentReasons.includes(reason)) {
+				useErrorStore.getState().showError("Position synced with server.");
+			}
 		});
 
 		socket.on("disconnect", () => {

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import type Phaser from "phaser";
 import { createGame } from "../game/createGame";
 import { useMapStore } from "../features/map/mapStore";
-import { useGameStore } from "../features/game/gameStore";
 import { Loader } from "./Loader";
 
 type Props = {
@@ -10,12 +9,9 @@ type Props = {
 	children?: React.ReactNode;
 };
 
-/** Main scene exposes this when running (for server-authoritative hero sync). */
-type MainSceneWithHero = Phaser.Scene & { setHeroPosition?(idx: number): void };
-
 /**
  * Hosts the Phaser game canvas (Preload + Main scene).
- * Registers the game instance in mapStore; syncs authoritative hero position from gameStore into Main scene.
+ * Registers the game instance in mapStore. Hero position is synced from gameStore inside Main scene for minimal latency.
  */
 const PRELOAD_COMPLETE_KEY = "onPreloadComplete";
 
@@ -24,7 +20,6 @@ export default function GameCanvas({ className, children }: Props) {
 	const gameRef = useRef<Phaser.Game | null>(null);
 	const [showLoadingOverlay, setShowLoadingOverlay] = useState(true);
 	const setGameRef = useMapStore((s) => s.setGameRef);
-	const hero = useGameStore((s) => s.hero);
 
 	// Mount: create Phaser game, register in store. Unmount: destroy and clear.
 	useEffect(() => {
@@ -39,13 +34,6 @@ export default function GameCanvas({ className, children }: Props) {
 			gameRef.current = null;
 		};
 	}, [setGameRef]);
-
-	// When server state updates hero, push idx into Main scene (no-op if scene not ready). Scene converts idx to pixels.
-	useEffect(() => {
-		const game = useMapStore.getState().gameRef;
-		const mainScene = game?.scene?.getScene("Main") as MainSceneWithHero | undefined;
-		mainScene?.setHeroPosition?.(hero.idx);
-	}, [hero.idx]);
 
 	return (
 		<div

@@ -23,6 +23,10 @@ describe("gameStore (optimistic)", () => {
 			lastConfirmedState: null,
 			pendingActions: [],
 			actionInProgress: false,
+			lastMoveSentAt: 0,
+			lastInvalidMoveAt: 0,
+			unsentMoves: [],
+			walkableByFloor: null,
 		});
 	});
 
@@ -42,6 +46,29 @@ describe("gameStore (optimistic)", () => {
 			floorIndex: 0,
 			idx: getHero(state)!.idx,
 		});
+	});
+
+	it("setStateFromServer with different gameId always applies (e.g. debug Generate map)", () => {
+		const state1 = makeInitialState();
+		useGameStore.getState().setStateFromServer({
+			gameId: "g1",
+			turn: state1.turn,
+			state: state1,
+		});
+		useGameStore.getState().sendAction({ type: "move", direction: "right" });
+		useGameStore.getState().sendAction({ type: "move", direction: "right" });
+		const state2 = makeInitialState();
+		useGameStore.getState().setStateFromServer({
+			gameId: "g2",
+			turn: state2.turn,
+			state: state2,
+		});
+		const s = useGameStore.getState();
+		expect(s.gameId).toBe("g2");
+		expect(s.turn).toBe(0);
+		expect(s.state).toEqual(state2);
+		expect(s.pendingActions).toEqual([]);
+		expect(s.unsentMoves).toEqual([]);
 	});
 
 	it("sendAction applies optimistically and emits when socket is set", () => {

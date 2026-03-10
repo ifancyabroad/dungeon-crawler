@@ -125,6 +125,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				}
 
 				if (expectedTurn !== state.turn) {
+					socket.emit("state", { gameId, turn: state.turn, state });
 					socket.emit("error", { reason: "turn_mismatch", currentTurn: state.turn });
 					return;
 				}
@@ -134,10 +135,12 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					result = applyAuthoritativeAction(gameId, state, parsed.data);
 				} catch (err) {
 					console.error("[action] applyAuthoritativeAction failed:", err);
+					socket.emit("state", { gameId, turn: state.turn, state });
 					socket.emit("error", { reason: "internal_error" });
 					return;
 				}
 				if (!result.ok) {
+					socket.emit("state", { gameId, turn: state.turn, state });
 					socket.emit("error", { reason: result.reason });
 					return;
 				}

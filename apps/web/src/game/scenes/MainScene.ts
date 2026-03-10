@@ -36,12 +36,21 @@ export default class MainScene extends Phaser.Scene {
 	private mapHeight = DEFAULT_MAP_HEIGHT;
 	/** One-shot unsubscribe when we're waiting for state; cleaned up in shutdown(). */
 	private unsubWaitForState: (() => void) | null = null;
+	/** Unsubscribe from hero position sync; cleaned up in shutdown(). */
+	private unsubHeroSync: (() => void) | null = null;
 
 	constructor() {
 		super("Main");
 	}
 
 	create() {
+		this.events.once("shutdown", () => {
+			this.unsubWaitForState?.();
+			this.unsubWaitForState = null;
+			this.unsubHeroSync?.();
+			this.unsubHeroSync = null;
+		});
+
 		const { gameId, state } = useGameStore.getState();
 		const fromState = state ? getMapConfigAndHeroFromState(state) : null;
 
@@ -52,7 +61,7 @@ export default class MainScene extends Phaser.Scene {
 		}
 	}
 
-	/** Subscribe to game store; when state arrives, build map once and unsubscribe. */
+	/** When joining without state: subscribe until state arrives, build map once, then unsubscribe. */
 	private subscribeUntilStateArrives() {
 		this.unsubWaitForState = useGameStore.subscribe((s) => {
 			const fromState = s.state ? getMapConfigAndHeroFromState(s.state) : null;
@@ -60,10 +69,6 @@ export default class MainScene extends Phaser.Scene {
 			this.unsubWaitForState?.();
 			this.unsubWaitForState = null;
 			if (this.scene.isActive()) this.buildMapAndHero(fromState.config, fromState.hero);
-		});
-		this.events.once("shutdown", () => {
-			this.unsubWaitForState?.();
-			this.unsubWaitForState = null;
 		});
 	}
 
@@ -111,7 +116,14 @@ export default class MainScene extends Phaser.Scene {
 		this.player.setDepth(10);
 
 		this.cameras.main.setBounds(0, 0, this.mapWidth * TILE_WIDTH, this.mapHeight * TILE_HEIGHT);
-		this.cameras.main.startFollow(this.player, true);
+		this.cameras.main.startFollow(this.player, true, 1, 1);
+
+		let lastSyncedIdx = heroPos.idx;
+		this.unsubHeroSync = useGameStore.subscribe((state) => {
+			if (state.hero.idx === lastSyncedIdx) return;
+			lastSyncedIdx = state.hero.idx;
+			this.syncHeroToStore(state.hero.idx);
+		});
 	}
 
 	private attachKeyboardOnline() {
@@ -124,30 +136,13 @@ export default class MainScene extends Phaser.Scene {
 		);
 	}
 
-	/**
-	 * Sync hero position from state. Converts idx to tile x,y then to pixel position.
-	 * Uses actionInProgress so the next action cannot be sent until this move's tween completes.
-	 */
-	setHeroPosition(idx: number) {
+	/** Apply hero tile index from store to sprite position (called from store subscription). */
+	private syncHeroToStore(idx: number) {
+		if (!this.player) return;
 		const { x, y } = idxToXY(idx, this.mapWidth);
 		this.playerTileX = x;
 		this.playerTileY = y;
-		const worldX = x * TILE_WIDTH + TILE_WIDTH / 2;
-		const worldY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
-		if (!this.player) return;
-		this.tweens.killTweensOf(this.player);
-		useGameStore.getState().setActionInProgress(false);
-		useGameStore.getState().setActionInProgress(true);
-		this.tweens.add({
-			targets: this.player,
-			x: worldX,
-			y: worldY,
-			duration: 80,
-			ease: "Power2",
-			onComplete: () => {
-				useGameStore.getState().setActionInProgress(false);
-			},
-		});
+		this.player.setPosition(x * TILE_WIDTH + TILE_WIDTH / 2, y * TILE_HEIGHT + TILE_HEIGHT / 2);
 	}
 
 	private createGroundLayer(groundData: number[][]) {

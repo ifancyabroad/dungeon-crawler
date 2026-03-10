@@ -21,6 +21,19 @@ export interface ApplyActionContext {
 	getWalkableMask(floorIndex: number): Uint8Array;
 }
 
+/** Build context from precomputed walkability masks (O(1) per apply). Use when masks are cached. */
+export function createWalkableContext(masks: Uint8Array[]): ApplyActionContext {
+	return {
+		getWalkableMask(fi: number): Uint8Array {
+			const mask = masks[fi];
+			if (mask === undefined) {
+				throw new Error(`createWalkableContext: missing walkability mask for floor ${fi}`);
+			}
+			return mask;
+		},
+	};
+}
+
 const DIRECTION_DELTA: Record<"up" | "down" | "left" | "right", { dx: number; dy: number }> = {
 	up: { dx: 0, dy: -1 },
 	down: { dx: 0, dy: 1 },
