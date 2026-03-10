@@ -75,6 +75,7 @@ export {
 	type GameSnapshotDoc,
 	type GameState,
 	type MoveAction,
+	type PersistedDynamicState,
 } from "./game";
 
 export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";

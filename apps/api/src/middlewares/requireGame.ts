@@ -1,10 +1,8 @@
 import type { RequestHandler } from "express";
 import { GameSession } from "../models/gameSession.model";
 import { getCookie } from "../lib/cookies";
-import { hashToken } from "../lib/gameToken";
+import { COOKIE_NAME, hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
-
-const COOKIE_NAME = "game_token";
 
 /**
  * Resolves session from game_token cookie (find by tokenHash).

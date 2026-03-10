@@ -4,24 +4,21 @@
  * Action log turn = newState.turn (turn after apply).
  */
 
-import type { Server } from "socket.io";
-import type { Socket } from "socket.io";
+import type { Server, Socket } from "socket.io";
 import { GameSession } from "../models/gameSession.model";
-import { GameActionLog } from "../models/gameActionLog.model";
-import { GameSnapshot } from "../models/gameSnapshot.model";
-import { ActionSchema, gameStateToPersisted } from "@app/shared";
+import { ActionSchema, gameStateToPersisted, PersistedDynamicStateSchema } from "@app/shared";
+import type { GameState } from "@app/shared";
 import {
 	ensureSessionLoaded,
 	setSessionState,
 	reconstructState,
+	persistAction,
 	applyAuthoritativeAction,
 	StateCorruptError,
 } from "../services/gameState.service";
 import { withGameLock } from "../services/gameLock";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
-import { runTransaction } from "../config/db";
-import { PersistedDynamicStateSchema } from "@app/shared";
 
 /** Auth context set on socket after successful join. */
 interface GameSocketData {
@@ -32,6 +29,23 @@ interface GameSocketData {
 const SNAPSHOT_INTERVAL = 50;
 
 export type GetToken = (socket: Socket) => string | undefined;
+
+async function loadStateOrEmitError(socket: Socket, gameId: string): Promise<GameState | null> {
+	try {
+		const state = await ensureSessionLoaded(gameId);
+		if (!state) {
+			socket.emit("error", { reason: "state_not_found" });
+			return null;
+		}
+		return state;
+	} catch (err) {
+		if (err instanceof StateCorruptError) {
+			socket.emit("error", { reason: "state_corrupt" });
+			return null;
+		}
+		throw err;
+	}
+}
 
 /**
  * Register game-related socket events (join, action) on a connected socket.
@@ -59,20 +73,8 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 
 		await GameSession.updateOne({ gameId }, { $set: { lastSeenAt: new Date() } }).exec();
 
-		let state;
-		try {
-			state = await ensureSessionLoaded(gameId);
-		} catch (err) {
-			if (err instanceof StateCorruptError) {
-				socket.emit("error", { reason: "state_corrupt" });
-				return;
-			}
-			throw err;
-		}
-		if (!state) {
-			socket.emit("error", { reason: "state_not_found" });
-			return;
-		}
+		const state = await loadStateOrEmitError(socket, gameId);
+		if (!state) return;
 
 		(socket.data as GameSocketData).gameId = gameId;
 		(socket.data as GameSocketData).authed = true;
@@ -109,20 +111,8 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 			}
 
 			await withGameLock(gameId, async () => {
-				let state;
-				try {
-					state = await ensureSessionLoaded(gameId);
-				} catch (err) {
-					if (err instanceof StateCorruptError) {
-						socket.emit("error", { reason: "state_corrupt" });
-						return;
-					}
-					throw err;
-				}
-				if (!state) {
-					socket.emit("error", { reason: "state_not_found" });
-					return;
-				}
+				const state = await loadStateOrEmitError(socket, gameId);
+				if (!state) return;
 
 				if (expectedTurn !== state.turn) {
 					socket.emit("state", { gameId, turn: state.turn, state });
@@ -149,56 +139,24 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				const persistedState = gameStateToPersisted(result.state);
 				PersistedDynamicStateSchema.parse(persistedState);
 
-				try {
-					await runTransaction(async (session) => {
-						await GameActionLog.create(
-							[{ gameId, turn: newTurn, action: parsed.data }],
-							{ session },
-						);
-						if (newTurn % SNAPSHOT_INTERVAL === 0) {
-							await GameSnapshot.create(
-								[
-									{
-										gameId,
-										turn: newTurn,
-										state: persistedState,
-										createdAt: new Date(),
-									},
-								],
-								{ session },
-							);
-							await GameSession.updateOne(
-								{ gameId },
-								{ $set: { latestSnapshotTurn: newTurn, lastSeenAt: new Date() } },
-								{ session },
-							);
-						} else {
-							await GameSession.updateOne(
-								{ gameId },
-								{ $set: { lastSeenAt: new Date() } },
-								{ session },
-							);
-						}
-					});
-				} catch (err: unknown) {
-					const isDuplicate =
-						err &&
-						typeof err === "object" &&
-						"code" in err &&
-						(err as { code: number }).code === 11000;
-					if (isDuplicate) {
-						const current = await reconstructState(gameId);
-						if (current) {
-							setSessionState(gameId, current);
-							io.to(gameId).emit("state", {
-								gameId,
-								turn: current.turn,
-								state: current,
-							});
-						}
-						return;
+				const persisted = await persistAction(
+					gameId,
+					newTurn,
+					parsed.data,
+					persistedState,
+					SNAPSHOT_INTERVAL,
+				);
+				if (!persisted) {
+					const current = await reconstructState(gameId);
+					if (current) {
+						setSessionState(gameId, current);
+						io.to(gameId).emit("state", {
+							gameId,
+							turn: current.turn,
+							state: current,
+						});
 					}
-					throw err;
+					return;
 				}
 
 				setSessionState(gameId, result.state);

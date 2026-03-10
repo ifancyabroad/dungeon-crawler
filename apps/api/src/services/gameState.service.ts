@@ -17,10 +17,12 @@ import {
 	type ApplyActionContext,
 	type ApplyActionResult,
 	type GameState,
+	type PersistedDynamicState,
 } from "@app/shared";
 import { GameActionLog } from "../models/gameActionLog.model";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
+import { runTransaction } from "../config/db";
 
 interface SessionEntry {
 	state: GameState;
@@ -136,6 +138,48 @@ export function applyAuthoritativeAction(
 
 export function deleteSessionState(gameId: string): void {
 	sessionStore.delete(gameId);
+}
+
+/**
+ * Persist an action (and periodic snapshot) in a single transaction.
+ * Returns false without throwing on duplicate-key error (action already persisted at this turn).
+ */
+export async function persistAction(
+	gameId: string,
+	turn: number,
+	action: Action,
+	persistedState: PersistedDynamicState,
+	snapshotInterval: number,
+): Promise<boolean> {
+	try {
+		const now = new Date();
+		const isSnapshotTurn = turn % snapshotInterval === 0;
+
+		await runTransaction(async (session) => {
+			await GameActionLog.create([{ gameId, turn, action }], { session });
+
+			if (isSnapshotTurn) {
+				await GameSnapshot.create(
+					[{ gameId, turn, state: persistedState, createdAt: now }],
+					{ session },
+				);
+			}
+
+			const $set: Record<string, unknown> = { lastSeenAt: now };
+			if (isSnapshotTurn) $set.latestSnapshotTurn = turn;
+			await GameSession.updateOne({ gameId }, { $set }, { session });
+		});
+
+		return true;
+	} catch (err: unknown) {
+		const isDuplicate =
+			err &&
+			typeof err === "object" &&
+			"code" in err &&
+			(err as { code: number }).code === 11000;
+		if (isDuplicate) return false;
+		throw err;
+	}
 }
 
 /**

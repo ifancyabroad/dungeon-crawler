@@ -1,5 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
+export const COOKIE_NAME = "game_token";
+
 /**
  * SHA-256(token + pepper). Never log the token.
  */

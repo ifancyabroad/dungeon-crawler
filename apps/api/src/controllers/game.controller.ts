@@ -10,11 +10,10 @@ import {
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { getSessionState, reconstructState, setSessionState } from "../services/gameState.service";
-import { hashToken } from "../lib/gameToken";
+import { COOKIE_NAME, hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
 import { runTransaction } from "../config/db";
 
-const COOKIE_NAME = "game_token";
 const COOKIE_OPTS = {
 	httpOnly: true,
 	sameSite: "lax" as const,
