@@ -115,7 +115,7 @@ export default class MainScene extends Phaser.Scene {
 		this.player.setOrigin(0.5, 0.5);
 		this.player.setDepth(10);
 
-		this.cameras.main.setBounds(0, 0, this.mapWidth * TILE_WIDTH, this.mapHeight * TILE_HEIGHT);
+		// No setBounds: keep hero always centered; at map edges the camera may show empty space.
 		this.cameras.main.startFollow(this.player, true, 1, 1);
 
 		let lastSyncedIdx = heroPos.idx;
