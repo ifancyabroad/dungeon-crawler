@@ -28,6 +28,9 @@ export {
 	type DecorationType,
 	type MapGenAlgorithm,
 	type MapGenConfig,
+	computeOpacityMask,
+	computeVisibility,
+	mergeExplored,
 } from "./map";
 export { createRng, createInitialRngState, createRngFromState, type Rng } from "./rng";
 
@@ -38,6 +41,7 @@ export {
 	applyAction,
 	applyActionWithDerivedContext,
 	buildGameStateFromPersisted,
+	createActionContext,
 	createEmptyFloorState,
 	createInitialState,
 	createWalkableContext,
@@ -48,6 +52,7 @@ export {
 	regenerateBaseMaps,
 	xyToIdx,
 	MAP_GEN_VERSION,
+	VISION_RADIUS,
 	ActorAttributesSchema,
 	ActorDefSchema,
 	ActorsByIdSchema,

@@ -25,3 +25,4 @@ export type { BuildDecorationLayerResult, DecorationType } from "./decorations";
 export { isCellWalkable } from "./walkability";
 export { computeWalkableMaskForFloor } from "./walkableMask";
 export { regenerateBaseMaps, type BaseLayerFloor } from "./baseLayers";
+export { computeOpacityMask, computeVisibility, mergeExplored } from "./visibility";

@@ -8,7 +8,9 @@ import {
 	ActionSchema,
 	applyAction,
 	buildGameStateFromPersisted,
+	computeOpacityMask,
 	computeWalkableMaskForFloor,
+	createActionContext,
 	PersistedDynamicStateSchema,
 	regenerateBaseMaps,
 	type Action,
@@ -23,6 +25,7 @@ import { GameSnapshot } from "../models/gameSnapshot.model";
 interface SessionEntry {
 	state: GameState;
 	walkableByFloor: Uint8Array[];
+	opacityByFloor: Uint8Array[];
 }
 
 /** Thrown when snapshot or action log fails Zod parse (distinct from session/snapshot not found). */
@@ -39,15 +42,19 @@ export class StateCorruptError extends Error {
 
 const sessionStore = new Map<string, SessionEntry>();
 
-function computeWalkableByFloor(state: GameState): Uint8Array[] {
+function computeFloorMasks(state: GameState): { walkable: Uint8Array[]; opacity: Uint8Array[] } {
 	const baseLayers = regenerateBaseMaps(
 		state.seed,
 		state.floors.map((f) => f.config),
 		state.mapGenVersion,
 	);
-	return baseLayers.map((base, i) =>
+	const walkable = baseLayers.map((base, i) =>
 		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
 	);
+	const opacity = baseLayers.map((base) =>
+		computeOpacityMask(base.wall, base.width, base.height),
+	);
+	return { walkable, opacity };
 }
 
 export function getSessionState(gameId: string): GameState | undefined {
@@ -59,10 +66,15 @@ export function getSessionWalkable(gameId: string): Uint8Array[] | undefined {
 	return sessionStore.get(gameId)?.walkableByFloor;
 }
 
-/** Set session state and recompute walkability masks for all floors. No optional masks; callers never pass walkableByFloor. */
+/** Returns opacity mask per floor (Uint8Array, 1=opaque). Undefined if session not loaded. */
+export function getSessionOpacity(gameId: string): Uint8Array[] | undefined {
+	return sessionStore.get(gameId)?.opacityByFloor;
+}
+
+/** Set session state and recompute walkability + opacity masks for all floors. */
 export function setSessionState(gameId: string, state: GameState): void {
-	const walkableByFloor = computeWalkableByFloor(state);
-	sessionStore.set(gameId, { state, walkableByFloor });
+	const { walkable, opacity } = computeFloorMasks(state);
+	sessionStore.set(gameId, { state, walkableByFloor: walkable, opacityByFloor: opacity });
 }
 
 const inFlightLoads = new Map<string, Promise<GameState | null>>();
@@ -96,36 +108,29 @@ export async function ensureSessionLoaded(gameId: string): Promise<GameState | n
 	return promise;
 }
 
-function makeWalkableContext(masks: Uint8Array[], errorContext?: string): ApplyActionContext {
-	return {
-		getWalkableMask(fi: number): Uint8Array {
-			const mask = masks[fi];
-			if (mask === undefined) {
-				throw new Error(
-					errorContext
-						? `${errorContext}: missing walkability mask for floor ${fi}`
-						: `missing walkability mask for floor ${fi}`,
-				);
-			}
-			return mask;
-		},
-	};
+function makeSessionContext(gameId: string, errorContext?: string): ApplyActionContext {
+	const walkable = getSessionWalkable(gameId);
+	const opacity = getSessionOpacity(gameId);
+	if (!walkable || !opacity) {
+		throw new Error(
+			errorContext
+				? `${errorContext}: missing cached masks for game ${gameId}`
+				: `missing cached masks for game ${gameId}`,
+		);
+	}
+	return createActionContext(walkable, opacity);
 }
 
 /**
  * Apply an action with context built from session cache. Use from socket action handler.
- * Throws if walkability cache is missing for the game or for the hero's floor.
+ * Throws if cached masks are missing for the game.
  */
 export function applyAuthoritativeAction(
 	gameId: string,
 	state: GameState,
 	action: Action,
 ): ApplyActionResult {
-	const masks = getSessionWalkable(gameId);
-	if (!masks) {
-		throw new Error(`applyAuthoritativeAction: no walkability cache for game ${gameId}`);
-	}
-	const context = makeWalkableContext(masks, `applyAuthoritativeAction (game ${gameId})`);
+	const context = makeSessionContext(gameId, "applyAuthoritativeAction");
 	return applyAction(state, action, context);
 }
 
@@ -185,8 +190,8 @@ export async function reconstructState(gameId: string): Promise<GameState | null
 		snapshotState,
 	);
 
-	const walkableByFloor = computeWalkableByFloor(fullState);
-	const applyContext = makeWalkableContext(walkableByFloor, "reconstructState");
+	const { walkable, opacity } = computeFloorMasks(fullState);
+	const applyContext = createActionContext(walkable, opacity);
 
 	for (const entry of logEntries) {
 		let action;

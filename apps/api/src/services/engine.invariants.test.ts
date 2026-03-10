@@ -6,6 +6,8 @@ import {
 	ActionSchema,
 	applyAction,
 	buildGameStateFromPersisted,
+	computeOpacityMask,
+	createActionContext,
 	createInitialState,
 	computeWalkableMaskForFloor,
 	regenerateBaseMaps,
@@ -15,6 +17,21 @@ import {
 } from "@app/shared";
 
 const SEED = 12345;
+
+function buildContext(state: ReturnType<typeof createInitialState>) {
+	const baseLayers = regenerateBaseMaps(
+		state.seed,
+		state.floors.map((f) => f.config),
+		state.mapGenVersion,
+	);
+	const walkable = baseLayers.map((base, i) =>
+		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
+	);
+	const opacity = baseLayers.map((base) =>
+		computeOpacityMask(base.wall, base.width, base.height),
+	);
+	return createActionContext(walkable, opacity);
+}
 
 describe("engine invariants", () => {
 	it("replay from snapshot + N actions equals direct apply with context", () => {
@@ -29,17 +46,7 @@ describe("engine invariants", () => {
 			persisted0,
 		);
 
-		const baseLayers = regenerateBaseMaps(SEED, floorConfigs, state0.mapGenVersion);
-		const masks = baseLayers.map((base, i) =>
-			computeWalkableMaskForFloor(base, fullState0.floors[i]?.state.tileOverrides ?? {}),
-		);
-		const context = {
-			getWalkableMask(fi: number) {
-				const m = masks[fi];
-				if (m === undefined) throw new Error(`missing mask for floor ${fi}`);
-				return m;
-			},
-		};
+		const context = buildContext(fullState0);
 
 		const moveRight = ActionSchema.parse({ type: "move", direction: "right" });
 		const moveDown = ActionSchema.parse({ type: "move", direction: "down" });
@@ -61,16 +68,7 @@ describe("engine invariants", () => {
 		);
 		const actions = [moveRight, moveDown];
 		for (const action of actions) {
-			const masksReplay = baseLayers.map((base, i) =>
-				computeWalkableMaskForFloor(base, replayed.floors[i]?.state.tileOverrides ?? {}),
-			);
-			const ctxReplay = {
-				getWalkableMask(fi: number) {
-					const m = masksReplay[fi];
-					if (m === undefined) throw new Error(`missing mask for floor ${fi}`);
-					return m;
-				},
-			};
+			const ctxReplay = buildContext(replayed);
 			const result = applyAction(replayed, action, ctxReplay);
 			expect(result.ok).toBe(true);
 			replayed = result.ok ? result.state : replayed;
@@ -84,21 +82,7 @@ describe("engine invariants", () => {
 	it("applyAction with context does not call regenerateBaseMaps", async () => {
 		const shared = await import("@app/shared");
 		const state = createInitialState(SEED, DEFAULT_FLOOR_CONFIG);
-		const baseLayers = regenerateBaseMaps(
-			SEED,
-			state.floors.map((f) => f.config),
-			state.mapGenVersion,
-		);
-		const masks = baseLayers.map((base, i) =>
-			computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
-		);
-		const context = {
-			getWalkableMask(fi: number) {
-				const m = masks[fi];
-				if (m === undefined) throw new Error(`missing mask for floor ${fi}`);
-				return m;
-			},
-		};
+		const context = buildContext(state);
 
 		const spy = vi.spyOn(shared, "regenerateBaseMaps");
 		try {
@@ -111,5 +95,25 @@ describe("engine invariants", () => {
 		} finally {
 			spy.mockRestore();
 		}
+	});
+
+	it("explored state grows after move", () => {
+		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG);
+		const exploredBefore = state0.floors[0].state.explored;
+		const exploredCount0 = exploredBefore.filter((v) => v === 1).length;
+		expect(exploredCount0).toBeGreaterThan(0);
+
+		const context = buildContext(state0);
+		const r = applyAction(
+			state0,
+			ActionSchema.parse({ type: "move", direction: "right" }),
+			context,
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+
+		const exploredAfter = r.state.floors[0].state.explored;
+		const exploredCount1 = exploredAfter.filter((v) => v === 1).length;
+		expect(exploredCount1).toBeGreaterThanOrEqual(exploredCount0);
 	});
 });

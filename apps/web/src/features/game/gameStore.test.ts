@@ -27,6 +27,7 @@ describe("gameStore (optimistic)", () => {
 			lastInvalidMoveAt: 0,
 			unsentMoves: [],
 			walkableByFloor: null,
+			opacityByFloor: null,
 		});
 	});
 

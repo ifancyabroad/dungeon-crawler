@@ -8,30 +8,52 @@ import type { Action } from "./actions";
 import type { Actor, FloorConfig, FloorState, GameState } from "./types";
 import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
+import { VISION_RADIUS } from "./config";
 import { createInitialRngState } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
+import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 
-/** Empty floor state (tileOverrides and actorsById). Use when defaulting or building from persisted. */
+/** Empty floor state (tileOverrides, actorsById, explored). Use when defaulting or building from persisted. */
 export function createEmptyFloorState(): FloorState {
-	return { tileOverrides: {}, actorsById: {} };
+	return { tileOverrides: {}, actorsById: {}, explored: [] };
 }
 
-/** Context required for applyAction: idx-based walkability mask per floor. mask[idx] === 1 means walkable. */
+/** Context required for applyAction: walkability + opacity masks per floor. */
 export interface ApplyActionContext {
 	getWalkableMask(floorIndex: number): Uint8Array;
+	/** 1 = opaque (blocks LoS), 0 = transparent. Required for explored-state updates. */
+	getOpacityMask(floorIndex: number): Uint8Array;
 }
 
-/** Build context from precomputed walkability masks (O(1) per apply). Use when masks are cached. */
-export function createWalkableContext(masks: Uint8Array[]): ApplyActionContext {
+/** Build context from precomputed walkability and opacity masks (O(1) per apply). */
+export function createActionContext(
+	walkableMasks: Uint8Array[],
+	opacityMasks: Uint8Array[],
+): ApplyActionContext {
 	return {
 		getWalkableMask(fi: number): Uint8Array {
-			const mask = masks[fi];
+			const mask = walkableMasks[fi];
 			if (mask === undefined) {
-				throw new Error(`createWalkableContext: missing walkability mask for floor ${fi}`);
+				throw new Error(`createActionContext: missing walkability mask for floor ${fi}`);
+			}
+			return mask;
+		},
+		getOpacityMask(fi: number): Uint8Array {
+			const mask = opacityMasks[fi];
+			if (mask === undefined) {
+				throw new Error(`createActionContext: missing opacity mask for floor ${fi}`);
 			}
 			return mask;
 		},
 	};
+}
+
+/** @deprecated Use createActionContext instead. Kept for backward compat; builds a dummy opacity mask. */
+export function createWalkableContext(masks: Uint8Array[]): ApplyActionContext {
+	return createActionContext(
+		masks,
+		masks.map((m) => new Uint8Array(m.length)),
+	);
 }
 
 const DIRECTION_DELTA: Record<"up" | "down" | "left" | "right", { dx: number; dy: number }> = {
@@ -76,7 +98,7 @@ const DEFAULT_ATTRIBUTES = {
 
 /**
  * Create initial game state: one floor, hero actor at spawn, rngState from seed.
- * No walkableByFloor on state; engine computes when needed.
+ * Computes initial explored tiles from spawn visibility.
  */
 export function createInitialState(seed: number, floorConfig: FloorConfig): GameState {
 	const rngState = createInitialRngState(seed);
@@ -84,6 +106,7 @@ export function createInitialState(seed: number, floorConfig: FloorConfig): Game
 	const baseLayers = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION);
 	const floor0 = baseLayers[0];
 	const width = floorConfig.width;
+	const height = floorConfig.height;
 	const spawnIdx = xyToIdx(floor0.spawn.x, floor0.spawn.y, width);
 
 	const heroActor: Actor = {
@@ -98,9 +121,21 @@ export function createInitialState(seed: number, floorConfig: FloorConfig): Game
 		def: { type: "hero", classId: "warrior" },
 	};
 
+	const opMask = computeOpacityMask(floor0.wall, width, height);
+	const visible = computeVisibility(
+		floor0.spawn.x,
+		floor0.spawn.y,
+		width,
+		height,
+		opMask,
+		VISION_RADIUS,
+	);
+	const explored = mergeExplored([], visible, width * height);
+
 	const floorState: FloorState = {
 		...createEmptyFloorState(),
 		actorsById: { hero: heroActor } as Record<import("./types").ActorId, Actor>,
+		explored,
 	};
 
 	return {
@@ -152,7 +187,16 @@ export function applyAction(
 			}
 			const updatedHero: Actor = { ...hero, idx: newIdx };
 			const newActorsById = { ...floor.state.actorsById, [state.heroId]: updatedHero };
-			const newFloorState = { ...floor.state, actorsById: newActorsById };
+
+			const opacityMask = context.getOpacityMask(fi);
+			const visible = computeVisibility(nx, ny, width, height, opacityMask, VISION_RADIUS);
+			const explored = mergeExplored(floor.state.explored, visible, size);
+
+			const newFloorState: FloorState = {
+				...floor.state,
+				actorsById: newActorsById,
+				explored,
+			};
 			const newFloors = state.floors.slice();
 			newFloors[fi] = { ...floor, state: newFloorState };
 
@@ -178,7 +222,7 @@ export function applyAction(
 }
 
 /**
- * Dev/test only: build context from state (regenerateBaseMaps + computeWalkableMaskForFloor per floor) and apply action.
+ * Dev/test only: build context from state (regenerateBaseMaps + masks per floor) and apply action.
  * Do not use in production API; production must pass context from cache.
  */
 export function applyActionWithDerivedContext(state: GameState, action: Action): ApplyActionResult {
@@ -187,16 +231,13 @@ export function applyActionWithDerivedContext(state: GameState, action: Action):
 		state.floors.map((f) => f.config),
 		state.mapGenVersion,
 	);
-	const masks = baseLayers.map((base, i) =>
+	const walkableMasks = baseLayers.map((base, i) =>
 		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
 	);
-	const context: ApplyActionContext = {
-		getWalkableMask(fi: number) {
-			const m = masks[fi];
-			if (m === undefined) throw new Error("missing mask for floor " + fi);
-			return m;
-		},
-	};
+	const opacityMasks = baseLayers.map((base) =>
+		computeOpacityMask(base.wall, base.width, base.height),
+	);
+	const context = createActionContext(walkableMasks, opacityMasks);
 	return applyAction(state, action, context);
 }
 

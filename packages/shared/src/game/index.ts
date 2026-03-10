@@ -22,6 +22,7 @@ export {
 	applyAction,
 	applyActionWithDerivedContext,
 	buildGameStateFromPersisted,
+	createActionContext,
 	createEmptyFloorState,
 	createInitialState,
 	createWalkableContext,
@@ -32,6 +33,7 @@ export {
 	type ApplyActionContext,
 	type ApplyActionResult,
 } from "./engine";
+export { VISION_RADIUS } from "./config";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
 	ActorDefSchema,

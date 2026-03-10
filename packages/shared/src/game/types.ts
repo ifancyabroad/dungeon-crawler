@@ -49,6 +49,8 @@ export interface Actor {
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;
 	actorsById: Record<ActorId, Actor>;
+	/** Flat array (length = width*height). 1 = tile has been seen at least once. Persisted. */
+	explored: number[];
 }
 
 /** Single floor: config + dynamic state. No parallel arrays. */

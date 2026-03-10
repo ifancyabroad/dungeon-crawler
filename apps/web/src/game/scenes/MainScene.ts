@@ -2,11 +2,14 @@ import Phaser from "phaser";
 import {
 	buildDecorationLayer,
 	buildWaterMask,
+	computeOpacityMask,
+	computeVisibility,
 	createRng,
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	generateMap,
 	idxToXY,
+	VISION_RADIUS,
 } from "@app/shared";
 import {
 	ENTITIES,
@@ -25,6 +28,8 @@ import {
 	toWallTileIndices,
 } from "../tiles/mapTileMapping";
 
+const FOG_TINT = 0x555555;
+
 export default class MainScene extends Phaser.Scene {
 	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 	private wallLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -34,6 +39,8 @@ export default class MainScene extends Phaser.Scene {
 	private playerTileY = 0;
 	private mapWidth = DEFAULT_MAP_WIDTH;
 	private mapHeight = DEFAULT_MAP_HEIGHT;
+	/** Precomputed opacity mask for LoS. Set once when map is built. */
+	private opacityMask: Uint8Array | null = null;
 	/** One-shot unsubscribe when we're waiting for state; cleaned up in shutdown(). */
 	private unsubWaitForState: (() => void) | null = null;
 	/** Unsubscribe from hero position sync; cleaned up in shutdown(). */
@@ -104,6 +111,8 @@ export default class MainScene extends Phaser.Scene {
 		this.createDecorationLayer(decorationData);
 		this.createWallLayer(wallData);
 
+		this.opacityMask = computeOpacityMask(wall, config.width, config.height);
+
 		const spawnPos = optionalConfigForSpawn
 			? { x: spawn.x, y: spawn.y }
 			: idxToXY(heroPos.idx, config.width);
@@ -118,11 +127,23 @@ export default class MainScene extends Phaser.Scene {
 		// No setBounds: keep hero always centered; at map edges the camera may show empty space.
 		this.cameras.main.startFollow(this.player, true, 1, 1);
 
+		const currentState = useGameStore.getState().state;
+		if (currentState) {
+			const explored = currentState.floors[currentState.heroFloorIndex]?.state.explored ?? [];
+			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
+		}
+
 		let lastSyncedIdx = heroPos.idx;
-		this.unsubHeroSync = useGameStore.subscribe((state) => {
-			if (state.hero.idx === lastSyncedIdx) return;
-			lastSyncedIdx = state.hero.idx;
-			this.syncHeroToStore(state.hero.idx);
+		this.unsubHeroSync = useGameStore.subscribe((storeState) => {
+			if (storeState.hero.idx === lastSyncedIdx) return;
+			lastSyncedIdx = storeState.hero.idx;
+			this.syncHeroToStore(storeState.hero.idx);
+
+			const gs = storeState.state;
+			if (gs) {
+				const explored = gs.floors[gs.heroFloorIndex]?.state.explored ?? [];
+				this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
+			}
 		});
 	}
 
@@ -195,5 +216,45 @@ export default class MainScene extends Phaser.Scene {
 			return;
 		}
 		wallMap.setCollision(getCollidingIndices());
+	}
+
+	/**
+	 * Update tile rendering for fog of war.
+	 * - Unexplored: tile hidden
+	 * - Explored but not currently visible: dark tint
+	 * - Visible: normal
+	 */
+	private applyFogOfWar(explored: number[], heroX: number, heroY: number) {
+		if (!this.opacityMask) return;
+
+		const visible = computeVisibility(
+			heroX,
+			heroY,
+			this.mapWidth,
+			this.mapHeight,
+			this.opacityMask,
+			VISION_RADIUS,
+		);
+
+		const layers = [this.groundLayer, this.decorationLayer, this.wallLayer];
+		for (const layer of layers) {
+			if (!layer) continue;
+			for (let y = 0; y < this.mapHeight; y++) {
+				for (let x = 0; x < this.mapWidth; x++) {
+					const tile = layer.getTileAt(x, y);
+					if (!tile) continue;
+					const idx = y * this.mapWidth + x;
+					if (visible[idx] === 1) {
+						tile.setAlpha(1);
+						tile.tint = 0xffffff;
+					} else if (explored[idx] === 1) {
+						tile.setAlpha(1);
+						tile.tint = FOG_TINT;
+					} else {
+						tile.setAlpha(0);
+					}
+				}
+			}
+		}
 	}
 }

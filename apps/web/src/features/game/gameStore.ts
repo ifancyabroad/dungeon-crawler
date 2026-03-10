@@ -2,8 +2,9 @@ import { create } from "zustand";
 import {
 	applyAction,
 	applyActionWithDerivedContext,
+	computeOpacityMask,
 	computeWalkableMaskForFloor,
-	createWalkableContext,
+	createActionContext,
 	getHero,
 	regenerateBaseMaps,
 	type GameState,
@@ -60,6 +61,8 @@ interface GameStoreState {
 	lastInvalidMoveAt: number;
 	/** Cached walkability masks per floor (1 = walkable). Set when we receive state from server or revert; used for O(1) apply. */
 	walkableByFloor: Uint8Array[] | null;
+	/** Cached opacity masks per floor (1 = blocks LoS). Used for visibility computation in applyAction. */
+	opacityByFloor: Uint8Array[] | null;
 }
 
 interface GameStoreActions {
@@ -90,17 +93,22 @@ const initialState: GameStoreState = {
 	lastMoveSentAt: 0,
 	lastInvalidMoveAt: 0,
 	walkableByFloor: null,
+	opacityByFloor: null,
 };
 
-function computeWalkableByFloor(state: GameState): Uint8Array[] {
+function computeFloorMasks(state: GameState): { walkable: Uint8Array[]; opacity: Uint8Array[] } {
 	const baseLayers = regenerateBaseMaps(
 		state.seed,
 		state.floors.map((f) => f.config),
 		state.mapGenVersion,
 	);
-	return baseLayers.map((base, i) =>
+	const walkable = baseLayers.map((base, i) =>
 		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
 	);
+	const opacity = baseLayers.map((base) =>
+		computeOpacityMask(base.wall, base.width, base.height),
+	);
+	return { walkable, opacity };
 }
 
 function heroFromState(state: GameState): { floorIndex: number; idx: number } {
@@ -138,8 +146,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		// New game (e.g. debug "Generate map"): always apply so scene restart sees new state.
 		if (payload.gameId !== currentGameId) {
 			applyStateUpdate(set, payload);
+			const masks = computeFloorMasks(payload.state);
 			set({
-				walkableByFloor: computeWalkableByFloor(payload.state),
+				walkableByFloor: masks.walkable,
+				opacityByFloor: masks.opacity,
 				pendingActions: [],
 				unsentMoves: [],
 			});
@@ -159,7 +169,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				turn: nextState.turn,
 				state: nextState,
 			});
-			set({ walkableByFloor: computeWalkableByFloor(nextState), pendingActions: [] });
+			const nextMasks = computeFloorMasks(nextState);
+			set({
+				walkableByFloor: nextMasks.walkable,
+				opacityByFloor: nextMasks.opacity,
+				pendingActions: [],
+			});
 			if (gameSocketRef) {
 				for (const { action, expectedTurn } of pendingActions) {
 					gameSocketRef.emit("action", {
@@ -175,7 +190,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		// Only update display when server is ahead or equal (avoid snap-back when we're ahead).
 		if (payload.turn >= currentTurn) {
 			applyStateUpdate(set, payload);
-			set({ walkableByFloor: computeWalkableByFloor(payload.state) });
+			const payloadMasks = computeFloorMasks(payload.state);
+			set({ walkableByFloor: payloadMasks.walkable, opacityByFloor: payloadMasks.opacity });
 		}
 
 		// Flush unsent moves: server caught up, send next queued action if server is ready for it.
@@ -214,6 +230,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			lastInvalidMoveAt,
 			unsentMoves,
 			walkableByFloor,
+			opacityByFloor,
 		} = get();
 		if (!gameId) return;
 		if (actionInProgress) return;
@@ -231,10 +248,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				: MIN_INVALID_MOVE_RETRY_MS;
 		if (lastInvalidMoveAt > 0 && now - lastInvalidMoveAt < minInvalidRetry) return;
 
-		const result =
-			walkableByFloor != null && walkableByFloor[state.heroFloorIndex] != null
-				? applyAction(state, action, createWalkableContext(walkableByFloor))
-				: applyActionWithDerivedContext(state, action);
+		const hasCachedMasks =
+			walkableByFloor != null &&
+			walkableByFloor[state.heroFloorIndex] != null &&
+			opacityByFloor != null &&
+			opacityByFloor[state.heroFloorIndex] != null;
+		const result = hasCachedMasks
+			? applyAction(state, action, createActionContext(walkableByFloor!, opacityByFloor!))
+			: applyActionWithDerivedContext(state, action);
 		if (!result.ok) {
 			set({ lastInvalidMoveAt: now });
 			return;
@@ -272,8 +293,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			turn: confirmed.turn,
 			state: confirmed,
 		});
+		const revertMasks = computeFloorMasks(confirmed);
 		set({
-			walkableByFloor: computeWalkableByFloor(confirmed),
+			walkableByFloor: revertMasks.walkable,
+			opacityByFloor: revertMasks.opacity,
 			pendingActions: [],
 			unsentMoves: [],
 			lastMoveSentAt: 0,
@@ -309,6 +332,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			lastMoveSentAt: 0,
 			lastInvalidMoveAt: 0,
 			walkableByFloor: null,
+			opacityByFloor: null,
 		});
 	},
 }));

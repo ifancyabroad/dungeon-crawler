@@ -53,6 +53,7 @@ const FloorStateSchema = new Schema(
 	{
 		tileOverrides: { type: Map, of: Number, default: () => new Map() },
 		actorsById: { type: Map, of: ActorSchema, default: () => new Map() },
+		explored: { type: [Number], default: [] },
 	},
 	{ _id: false },
 );

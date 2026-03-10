@@ -5,7 +5,9 @@
 import { describe, it, expect } from "vitest";
 import {
 	applyAction,
+	computeOpacityMask,
 	computeWalkableMaskForFloor,
+	createActionContext,
 	createInitialState,
 	DEFAULT_FLOOR_CONFIG,
 	getHero,
@@ -34,11 +36,8 @@ describe("walkable mask", () => {
 		const base = baseLayers[0]!;
 		const mask = computeWalkableMaskForFloor(base, state.floors[0]!.state.tileOverrides ?? {});
 
-		const context = {
-			getWalkableMask(_floorIndex: number) {
-				return mask;
-			},
-		};
+		const opacityMask = computeOpacityMask(base.wall, width, height);
+		const context = createActionContext([mask], [opacityMask]);
 
 		const heroBefore = getHero(state);
 		expect(heroBefore).toBeDefined();
