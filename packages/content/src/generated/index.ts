@@ -25,6 +25,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "charisma": 10
     },
     "startingHp": 8,
+    "hitDie": 6,
     "startingEquipment": [
       "staff-basic",
       "robe-cloth"
@@ -56,6 +57,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "charisma": 14
     },
     "startingHp": 10,
+    "hitDie": 8,
     "startingEquipment": [
       "dagger-basic",
       "leather-jacket"
@@ -88,6 +90,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "charisma": 12
     },
     "startingHp": 14,
+    "hitDie": 10,
     "startingEquipment": [
       "sword-basic",
       "shield-wood",
@@ -133,7 +136,8 @@ export const monsters: readonly MonsterDefinition[] = [
     },
     "hp": 7,
     "armorClass": 12,
-    "tileId": 677
+    "tileId": 677,
+    "xpReward": 25
   }
 ] as readonly MonsterDefinition[];
 

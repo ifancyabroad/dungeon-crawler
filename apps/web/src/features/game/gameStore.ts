@@ -40,6 +40,12 @@ interface UnsentMove {
 /** Maximum combat log entries retained. */
 const MAX_COMBAT_LOG = 50;
 
+/** Extracted level_up event payload for the modal. */
+export interface LevelUpEvent {
+	newLevel: number;
+	hpGained: number;
+}
+
 interface GameStoreState {
 	gameId: string | null;
 	turn: number;
@@ -75,6 +81,8 @@ interface GameStoreState {
 	combatLog: GameEvent[];
 	/** Turn number of the last optimistic event batch we logged. Used to avoid double-logging when server confirms. */
 	lastOptimisticEventTurn: number;
+	/** Pending level-up events to display in sequence. Dismissed one at a time. */
+	levelUpEvents: LevelUpEvent[];
 }
 
 interface GameStoreActions {
@@ -95,6 +103,8 @@ interface GameStoreActions {
 	getStoredGameId: () => string | null;
 	storeGameId: (id: string) => void;
 	clearGameId: () => void;
+	/** Dismiss the first pending level-up event. */
+	dismissLevelUp: () => void;
 }
 
 export type GameStore = GameStoreState & GameStoreActions;
@@ -116,6 +126,7 @@ const initialState: GameStoreState = {
 	heroAlive: true,
 	combatLog: [],
 	lastOptimisticEventTurn: -1,
+	levelUpEvents: [],
 };
 
 function computeFloorMasks(state: GameState): { walkable: Uint8Array[]; opacity: Uint8Array[] } {
@@ -137,6 +148,12 @@ function heroFromState(state: GameState): { floorIndex: number; idx: number } {
 	const hero = getHero(state);
 	if (!hero) return { floorIndex: 0, idx: 0 };
 	return { floorIndex: state.heroFloorIndex, idx: hero.idx };
+}
+
+function extractLevelUpEvents(events: GameEvent[]): LevelUpEvent[] {
+	return events
+		.filter((e): e is Extract<GameEvent, { type: "level_up" }> => e.type === "level_up")
+		.map((e) => ({ newLevel: e.newLevel, hpGained: e.hpGained }));
 }
 
 function applyStateUpdate(
@@ -175,6 +192,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		if (incomingEvents.length > 0 && !alreadyLogged) {
 			const newLog = [...combatLog, ...incomingEvents].slice(-MAX_COMBAT_LOG);
 			set({ events: incomingEvents, combatLog: newLog });
+			const newLevelUps = extractLevelUpEvents(incomingEvents);
+			if (newLevelUps.length > 0) {
+				set({ levelUpEvents: [...get().levelUpEvents, ...newLevelUps] });
+			}
 		}
 
 		// New game (e.g. debug "Generate map"): always apply so scene restart sees new state.
@@ -307,6 +328,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				combatLog: newLog,
 				lastOptimisticEventTurn: result.state.turn,
 			});
+			const newLevelUps = extractLevelUpEvents(result.events);
+			if (newLevelUps.length > 0) {
+				set({ levelUpEvents: [...get().levelUpEvents, ...newLevelUps] });
+			}
 		}
 
 		applyStateUpdate(set, {
@@ -384,7 +409,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			heroAlive: true,
 			combatLog: [],
 			lastOptimisticEventTurn: -1,
+			levelUpEvents: [],
 		});
+	},
+
+	dismissLevelUp: () => {
+		const { levelUpEvents } = get();
+		set({ levelUpEvents: levelUpEvents.slice(1) });
 	},
 }));
 

@@ -12,5 +12,6 @@
 	},
 	"hp": 7,
 	"armorClass": 12,
-	"tileId": 677
+	"tileId": 677,
+	"xpReward": 25
 }

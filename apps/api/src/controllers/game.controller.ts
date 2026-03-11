@@ -5,9 +5,8 @@ import {
 	createInitialState,
 	createGameBodySchema,
 	DEFAULT_FLOOR_CONFIG,
-	findAdjacentWalkable,
 	gameStateToPersisted,
-	getHero,
+	getActorAtIdx,
 	PersistedDynamicStateSchema,
 	regenerateBaseMaps,
 	resetMonsterCounter,
@@ -56,43 +55,61 @@ export const createGame: RequestHandler = async (req, res) => {
 		hp: classDef.startingHp,
 		maxHp: classDef.startingHp,
 		attributes: { ...classDef.baseAttributes },
+		level: 1,
+		xp: 0,
+		hitDie: classDef.hitDie,
 	};
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
 	resetMonsterCounter();
 	let state = createInitialState(seed, DEFAULT_FLOOR_CONFIG, heroInit);
 
-	// Spawn a goblin adjacent to the hero
+	// Spawn goblins for testing
 	const goblinDef = monstersById["goblin" as MonsterId];
 	if (goblinDef) {
-		const hero = getHero(state);
-		if (hero) {
-			const baseLayers = regenerateBaseMaps(
-				seed,
-				state.floors.map((f) => f.config),
-				state.mapGenVersion,
-			);
-			const walkMask = computeWalkableMaskForFloor(
-				baseLayers[0],
-				state.floors[0].state.tileOverrides,
-			);
-			const spawnIdx = findAdjacentWalkable(
-				hero.idx,
-				state.floors[0].config.width,
-				state.floors[0].config.height,
-				walkMask,
-				state.floors[0].state,
-			);
+		const baseLayers = regenerateBaseMaps(
+			seed,
+			state.floors.map((f) => f.config),
+			state.mapGenVersion,
+		);
+		const walkMask = computeWalkableMaskForFloor(
+			baseLayers[0],
+			state.floors[0].state.tileOverrides,
+		);
+		const floorWidth = state.floors[0].config.width;
+		const floorHeight = state.floors[0].config.height;
+
+		const goblinInit: MonsterInit = {
+			monsterId: goblinDef.id,
+			name: goblinDef.name,
+			hp: goblinDef.hp,
+			maxHp: goblinDef.hp,
+			armorClass: goblinDef.armorClass,
+			attributes: { ...goblinDef.baseAttributes },
+			xpReward: goblinDef.xpReward,
+		};
+
+		// Spawn 5 goblins spread across the floor. For each, find the first unoccupied
+		// walkable tile scanning from a deterministic offset so placement is seed-stable.
+		const floorSize = floorWidth * floorHeight;
+		const spawnOffsets = [
+			0,
+			Math.floor(floorSize * 0.2),
+			Math.floor(floorSize * 0.4),
+			Math.floor(floorSize * 0.6),
+			Math.floor(floorSize * 0.8),
+		];
+		for (const offset of spawnOffsets) {
+			let spawnIdx: number | undefined;
+			for (let i = 0; i < floorSize; i++) {
+				const idx = (offset + i) % floorSize;
+				if (walkMask[idx] === 1 && !getActorAtIdx(state.floors[0].state, idx)) {
+					spawnIdx = idx;
+					break;
+				}
+			}
 			if (spawnIdx !== undefined) {
-				const monsterInit: MonsterInit = {
-					monsterId: goblinDef.id,
-					name: goblinDef.name,
-					hp: goblinDef.hp,
-					maxHp: goblinDef.hp,
-					armorClass: goblinDef.armorClass,
-					attributes: { ...goblinDef.baseAttributes },
-				};
-				state = spawnMonster(state, 0, monsterInit, spawnIdx);
+				state = spawnMonster(state, 0, goblinInit, spawnIdx);
 			}
 		}
 	}

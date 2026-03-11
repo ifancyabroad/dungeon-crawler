@@ -59,6 +59,7 @@ export {
 	xyToIdx,
 	MAP_GEN_VERSION,
 	VISION_RADIUS,
+	XP_PER_LEVEL,
 	ActorAttributesSchema,
 	ActorDefSchema,
 	ActorsByIdSchema,

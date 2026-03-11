@@ -11,6 +11,7 @@
 		"charisma": 14
 	},
 	"startingHp": 10,
+	"hitDie": 8,
 	"startingEquipment": ["dagger-basic", "leather-jacket"],
 	"startingSkills": ["stealth", "lockpick"],
 	"weaponProficiencies": ["dagger", "shortbow", "short-sword"],

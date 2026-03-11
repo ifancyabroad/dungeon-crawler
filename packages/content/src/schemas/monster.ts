@@ -13,6 +13,7 @@ export const MonsterSchema = z.object({
 	hp: z.number(),
 	armorClass: z.number(),
 	tileId: z.number(),
+	xpReward: z.number(),
 });
 
 export type MonsterDefinition = z.infer<typeof MonsterSchema>;

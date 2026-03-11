@@ -42,6 +42,9 @@ export interface HeroInit {
 	maxHp: number;
 	armorClass?: number;
 	attributes: ActorAttributes;
+	level: number;
+	xp: number;
+	hitDie: number;
 }
 
 /** Data the caller provides to spawn a monster actor. Keeps the engine content-agnostic. */
@@ -52,6 +55,7 @@ export interface MonsterInit {
 	maxHp: number;
 	armorClass: number;
 	attributes: ActorAttributes;
+	xpReward: number;
 }
 
 /** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */
@@ -66,12 +70,18 @@ export interface Actor {
 	attributes: ActorAttributes;
 	skills: Record<string, ActorSkillState>;
 	def: ActorDef;
+	level: number;
+	xp: number;
+	hitDie: number;
+	/** XP awarded to the killer when this actor dies. 0 for the hero. */
+	xpReward: number;
 }
 
 /** Events emitted during a turn for combat log and client feedback. */
 export type GameEvent =
 	| { type: "attack"; attackerId: ActorId; defenderId: ActorId; result: AttackResult }
-	| { type: "death"; actorId: ActorId };
+	| { type: "death"; actorId: ActorId }
+	| { type: "level_up"; actorId: ActorId; newLevel: number; hpGained: number };
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;

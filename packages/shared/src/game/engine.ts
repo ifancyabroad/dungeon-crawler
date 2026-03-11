@@ -17,7 +17,7 @@ import type {
 } from "./types";
 import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
-import { VISION_RADIUS } from "./config";
+import { VISION_RADIUS, XP_PER_LEVEL } from "./config";
 import { createInitialRngState, createRngFromState, type Rng } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
@@ -109,6 +109,9 @@ export const DEFAULT_HERO_INIT: HeroInit = {
 	hp: 100,
 	maxHp: 100,
 	attributes: { ...DEFAULT_ATTRIBUTES },
+	level: 1,
+	xp: 0,
+	hitDie: 10,
 };
 
 /**
@@ -139,6 +142,10 @@ export function createInitialState(
 		attributes: { ...hero.attributes },
 		skills: {},
 		def: { type: "hero", classId: hero.classId },
+		level: hero.level,
+		xp: hero.xp,
+		hitDie: hero.hitDie,
+		xpReward: 0,
 	};
 
 	const opMask = computeOpacityMask(floor0.wall, width, height);
@@ -239,6 +246,10 @@ export function spawnMonster(
 		attributes: { ...init.attributes },
 		skills: {},
 		def: { type: "monster", monsterId: init.monsterId },
+		level: 0,
+		xp: 0,
+		hitDie: 0,
+		xpReward: init.xpReward,
 	};
 	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
 	const newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };
@@ -407,17 +418,56 @@ export function applyAction(
 				result: attackResult,
 			});
 
+			let updatedHero: Actor = hero;
 			let updatedDefender: Actor | undefined;
 			if (attackResult.hit) {
 				const newHp = Math.max(0, defender.hp - attackResult.damage);
 				updatedDefender = { ...defender, hp: newHp, alive: newHp > 0 };
 				if (!updatedDefender.alive) {
 					events.push({ type: "death", actorId: defender.id });
+
+					// Grant XP to the hero
+					const gainedXp = defender.xpReward;
+					if (gainedXp > 0) {
+						let newXp = hero.xp + gainedXp;
+						let newLevel = hero.level;
+						let newMaxHp = hero.maxHp;
+						let newCurrentHp = hero.hp;
+
+						// Check for level-up (can only level up once per kill in practice, but loop for safety)
+						const nextLevelXp = XP_PER_LEVEL[newLevel + 1] ?? Infinity;
+						if (newXp >= nextLevelXp) {
+							newXp -= nextLevelXp;
+							newLevel += 1;
+							// Roll hit die + CON modifier, minimum 1
+							const conMod = Math.floor((hero.attributes.constitution - 10) / 2);
+							const roll = Math.floor(rng() * hero.hitDie) + 1;
+							const hpGained = Math.max(1, roll + conMod);
+							newMaxHp += hpGained;
+							newCurrentHp += hpGained;
+							events.push({
+								type: "level_up",
+								actorId: state.heroId,
+								newLevel,
+								hpGained,
+							});
+						}
+
+						updatedHero = {
+							...hero,
+							xp: newXp,
+							level: newLevel,
+							maxHp: newMaxHp,
+							hp: newCurrentHp,
+						};
+					}
 				}
 			}
-			const newActorsById = updatedDefender
-				? { ...floor.state.actorsById, [defender.id]: updatedDefender }
-				: { ...floor.state.actorsById };
+			const newActorsById = {
+				...floor.state.actorsById,
+				[state.heroId]: updatedHero,
+				...(updatedDefender ? { [defender.id]: updatedDefender } : {}),
+			};
 
 			let newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };
 

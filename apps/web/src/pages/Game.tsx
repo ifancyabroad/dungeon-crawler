@@ -5,6 +5,7 @@ import GameCanvas from "../components/GameCanvas";
 import GameOverlay from "../components/GameOverlay";
 import { CombatLog } from "../components/CombatLog";
 import { DeathModal } from "../components/DeathModal";
+import { LevelUpModal } from "../components/LevelUpModal";
 import DebugDrawer from "../components/DebugDrawer";
 import { Button } from "../components/Button";
 import { useGameSocket } from "../features/game/useGameSocket";
@@ -74,6 +75,7 @@ export default function Game() {
 			</div>
 
 			<DeathModal open={!heroAlive && gameId !== null} />
+			<LevelUpModal />
 
 			<DebugDrawer open={debugDrawerOpen} onClose={() => setDebugDrawerOpen(false)} />
 		</div>

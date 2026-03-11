@@ -13,6 +13,7 @@ export const CharacterClassSchema = z.object({
 	description: z.string(),
 	baseAttributes: BaseAttributesSchema,
 	startingHp: z.number(),
+	hitDie: z.number(),
 	startingEquipment: z.array(z.string()),
 	startingSkills: z.array(z.string()),
 	weaponProficiencies: z.array(z.string()),

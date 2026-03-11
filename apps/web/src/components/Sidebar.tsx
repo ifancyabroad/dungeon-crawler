@@ -1,4 +1,4 @@
-import { getHero } from "@app/shared";
+import { getHero, XP_PER_LEVEL } from "@app/shared";
 import { classesById, type CharacterClassId } from "@app/content";
 import { Button } from "./Button";
 import { TileSprite } from "./TileSprite";
@@ -45,7 +45,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 								<div className="flex-1 min-w-0">
 									<p className="text-sm font-semibold text-text">{hero.name}</p>
 									<p className="text-xs text-text-muted">
-										{classDef?.name ?? "Unknown"}
+										{`Level ${hero.level} ${classDef?.name ?? "Unknown"}`}
 									</p>
 								</div>
 								<Button
@@ -86,6 +86,32 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 									/>
 								</div>
 							</div>
+							{(() => {
+								const xpForNext = XP_PER_LEVEL[hero.level + 1];
+								return (
+									<div className="space-y-1">
+										<div className="flex justify-between text-xs">
+											<span className="text-text-muted">XP</span>
+											<span className="text-text tabular-nums">
+												{xpForNext !== undefined
+													? `${hero.xp} / ${xpForNext}`
+													: `${hero.xp} (max level)`}
+											</span>
+										</div>
+										<div className="h-1.5 rounded-full bg-bg-elevated overflow-hidden">
+											<div
+												className="h-full rounded-full bg-primary transition-all"
+												style={{
+													width:
+														xpForNext !== undefined
+															? `${Math.max(0, Math.min(100, (hero.xp / xpForNext) * 100))}%`
+															: "100%",
+												}}
+											/>
+										</div>
+									</div>
+								);
+							})()}
 						</>
 					) : (
 						<div className="flex items-center justify-between">

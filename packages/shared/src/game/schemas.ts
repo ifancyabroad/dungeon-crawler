@@ -46,6 +46,10 @@ export const ActorSchema = z.object({
 	attributes: ActorAttributesSchema,
 	skills: z.record(z.string(), ActorSkillStateSchema),
 	def: ActorDefSchema,
+	level: z.number(),
+	xp: z.number(),
+	hitDie: z.number(),
+	xpReward: z.number(),
 });
 
 export const ActorsByIdSchema = z.record(z.string(), ActorSchema);
