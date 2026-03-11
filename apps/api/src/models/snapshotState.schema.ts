@@ -46,6 +46,10 @@ const ActorSchema = new Schema(
 		attributes: ActorAttributesSchema,
 		skills: { type: Map, of: ActorSkillStateSchema, default: () => new Map() },
 		def: ActorDefSchema,
+		level: Number,
+		xp: Number,
+		hitDie: Number,
+		xpReward: Number,
 	},
 	{ _id: false },
 );
