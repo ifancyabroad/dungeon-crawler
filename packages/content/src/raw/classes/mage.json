@@ -15,5 +15,6 @@
 	"startingSkills": ["arcane-lore", "spellcasting"],
 	"weaponProficiencies": ["staff", "dagger"],
 	"armorProficiencies": ["cloth"],
-	"resource": "mana"
+	"resource": "mana",
+	"tileId": 746
 }

@@ -3,15 +3,7 @@
  */
 
 import { z } from "zod";
-
-const BaseAttributesSchema = z.object({
-	strength: z.number(),
-	dexterity: z.number(),
-	constitution: z.number(),
-	intelligence: z.number(),
-	wisdom: z.number(),
-	charisma: z.number(),
-});
+import { BaseAttributesSchema } from "./common.js";
 
 const ResourceSchema = z.enum(["mana", "stamina", "none"]);
 
@@ -26,6 +18,7 @@ export const CharacterClassSchema = z.object({
 	weaponProficiencies: z.array(z.string()),
 	armorProficiencies: z.array(z.string()),
 	resource: ResourceSchema,
+	tileId: z.number(),
 });
 
 export type CharacterClassDefinition = z.infer<typeof CharacterClassSchema>;

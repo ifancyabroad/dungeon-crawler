@@ -5,6 +5,7 @@
 
 import type { MapGenConfig } from "../map/types";
 import type { Action } from "./actions";
+import type { AttackResult } from "../combat/types";
 
 export type TileId = number;
 
@@ -39,6 +40,17 @@ export interface HeroInit {
 	classId: string;
 	hp: number;
 	maxHp: number;
+	armorClass?: number;
+	attributes: ActorAttributes;
+}
+
+/** Data the caller provides to spawn a monster actor. Keeps the engine content-agnostic. */
+export interface MonsterInit {
+	monsterId: string;
+	name: string;
+	hp: number;
+	maxHp: number;
+	armorClass: number;
 	attributes: ActorAttributes;
 }
 
@@ -50,10 +62,16 @@ export interface Actor {
 	alive: boolean;
 	hp: number;
 	maxHp: number;
+	armorClass: number;
 	attributes: ActorAttributes;
 	skills: Record<string, ActorSkillState>;
 	def: ActorDef;
 }
+
+/** Events emitted during a turn for combat log and client feedback. */
+export type GameEvent =
+	| { type: "attack"; attackerId: ActorId; defenderId: ActorId; result: AttackResult }
+	| { type: "death"; actorId: ActorId };
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;

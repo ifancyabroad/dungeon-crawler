@@ -6,8 +6,14 @@
 
 import type { Server, Socket } from "socket.io";
 import { GameSession } from "../models/gameSession.model";
-import { ActionSchema, gameStateToPersisted, PersistedDynamicStateSchema } from "@app/shared";
-import type { GameState } from "@app/shared";
+import { Hero } from "../models/hero.model";
+import {
+	ActionSchema,
+	gameStateToPersisted,
+	getHero,
+	PersistedDynamicStateSchema,
+} from "@app/shared";
+import type { GameEvent, GameState } from "@app/shared";
 import {
 	ensureSessionLoaded,
 	setSessionState,
@@ -79,7 +85,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 		(socket.data as GameSocketData).gameId = gameId;
 		(socket.data as GameSocketData).authed = true;
 		socket.join(gameId);
-		socket.emit("state", { gameId, turn: state.turn, state });
+		socket.emit("state", { gameId, turn: state.turn, state, events: [] });
 	});
 
 	socket.on(
@@ -154,13 +160,27 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 							gameId,
 							turn: current.turn,
 							state: current,
+							events: [],
 						});
 					}
 					return;
 				}
 
 				setSessionState(gameId, result.state);
-				io.to(gameId).emit("state", { gameId, turn: newTurn, state: result.state });
+				const events: GameEvent[] = result.events;
+				io.to(gameId).emit("state", { gameId, turn: newTurn, state: result.state, events });
+
+				// If the hero died, update the Hero model
+				const hero = getHero(result.state);
+				if (hero && !hero.alive) {
+					const session = await GameSession.findOne({ gameId }).lean().exec();
+					if (session) {
+						await Hero.updateOne(
+							{ gameId, status: "active" },
+							{ $set: { status: "dead" } },
+						).exec();
+					}
+				}
 			});
 		},
 	);

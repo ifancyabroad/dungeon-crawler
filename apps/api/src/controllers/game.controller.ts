@@ -1,14 +1,21 @@
 import { randomBytes } from "node:crypto";
 import type { RequestHandler } from "express";
 import {
+	computeWalkableMaskForFloor,
 	createInitialState,
 	createGameBodySchema,
 	DEFAULT_FLOOR_CONFIG,
+	findAdjacentWalkable,
 	gameStateToPersisted,
+	getHero,
 	PersistedDynamicStateSchema,
+	regenerateBaseMaps,
+	resetMonsterCounter,
+	spawnMonster,
 	type HeroInit,
+	type MonsterInit,
 } from "@app/shared";
-import { classesById, type CharacterClassId } from "@app/content";
+import { classesById, monstersById, type CharacterClassId, type MonsterId } from "@app/content";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { Hero } from "../models/hero.model";
@@ -16,6 +23,7 @@ import { getSessionState, reconstructState, setSessionState } from "../services/
 import { COOKIE_NAME, hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
 import { runTransaction } from "../config/db";
+import { getCookie } from "../lib/cookies";
 
 const COOKIE_OPTS = {
 	httpOnly: true,
@@ -51,7 +59,44 @@ export const createGame: RequestHandler = async (req, res) => {
 	};
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
-	const state = createInitialState(seed, DEFAULT_FLOOR_CONFIG, heroInit);
+	resetMonsterCounter();
+	let state = createInitialState(seed, DEFAULT_FLOOR_CONFIG, heroInit);
+
+	// Spawn a goblin adjacent to the hero
+	const goblinDef = monstersById["goblin" as MonsterId];
+	if (goblinDef) {
+		const hero = getHero(state);
+		if (hero) {
+			const baseLayers = regenerateBaseMaps(
+				seed,
+				state.floors.map((f) => f.config),
+				state.mapGenVersion,
+			);
+			const walkMask = computeWalkableMaskForFloor(
+				baseLayers[0],
+				state.floors[0].state.tileOverrides,
+			);
+			const spawnIdx = findAdjacentWalkable(
+				hero.idx,
+				state.floors[0].config.width,
+				state.floors[0].config.height,
+				walkMask,
+				state.floors[0].state,
+			);
+			if (spawnIdx !== undefined) {
+				const monsterInit: MonsterInit = {
+					monsterId: goblinDef.id,
+					name: goblinDef.name,
+					hp: goblinDef.hp,
+					maxHp: goblinDef.hp,
+					armorClass: goblinDef.armorClass,
+					attributes: { ...goblinDef.baseAttributes },
+				};
+				state = spawnMonster(state, 0, monsterInit, spawnIdx);
+			}
+		}
+	}
+
 	const persistedState = gameStateToPersisted(state);
 	PersistedDynamicStateSchema.parse(persistedState);
 
@@ -96,15 +141,9 @@ export const createGame: RequestHandler = async (req, res) => {
 /**
  * Returns the current game (for Continue). Requires requireGame middleware.
  * Uses in-memory state if present, else reconstructs from latest snapshot + action log replay.
- * Legacy sessions (pre-migration, no snapshot) return 410 so the client can prompt for a new game.
  */
 export const getGame: RequestHandler = async (_req, res) => {
-	const session = res.locals.gameSession as {
-		gameId: string;
-		state?: unknown;
-		latestSnapshotTurn?: number;
-	};
-	// Prefer in-memory state (e.g. same process that created the game)
+	const session = res.locals.gameSession as { gameId: string };
 	const cached = getSessionState(session.gameId);
 	if (cached) {
 		return res.json({ gameId: session.gameId, state: cached });
@@ -113,12 +152,19 @@ export const getGame: RequestHandler = async (_req, res) => {
 	if (state) {
 		return res.json({ gameId: session.gameId, state });
 	}
-	// Legacy session: has old embedded state, no snapshot (pre-migration)
-	if ("state" in session && session.state != null && session.latestSnapshotTurn === undefined) {
-		return res.status(410).json({
-			error: "Legacy save from a previous version",
-			code: "legacy_save",
-		});
-	}
 	return res.status(404).json({ error: "Game state not found" });
+};
+
+/**
+ * Lightweight check: does this browser have a continuable game (active, non-dead hero)?
+ * No middleware required — reads cookie directly and queries Hero model.
+ */
+export const getGameStatus: RequestHandler = async (req, res) => {
+	const token = getCookie(req, COOKIE_NAME);
+	if (!token) {
+		return res.json({ hasActiveHero: false });
+	}
+	const tokenHash = hashToken(token, env.GAME_TOKEN_PEPPER);
+	const activeHero = await Hero.findOne({ tokenHash, status: "active" }).lean().exec();
+	return res.json({ hasActiveHero: !!activeHero });
 };

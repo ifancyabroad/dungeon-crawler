@@ -8,16 +8,25 @@ export type {
 	Floor,
 	FloorConfig,
 	FloorState,
+	GameEvent,
 	GameSessionDoc,
 	GameSnapshotDoc,
 	GameState,
 	HeroInit,
+	MonsterInit,
 	PersistedDynamicState,
 	RngState,
 	TileId,
 } from "./types";
 export { MAP_GEN_VERSION } from "./types";
-export { ActionSchema, MoveActionSchema, type Action, type MoveAction } from "./actions";
+export {
+	ActionSchema,
+	AttackActionSchema,
+	MoveActionSchema,
+	type Action,
+	type AttackAction,
+	type MoveAction,
+} from "./actions";
 export {
 	actorKind,
 	applyAction,
@@ -26,11 +35,15 @@ export {
 	createActionContext,
 	createEmptyFloorState,
 	createInitialState,
-	createWalkableContext,
 	DEFAULT_HERO_INIT,
+	findAdjacentWalkable,
 	gameStateToPersisted,
+	getActorAtIdx,
+	getAdjacentIndices,
 	getHero,
 	idxToXY,
+	resetMonsterCounter,
+	spawnMonster,
 	xyToIdx,
 	type ApplyActionContext,
 	type ApplyActionResult,

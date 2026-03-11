@@ -8,17 +8,22 @@ import {
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	generateMap,
+	getActorAtIdx,
 	idxToXY,
+	xyToIdx,
 	VISION_RADIUS,
+	type Action,
+	type GameState,
+	type MapGenConfig,
 } from "@app/shared";
 import {
+	ENTITY_TILES,
 	getCollidingIndices,
 	getHeroTile,
 	TILE_HEIGHT,
 	TILE_WIDTH,
 	TILESET_KEY,
 } from "../tiles/tilesetRegistry";
-import type { MapGenConfig } from "@app/shared";
 import { useGameStore } from "../../features/game/gameStore";
 import { useMapStore } from "../../features/map/mapStore";
 import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
@@ -45,18 +50,32 @@ export default class MainScene extends Phaser.Scene {
 	private unsubWaitForState: (() => void) | null = null;
 	/** Unsubscribe from hero position sync; cleaned up in shutdown(). */
 	private unsubHeroSync: (() => void) | null = null;
+	/** Monster sprites keyed by actor ID. */
+	private monsterSprites = new Map<string, Phaser.GameObjects.Sprite>();
+	/** Unsubscribe from actor sync. */
+	private unsubActorSync: (() => void) | null = null;
+	/** Set to true once the scene is shut down or destroyed; guards async subscription callbacks. */
+	private disposed = false;
 
 	constructor() {
 		super("Main");
 	}
 
 	create() {
-		this.events.once("shutdown", () => {
+		this.disposed = false;
+
+		const cleanup = () => {
+			this.disposed = true;
 			this.unsubWaitForState?.();
 			this.unsubWaitForState = null;
 			this.unsubHeroSync?.();
 			this.unsubHeroSync = null;
-		});
+			this.unsubActorSync?.();
+			this.unsubActorSync = null;
+			this.monsterSprites.clear();
+		};
+		this.events.once("shutdown", cleanup);
+		this.events.once("destroy", cleanup);
 
 		const { gameId, state } = useGameStore.getState();
 		const fromState = state ? getMapConfigAndHeroFromState(state) : null;
@@ -71,6 +90,7 @@ export default class MainScene extends Phaser.Scene {
 	/** When joining without state: subscribe until state arrives, build map once, then unsubscribe. */
 	private subscribeUntilStateArrives() {
 		this.unsubWaitForState = useGameStore.subscribe((s) => {
+			if (this.disposed) return;
 			const fromState = s.state ? getMapConfigAndHeroFromState(s.state) : null;
 			if (!fromState) return;
 			this.unsubWaitForState?.();
@@ -131,30 +151,121 @@ export default class MainScene extends Phaser.Scene {
 		if (currentState) {
 			const explored = currentState.floors[currentState.heroFloorIndex]?.state.explored ?? [];
 			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
+			this.syncMonsters(currentState);
 		}
 
 		let lastSyncedIdx = heroPos.idx;
+		let lastSyncedTurn = currentState?.turn ?? -1;
 		this.unsubHeroSync = useGameStore.subscribe((storeState) => {
-			if (storeState.hero.idx === lastSyncedIdx) return;
-			lastSyncedIdx = storeState.hero.idx;
-			this.syncHeroToStore(storeState.hero.idx);
-
+			if (this.disposed) return;
 			const gs = storeState.state;
-			if (gs) {
+			const turnChanged = gs != null && gs.turn !== lastSyncedTurn;
+
+			if (storeState.hero.idx !== lastSyncedIdx) {
+				lastSyncedIdx = storeState.hero.idx;
+				this.syncHeroToStore(storeState.hero.idx);
+			}
+
+			if (gs && turnChanged) {
+				lastSyncedTurn = gs.turn;
 				const explored = gs.floors[gs.heroFloorIndex]?.state.explored ?? [];
 				this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
+				this.syncMonsters(gs);
 			}
 		});
 	}
 
+	/** Synchronize monster sprites with the current game state. */
+	private syncMonsters(gameState: GameState) {
+		const floor = gameState.floors[gameState.heroFloorIndex];
+		if (!floor) return;
+		const actorsById = floor.state.actorsById;
+
+		// Update or create monster sprites
+		for (const [id, actor] of Object.entries(actorsById)) {
+			if (id === gameState.heroId) continue;
+			if (actor.def.type !== "monster") continue;
+
+			const existing = this.monsterSprites.get(id);
+			if (!actor.alive) {
+				if (existing) {
+					existing.destroy();
+					this.monsterSprites.delete(id);
+				}
+				continue;
+			}
+
+			const { x, y } = idxToXY(actor.idx, this.mapWidth);
+			const px = x * TILE_WIDTH + TILE_WIDTH / 2;
+			const py = y * TILE_HEIGHT + TILE_HEIGHT / 2;
+			const tileFrame = ENTITY_TILES.monsters[actor.def.monsterId];
+			if (tileFrame === undefined) continue;
+
+			if (existing) {
+				existing.setPosition(px, py);
+				existing.setFrame(tileFrame);
+			} else {
+				const sprite = this.add.sprite(px, py, TILESET_KEY, tileFrame);
+				sprite.setOrigin(0.5, 0.5);
+				sprite.setDepth(9);
+				this.monsterSprites.set(id, sprite);
+			}
+		}
+
+		// Remove sprites for actors no longer in state
+		for (const [id, sprite] of this.monsterSprites) {
+			if (!actorsById[id] || !actorsById[id].alive) {
+				sprite.destroy();
+				this.monsterSprites.delete(id);
+			}
+		}
+	}
+
 	private attachKeyboardOnline() {
-		const sendAction = useGameStore.getState().sendAction;
-		this.input.keyboard?.on("keydown-W", () => sendAction({ type: "move", direction: "up" }));
-		this.input.keyboard?.on("keydown-S", () => sendAction({ type: "move", direction: "down" }));
-		this.input.keyboard?.on("keydown-A", () => sendAction({ type: "move", direction: "left" }));
-		this.input.keyboard?.on("keydown-D", () =>
-			sendAction({ type: "move", direction: "right" }),
-		);
+		const directionAction = (direction: "up" | "down" | "left" | "right") => {
+			const { sendAction, state } = useGameStore.getState();
+			if (!state) return;
+			const action = this.resolveDirectionAction(state, direction);
+			sendAction(action);
+		};
+		this.input.keyboard?.on("keydown-W", () => directionAction("up"));
+		this.input.keyboard?.on("keydown-S", () => directionAction("down"));
+		this.input.keyboard?.on("keydown-A", () => directionAction("left"));
+		this.input.keyboard?.on("keydown-D", () => directionAction("right"));
+	}
+
+	/**
+	 * Determine whether a WASD press should be a move or attack.
+	 * If a living enemy occupies the target tile, send an attack action.
+	 */
+	private resolveDirectionAction(
+		state: GameState,
+		direction: "up" | "down" | "left" | "right",
+	): Action {
+		const floor = state.floors[state.heroFloorIndex];
+		if (!floor) return { type: "move", direction };
+		const hero = floor.state.actorsById[state.heroId];
+		if (!hero) return { type: "move", direction };
+
+		const DELTA: Record<string, { dx: number; dy: number }> = {
+			up: { dx: 0, dy: -1 },
+			down: { dx: 0, dy: 1 },
+			left: { dx: -1, dy: 0 },
+			right: { dx: 1, dy: 0 },
+		};
+		const { dx, dy } = DELTA[direction];
+		const { x, y } = idxToXY(hero.idx, floor.config.width);
+		const nx = x + dx;
+		const ny = y + dy;
+		if (nx < 0 || nx >= floor.config.width || ny < 0 || ny >= floor.config.height) {
+			return { type: "move", direction };
+		}
+		const targetIdx = xyToIdx(nx, ny, floor.config.width);
+		const enemy = getActorAtIdx(floor.state, targetIdx);
+		if (enemy && enemy.id !== state.heroId) {
+			return { type: "attack", direction };
+		}
+		return { type: "move", direction };
 	}
 
 	/** Apply hero tile index from store to sprite position (called from store subscription). */

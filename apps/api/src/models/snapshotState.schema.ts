@@ -42,6 +42,7 @@ const ActorSchema = new Schema(
 		alive: Boolean,
 		hp: Number,
 		maxHp: Number,
+		armorClass: Number,
 		attributes: ActorAttributesSchema,
 		skills: { type: Map, of: ActorSkillStateSchema, default: () => new Map() },
 		def: ActorDefSchema,

@@ -35,7 +35,6 @@ export const ActorDefSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("monster"), monsterId: z.string() }),
 ]);
 
-/** skills may be omitted in legacy snapshots; default to {} so we accept old persisted data. */
 export const ActorSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -43,8 +42,9 @@ export const ActorSchema = z.object({
 	alive: z.boolean(),
 	hp: z.number(),
 	maxHp: z.number(),
+	armorClass: z.number(),
 	attributes: ActorAttributesSchema,
-	skills: z.record(z.string(), ActorSkillStateSchema).default({}),
+	skills: z.record(z.string(), ActorSkillStateSchema),
 	def: ActorDefSchema,
 });
 

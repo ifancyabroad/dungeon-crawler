@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Modal } from "../components/Modal";
-import { useContinueGame } from "../features/game/useGames";
+import { useContinueGame, useGameStatus } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
 import { useErrorStore } from "../features/error/errorStore";
 import { getApiErrorMessage } from "../lib/errors";
@@ -16,11 +16,15 @@ export default function Landing() {
 	const showError = useErrorStore((s) => s.showError);
 
 	const continueGame = useContinueGame();
+	const gameStatus = useGameStatus();
 	const [warnOpen, setWarnOpen] = useState(false);
+
+	const hasActiveHero = gameStatus.data?.hasActiveHero ?? false;
+	const canContinue = hasActiveHero && !gameStatus.isLoading;
 
 	function handleNewGame() {
 		const existingId = getStoredGameId();
-		if (existingId) {
+		if (existingId && hasActiveHero) {
 			setWarnOpen(true);
 		} else {
 			navigate("/character-create");
@@ -54,7 +58,7 @@ export default function Landing() {
 						variant="secondary"
 						size="lg"
 						onClick={() => handleContinue()}
-						disabled={continueGame.isPending}
+						disabled={!canContinue || continueGame.isPending}
 					>
 						{continueGame.isPending ? "Loading…" : "Continue"}
 					</Button>

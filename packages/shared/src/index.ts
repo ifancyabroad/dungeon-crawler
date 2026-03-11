@@ -36,6 +36,7 @@ export { createRng, createInitialRngState, createRngFromState, type Rng } from "
 
 export {
 	ActionSchema,
+	AttackActionSchema,
 	MoveActionSchema,
 	actorKind,
 	applyAction,
@@ -44,13 +45,17 @@ export {
 	createActionContext,
 	createEmptyFloorState,
 	createInitialState,
-	createWalkableContext,
 	DEFAULT_HERO_INIT,
+	findAdjacentWalkable,
 	gameStateToPersisted,
+	getActorAtIdx,
+	getAdjacentIndices,
 	getHero,
 	computeWalkableMaskForFloor,
 	idxToXY,
 	regenerateBaseMaps,
+	resetMonsterCounter,
+	spawnMonster,
 	xyToIdx,
 	MAP_GEN_VERSION,
 	VISION_RADIUS,
@@ -71,13 +76,27 @@ export {
 	type ActorSkillState,
 	type ApplyActionContext,
 	type ApplyActionResult,
+	type AttackAction,
 	type BaseLayerFloor,
+	type GameEvent,
 	type GameSessionDoc,
 	type GameSnapshotDoc,
 	type GameState,
 	type HeroInit,
+	type MonsterInit,
 	type MoveAction,
 	type PersistedDynamicState,
 } from "./game";
+
+export {
+	abilityModifier,
+	computeUnarmoredAC,
+	resolveAttack,
+	rollD20,
+	rollDice,
+	UNARMED_WEAPON,
+	type AttackResult,
+	type WeaponDice,
+} from "./combat";
 
 export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";

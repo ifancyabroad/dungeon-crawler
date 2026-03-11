@@ -15,5 +15,6 @@
 	"startingSkills": ["stealth", "lockpick"],
 	"weaponProficiencies": ["dagger", "shortbow", "short-sword"],
 	"armorProficiencies": ["light"],
-	"resource": "stamina"
+	"resource": "stamina",
+	"tileId": 740
 }

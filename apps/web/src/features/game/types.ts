@@ -17,3 +17,7 @@ export interface CurrentGameResponse {
 	gameId: string;
 	state: GameState;
 }
+
+export interface GameStatusResponse {
+	hasActiveHero: boolean;
+}

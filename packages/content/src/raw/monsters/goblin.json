@@ -1,0 +1,16 @@
+{
+	"id": "goblin",
+	"name": "Goblin",
+	"description": "A small, cunning creature with quick reflexes but poor strength.",
+	"baseAttributes": {
+		"strength": 8,
+		"dexterity": 14,
+		"constitution": 10,
+		"intelligence": 10,
+		"wisdom": 8,
+		"charisma": 8
+	},
+	"hp": 7,
+	"armorClass": 12,
+	"tileId": 677
+}

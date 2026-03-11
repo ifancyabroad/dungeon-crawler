@@ -7,9 +7,10 @@ import {
 	createActionContext,
 	getHero,
 	regenerateBaseMaps,
+	type Action,
+	type GameEvent,
 	type GameState,
 } from "@app/shared";
-import type { Action } from "@app/shared";
 
 const GAME_ID_KEY = "dungeon_gameId";
 
@@ -35,6 +36,9 @@ interface UnsentMove {
 	action: Action;
 	expectedTurn: number;
 }
+
+/** Maximum combat log entries retained. */
+const MAX_COMBAT_LOG = 50;
 
 interface GameStoreState {
 	gameId: string | null;
@@ -63,13 +67,27 @@ interface GameStoreState {
 	walkableByFloor: Uint8Array[] | null;
 	/** Cached opacity masks per floor (1 = blocks LoS). Used for visibility computation in applyAction. */
 	opacityByFloor: Uint8Array[] | null;
+	/** Latest combat events from the most recent action. */
+	events: GameEvent[];
+	/** Whether the hero is currently alive. Derived from state. */
+	heroAlive: boolean;
+	/** Accumulated combat log entries for display. Capped at MAX_COMBAT_LOG. */
+	combatLog: GameEvent[];
+	/** Turn number of the last optimistic event batch we logged. Used to avoid double-logging when server confirms. */
+	lastOptimisticEventTurn: number;
 }
 
 interface GameStoreActions {
 	/** Set state from server (join or state event). Updates lastConfirmedState; only updates display when server.turn >= current turn (avoids snap-back). */
-	setStateFromServer: (payload: { gameId: string; turn: number; state: GameState }) => void;
+	setStateFromServer: (payload: {
+		gameId: string;
+		turn: number;
+		state: GameState;
+		events?: GameEvent[];
+	}) => void;
 	setGameId: (id: string | null) => void;
-	sendAction: (action: { type: "move"; direction: "up" | "down" | "left" | "right" }) => void;
+	/** Send a player action (move or attack). Direction-based: client determines action type. */
+	sendAction: (action: Action) => void;
 	/** Called by the scene when an action's feedback starts (true) or completes (false). Blocks sendAction while true. */
 	setActionInProgress: (active: boolean) => void;
 	/** Revert to last confirmed state and return error reason for UI. */
@@ -94,6 +112,10 @@ const initialState: GameStoreState = {
 	lastInvalidMoveAt: 0,
 	walkableByFloor: null,
 	opacityByFloor: null,
+	events: [],
+	heroAlive: true,
+	combatLog: [],
+	lastOptimisticEventTurn: -1,
 };
 
 function computeFloorMasks(state: GameState): { walkable: Uint8Array[]; opacity: Uint8Array[] } {
@@ -122,11 +144,13 @@ function applyStateUpdate(
 	payload: { gameId: string; turn: number; state: GameState },
 ) {
 	const state = payload.state;
+	const hero = getHero(state);
 	set({
 		gameId: payload.gameId,
 		turn: payload.turn,
 		hero: heroFromState(state),
 		state,
+		heroAlive: hero?.alive ?? false,
 	});
 }
 
@@ -139,9 +163,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			turn: currentTurn,
 			pendingActions,
 			lastConfirmedState,
+			combatLog,
+			lastOptimisticEventTurn,
 		} = get();
 		const confirmedTurn = lastConfirmedState?.turn ?? -1;
 		if (payload.turn >= confirmedTurn) set({ lastConfirmedState: payload.state });
+
+		const incomingEvents = payload.events ?? [];
+		// Only append server events if we didn't already log them optimistically for this turn
+		const alreadyLogged = lastOptimisticEventTurn === payload.turn;
+		if (incomingEvents.length > 0 && !alreadyLogged) {
+			const newLog = [...combatLog, ...incomingEvents].slice(-MAX_COMBAT_LOG);
+			set({ events: incomingEvents, combatLog: newLog });
+		}
 
 		// New game (e.g. debug "Generate map"): always apply so scene restart sees new state.
 		if (payload.gameId !== currentGameId) {
@@ -152,6 +186,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				opacityByFloor: masks.opacity,
 				pendingActions: [],
 				unsentMoves: [],
+				combatLog: [],
+				events: [],
+				lastOptimisticEventTurn: -1,
 			});
 			return;
 		}
@@ -261,7 +298,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			return;
 		}
 
-		// Always apply for display (DCSS-style: character renders in each tile).
+		// Update events from local apply; record the resulting turn so we skip server duplicates
+		if (result.events.length > 0) {
+			const currentLog = get().combatLog;
+			const newLog = [...currentLog, ...result.events].slice(-MAX_COMBAT_LOG);
+			set({
+				events: result.events,
+				combatLog: newLog,
+				lastOptimisticEventTurn: result.state.turn,
+			});
+		}
+
 		applyStateUpdate(set, {
 			gameId,
 			turn: result.state.turn,
@@ -333,6 +380,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			lastInvalidMoveAt: 0,
 			walkableByFloor: null,
 			opacityByFloor: null,
+			events: [],
+			heroAlive: true,
+			combatLog: [],
+			lastOptimisticEventTurn: -1,
 		});
 	},
 }));

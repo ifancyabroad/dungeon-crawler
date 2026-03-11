@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createGame, getGame } from "../controllers/game.controller";
+import { createGame, getGame, getGameStatus } from "../controllers/game.controller";
 import { requireGame } from "../middlewares/requireGame";
 import { validateHeroName } from "../middlewares/validateHeroName";
 
@@ -11,5 +11,6 @@ const router = Router();
 
 router.post("/", validateHeroName, createGame);
 router.get("/", requireGame, getGame);
+router.get("/status", getGameStatus);
 
 export default router;

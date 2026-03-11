@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { GameState } from "@app/shared";
+import type { GameEvent, GameState } from "@app/shared";
 import { io } from "socket.io-client";
 import { getSocketUrl } from "../../lib/api";
 import { useGameStore, setGameSocket } from "./gameStore";
@@ -27,13 +27,17 @@ export function useGameSocket(gameId: string | null) {
 			socket.emit("join", { gameId });
 		});
 
-		socket.on("state", (payload: { gameId: string; turn: number; state: GameState }) => {
-			useGameStore.getState().setStateFromServer({
-				gameId: payload.gameId,
-				turn: payload.turn,
-				state: payload.state,
-			});
-		});
+		socket.on(
+			"state",
+			(payload: { gameId: string; turn: number; state: GameState; events?: GameEvent[] }) => {
+				useGameStore.getState().setStateFromServer({
+					gameId: payload.gameId,
+					turn: payload.turn,
+					state: payload.state,
+					events: payload.events,
+				});
+			},
+		);
 
 		socket.on("error", (payload: { reason?: string }) => {
 			const reason = payload.reason ?? "Connection or validation issue";
@@ -43,7 +47,14 @@ export function useGameSocket(gameId: string | null) {
 				useGameStore.getState().revertToConfirmed();
 			}
 			// Only show modal for unexpected errors, not for invalid move or server catching up
-			const silentReasons = ["move_blocked", "move_out_of_bounds", "turn_mismatch"];
+			const silentReasons = [
+				"move_blocked",
+				"move_blocked_by_enemy",
+				"move_out_of_bounds",
+				"attack_no_target",
+				"attack_out_of_bounds",
+				"turn_mismatch",
+			];
 			if (!silentReasons.includes(reason)) {
 				useErrorStore.getState().showError("Position synced with server.");
 			}

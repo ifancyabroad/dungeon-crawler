@@ -15,5 +15,6 @@
 	"startingSkills": ["weapon-mastery", "shield-block"],
 	"weaponProficiencies": ["sword", "axe", "mace", "polearm"],
 	"armorProficiencies": ["light", "medium", "heavy", "shield"],
-	"resource": "stamina"
+	"resource": "stamina",
+	"tileId": 742
 }
