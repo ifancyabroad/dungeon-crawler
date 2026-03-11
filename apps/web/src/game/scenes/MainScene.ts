@@ -46,6 +46,8 @@ export default class MainScene extends Phaser.Scene {
 	private mapHeight = DEFAULT_MAP_HEIGHT;
 	/** Precomputed opacity mask for LoS. Set once when map is built. */
 	private opacityMask: Uint8Array | null = null;
+	/** Currently visible tile indices, recomputed each turn in applyFogOfWar. */
+	private visibleMask: Uint8Array | null = null;
 	/** One-shot unsubscribe when we're waiting for state; cleaned up in shutdown(). */
 	private unsubWaitForState: (() => void) | null = null;
 	/** Unsubscribe from hero position sync; cleaned up in shutdown(). */
@@ -201,13 +203,17 @@ export default class MainScene extends Phaser.Scene {
 			const tileFrame = ENTITY_TILES.monsters[actor.def.monsterId];
 			if (tileFrame === undefined) continue;
 
+			const isVisible = this.visibleMask?.[actor.idx] === 1;
+
 			if (existing) {
 				existing.setPosition(px, py);
 				existing.setFrame(tileFrame);
+				existing.setVisible(isVisible);
 			} else {
 				const sprite = this.add.sprite(px, py, TILESET_KEY, tileFrame);
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(9);
+				sprite.setVisible(isVisible);
 				this.monsterSprites.set(id, sprite);
 			}
 		}
@@ -346,6 +352,7 @@ export default class MainScene extends Phaser.Scene {
 			this.opacityMask,
 			VISION_RADIUS,
 		);
+		this.visibleMask = visible;
 
 		const layers = [this.groundLayer, this.decorationLayer, this.wallLayer];
 		for (const layer of layers) {
