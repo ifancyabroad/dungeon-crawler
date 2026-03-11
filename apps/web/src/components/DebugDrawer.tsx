@@ -22,17 +22,21 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 
 	async function handleGenerateMap() {
 		const raw = seedInput.trim();
-		let options: { seed?: number } | undefined = undefined;
+		let seed: number | undefined = undefined;
 		if (raw !== "") {
 			const n = parseInt(raw, 10);
 			if (Number.isNaN(n) || n < 1) {
 				showError("Seed must be a positive integer or leave empty for random.");
 				return;
 			}
-			options = { seed: n };
+			seed = n;
 		}
 		try {
-			const data = await createGame.mutateAsync(options);
+			const data = await createGame.mutateAsync({
+				classId: "warrior",
+				heroName: "Debug Hero",
+				...(seed !== undefined ? { seed } : {}),
+			});
 			setStateFromServer({
 				gameId: data.gameId,
 				turn: data.state.turn,

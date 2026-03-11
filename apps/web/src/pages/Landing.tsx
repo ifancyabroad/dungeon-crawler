@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
-import { useContinueGame, useCreateGame } from "../features/game/useGames";
+import { Modal } from "../components/Modal";
+import { useContinueGame } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
 import { useErrorStore } from "../features/error/errorStore";
 import { getApiErrorMessage } from "../lib/errors";
@@ -10,21 +12,18 @@ export default function Landing() {
 	const navigate = useNavigate();
 	const setStateFromServer = useGameStore((s) => s.setStateFromServer);
 	const storeGameId = useGameStore((s) => s.storeGameId);
+	const getStoredGameId = useGameStore((s) => s.getStoredGameId);
 	const showError = useErrorStore((s) => s.showError);
 
-	const createGame = useCreateGame();
 	const continueGame = useContinueGame();
+	const [warnOpen, setWarnOpen] = useState(false);
 
-	const loading = createGame.isPending || continueGame.isPending;
-
-	async function handleNewGame() {
-		try {
-			const data = await createGame.mutateAsync();
-			setStateFromServer({ gameId: data.gameId, turn: data.state.turn, state: data.state });
-			storeGameId(data.gameId);
-			navigate("/game");
-		} catch (e) {
-			showError(getApiErrorMessage(e));
+	function handleNewGame() {
+		const existingId = getStoredGameId();
+		if (existingId) {
+			setWarnOpen(true);
+		} else {
+			navigate("/character-create");
 		}
 	}
 
@@ -46,21 +45,48 @@ export default function Landing() {
 					<Button
 						variant="primary"
 						size="lg"
-						onClick={() => handleNewGame()}
-						disabled={loading}
+						onClick={handleNewGame}
+						disabled={continueGame.isPending}
 					>
-						{createGame.isPending ? "Creating…" : "New Game"}
+						New Game
 					</Button>
 					<Button
 						variant="secondary"
 						size="lg"
 						onClick={() => handleContinue()}
-						disabled={loading}
+						disabled={continueGame.isPending}
 					>
 						{continueGame.isPending ? "Loading…" : "Continue"}
 					</Button>
 				</div>
 			</Card>
+
+			<Modal
+				open={warnOpen}
+				onClose={() => setWarnOpen(false)}
+				title="Existing Game"
+				footer={
+					<>
+						<Button variant="secondary" size="md" onClick={() => setWarnOpen(false)}>
+							Cancel
+						</Button>
+						<Button
+							variant="primary"
+							size="md"
+							onClick={() => {
+								setWarnOpen(false);
+								navigate("/character-create");
+							}}
+						>
+							Start New
+						</Button>
+					</>
+				}
+			>
+				<p className="text-text-muted">
+					You have an active game. Starting a new one will end your current adventure.
+				</p>
+			</Modal>
 		</div>
 	);
 }

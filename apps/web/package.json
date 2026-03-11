@@ -21,6 +21,7 @@
 		"@app/content": "workspace:*",
 		"@app/shared": "workspace:*",
 		"@tanstack/react-query": "^5.90.20",
+		"fantasy-name-generator": "^2.0.0",
 		"ky": "^1.14.3",
 		"phaser": "^3.90.0",
 		"react": "^19.2.3",

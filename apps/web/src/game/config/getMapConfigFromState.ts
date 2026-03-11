@@ -8,7 +8,7 @@ import { DEFAULT_FLOOR_CONFIG, getHero, type GameState, type MapGenConfig } from
 
 export interface MapConfigAndHero {
 	config: MapGenConfig;
-	hero: { floorIndex: number; idx: number };
+	hero: { floorIndex: number; idx: number; classId: string };
 }
 
 /**
@@ -25,8 +25,9 @@ export function getMapConfigAndHeroFromState(state: GameState): MapConfigAndHero
 		...floor.config,
 		seed: state.seed + floorIndex,
 	};
+	const classId = hero.def.type === "hero" ? hero.def.classId : "warrior";
 	return {
 		config,
-		hero: { floorIndex, idx: hero.idx },
+		hero: { floorIndex, idx: hero.idx, classId },
 	};
 }

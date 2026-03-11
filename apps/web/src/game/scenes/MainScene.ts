@@ -12,8 +12,8 @@ import {
 	VISION_RADIUS,
 } from "@app/shared";
 import {
-	ENTITIES,
 	getCollidingIndices,
+	getHeroTile,
 	TILE_HEIGHT,
 	TILE_WIDTH,
 	TILESET_KEY,
@@ -81,7 +81,7 @@ export default class MainScene extends Phaser.Scene {
 
 	private buildMapAndHero(
 		config: MapGenConfig,
-		heroPos: { floorIndex: number; idx: number },
+		heroPos: { floorIndex: number; idx: number; classId: string },
 		optionalConfigForSpawn?: MapGenConfig,
 	) {
 		this.mapWidth = config.width;
@@ -120,7 +120,7 @@ export default class MainScene extends Phaser.Scene {
 		this.playerTileY = spawnPos.y;
 		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
 		const startY = this.playerTileY * TILE_HEIGHT + TILE_HEIGHT / 2;
-		this.player = this.add.sprite(startX, startY, TILESET_KEY, ENTITIES.HERO);
+		this.player = this.add.sprite(startX, startY, TILESET_KEY, getHeroTile(heroPos.classId));
 		this.player.setOrigin(0.5, 0.5);
 		this.player.setDepth(10);
 

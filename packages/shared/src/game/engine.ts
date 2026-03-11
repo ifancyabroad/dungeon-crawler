@@ -5,7 +5,7 @@
  */
 
 import type { Action } from "./actions";
-import type { Actor, FloorConfig, FloorState, GameState } from "./types";
+import type { Actor, FloorConfig, FloorState, GameState, HeroInit } from "./types";
 import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
 import { VISION_RADIUS } from "./config";
@@ -96,11 +96,24 @@ const DEFAULT_ATTRIBUTES = {
 	charisma: 10,
 } as const;
 
+/** Fallback hero init for tests and debug. Matches legacy hardcoded warrior. */
+export const DEFAULT_HERO_INIT: HeroInit = {
+	name: "Hero",
+	classId: "warrior",
+	hp: 100,
+	maxHp: 100,
+	attributes: { ...DEFAULT_ATTRIBUTES },
+};
+
 /**
  * Create initial game state: one floor, hero actor at spawn, rngState from seed.
  * Computes initial explored tiles from spawn visibility.
  */
-export function createInitialState(seed: number, floorConfig: FloorConfig): GameState {
+export function createInitialState(
+	seed: number,
+	floorConfig: FloorConfig,
+	hero: HeroInit,
+): GameState {
 	const rngState = createInitialRngState(seed);
 	const floorConfigs: FloorConfig[] = [floorConfig];
 	const baseLayers = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION);
@@ -111,14 +124,14 @@ export function createInitialState(seed: number, floorConfig: FloorConfig): Game
 
 	const heroActor: Actor = {
 		id: "hero",
-		name: "Hero",
+		name: hero.name,
 		idx: spawnIdx,
 		alive: true,
-		hp: 100,
-		maxHp: 100,
-		attributes: { ...DEFAULT_ATTRIBUTES },
+		hp: hero.hp,
+		maxHp: hero.maxHp,
+		attributes: { ...hero.attributes },
 		skills: {},
-		def: { type: "hero", classId: "warrior" },
+		def: { type: "hero", classId: hero.classId },
 	};
 
 	const opMask = computeOpacityMask(floor0.wall, width, height);

@@ -115,9 +115,25 @@ export function getDecorationsByTheme(theme: string): { type: string; indices: n
 /** Legacy: indices that block movement. Prefer getCollidingIndices(). */
 export const COLLIDING_INDICES: number[] = getCollidingIndices();
 
-/** Entity tile indices for placement (hero, monsters). Same 32×32 grid in the sheet. */
-export const ENTITIES = {
-	HERO: 739,
-	RAT: 619,
-	GOBLIN: 677,
+/** Entity tile indices keyed by content id. Same 32×32 grid in the tileset sheet. */
+export const ENTITY_TILES = {
+	heroes: {
+		warrior: 742,
+		rogue: 740,
+		mage: 746,
+	} as Record<string, number>,
+	monsters: {
+		rat: 619,
+		goblin: 677,
+	} as Record<string, number>,
 } as const;
+
+export const DEFAULT_HERO_TILE = ENTITY_TILES.heroes.warrior;
+
+/** Resolve tileset index for a hero class. Falls back to warrior tile for unknown ids. */
+export function getHeroTile(classId: string): number {
+	return ENTITY_TILES.heroes[classId] ?? DEFAULT_HERO_TILE;
+}
+
+/** Number of tile columns in the tileset spritesheet (used for CSS background-position). */
+export const TILESET_COLUMNS = 21;

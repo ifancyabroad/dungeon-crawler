@@ -45,6 +45,7 @@ export {
 	createEmptyFloorState,
 	createInitialState,
 	createWalkableContext,
+	DEFAULT_HERO_INIT,
 	gameStateToPersisted,
 	getHero,
 	computeWalkableMaskForFloor,
@@ -74,6 +75,7 @@ export {
 	type GameSessionDoc,
 	type GameSnapshotDoc,
 	type GameState,
+	type HeroInit,
 	type MoveAction,
 	type PersistedDynamicState,
 } from "./game";

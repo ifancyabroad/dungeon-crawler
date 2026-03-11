@@ -12,6 +12,7 @@ import {
 	computeWalkableMaskForFloor,
 	regenerateBaseMaps,
 	DEFAULT_FLOOR_CONFIG,
+	DEFAULT_HERO_INIT,
 	gameStateToPersisted,
 	getHero,
 } from "@app/shared";
@@ -35,7 +36,7 @@ function buildContext(state: ReturnType<typeof createInitialState>) {
 
 describe("engine invariants", () => {
 	it("replay from snapshot + N actions equals direct apply with context", () => {
-		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG);
+		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
 		const persisted0 = gameStateToPersisted(state0);
 		const floorConfigs = state0.floors.map((f) => f.config);
 
@@ -81,7 +82,7 @@ describe("engine invariants", () => {
 
 	it("applyAction with context does not call regenerateBaseMaps", async () => {
 		const shared = await import("@app/shared");
-		const state = createInitialState(SEED, DEFAULT_FLOOR_CONFIG);
+		const state = createInitialState(SEED, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
 		const context = buildContext(state);
 
 		const spy = vi.spyOn(shared, "regenerateBaseMaps");
@@ -98,7 +99,7 @@ describe("engine invariants", () => {
 	});
 
 	it("explored state grows after move", () => {
-		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG);
+		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
 		const exploredBefore = state0.floors[0].state.explored;
 		const exploredCount0 = exploredBefore.filter((v) => v === 1).length;
 		expect(exploredCount0).toBeGreaterThan(0);

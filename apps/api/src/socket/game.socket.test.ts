@@ -55,6 +55,13 @@ vi.mock("../models/gameActionLog.model", () => ({
 	GameActionLog: { create: mockActionLogCreate },
 }));
 
+vi.mock("../models/hero.model", () => ({
+	Hero: {
+		create: vi.fn().mockResolvedValue(undefined),
+		updateMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+	},
+}));
+
 vi.mock("../config/db", () => ({
 	runTransaction: (fn: (session: unknown) => Promise<unknown>) => fn({}),
 }));
@@ -115,7 +122,12 @@ describe("game socket", () => {
 	);
 
 	it("join emits state with gameId, turn, and state", async () => {
-		const res = await fetch(`${baseUrl}/api/game`, { method: "POST", redirect: "manual" });
+		const res = await fetch(`${baseUrl}/api/game`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ classId: "warrior", heroName: "Tester" }),
+			redirect: "manual",
+		});
 		expect(res.status).toBe(201);
 		const body = (await res.json()) as { gameId: string };
 		const gameId = body.gameId;
@@ -156,7 +168,7 @@ describe("game socket", () => {
 		const res = await fetch(`${baseUrl}/api/game`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ seed: 12345 }),
+			body: JSON.stringify({ seed: 12345, classId: "warrior", heroName: "Tester" }),
 			redirect: "manual",
 		});
 		expect(res.status).toBe(201);
@@ -214,7 +226,12 @@ describe("game socket", () => {
 	});
 
 	it("invalid action schema emits error", async () => {
-		const res = await fetch(`${baseUrl}/api/game`, { method: "POST", redirect: "manual" });
+		const res = await fetch(`${baseUrl}/api/game`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ classId: "warrior", heroName: "Tester" }),
+			redirect: "manual",
+		});
 		const body = (await res.json()) as { gameId: string };
 		const token = parseGameToken(res.headers.get("set-cookie") ?? undefined);
 		const client = ioClient(baseUrl, {

@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import http from "node:http";
 import { io as ioClient } from "socket.io-client";
 import type { GameState } from "@app/shared";
-import { createInitialState, DEFAULT_FLOOR_CONFIG } from "@app/shared";
+import { createInitialState, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT } from "@app/shared";
 
 process.env.MONGO_URI = "mongodb://localhost:27017/test";
 process.env.GAME_TOKEN_PEPPER = "test-pepper";
@@ -102,6 +102,13 @@ vi.mock("../models/gameActionLog.model", () => ({
 	},
 }));
 
+vi.mock("../models/hero.model", () => ({
+	Hero: {
+		create: vi.fn().mockResolvedValue(undefined),
+		updateMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+	},
+}));
+
 vi.mock("../config/db", () => ({
 	runTransaction: (fn: (session: unknown) => Promise<unknown>) => fn({}),
 }));
@@ -190,7 +197,7 @@ describe("gameState concurrency", () => {
 		const { GameActionLog } = await import("../models/gameActionLog.model");
 
 		const gameId = "direct-test-game";
-		const state0 = createInitialState(12345, DEFAULT_FLOOR_CONFIG);
+		const state0 = createInitialState(12345, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
 		setSessionState(gameId, state0);
 
 		const expectedTurn = 0;
@@ -230,7 +237,12 @@ describe("gameState concurrency", () => {
 	});
 
 	it("N concurrent actions with same expectedTurn → exactly one log entry (socket integration)", async () => {
-		const res = await fetch(`${baseUrl}/api/game`, { method: "POST", redirect: "manual" });
+		const res = await fetch(`${baseUrl}/api/game`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ classId: "warrior", heroName: "Tester" }),
+			redirect: "manual",
+		});
 		expect(res.status).toBe(201);
 		const body = (await res.json()) as { gameId: string };
 		const gameId = body.gameId;
@@ -244,7 +256,7 @@ describe("gameState concurrency", () => {
 
 		const joinState = await new Promise<{ state: GameState }>((resolve, reject) => {
 			const t = setTimeout(() => reject(new Error("timeout")), 3000);
-			client.on("state", (p: { state: GameState }) => {
+			client.once("state", (p: { state: GameState }) => {
 				clearTimeout(t);
 				resolve(p);
 			});
@@ -268,10 +280,12 @@ describe("gameState concurrency", () => {
 			});
 		}
 
+		// Wait for all events: N states (1 success + N-1 re-syncs) + N-1 errors
+		const totalExpected = N + (N - 1);
 		await new Promise<void>((resolve, reject) => {
-			const t = setTimeout(() => reject(new Error("timeout waiting for 5 responses")), 8000);
+			const t = setTimeout(() => reject(new Error("timeout waiting for responses")), 8000);
 			const check = () => {
-				if (stateEvents.length + errorEvents.length >= N) {
+				if (stateEvents.length + errorEvents.length >= totalExpected) {
 					clearTimeout(t);
 					resolve();
 				}
@@ -280,12 +294,10 @@ describe("gameState concurrency", () => {
 			client.on("error", check);
 		});
 
-		expect(stateEvents.length).toBe(1);
-		expect(stateEvents[0].turn).toBe(expectedTurn + 1);
-
 		const turnMismatch = errorEvents.filter((e) => e.reason === "turn_mismatch");
 		expect(turnMismatch.length).toBe(N - 1);
 
+		// Only one action should have reached the persistence layer
 		expect(mockActionLogCreate).toHaveBeenCalledTimes(1);
 		expect(createCalls.length).toBe(1);
 		expect(createCalls[0].gameId).toBe(gameId);

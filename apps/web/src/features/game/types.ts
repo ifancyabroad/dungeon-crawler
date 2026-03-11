@@ -1,8 +1,10 @@
 import type { GameState } from "@app/shared";
 
-/** Optional body for POST /api/game (e.g. seed for debug). */
+/** Body for POST /api/game. classId + heroName are required for character creation. */
 export interface CreateGameOptions {
 	seed?: number;
+	classId: string;
+	heroName: string;
 }
 
 export interface CreateGameResponse {

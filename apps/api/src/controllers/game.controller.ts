@@ -6,9 +6,12 @@ import {
 	DEFAULT_FLOOR_CONFIG,
 	gameStateToPersisted,
 	PersistedDynamicStateSchema,
+	type HeroInit,
 } from "@app/shared";
+import { classesById, type CharacterClassId } from "@app/content";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
+import { Hero } from "../models/hero.model";
 import { getSessionState, reconstructState, setSessionState } from "../services/gameState.service";
 import { COOKIE_NAME, hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
@@ -23,9 +26,9 @@ const COOKIE_OPTS = {
 };
 
 /**
- * Creates a new game session. Writes snapshot at turn 0 (full dynamic state + rngState),
- * session metadata (no embedded state). Overwrites any existing game_token cookie.
- * Optional body: { seed?: number } to use a specific RNG seed (e.g. for debug/replay).
+ * Creates a new game session with a chosen class and hero name.
+ * Retires any existing active hero for this browser, creates a new Hero doc,
+ * and writes snapshot + session to DB in a transaction.
  */
 export const createGame: RequestHandler = async (req, res) => {
 	const body = createGameBodySchema.parse(req.body ?? {});
@@ -34,12 +37,36 @@ export const createGame: RequestHandler = async (req, res) => {
 	const tokenHash = hashToken(token, env.GAME_TOKEN_PEPPER);
 	const now = new Date();
 
+	const classDef = classesById[body.classId as CharacterClassId];
+	if (!classDef) {
+		return res.status(400).json({ error: `Unknown class: ${body.classId}` });
+	}
+
+	const heroInit: HeroInit = {
+		name: body.heroName,
+		classId: classDef.id,
+		hp: classDef.startingHp,
+		maxHp: classDef.startingHp,
+		attributes: { ...classDef.baseAttributes },
+	};
+
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
-	const state = createInitialState(seed, DEFAULT_FLOOR_CONFIG);
+	const state = createInitialState(seed, DEFAULT_FLOOR_CONFIG, heroInit);
 	const persistedState = gameStateToPersisted(state);
 	PersistedDynamicStateSchema.parse(persistedState);
 
 	await runTransaction(async (session) => {
+		await Hero.updateMany(
+			{ tokenHash, status: "active" },
+			{ $set: { status: "retired" } },
+			{ session },
+		);
+
+		await Hero.create(
+			[{ gameId, tokenHash, name: body.heroName, classId: classDef.id, status: "active" }],
+			{ session },
+		);
+
 		await GameSnapshot.create([{ gameId, turn: 0, state: persistedState, createdAt: now }], {
 			session,
 		});

@@ -29,6 +29,13 @@ vi.mock("../models/gameActionLog.model", () => ({
 	GameActionLog: { create: vi.fn().mockResolvedValue(undefined) },
 }));
 
+vi.mock("../models/hero.model", () => ({
+	Hero: {
+		create: vi.fn().mockResolvedValue(undefined),
+		updateMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+	},
+}));
+
 const mockReconstructState = vi.fn().mockResolvedValue(null);
 vi.mock("../services/gameState.service", () => ({
 	reconstructState: (...args: unknown[]) => mockReconstructState(...args),
@@ -53,7 +60,10 @@ beforeEach(() => {
 
 describe("POST /api/game", () => {
 	it("returns 201 with gameId and sets game_token cookie (HttpOnly, SameSite=Lax)", async () => {
-		const res = await request(app).post("/api/game").expect(201);
+		const res = await request(app)
+			.post("/api/game")
+			.send({ classId: "warrior", heroName: "Tester" })
+			.expect(201);
 
 		expect(res.body).toHaveProperty("gameId");
 		expect(typeof res.body.gameId).toBe("string");

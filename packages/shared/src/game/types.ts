@@ -33,6 +33,15 @@ export interface ActorSkillState {
 /** Definition reference: hero (classId from content) or monster. */
 export type ActorDef = { type: "hero"; classId: string } | { type: "monster"; monsterId: string };
 
+/** Data the caller provides to create the initial hero actor. Keeps the engine content-agnostic. */
+export interface HeroInit {
+	name: string;
+	classId: string;
+	hp: number;
+	maxHp: number;
+	attributes: ActorAttributes;
+}
+
 /** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */
 export interface Actor {
 	id: string;
