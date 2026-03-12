@@ -16,6 +16,8 @@ export {
 	TILE_TYPE,
 } from "./config";
 export type { GeneratedMap, MapGenAlgorithm, MapGenConfig } from "./types";
+export { FLOOR_THEMES } from "./themes";
+export type { FloorTheme } from "./themes";
 export { buildGroundLayer, buildWallLayer } from "./build";
 export { generateMap } from "./generate";
 export { wouldStayConnected } from "./connectivity";

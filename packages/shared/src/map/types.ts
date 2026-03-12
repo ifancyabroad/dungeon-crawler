@@ -2,6 +2,8 @@
  * Map types. Constants and default config live in config.ts.
  */
 
+import type { FloorTheme } from "./themes";
+
 /** Map generation algorithm: BSP (room-corridor) or cave (cellular automata, organic). */
 export type MapGenAlgorithm = "bsp" | "cave";
 
@@ -10,7 +12,7 @@ export interface MapGenConfig {
 	seed: number;
 	width: number;
 	height: number;
-	theme: string;
+	theme: FloorTheme;
 	/** "bsp" (rooms + corridors) or "cave" (cellular automata). */
 	algorithm: MapGenAlgorithm;
 	/** Cave only: initial floor chance for cellular automata (0.35–0.55). */

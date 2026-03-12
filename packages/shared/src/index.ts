@@ -28,6 +28,8 @@ export {
 	type DecorationType,
 	type MapGenAlgorithm,
 	type MapGenConfig,
+	type FloorTheme,
+	FLOOR_THEMES,
 	computeOpacityMask,
 	computeVisibility,
 	mergeExplored,
@@ -60,6 +62,7 @@ export {
 	MAP_GEN_VERSION,
 	VISION_RADIUS,
 	XP_PER_LEVEL,
+	BASE_MONSTERS_PER_FLOOR,
 	ActorAttributesSchema,
 	ActorDefSchema,
 	ActorsByIdSchema,
@@ -88,6 +91,7 @@ export {
 	type MoveAction,
 	type PersistedDynamicState,
 } from "./game";
+export { getSpawnTable, type SpawnEntry } from "./game";
 
 export {
 	abilityModifier,

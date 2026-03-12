@@ -20,7 +20,7 @@ describe("walkable mask", () => {
 	const seed = 42;
 	const width = 10;
 	const height = 8;
-	const floorConfig = { ...DEFAULT_FLOOR_CONFIG, width, height, theme: "dungeon" };
+	const floorConfig = { ...DEFAULT_FLOOR_CONFIG, width, height, theme: "green_forest" as const };
 
 	it("computeWalkableMaskForFloor returns mask of length width*height", () => {
 		const baseLayers = regenerateBaseMaps(seed, [floorConfig], MAP_GEN_VERSION);

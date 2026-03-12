@@ -3,6 +3,7 @@
  */
 
 import type { MapGenConfig } from "./types";
+import type { FloorTheme } from "./themes";
 
 /** Logical tile types for map generation. Client maps these to tileset indices. */
 export const TILE_TYPE = {
@@ -28,7 +29,7 @@ export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
 export const DEFAULT_SCATTER_CHANCE = 0.28;
 
 /** Default theme name for client tile mapping (e.g. green_forest). */
-export const DEFAULT_FLOOR_THEME = "green_forest";
+export const DEFAULT_FLOOR_THEME: FloorTheme = "green_forest";
 
 /** Default map algorithm: "bsp" (rooms) or "cave" (cellular automata). */
 export const DEFAULT_MAP_ALGORITHM = "cave" as const;

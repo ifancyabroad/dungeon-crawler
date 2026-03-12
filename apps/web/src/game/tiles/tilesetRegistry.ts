@@ -6,6 +6,8 @@
  * for procedural map rendering and getCollidingIndices for collision.
  */
 
+import type { FloorTheme } from "@app/shared";
+
 export const TILE_WIDTH = 32;
 export const TILE_HEIGHT = 32;
 export const TILESET_KEY = "roguelike-tileset";
@@ -13,7 +15,7 @@ export const TILESET_KEY = "roguelike-tileset";
 export type TileRole = "floor" | "wall" | "decoration";
 
 export interface TileMetadata {
-	theme: string;
+	theme: FloorTheme;
 	role: TileRole;
 	type: string;
 	collision: boolean;
@@ -78,8 +80,8 @@ export function getCollidingIndices(): number[] {
 }
 
 /** Unique theme names from TILE_METADATA (for UI e.g. theme selector). */
-export function getThemes(): string[] {
-	const themes = new Set<string>();
+export function getThemes(): FloorTheme[] {
+	const themes = new Set<FloorTheme>();
 	for (const meta of Object.values(TILE_METADATA)) {
 		themes.add(meta.theme);
 	}
@@ -87,21 +89,21 @@ export function getThemes(): string[] {
 }
 
 /** Tile indices for a given theme and role (e.g. for procedural map rendering). */
-export function getTileIndicesByThemeAndRole(theme: string, role: TileRole): number[] {
+export function getTileIndicesByThemeAndRole(theme: FloorTheme, role: TileRole): number[] {
 	return Object.entries(TILE_METADATA)
 		.filter(([, meta]) => meta.theme === theme && meta.role === role)
 		.map(([index]) => Number(index));
 }
 
 /** Tile indices for a given theme and type (e.g. decoration type "path", "grass"). */
-export function getTileIndicesByThemeAndType(theme: string, type: string): number[] {
+export function getTileIndicesByThemeAndType(theme: FloorTheme, type: string): number[] {
 	return Object.entries(TILE_METADATA)
 		.filter(([, meta]) => meta.theme === theme && meta.type === type)
 		.map(([index]) => Number(index));
 }
 
 /** Decoration types (role === "decoration") grouped by type for a theme. Path is separate for connected placement. */
-export function getDecorationsByTheme(theme: string): { type: string; indices: number[] }[] {
+export function getDecorationsByTheme(theme: FloorTheme): { type: string; indices: number[] }[] {
 	const byType = new Map<string, number[]>();
 	for (const [index, meta] of Object.entries(TILE_METADATA)) {
 		if (meta.theme !== theme || meta.role !== "decoration") continue;
