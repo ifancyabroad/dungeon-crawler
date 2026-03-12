@@ -12,15 +12,15 @@ function formatEvent(event: GameEvent): string {
 
 		if (!result.hit) {
 			if (attackerId === "hero") {
-				return `You missed ${defender}. (Rolled ${result.naturalRoll} + ${result.totalAttackRoll - result.naturalRoll} = ${result.totalAttackRoll} vs AC ${result.targetAc})`;
+				return `You missed ${defender}. (${result.naturalRoll}+${result.totalAttackRoll - result.naturalRoll}=${result.totalAttackRoll} vs AC ${result.targetAc})`;
 			}
 			return `${attacker} missed ${defender}. (Rolled ${result.naturalRoll})`;
 		}
-		const critLabel = result.critical ? "Critical hit! " : "";
+		const critLabel = result.critical ? "[CRIT] " : "";
 		if (attackerId === "hero") {
-			return `${critLabel}You hit ${defender} for ${result.damage} damage. (Rolled ${result.naturalRoll})`;
+			return `${critLabel}You hit ${defender} for ${result.damage} dmg. (Rolled ${result.naturalRoll})`;
 		}
-		return `${critLabel}${attacker} hit ${defender} for ${result.damage} damage. (Rolled ${result.naturalRoll})`;
+		return `${critLabel}${attacker} hit ${defender} for ${result.damage} dmg. (Rolled ${result.naturalRoll})`;
 	}
 
 	if (event.type === "death") {
@@ -37,6 +37,24 @@ function capitalize(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function eventColorClass(event: GameEvent): string {
+	if (event.type === "death") {
+		return event.actorId === "hero" ? "text-death" : "text-kill";
+	}
+	if (event.type === "attack" && event.result.critical) {
+		return "text-primary";
+	}
+	if (event.type === "attack" && event.attackerId === "hero") {
+		return "text-text-bright";
+	}
+	return "text-text";
+}
+
+// Fixed line-height so container height is always an exact multiple — no partial lines.
+const LINE_HEIGHT = 24; // px, matches leading-6
+const VISIBLE_LINES = 5;
+const LOG_HEIGHT = LINE_HEIGHT * VISIBLE_LINES;
+
 export function CombatLog() {
 	const combatLog = useGameStore((s) => s.combatLog);
 	const scrollRef = useRef<HTMLDivElement>(null);
@@ -48,33 +66,36 @@ export function CombatLog() {
 	}, [combatLog.length]);
 
 	return (
-		<div
-			ref={scrollRef}
-			className="h-32 shrink-0 overflow-y-auto border-t border-border bg-bg-surface px-4 py-2 text-sm font-mono"
-		>
-			{combatLog.length === 0 && (
-				<p className="text-text-muted/50 italic">No combat events yet.</p>
-			)}
-			{combatLog.map((event, i) => {
-				const text = formatEvent(event);
-				if (!text) return null;
-				const isHeroDeath = event.type === "death" && event.actorId === "hero";
-				const isEnemyDeath = event.type === "death" && event.actorId !== "hero";
-				return (
-					<p
-						key={i}
-						className={
-							isHeroDeath
-								? "text-red-400"
-								: isEnemyDeath
-									? "text-green-400"
-									: "text-text-muted"
-						}
-					>
-						{text}
-					</p>
-				);
-			})}
+		<div className="shrink-0 bg-transparent">
+			<div
+				ref={scrollRef}
+				className="overflow-y-auto px-3 py-0"
+				style={{ height: LOG_HEIGHT, lineHeight: `${LINE_HEIGHT}px` }}
+			>
+				{combatLog.length === 0 && (
+					<>
+						<p className="text-text-bright" style={{ lineHeight: `${LINE_HEIGHT}px` }}>
+							Welcome, adventurer. The dungeon awaits.
+						</p>
+						<p className="text-text-muted" style={{ lineHeight: `${LINE_HEIGHT}px` }}>
+							Move with WASD or arrow keys.
+						</p>
+					</>
+				)}
+				{combatLog.map((event, i) => {
+					const text = formatEvent(event);
+					if (!text) return null;
+					return (
+						<p
+							key={i}
+							className={eventColorClass(event)}
+							style={{ lineHeight: `${LINE_HEIGHT}px` }}
+						>
+							{text}
+						</p>
+					);
+				})}
+			</div>
 		</div>
 	);
 }

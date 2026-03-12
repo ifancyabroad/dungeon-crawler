@@ -3,13 +3,13 @@ import { Button } from "../components/Button";
 
 export default function NotFound() {
 	return (
-		<div className="h-screen w-screen bg-bg-base text-text flex items-center justify-center">
+		<div className="h-screen w-screen bg-bg-base flex items-center justify-center">
 			<div className="text-center space-y-4">
-				<p className="text-6xl font-bold text-text-muted">404</p>
-				<h1 className="text-2xl font-semibold">Page not found</h1>
-				<p className="text-text-muted">The page you’re looking for doesn’t exist.</p>
-				<Button variant="primary" asChild>
-					<Link to="/">Go to Home</Link>
+				<p className="text-5xl text-text-dim">404</p>
+				<p className="text-lg text-primary">Page not found</p>
+				<p className="text-base text-text-muted">This path leads nowhere.</p>
+				<Button variant="secondary" size="md" asChild>
+					<Link to="/">Return to Menu</Link>
 				</Button>
 			</div>
 		</div>

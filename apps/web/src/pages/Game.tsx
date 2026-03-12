@@ -2,12 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import GameCanvas from "../components/GameCanvas";
-import GameOverlay from "../components/GameOverlay";
 import { CombatLog } from "../components/CombatLog";
 import { DeathModal } from "../components/DeathModal";
 import { LevelUpModal } from "../components/LevelUpModal";
 import DebugDrawer from "../components/DebugDrawer";
-import { Button } from "../components/Button";
 import { useGameSocket } from "../features/game/useGameSocket";
 import { useGameStore } from "../features/game/gameStore";
 
@@ -18,7 +16,6 @@ export default function Game() {
 	const gameId = useGameStore((s) => s.gameId);
 	const heroAlive = useGameStore((s) => s.heroAlive);
 
-	// On mount: hydrate gameId from localStorage if the store is empty, or redirect to menu if there's nothing.
 	useEffect(() => {
 		const stored = useGameStore.getState().getStoredGameId();
 		const current = useGameStore.getState().gameId;
@@ -35,7 +32,7 @@ export default function Game() {
 	const [debugDrawerOpen, setDebugDrawerOpen] = useState(false);
 
 	return (
-		<div className="h-screen w-screen bg-bg-base text-text">
+		<div className="h-screen w-screen bg-bg-base text-text overflow-hidden">
 			<div className="flex h-full">
 				<Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -45,28 +42,25 @@ export default function Game() {
 							<GameCanvas />
 						</div>
 
-						<GameOverlay />
-
-						<Button
-							variant="secondary"
-							size="md"
+						{/* Mobile sidebar toggle */}
+						<button
+							type="button"
 							onClick={() => setSidebarOpen(true)}
-							className="md:hidden absolute top-3 left-3 backdrop-blur bg-bg-surface/80 hover:bg-bg-elevated/80"
+							className="md:hidden absolute top-3 left-3 text-sm border border-border bg-bg-panel/95 text-text-muted hover:text-text-bright px-3 py-1 transition-colors"
 							aria-label="Open sidebar"
 						>
-							☰ Menu
-						</Button>
+							≡ Menu
+						</button>
 
 						{DEBUG_DRAWER_ENABLED && (
-							<Button
-								variant="secondary"
-								size="sm"
+							<button
+								type="button"
 								onClick={() => setDebugDrawerOpen(true)}
-								className="absolute top-3 right-3 backdrop-blur bg-bg-surface/80 hover:bg-bg-elevated/80"
+								className="absolute top-3 right-3 font-mono text-xs uppercase tracking-wider border border-border bg-bg-panel/90 text-text-muted hover:text-text px-2.5 py-1 transition-colors"
 								aria-label="Open debug drawer"
 							>
 								Debug
-							</Button>
+							</button>
 						)}
 					</div>
 

@@ -58,12 +58,12 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 			<aside
 				className={[
 					"fixed top-0 right-0 bottom-0 z-50 w-[260px]",
-					"bg-bg-surface border-l border-border overflow-y-auto",
+					"bg-bg-surface border-l-2 border-border overflow-y-auto",
 					"transform transition-transform duration-200",
 				].join(" ")}
 				aria-label="Debug drawer"
 			>
-				<div className="sticky top-0 z-10 border-b border-border bg-bg-surface/95 backdrop-blur">
+				<div className="sticky top-0 z-10 border-b-2 border-border bg-bg-surface/95 backdrop-blur">
 					<div className="flex items-center justify-between px-4 py-3">
 						<h2 className="text-sm font-semibold text-text">Debug</h2>
 						<Button

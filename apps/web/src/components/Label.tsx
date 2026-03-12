@@ -6,10 +6,7 @@ type LabelProps = ComponentPropsWithoutRef<"label"> & {
 
 export function Label({ children, className = "", required, ...rest }: LabelProps) {
 	return (
-		<label
-			className={`block text-sm font-medium text-text-muted ${className}`.trim()}
-			{...rest}
-		>
+		<label className={`block text-sm text-text-label mb-1 ${className}`.trim()} {...rest}>
 			{children}
 			{required && (
 				<span className="text-error ml-0.5" aria-hidden>

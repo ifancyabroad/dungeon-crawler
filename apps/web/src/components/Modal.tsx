@@ -1,5 +1,4 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Button } from "./Button";
 
 type ModalProps = {
 	open: boolean;
@@ -15,11 +14,9 @@ export function Modal({ open, onClose, title, children, footer, className = "" }
 
 	useEffect(() => {
 		if (!open) return;
-
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key === "Escape") onClose();
 		};
-
 		document.addEventListener("keydown", handleEscape);
 		return () => document.removeEventListener("keydown", handleEscape);
 	}, [open, onClose]);
@@ -33,40 +30,34 @@ export function Modal({ open, onClose, title, children, footer, className = "" }
 			role="dialog"
 			aria-labelledby={title ? "modal-title" : undefined}
 		>
-			<div className="fixed inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
+			{/* Pure black backdrop, no opacity blending */}
+			<div className="fixed inset-0 bg-black/90" onClick={onClose} aria-hidden="true" />
+
+			{/* Panel — DCSS style: warm dark bg, amber border */}
 			<div
 				ref={panelRef}
 				className={[
 					"relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col",
-					"rounded border border-border bg-bg-surface shadow-xl",
+					"border-2 border-border bg-bg-panel",
 					className,
 				].join(" ")}
 				onClick={(e) => e.stopPropagation()}
 			>
 				{/* Header */}
-				<div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-4 py-3">
-					{title != null && (
-						<h2 id="modal-title" className="text-lg font-semibold text-text">
+				{title != null && (
+					<div className="shrink-0 border-b-2 border-border px-4 py-2">
+						<h2 id="modal-title" className="text-primary text-base">
 							{title}
 						</h2>
-					)}
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={onClose}
-						aria-label="Close"
-						className={title == null ? "ml-auto" : ""}
-					>
-						×
-					</Button>
-				</div>
+					</div>
+				)}
 
 				{/* Body */}
-				<div className="min-h-0 flex-1 overflow-y-auto p-4 text-text">{children}</div>
+				<div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 text-text">{children}</div>
 
 				{/* Footer */}
 				{footer != null && (
-					<div className="shrink-0 border-t border-border px-4 py-3 flex justify-end gap-2">
+					<div className="shrink-0 border-t-2 border-border px-4 py-3 flex justify-end gap-2">
 						{footer}
 					</div>
 				)}

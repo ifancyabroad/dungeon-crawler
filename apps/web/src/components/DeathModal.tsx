@@ -9,32 +9,28 @@ type DeathModalProps = {
 export function DeathModal({ open }: DeathModalProps) {
 	const navigate = useNavigate();
 
-	function handleReturnToMenu() {
-		navigate("/");
-	}
-
-	function handleNewCharacter() {
-		navigate("/character-create");
-	}
-
 	return (
 		<Modal
 			open={open}
 			onClose={() => {}}
-			title="You Have Died"
+			title="You have died."
 			footer={
 				<>
-					<Button variant="secondary" size="md" onClick={handleReturnToMenu}>
+					<Button variant="secondary" size="md" onClick={() => navigate("/")}>
 						Return to Menu
 					</Button>
-					<Button variant="primary" size="md" onClick={handleNewCharacter}>
+					<Button
+						variant="primary"
+						size="md"
+						onClick={() => navigate("/character-create")}
+					>
 						New Character
 					</Button>
 				</>
 			}
 		>
-			<p className="text-text-muted">
-				Your hero has fallen in the dungeon. Their journey ends here.
+			<p className="text-base text-text italic">
+				Your hero has fallen in the darkness. Their deeds will not be forgotten.
 			</p>
 		</Modal>
 	);
