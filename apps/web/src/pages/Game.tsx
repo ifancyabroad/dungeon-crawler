@@ -46,22 +46,33 @@ export default function Game() {
 						<button
 							type="button"
 							onClick={() => setSidebarOpen(true)}
-							className="md:hidden absolute top-3 left-3 text-sm border border-border bg-bg-panel/95 text-text-muted hover:text-text-bright px-3 py-1 transition-colors"
+							className="md:hidden absolute top-3 left-3 text-sm border border-border bg-bg-panel/95 text-text-muted hover:text-text px-3 py-1 transition-colors"
 							aria-label="Open sidebar"
 						>
 							≡ Menu
 						</button>
 
-						{DEBUG_DRAWER_ENABLED && (
+						<div className="absolute top-3 right-3 flex items-center gap-2">
 							<button
 								type="button"
-								onClick={() => setDebugDrawerOpen(true)}
-								className="absolute top-3 right-3 font-mono text-xs uppercase tracking-wider border border-border bg-bg-panel/90 text-text-muted hover:text-text px-2.5 py-1 transition-colors"
-								aria-label="Open debug drawer"
+								onClick={() => navigate("/")}
+								className="font-mono text-xs uppercase tracking-wider border border-border bg-bg-panel/90 text-text-muted hover:text-text px-2.5 py-1 transition-colors"
+								aria-label="Return to main menu"
 							>
-								Debug
+								← Menu
 							</button>
-						)}
+
+							{DEBUG_DRAWER_ENABLED && (
+								<button
+									type="button"
+									onClick={() => setDebugDrawerOpen(true)}
+									className="font-mono text-xs uppercase tracking-wider border border-border bg-bg-panel/90 text-text-muted hover:text-text px-2.5 py-1 transition-colors"
+									aria-label="Open debug drawer"
+								>
+									Debug
+								</button>
+							)}
+						</div>
 					</div>
 
 					<CombatLog />
