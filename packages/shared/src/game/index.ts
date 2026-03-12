@@ -58,6 +58,8 @@ export {
 	ActorAttributesSchema,
 	ActorSkillStateSchema,
 	FloorStateSchema,
+	MonsterAIStateSchema,
 	PersistedDynamicStateSchema,
 	RngStateSchema,
 } from "./schemas";
+export type { AIStrategyTag, MonsterAIState } from "./monsterAI";

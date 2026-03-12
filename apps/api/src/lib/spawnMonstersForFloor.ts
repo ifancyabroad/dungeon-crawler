@@ -74,6 +74,7 @@ export function spawnMonstersForFloor(
 			armorClass: def.armorClass,
 			attributes: { ...def.baseAttributes },
 			xpReward: def.xpReward,
+			aiStrategy: def.aiStrategy,
 		};
 
 		current = spawnMonster(current, floorIndex, init, spawnIdx);

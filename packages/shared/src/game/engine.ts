@@ -24,6 +24,7 @@ import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/vis
 import { resolveAttack } from "../combat/combat";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
+import { runMonsterAI, type MonsterAIState } from "./monsterAI";
 
 /** Empty floor state (tileOverrides, actorsById, explored). Use when defaulting or building from persisted. */
 export function createEmptyFloorState(): FloorState {
@@ -235,6 +236,7 @@ export function spawnMonster(
 ): GameState {
 	const floor = state.floors[floorIndex];
 	if (!floor) return state;
+	const aiState: MonsterAIState = { strategy: init.aiStrategy };
 	const actor: Actor = {
 		id: nextMonsterId(init.monsterId),
 		name: init.name,
@@ -250,6 +252,7 @@ export function spawnMonster(
 		xp: 0,
 		hitDie: 0,
 		xpReward: init.xpReward,
+		aiState,
 	};
 	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
 	const newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };
@@ -264,7 +267,7 @@ export function spawnMonster(
 
 /**
  * After a player action, each living monster on the hero's floor acts.
- * Static enemies: attack if adjacent to hero, otherwise do nothing.
+ * Each monster runs its AI strategy: chase/roam/attack based on LoS.
  * Sorted by actor ID for deterministic order.
  */
 function processEnemyTurns(
@@ -272,6 +275,8 @@ function processEnemyTurns(
 	heroId: ActorId,
 	width: number,
 	height: number,
+	walkableMask: Uint8Array,
+	opacityMask: Uint8Array,
 	rng: Rng,
 ): { floorState: FloorState; events: GameEvent[] } {
 	const events: GameEvent[] = [];
@@ -289,19 +294,68 @@ function processEnemyTurns(
 	for (const mid of monsterIds) {
 		if (!currentHero.alive) break;
 		const monster = actorsById[mid];
-		const adj = getAdjacentIndices(currentHero.idx, width, height);
-		if (!adj.includes(monster.idx)) continue;
 
-		const result = resolveAttack(monster, currentHero, rng, UNARMED_WEAPON);
-		events.push({ type: "attack", attackerId: mid, defenderId: heroId, result });
+		// Monsters without aiState are inert (shouldn't happen in normal play)
+		const aiState = monster.aiState;
+		if (!aiState) continue;
 
-		if (result.hit) {
-			const newHp = Math.max(0, currentHero.hp - result.damage);
-			currentHero = { ...currentHero, hp: newHp, alive: newHp > 0 };
-			actorsById = { ...actorsById, [heroId]: currentHero };
-			if (!currentHero.alive) {
-				events.push({ type: "death", actorId: heroId });
+		const { x, y } = idxToXY(monster.idx, width);
+		const visibleFromMonster = computeVisibility(
+			x,
+			y,
+			width,
+			height,
+			opacityMask,
+			VISION_RADIUS,
+		);
+
+		// Build a temporary floor state snapshot so AI sees the current actor positions
+		const currentFloorState: FloorState = { ...floorState, actorsById };
+
+		const { result, newAIState } = runMonsterAI({
+			monster,
+			aiState,
+			hero: currentHero,
+			heroId,
+			visibleFromMonster,
+			walkableMask,
+			floorState: currentFloorState,
+			width,
+			height,
+			rng,
+		});
+
+		if (result.kind === "attack") {
+			const attackResult = resolveAttack(monster, currentHero, rng, UNARMED_WEAPON);
+			events.push({
+				type: "attack",
+				attackerId: mid,
+				defenderId: heroId,
+				result: attackResult,
+			});
+
+			if (attackResult.hit) {
+				const newHp = Math.max(0, currentHero.hp - attackResult.damage);
+				currentHero = { ...currentHero, hp: newHp, alive: newHp > 0 };
+				actorsById = {
+					...actorsById,
+					[heroId]: currentHero,
+					[mid]: { ...monster, aiState: newAIState },
+				};
+				if (!currentHero.alive) {
+					events.push({ type: "death", actorId: heroId });
+				}
+			} else {
+				actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
 			}
+		} else if (result.kind === "move") {
+			actorsById = {
+				...actorsById,
+				[mid]: { ...monster, idx: result.toIdx, aiState: newAIState },
+			};
+		} else {
+			// idle — just persist updated aiState (e.g. cleared lastKnownHeroIdx)
+			actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
 		}
 	}
 
@@ -373,7 +427,15 @@ export function applyAction(
 
 			// Enemy turns after move
 			const { rng, getState: getRngState } = createRngFromState(state.rngState);
-			const enemyResult = processEnemyTurns(newFloorState, state.heroId, width, height, rng);
+			const enemyResult = processEnemyTurns(
+				newFloorState,
+				state.heroId,
+				width,
+				height,
+				mask,
+				opacityMask,
+				rng,
+			);
 			newFloorState = enemyResult.floorState;
 
 			const newFloors = state.floors.slice();
@@ -385,7 +447,7 @@ export function applyAction(
 					...state,
 					turn: state.turn + 1,
 					floors: newFloors,
-					rngState: enemyResult.events.length > 0 ? getRngState() : state.rngState,
+					rngState: getRngState(),
 				},
 				events: enemyResult.events,
 			};
@@ -472,7 +534,17 @@ export function applyAction(
 			let newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };
 
 			// Enemy turns after attack
-			const enemyResult = processEnemyTurns(newFloorState, state.heroId, width, height, rng);
+			const attackWalkMask = context.getWalkableMask(fi);
+			const attackOpacityMask = context.getOpacityMask(fi);
+			const enemyResult = processEnemyTurns(
+				newFloorState,
+				state.heroId,
+				width,
+				height,
+				attackWalkMask,
+				attackOpacityMask,
+				rng,
+			);
 			newFloorState = enemyResult.floorState;
 			events.push(...enemyResult.events);
 

@@ -14,6 +14,7 @@ export const MonsterSchema = z.object({
 	armorClass: z.number(),
 	tileId: z.number(),
 	xpReward: z.number(),
+	aiStrategy: z.enum(["melee"]),
 });
 
 export type MonsterDefinition = z.infer<typeof MonsterSchema>;

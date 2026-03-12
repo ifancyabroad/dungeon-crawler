@@ -6,6 +6,7 @@
 import type { MapGenConfig } from "../map/types";
 import type { Action } from "./actions";
 import type { AttackResult } from "../combat/types";
+import type { MonsterAIState } from "./monsterAI";
 
 export type TileId = number;
 
@@ -56,6 +57,7 @@ export interface MonsterInit {
 	armorClass: number;
 	attributes: ActorAttributes;
 	xpReward: number;
+	aiStrategy: MonsterAIState["strategy"];
 }
 
 /** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */
@@ -75,6 +77,8 @@ export interface Actor {
 	hitDie: number;
 	/** XP awarded to the killer when this actor dies. 0 for the hero. */
 	xpReward: number;
+	/** AI behaviour state. Undefined for the hero actor. */
+	aiState?: MonsterAIState;
 }
 
 /** Events emitted during a turn for combat log and client feedback. */
