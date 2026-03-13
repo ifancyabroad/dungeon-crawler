@@ -15,6 +15,8 @@ export const MonsterSchema = z.object({
 	tileId: z.number(),
 	xpReward: z.number(),
 	aiStrategy: z.enum(["melee"]),
+	/** CSS hex colour for blood/death particle effects. */
+	bloodColor: z.string(),
 });
 
 export type MonsterDefinition = z.infer<typeof MonsterSchema>;

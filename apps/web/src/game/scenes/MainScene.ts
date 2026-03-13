@@ -35,7 +35,9 @@ import {
 import { MoveTweenManager } from "../fx/MoveTweenManager";
 import { AttackAnimator } from "../fx/AttackAnimator";
 import { HealthBarManager } from "../fx/HealthBarManager";
-import { DeathStainManager } from "../fx/DeathStainManager";
+import { DeathFxManager } from "../fx/DeathFxManager";
+import { BLOOD_TEXTURE_KEY, HERO_BLOOD_COLOR } from "../fx/particles";
+import { monstersById } from "@app/content";
 import { DamageNumberManager } from "../fx/DamageNumberManager";
 
 const FOG_TINT = 0x555555;
@@ -68,7 +70,7 @@ export default class MainScene extends Phaser.Scene {
 	private moveTweens: MoveTweenManager | null = null;
 	private attackAnimator: AttackAnimator | null = null;
 	private healthBars: HealthBarManager | null = null;
-	private deathStains: DeathStainManager | null = null;
+	private deathFx: DeathFxManager | null = null;
 	private damageNumbers: DamageNumberManager | null = null;
 
 	constructor() {
@@ -88,6 +90,10 @@ export default class MainScene extends Phaser.Scene {
 			this.unsubActorSync = null;
 			this.monsterSprites.clear();
 			this.destroyFx();
+			// Blood particle texture is shared across FX managers; remove it once on scene teardown
+			if (this.textures.exists(BLOOD_TEXTURE_KEY)) {
+				this.textures.remove(BLOOD_TEXTURE_KEY);
+			}
 		};
 		this.events.once("shutdown", cleanup);
 		this.events.once("destroy", cleanup);
@@ -167,7 +173,7 @@ export default class MainScene extends Phaser.Scene {
 		this.moveTweens = new MoveTweenManager(this);
 		this.attackAnimator = new AttackAnimator(this, this.mapWidth);
 		this.healthBars = new HealthBarManager(this);
-		this.deathStains = new DeathStainManager(this, this.mapWidth);
+		this.deathFx = new DeathFxManager(this, this.mapWidth);
 		this.damageNumbers = new DamageNumberManager(this, this.mapWidth);
 
 		const currentState = useGameStore.getState().state;
@@ -221,6 +227,16 @@ export default class MainScene extends Phaser.Scene {
 				if (events.length > 0 && floor) {
 					const actorsById = floor.state.actorsById;
 					const getActorIdx = (id: string) => actorsById[id]?.idx;
+					// Hero always gets default (red) blood; monsters use their content-defined colour.
+					const getBloodColor = (id: string): string => {
+						const actor = actorsById[id];
+						if (!actor || actor.def.type !== "monster") return HERO_BLOOD_COLOR;
+						return (
+							(monstersById as Record<string, { bloodColor: string }>)[
+								actor.def.monsterId
+							]?.bloodColor ?? HERO_BLOOD_COLOR
+						);
+					};
 
 					this.attackAnimator?.playEvents(
 						events,
@@ -228,9 +244,10 @@ export default class MainScene extends Phaser.Scene {
 						this.player,
 						this.monsterSprites,
 						getActorIdx,
+						getBloodColor,
 					);
 					this.damageNumbers?.handleEvents(events, getActorIdx);
-					this.deathStains?.handleEvents(events, gs.heroId, getActorIdx);
+					this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
 				}
 
 				this.syncMonsters(gs);
@@ -469,9 +486,9 @@ export default class MainScene extends Phaser.Scene {
 		this.attackAnimator = null;
 		this.healthBars?.destroy();
 		this.healthBars = null;
-		this.deathStains?.destroy();
-		this.deathStains = null;
-		// DamageNumberManager has no state to clean up — labels self-destruct via tweens
+		// DeathFxManager and DamageNumberManager have no state to clean up —
+		// all emitters and labels self-destruct via tweens/delayedCall
+		this.deathFx = null;
 		this.damageNumbers = null;
 	}
 }

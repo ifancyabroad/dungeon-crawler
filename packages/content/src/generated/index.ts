@@ -138,7 +138,8 @@ export const monsters: readonly MonsterDefinition[] = [
     "armorClass": 12,
     "tileId": 677,
     "xpReward": 25,
-    "aiStrategy": "melee"
+    "aiStrategy": "melee",
+    "bloodColor": "#cc0000"
   }
 ] as readonly MonsterDefinition[];
 
