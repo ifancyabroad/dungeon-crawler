@@ -34,6 +34,14 @@ const ActorDefSchema = new Schema(
 	{ _id: false },
 );
 
+const MonsterAIStateSchema = new Schema(
+	{
+		strategy: { type: String, required: true },
+		lastKnownHeroIdx: Number,
+	},
+	{ _id: false },
+);
+
 const ActorSchema = new Schema(
 	{
 		id: String,
@@ -50,6 +58,7 @@ const ActorSchema = new Schema(
 		xp: Number,
 		hitDie: Number,
 		xpReward: Number,
+		aiState: { type: MonsterAIStateSchema, default: undefined },
 	},
 	{ _id: false },
 );

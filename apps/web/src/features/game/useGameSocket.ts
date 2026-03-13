@@ -8,9 +8,13 @@ import { useErrorStore } from "../error/errorStore";
 /**
  * Connect socket when gameId is present; emit join; on state/error update store.
  * Call from Game page when we have a gameId.
+ *
+ * The socket ref is only exposed to the store AFTER the server confirms join via a
+ * "state" event. This prevents actions from being emitted on an unauthorised socket
+ * between reconnect and the server's join acknowledgement.
  */
 export function useGameSocket(gameId: string | null) {
-	const connected = useRef(false);
+	const joinedRef = useRef(false);
 
 	useEffect(() => {
 		if (!gameId) {
@@ -22,14 +26,19 @@ export function useGameSocket(gameId: string | null) {
 		const socket = io(url, { withCredentials: true, autoConnect: true });
 
 		socket.on("connect", () => {
-			connected.current = true;
-			setGameSocket(socket);
+			joinedRef.current = false;
 			socket.emit("join", { gameId });
 		});
 
 		socket.on(
 			"state",
 			(payload: { gameId: string; turn: number; state: GameState; events?: GameEvent[] }) => {
+				// Expose the socket to the store on the first state after (re)connect so that
+				// actions queued during disconnect are flushed with the correct auth context.
+				if (!joinedRef.current) {
+					joinedRef.current = true;
+					setGameSocket(socket);
+				}
 				useGameStore.getState().setStateFromServer({
 					gameId: payload.gameId,
 					turn: payload.turn,
@@ -61,13 +70,14 @@ export function useGameSocket(gameId: string | null) {
 		});
 
 		socket.on("disconnect", () => {
-			connected.current = false;
+			joinedRef.current = false;
 			setGameSocket(null);
 		});
 
 		socket.connect();
 
 		return () => {
+			joinedRef.current = false;
 			setGameSocket(null);
 			socket.removeAllListeners();
 			socket.disconnect();
