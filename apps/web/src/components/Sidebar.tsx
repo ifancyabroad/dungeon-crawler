@@ -1,6 +1,9 @@
+import { Backpack, Sparkles, User } from "lucide-react";
 import { getHero, XP_PER_LEVEL } from "@app/shared";
 import { classesById, type CharacterClassId } from "@app/content";
 import { useGameStore } from "../features/game/gameStore";
+import { useUiStore } from "../features/ui/uiStore";
+import { Button } from "./Button";
 
 type SidebarProps = {
 	open: boolean;
@@ -32,11 +35,9 @@ function Bar({ pct, colorClass }: { pct: number; colorClass: string }) {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
 	const state = useGameStore((s) => s.state);
-	const turn = useGameStore((s) => s.turn);
 	const hero = state ? getHero(state) : undefined;
 	const classDef =
 		hero?.def.type === "hero" ? classesById[hero.def.classId as CharacterClassId] : undefined;
-	const floor = state ? state.heroFloorIndex + 1 : undefined;
 	const xpForNext = hero ? XP_PER_LEVEL[hero.level + 1] : undefined;
 
 	const hpPct = hero ? Math.max(0, Math.min(100, (hero.hp / hero.maxHp) * 100)) : 0;
@@ -44,6 +45,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 		hero && xpForNext && xpForNext > 0
 			? Math.max(0, Math.min(100, (hero.xp / xpForNext) * 100))
 			: 0;
+
+	const openModal = useUiStore((s) => s.open);
 
 	return (
 		<>
@@ -78,6 +81,34 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
 				{hero ? (
 					<div className="flex-1 px-3 py-2 space-y-2">
+						{/* Icon buttons */}
+						<div className="flex gap-1">
+							<Button
+								variant="secondary"
+								size="icon"
+								aria-label="Character Sheet"
+								onClick={() => openModal("characterSheet")}
+							>
+								<User className="w-4 h-4" />
+							</Button>
+							<Button
+								variant="secondary"
+								size="icon"
+								aria-label="Inventory"
+								onClick={() => openModal("inventory")}
+							>
+								<Backpack className="w-4 h-4" />
+							</Button>
+							<Button
+								variant="secondary"
+								size="icon"
+								aria-label="Skills"
+								onClick={() => openModal("skills")}
+							>
+								<Sparkles className="w-4 h-4" />
+							</Button>
+						</div>
+
 						{/* Hero identity */}
 						<div>
 							<p className="text-text-bright">{hero.name}</p>
@@ -128,19 +159,15 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 							})}
 						</div>
 
-						{/* AC / Floor / Turn */}
+						{/* AC / Gold */}
 						<div className="grid grid-cols-2 gap-y-0.5">
 							<div className="flex gap-1">
 								<span className="text-text-label w-7 shrink-0">AC</span>
 								<span className="text-text tabular-nums">{hero.armorClass}</span>
 							</div>
 							<div className="flex gap-1">
-								<span className="text-text-label w-10 shrink-0">Floor</span>
-								<span className="text-text tabular-nums">{floor ?? "—"}</span>
-							</div>
-							<div className="flex gap-1">
-								<span className="text-text-label w-10 shrink-0">Turn</span>
-								<span className="text-text tabular-nums">{turn}</span>
+								<span className="text-text-label w-10 shrink-0">Gold</span>
+								<span className="text-text tabular-nums">0</span>
 							</div>
 						</div>
 					</div>

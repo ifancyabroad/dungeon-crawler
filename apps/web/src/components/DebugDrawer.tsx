@@ -68,10 +68,9 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 						<h2 className="text-sm font-semibold text-text">Debug</h2>
 						<Button
 							variant="ghost"
-							size="sm"
+							size="icon"
 							onClick={onClose}
 							aria-label="Close drawer"
-							className="p-1.5"
 						>
 							<svg
 								className="w-4 h-4"

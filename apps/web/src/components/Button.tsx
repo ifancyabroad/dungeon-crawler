@@ -7,7 +7,7 @@ import {
 } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 type ButtonProps = ComponentPropsWithoutRef<"button"> & {
 	variant?: ButtonVariant;
@@ -17,17 +17,19 @@ type ButtonProps = ComponentPropsWithoutRef<"button"> & {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-	primary: "bg-primary text-primary-contrast hover:bg-primary-dim focus-visible:ring-primary/50",
+	primary:
+		"bg-primary text-primary-contrast border-primary hover:bg-primary-dim focus-visible:ring-primary/50",
 	secondary:
-		"bg-bg-elevated text-text-bright border-2 border-border hover:border-border-bright focus-visible:ring-border",
-	ghost: "bg-transparent text-text-muted hover:text-text-bright focus-visible:ring-border",
-	danger: "bg-error text-text-bright hover:bg-error/80 focus-visible:ring-error/50",
+		"bg-bg-panel text-text-muted border-border hover:text-text hover:border-border-bright focus-visible:ring-border",
+	ghost: "bg-transparent text-text-muted border-transparent hover:text-text hover:border-border focus-visible:ring-border",
+	danger: "bg-error text-text-bright border-error hover:bg-error/80 focus-visible:ring-error/50",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-	sm: "px-3 py-1 text-sm",
-	md: "px-4 py-1.5 text-base",
-	lg: "px-5 py-2 text-base",
+	sm: "px-3 py-1",
+	md: "px-4 py-1.5",
+	lg: "px-5 py-2",
+	icon: "p-2",
 };
 
 export function Button({
@@ -41,7 +43,7 @@ export function Button({
 	...rest
 }: ButtonProps) {
 	const base =
-		"inline-flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-bg-base disabled:opacity-40 disabled:pointer-events-none";
+		"inline-flex items-center justify-center font-mono text-xs uppercase tracking-wider border transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:ring-offset-bg-base disabled:opacity-40 disabled:pointer-events-none";
 	const combinedClassName =
 		`${base} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`.trim();
 

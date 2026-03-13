@@ -5,9 +5,13 @@ import GameCanvas from "../components/GameCanvas";
 import { CombatLog } from "../components/CombatLog";
 import { DeathModal } from "../components/DeathModal";
 import { LevelUpModal } from "../components/LevelUpModal";
+import { CharacterSheetModal } from "../components/CharacterSheetModal";
+import { InventoryModal } from "../components/InventoryModal";
+import { SkillsModal } from "../components/SkillsModal";
 import DebugDrawer from "../components/DebugDrawer";
 import { useGameSocket } from "../features/game/useGameSocket";
 import { useGameStore } from "../features/game/gameStore";
+import { Button } from "../components/Button";
 
 const DEBUG_DRAWER_ENABLED = import.meta.env.VITE_DEBUG_DRAWER_ENABLED === "true";
 
@@ -43,34 +47,32 @@ export default function Game() {
 						</div>
 
 						{/* Mobile sidebar toggle */}
-						<button
-							type="button"
+						<Button
+							variant="secondary"
 							onClick={() => setSidebarOpen(true)}
-							className="md:hidden absolute top-3 left-3 text-sm border border-border bg-bg-panel/95 text-text-muted hover:text-text px-3 py-1 transition-colors"
+							className="md:hidden absolute top-3 left-3"
 							aria-label="Open sidebar"
 						>
 							≡ Menu
-						</button>
+						</Button>
 
 						<div className="absolute top-3 right-3 flex items-center gap-2">
-							<button
-								type="button"
+							<Button
+								variant="secondary"
 								onClick={() => navigate("/")}
-								className="font-mono text-xs uppercase tracking-wider border border-border bg-bg-panel/90 text-text-muted hover:text-text px-2.5 py-1 transition-colors"
 								aria-label="Return to main menu"
 							>
 								← Menu
-							</button>
+							</Button>
 
 							{DEBUG_DRAWER_ENABLED && (
-								<button
-									type="button"
+								<Button
+									variant="secondary"
 									onClick={() => setDebugDrawerOpen(true)}
-									className="font-mono text-xs uppercase tracking-wider border border-border bg-bg-panel/90 text-text-muted hover:text-text px-2.5 py-1 transition-colors"
 									aria-label="Open debug drawer"
 								>
 									Debug
-								</button>
+								</Button>
 							)}
 						</div>
 					</div>
@@ -81,6 +83,9 @@ export default function Game() {
 
 			<DeathModal open={!heroAlive && gameId !== null} />
 			<LevelUpModal />
+			<CharacterSheetModal />
+			<InventoryModal />
+			<SkillsModal />
 
 			<DebugDrawer open={debugDrawerOpen} onClose={() => setDebugDrawerOpen(false)} />
 		</div>
