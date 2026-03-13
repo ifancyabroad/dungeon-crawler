@@ -4,7 +4,7 @@ import {
 	computeWalkableMaskForFloor,
 	createInitialState,
 	createGameBodySchema,
-	DEFAULT_FLOOR_CONFIG,
+	FLOOR_CONFIGS,
 	gameStateToPersisted,
 	PersistedDynamicStateSchema,
 	regenerateBaseMaps,
@@ -60,13 +60,16 @@ export const createGame: RequestHandler = async (req, res) => {
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
 	resetMonsterCounter();
-	let state = createInitialState(seed, DEFAULT_FLOOR_CONFIG, heroInit);
+	let state = createInitialState(seed, FLOOR_CONFIGS, heroInit);
 
+	// Compute base layers once; reused for floor-0 monster spawn and passed to setSessionState
+	// to avoid a second regenerateBaseMaps call there.
 	const baseLayers = regenerateBaseMaps(
 		seed,
 		state.floors.map((f) => f.config),
 		state.mapGenVersion,
 	);
+	// Only spawn monsters on floor 0 at creation; other floors spawn on first visit
 	const walkMask = computeWalkableMaskForFloor(
 		baseLayers[0],
 		state.floors[0].state.tileOverrides,
@@ -108,7 +111,7 @@ export const createGame: RequestHandler = async (req, res) => {
 		);
 	});
 
-	setSessionState(gameId, state);
+	setSessionState(gameId, state, baseLayers);
 
 	res.cookie(COOKIE_NAME, token, COOKIE_OPTS);
 	res.status(201).json({ gameId, seed, state });

@@ -19,6 +19,7 @@ import {
 import {
 	ENTITY_TILES,
 	getCollidingIndices,
+	getExitTile,
 	getHeroTile,
 	TILE_HEIGHT,
 	TILE_WIDTH,
@@ -32,7 +33,7 @@ import {
 	toGroundTileIndices,
 	toWallTileIndices,
 } from "../tiles/mapTileMapping";
-import { MoveTweenManager } from "../fx/MoveTweenManager";
+import { MoveTweenManager, MOVE_DURATION_MS } from "../fx/MoveTweenManager";
 import { AttackAnimator } from "../fx/AttackAnimator";
 import { HealthBarManager } from "../fx/HealthBarManager";
 import { DeathFxManager } from "../fx/DeathFxManager";
@@ -46,6 +47,12 @@ export default class MainScene extends Phaser.Scene {
 	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 	private wallLayer: Phaser.Tilemaps.TilemapLayer | null = null;
 	private decorationLayer: Phaser.Tilemaps.TilemapLayer | null = null;
+	/**
+	 * World sprites that receive fog-of-war treatment alongside tilemap tiles.
+	 * Any sprite placed at a specific tile idx (exit, items, traps, etc.) can be registered here;
+	 * applyFogOfWar will handle visibility automatically without per-sprite custom code.
+	 */
+	private foggedSprites: Array<{ sprite: Phaser.GameObjects.Sprite; idx: number }> = [];
 	private player!: Phaser.GameObjects.Sprite;
 	private playerTileX = 0;
 	private playerTileY = 0;
@@ -55,6 +62,13 @@ export default class MainScene extends Phaser.Scene {
 	private opacityMask: Uint8Array | null = null;
 	/** Currently visible tile indices, recomputed each turn in applyFogOfWar. */
 	private visibleMask: Uint8Array | null = null;
+	/**
+	 * Last-rendered fog state per tile: 0 = hidden, 1 = explored/dim, 2 = visible.
+	 * Used to skip tiles that haven't changed, avoiding redundant getTileAt + tint calls.
+	 * Double-buffered with tileDisplayBuffer to avoid per-call allocation.
+	 */
+	private tileDisplayState: Uint8Array | null = null;
+	private tileDisplayBuffer: Uint8Array | null = null;
 	/** One-shot unsubscribe when we're waiting for state; cleaned up in shutdown(). */
 	private unsubWaitForState: (() => void) | null = null;
 	/** Unsubscribe from hero position sync; cleaned up in shutdown(). */
@@ -65,6 +79,8 @@ export default class MainScene extends Phaser.Scene {
 	private unsubActorSync: (() => void) | null = null;
 	/** Set to true once the scene is shut down or destroyed; guards async subscription callbacks. */
 	private disposed = false;
+	/** Blocks subscription updates while a floor fade transition is in progress. */
+	private isTransitioning = false;
 
 	// FX managers — created per map build, destroyed on cleanup
 	private moveTweens: MoveTweenManager | null = null;
@@ -79,6 +95,9 @@ export default class MainScene extends Phaser.Scene {
 
 	create() {
 		this.disposed = false;
+		// A scene.restart() may interrupt an in-progress floor transition (e.g. Generate Map
+		// called while on a non-first floor). Reset the flag so the new scene isn't blocked.
+		this.isTransitioning = false;
 
 		const cleanup = () => {
 			this.disposed = true;
@@ -125,6 +144,10 @@ export default class MainScene extends Phaser.Scene {
 		heroPos: { floorIndex: number; idx: number; classId: string },
 		optionalConfigForSpawn?: MapGenConfig,
 	) {
+		// Reset fog diff state so the new tilemap (all tiles alpha=1 by default)
+		// is fully re-evaluated rather than diffed against a stale previous map.
+		this.tileDisplayState = null;
+		this.tileDisplayBuffer = null;
 		this.mapWidth = config.width;
 		this.mapHeight = config.height;
 		useMapStore.getState().setMapConfigOverride(config);
@@ -153,6 +176,23 @@ export default class MainScene extends Phaser.Scene {
 		this.createWallLayer(wallData);
 
 		this.opacityMask = computeOpacityMask(wall, config.width, config.height);
+
+		// Place exit sprite and register it for fog-of-war treatment
+		const stateForExit = useGameStore.getState().state;
+		const exitIdx = stateForExit?.floors[heroPos.floorIndex]?.state.exitIdx ?? null;
+		if (exitIdx !== null) {
+			const { x: ex, y: ey } = idxToXY(exitIdx, config.width);
+			const exitSprite = this.add.sprite(
+				ex * TILE_WIDTH + TILE_WIDTH / 2,
+				ey * TILE_HEIGHT + TILE_HEIGHT / 2,
+				TILESET_KEY,
+				getExitTile(config.theme),
+			);
+			exitSprite.setOrigin(0.5, 0.5);
+			exitSprite.setDepth(2);
+			exitSprite.setAlpha(0);
+			this.foggedSprites.push({ sprite: exitSprite, idx: exitIdx });
+		}
 
 		const spawnPos = optionalConfigForSpawn
 			? { x: spawn.x, y: spawn.y }
@@ -185,19 +225,39 @@ export default class MainScene extends Phaser.Scene {
 
 		let lastSyncedIdx = heroPos.idx;
 		let lastSyncedTurn = currentState?.turn ?? -1;
+		let lastFloorIndex = heroPos.floorIndex;
 		// Track which event-turn we already dispatched to FX managers so stale
 		// events in the store don't replay on every subsequent move turn.
 		let lastDispatchedEventTurn = -1;
 		this.unsubHeroSync = useGameStore.subscribe((storeState) => {
-			if (this.disposed) return;
+			if (this.disposed || this.isTransitioning) return;
 			const gs = storeState.state;
+
+			// Floor change: slide hero onto exit tile and fade out simultaneously, then rebuild → fade-in
+			if (gs && gs.heroFloorIndex !== lastFloorIndex) {
+				const fromFloor = lastFloorIndex;
+				lastFloorIndex = gs.heroFloorIndex;
+				const exitIdx = gs.floors[fromFloor]?.state.exitIdx;
+				if (exitIdx != null && this.player) {
+					const { x: ex, y: ey } = idxToXY(exitIdx, this.mapWidth);
+					this.tweens.add({
+						targets: this.player,
+						x: ex * TILE_WIDTH + TILE_WIDTH / 2,
+						y: ey * TILE_HEIGHT + TILE_HEIGHT / 2,
+						duration: MOVE_DURATION_MS,
+						ease: Phaser.Math.Easing.Sine.Out,
+					});
+				}
+				this.triggerFloorTransition(gs);
+				return;
+			}
+
 			const turnChanged = gs != null && gs.turn !== lastSyncedTurn;
 
 			if (gs && turnChanged) {
 				lastSyncedTurn = gs.turn;
 				const floor = gs.floors[gs.heroFloorIndex];
 				const explored = floor?.state.explored ?? [];
-				this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
 
 				// Events are only fresh when the store's event-turn matches this turn.
 				// lastOptimisticEventTurn records which turn produced the current events[].
@@ -216,12 +276,14 @@ export default class MainScene extends Phaser.Scene {
 						e.type === "attack" && e.attackerId === gs.heroId,
 				);
 
-				// Move tween only fires when the hero actually changed tiles and
-				// this turn was not an attack (attacks stay in place, bump via AttackAnimator).
+				// Sync hero position first so applyFogOfWar computes visibility from
+				// the destination tile, not the tile the hero is tweening away from.
 				if (heroMoved && !hasHeroAttack) {
 					lastSyncedIdx = storeState.hero.idx;
 					this.syncHeroToStore(storeState.hero.idx);
 				}
+
+				this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
 
 				// Dispatch fresh events to FX managers before syncMonsters removes dead sprites
 				if (events.length > 0 && floor) {
@@ -257,6 +319,59 @@ export default class MainScene extends Phaser.Scene {
 				this.syncHeroToStore(storeState.hero.idx);
 			}
 		});
+	}
+
+	/**
+	 * Fade out camera, destroy current map objects, rebuild for new floor, then fade in.
+	 * Called when heroFloorIndex changes in the game store.
+	 */
+	private triggerFloorTransition(gs: GameState) {
+		this.isTransitioning = true;
+		this.cameras.main.fadeOut(300, 0, 0, 0);
+		this.cameras.main.once("camerafadeoutcomplete", () => {
+			if (this.disposed) {
+				this.isTransitioning = false;
+				return;
+			}
+			// Unsubscribe old sync before rebuilding to prevent double-subscription
+			this.unsubHeroSync?.();
+			this.unsubHeroSync = null;
+
+			const fromState = getMapConfigAndHeroFromState(gs);
+			if (!fromState) {
+				this.isTransitioning = false;
+				return;
+			}
+
+			this.cleanupMapObjects();
+			this.isTransitioning = false;
+			this.buildMapAndHero(fromState.config, fromState.hero);
+			this.cameras.main.fadeIn(300, 0, 0, 0);
+		});
+	}
+
+	/** Destroy all current map layers, fogged world sprites, player, and monster sprites. */
+	private cleanupMapObjects(): void {
+		this.tileDisplayState = null;
+		this.tileDisplayBuffer = null;
+		this.groundLayer?.destroy();
+		this.groundLayer = null;
+		this.decorationLayer?.destroy();
+		this.decorationLayer = null;
+		this.wallLayer?.destroy();
+		this.wallLayer = null;
+		for (const { sprite } of this.foggedSprites) {
+			sprite.destroy();
+		}
+		this.foggedSprites = [];
+		if (this.player) {
+			this.player.destroy();
+		}
+		for (const sprite of this.monsterSprites.values()) {
+			sprite.destroy();
+		}
+		this.monsterSprites.clear();
+		this.destroyFx();
 	}
 
 	/** Synchronize monster sprites with the current game state. */
@@ -443,6 +558,11 @@ export default class MainScene extends Phaser.Scene {
 	 * - Unexplored: tile hidden
 	 * - Explored but not currently visible: dark tint
 	 * - Visible: normal
+	 *
+	 * Diff-based: computes new per-tile display state (0/1/2) and only calls
+	 * getTileAt + sets tint/alpha on tiles whose state actually changed. On a
+	 * 65×65 map this reduces per-move tile operations from ~12k to the ~few
+	 * hundred tiles near the vision boundary.
 	 */
 	private applyFogOfWar(explored: number[], heroX: number, heroY: number) {
 		if (!this.opacityMask) return;
@@ -457,24 +577,55 @@ export default class MainScene extends Phaser.Scene {
 		);
 		this.visibleMask = visible;
 
+		const size = this.mapWidth * this.mapHeight;
+		const prev = this.tileDisplayState;
+
+		// Reuse pre-allocated buffer to avoid per-call heap allocation.
+		if (!this.tileDisplayBuffer || this.tileDisplayBuffer.length !== size) {
+			this.tileDisplayBuffer = new Uint8Array(size);
+		}
+		const next = this.tileDisplayBuffer;
+
+		// Compute new state for each tile; only call getTileAt on tiles that changed.
 		const layers = [this.groundLayer, this.decorationLayer, this.wallLayer];
-		for (const layer of layers) {
-			if (!layer) continue;
-			for (let y = 0; y < this.mapHeight; y++) {
-				for (let x = 0; x < this.mapWidth; x++) {
-					const tile = layer.getTileAt(x, y);
-					if (!tile) continue;
-					const idx = y * this.mapWidth + x;
-					if (visible[idx] === 1) {
-						tile.setAlpha(1);
-						tile.tint = 0xffffff;
-					} else if (explored[idx] === 1) {
-						tile.setAlpha(1);
-						tile.tint = FOG_TINT;
-					} else {
-						tile.setAlpha(0);
-					}
+		for (let i = 0; i < size; i++) {
+			const newState: number = visible[i] === 1 ? 2 : explored[i] === 1 ? 1 : 0;
+			next[i] = newState;
+			if (prev && prev[i] === newState) continue;
+
+			const x = i % this.mapWidth;
+			const y = (i / this.mapWidth) | 0;
+			for (const layer of layers) {
+				if (!layer) continue;
+				const tile = layer.getTileAt(x, y);
+				if (!tile) continue;
+				if (newState === 2) {
+					tile.setAlpha(1);
+					tile.tint = 0xffffff;
+				} else if (newState === 1) {
+					tile.setAlpha(1);
+					tile.tint = FOG_TINT;
+				} else {
+					tile.setAlpha(0);
 				}
+			}
+		}
+
+		// Swap buffers: next becomes current, old current becomes the write buffer next call.
+		this.tileDisplayState = next;
+		this.tileDisplayBuffer = prev ?? new Uint8Array(size);
+
+		// Apply fog-of-war to registered world sprites (exit, items, traps, etc.)
+		for (const { sprite, idx } of this.foggedSprites) {
+			const state = next[idx];
+			if (state === 2) {
+				sprite.setAlpha(1);
+				sprite.setTint(0xffffff);
+			} else if (state === 1) {
+				sprite.setAlpha(1);
+				sprite.setTint(FOG_TINT);
+			} else {
+				sprite.setAlpha(0);
 			}
 		}
 	}

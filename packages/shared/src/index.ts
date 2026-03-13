@@ -33,6 +33,8 @@ export {
 	computeOpacityMask,
 	computeVisibility,
 	mergeExplored,
+	FLOOR_CONFIGS,
+	findExitIdx,
 } from "./map";
 export { createRng, createInitialRngState, createRngFromState, type Rng } from "./rng";
 

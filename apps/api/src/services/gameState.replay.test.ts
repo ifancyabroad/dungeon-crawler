@@ -18,7 +18,7 @@ const SEED = 12345;
 
 describe("gameState replay", () => {
 	it("snapshot turn 0 -> apply 2 actions -> replay reproduces turn, hero, rngState", () => {
-		const state0 = createInitialState(SEED, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
+		const state0 = createInitialState(SEED, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT);
 		const persisted0 = gameStateToPersisted(state0);
 
 		const fullState0 = buildGameStateFromPersisted(

@@ -26,6 +26,7 @@ export { buildDecorationLayer, BLOCKING_DECORATION_TYPES } from "./decorations";
 export type { BuildDecorationLayerResult, DecorationType } from "./decorations";
 export { isCellWalkable } from "./walkability";
 export { computeWalkableMaskForFloor } from "./walkableMask";
-export { regenerateBaseMaps, type BaseLayerFloor } from "./baseLayers";
+export { regenerateBaseMaps, findExitIdx, type BaseLayerFloor } from "./baseLayers";
+export { FLOOR_CONFIGS } from "./floorConfigs";
 export { computeOpacityMask, computeVisibility, mergeExplored } from "./visibility";
 export { bfsNextStep } from "./pathfinding";

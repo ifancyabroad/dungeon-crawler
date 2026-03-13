@@ -31,7 +31,7 @@ describe("walkable mask", () => {
 	});
 
 	it("applyAction(move) uses mask[idx] consistently", () => {
-		const state = createInitialState(seed, floorConfig, DEFAULT_HERO_INIT);
+		const state = createInitialState(seed, [floorConfig], DEFAULT_HERO_INIT);
 		const baseLayers = regenerateBaseMaps(seed, [floorConfig], MAP_GEN_VERSION);
 		const base = baseLayers[0]!;
 		const mask = computeWalkableMaskForFloor(base, state.floors[0]!.state.tileOverrides ?? {});

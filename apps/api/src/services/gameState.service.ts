@@ -16,6 +16,7 @@ import {
 	type Action,
 	type ApplyActionContext,
 	type ApplyActionResult,
+	type BaseLayerFloor,
 	type GameState,
 	type PersistedDynamicState,
 } from "@app/shared";
@@ -28,6 +29,8 @@ interface SessionEntry {
 	state: GameState;
 	walkableByFloor: Uint8Array[];
 	opacityByFloor: Uint8Array[];
+	/** Base layers cached per session: only regenerated on first load, never on subsequent actions. */
+	baseLayers: BaseLayerFloor[];
 }
 
 /** Thrown when snapshot or action log fails Zod parse (distinct from session/snapshot not found). */
@@ -44,21 +47,6 @@ export class StateCorruptError extends Error {
 
 const sessionStore = new Map<string, SessionEntry>();
 
-function computeFloorMasks(state: GameState): { walkable: Uint8Array[]; opacity: Uint8Array[] } {
-	const baseLayers = regenerateBaseMaps(
-		state.seed,
-		state.floors.map((f) => f.config),
-		state.mapGenVersion,
-	);
-	const walkable = baseLayers.map((base, i) =>
-		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
-	);
-	const opacity = baseLayers.map((base) =>
-		computeOpacityMask(base.wall, base.width, base.height),
-	);
-	return { walkable, opacity };
-}
-
 export function getSessionState(gameId: string): GameState | undefined {
 	return sessionStore.get(gameId)?.state;
 }
@@ -73,10 +61,39 @@ export function getSessionOpacity(gameId: string): Uint8Array[] | undefined {
 	return sessionStore.get(gameId)?.opacityByFloor;
 }
 
-/** Set session state and recompute walkability + opacity masks for all floors. */
-export function setSessionState(gameId: string, state: GameState): void {
-	const { walkable, opacity } = computeFloorMasks(state);
-	sessionStore.set(gameId, { state, walkableByFloor: walkable, opacityByFloor: opacity });
+/**
+ * Update session state. Base layers and opacity masks are computed once on first call and cached
+ * (they depend only on seed + configs, both immutable during a run). Walkable masks are recomputed
+ * each call since tileOverrides could change in a future update.
+ *
+ * Pass `precomputedBaseLayers` when the caller has already generated them (e.g. game creation)
+ * to avoid a redundant regenerateBaseMaps call.
+ */
+export function setSessionState(
+	gameId: string,
+	state: GameState,
+	precomputedBaseLayers?: BaseLayerFloor[],
+): void {
+	const existing = sessionStore.get(gameId);
+
+	const baseLayers =
+		precomputedBaseLayers ??
+		existing?.baseLayers ??
+		regenerateBaseMaps(
+			state.seed,
+			state.floors.map((f) => f.config),
+			state.mapGenVersion,
+		);
+
+	const opacityByFloor =
+		existing?.opacityByFloor ??
+		baseLayers.map((base) => computeOpacityMask(base.wall, base.width, base.height));
+
+	const walkableByFloor = baseLayers.map((base, i) =>
+		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
+	);
+
+	sessionStore.set(gameId, { state, walkableByFloor, opacityByFloor, baseLayers });
 }
 
 const inFlightLoads = new Map<string, Promise<GameState | null>>();
@@ -142,6 +159,7 @@ export function deleteSessionState(gameId: string): void {
 
 /**
  * Persist an action (and periodic snapshot) in a single transaction.
+ * Pass forceSnapshot=true to always write a snapshot (e.g. after a floor descend).
  * Returns false without throwing on duplicate-key error (action already persisted at this turn).
  */
 export async function persistAction(
@@ -150,10 +168,11 @@ export async function persistAction(
 	action: Action,
 	persistedState: PersistedDynamicState,
 	snapshotInterval: number,
+	forceSnapshot = false,
 ): Promise<boolean> {
 	try {
 		const now = new Date();
-		const isSnapshotTurn = turn % snapshotInterval === 0;
+		const isSnapshotTurn = forceSnapshot || turn % snapshotInterval === 0;
 
 		await runTransaction(async (session) => {
 			await GameActionLog.create([{ gameId, turn, action }], { session });
@@ -234,7 +253,17 @@ export async function reconstructState(gameId: string): Promise<GameState | null
 		snapshotState,
 	);
 
-	const { walkable, opacity } = computeFloorMasks(fullState);
+	const baseLayers = regenerateBaseMaps(
+		fullState.seed,
+		fullState.floors.map((f) => f.config),
+		fullState.mapGenVersion,
+	);
+	const walkable = baseLayers.map((base, i) =>
+		computeWalkableMaskForFloor(base, fullState.floors[i]?.state.tileOverrides ?? {}),
+	);
+	const opacity = baseLayers.map((base) =>
+		computeOpacityMask(base.wall, base.width, base.height),
+	);
 	const applyContext = createActionContext(walkable, opacity);
 
 	for (const entry of logEntries) {

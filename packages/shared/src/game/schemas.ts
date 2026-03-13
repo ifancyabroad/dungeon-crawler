@@ -64,7 +64,9 @@ export const ActorsByIdSchema = z.record(z.string(), ActorSchema);
 export const FloorStateSchema = z.object({
 	tileOverrides: z.record(z.string(), z.number()),
 	actorsById: ActorsByIdSchema,
-	explored: z.array(z.number()).default([]),
+	explored: z.array(z.number()),
+	spawnIdx: z.number(),
+	exitIdx: z.number().nullable(),
 });
 
 /** Persisted dynamic state; validate snapshots with this (includes RngState). */

@@ -197,7 +197,7 @@ describe("gameState concurrency", () => {
 		const { GameActionLog } = await import("../models/gameActionLog.model");
 
 		const gameId = "direct-test-game";
-		const state0 = createInitialState(12345, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
+		const state0 = createInitialState(12345, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT);
 		setSessionState(gameId, state0);
 
 		const expectedTurn = 0;

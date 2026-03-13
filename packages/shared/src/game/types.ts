@@ -85,13 +85,18 @@ export interface Actor {
 export type GameEvent =
 	| { type: "attack"; attackerId: ActorId; defenderId: ActorId; result: AttackResult }
 	| { type: "death"; actorId: ActorId }
-	| { type: "level_up"; actorId: ActorId; newLevel: number; hpGained: number };
+	| { type: "level_up"; actorId: ActorId; newLevel: number; hpGained: number }
+	| { type: "descend"; fromFloor: number; toFloor: number };
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;
 	actorsById: Record<ActorId, Actor>;
 	/** Flat array (length = width*height). 1 = tile has been seen at least once. Persisted. */
 	explored: number[];
+	/** Flat tile index of the spawn point for this floor. Set once at game creation. */
+	spawnIdx: number;
+	/** Flat tile index of the exit to the next floor. null on the final floor. */
+	exitIdx: number | null;
 }
 
 /** Single floor: config + dynamic state. No parallel arrays. */

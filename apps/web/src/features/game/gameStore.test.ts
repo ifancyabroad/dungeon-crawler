@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useGameStore, setGameSocket } from "./gameStore";
 
 function makeInitialState(): GameState {
-	return createInitialState(42, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
+	return createInitialState(42, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT);
 }
 
 describe("gameStore (optimistic)", () => {
@@ -117,7 +117,7 @@ describe("gameStore (optimistic)", () => {
 		expect(emit).toHaveBeenCalledTimes(2);
 
 		// Server sends state for turn 1 only (behind us). We must not overwrite display.
-		const stateAfterOne = createInitialState(42, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT);
+		const stateAfterOne = createInitialState(42, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT);
 		const result = applyActionWithDerivedContext(stateAfterOne, {
 			type: "move",
 			direction: "right",

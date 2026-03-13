@@ -129,21 +129,6 @@ const initialState: GameStoreState = {
 	levelUpEvents: [],
 };
 
-function computeFloorMasks(state: GameState): { walkable: Uint8Array[]; opacity: Uint8Array[] } {
-	const baseLayers = regenerateBaseMaps(
-		state.seed,
-		state.floors.map((f) => f.config),
-		state.mapGenVersion,
-	);
-	const walkable = baseLayers.map((base, i) =>
-		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
-	);
-	const opacity = baseLayers.map((base) =>
-		computeOpacityMask(base.wall, base.width, base.height),
-	);
-	return { walkable, opacity };
-}
-
 function heroFromState(state: GameState): { floorIndex: number; idx: number } {
 	const hero = getHero(state);
 	if (!hero) return { floorIndex: 0, idx: 0 };
@@ -169,6 +154,23 @@ function applyStateUpdate(
 		state,
 		heroAlive: hero?.alive ?? false,
 	});
+}
+
+/** Compute and return walkable + opacity masks for all floors. Static for the session lifetime. */
+function buildMasks(state: GameState): Pick<GameStoreState, "walkableByFloor" | "opacityByFloor"> {
+	const baseLayers = regenerateBaseMaps(
+		state.seed,
+		state.floors.map((f) => f.config),
+		state.mapGenVersion,
+	);
+	return {
+		walkableByFloor: baseLayers.map((base, i) =>
+			computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
+		),
+		opacityByFloor: baseLayers.map((base) =>
+			computeOpacityMask(base.wall, base.width, base.height),
+		),
+	};
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -199,12 +201,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		}
 
 		// New game (e.g. debug "Generate map"): always apply so scene restart sees new state.
+		// Masks are static for the session lifetime; also initialised in the normal branch below
+		// when gameId was pre-loaded from localStorage (page refresh).
 		if (payload.gameId !== currentGameId) {
 			applyStateUpdate(set, payload);
-			const masks = computeFloorMasks(payload.state);
 			set({
-				walkableByFloor: masks.walkable,
-				opacityByFloor: masks.opacity,
+				...buildMasks(payload.state),
 				pendingActions: [],
 				unsentMoves: [],
 				combatLog: [],
@@ -216,9 +218,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 		if (pendingActions.length > 0) {
 			// Replay pending on top of server state, update display, then send all and clear queue.
+			// Use cached masks when available (normal case); fall back to derived context only if
+			// masks haven't been initialised yet (should not happen in practice).
+			const { walkableByFloor: wb, opacityByFloor: ob } = get();
+			const replayCtx = wb && ob ? createActionContext(wb, ob) : null;
 			let nextState = payload.state;
 			for (const { action } of pendingActions) {
-				const result = applyActionWithDerivedContext(nextState, action);
+				const result = replayCtx
+					? applyAction(nextState, action, replayCtx)
+					: applyActionWithDerivedContext(nextState, action);
 				if (!result.ok) break;
 				nextState = result.state;
 			}
@@ -227,12 +235,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				turn: nextState.turn,
 				state: nextState,
 			});
-			const nextMasks = computeFloorMasks(nextState);
-			set({
-				walkableByFloor: nextMasks.walkable,
-				opacityByFloor: nextMasks.opacity,
-				pendingActions: [],
-			});
+			// Masks are static for this game session; no recomputation needed on state replay.
+			set({ pendingActions: [] });
 			if (gameSocketRef) {
 				for (const { action, expectedTurn } of pendingActions) {
 					gameSocketRef.emit("action", {
@@ -246,10 +250,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		}
 
 		// Only update display when server is ahead or equal (avoid snap-back when we're ahead).
+		// Masks are static for this game session; no recomputation needed on routine state updates.
 		if (payload.turn >= currentTurn) {
 			applyStateUpdate(set, payload);
-			const payloadMasks = computeFloorMasks(payload.state);
-			set({ walkableByFloor: payloadMasks.walkable, opacityByFloor: payloadMasks.opacity });
+		}
+
+		// On page refresh the gameId is pre-loaded from localStorage before the socket responds,
+		// so this branch is taken instead of the new-game branch — meaning masks were never
+		// computed. Initialise them now if still absent so sendAction uses applyAction (fast)
+		// rather than applyActionWithDerivedContext (regenerates all maps on every keypress).
+		if (get().walkableByFloor == null) {
+			const s = get().state;
+			if (s) set(buildMasks(s));
 		}
 
 		// Flush unsent moves: server caught up, send next queued action if server is ready for it.
@@ -275,7 +287,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 	setGameId: (id) => set({ gameId: id }),
 
-	setActionInProgress: (active) => set({ actionInProgress: active }),
+	setActionInProgress: (active) => {
+		set({ actionInProgress: active });
+	},
 
 	sendAction: (action) => {
 		const {
@@ -365,10 +379,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			turn: confirmed.turn,
 			state: confirmed,
 		});
-		const revertMasks = computeFloorMasks(confirmed);
+		// Masks are static for this game session; no recomputation needed on rollback.
 		set({
-			walkableByFloor: revertMasks.walkable,
-			opacityByFloor: revertMasks.opacity,
 			pendingActions: [],
 			unsentMoves: [],
 			lastMoveSentAt: 0,

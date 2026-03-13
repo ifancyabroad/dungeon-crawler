@@ -20,11 +20,14 @@ import {
 	reconstructState,
 	persistAction,
 	applyAuthoritativeAction,
+	getSessionWalkable,
 	StateCorruptError,
 } from "../services/gameState.service";
 import { withGameLock } from "../services/gameLock";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
+import { applyDescendSideEffects } from "../lib/spawnMonstersForFloor";
+import { monstersById } from "@app/content";
 
 /** Auth context set on socket after successful join. */
 interface GameSocketData {
@@ -141,8 +144,22 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					return;
 				}
 
-				const newTurn = result.state.turn;
-				const persistedState = gameStateToPersisted(result.state);
+				const descendEvent = result.events.find((e) => e.type === "descend");
+				let finalState = result.state;
+				if (descendEvent?.type === "descend") {
+					// Pass the cached walk mask so applyDescendSideEffects doesn't have to
+					// regenerate all floor maps — the session already has them pre-computed.
+					const cachedWalkMask = getSessionWalkable(gameId)?.[descendEvent.toFloor];
+					finalState = applyDescendSideEffects(
+						finalState,
+						descendEvent.toFloor,
+						monstersById,
+						cachedWalkMask,
+					);
+				}
+
+				const newTurn = finalState.turn;
+				const persistedState = gameStateToPersisted(finalState);
 				PersistedDynamicStateSchema.parse(persistedState);
 
 				const persisted = await persistAction(
@@ -151,6 +168,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					parsed.data,
 					persistedState,
 					SNAPSHOT_INTERVAL,
+					!!descendEvent,
 				);
 				if (!persisted) {
 					const current = await reconstructState(gameId);
@@ -166,12 +184,12 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					return;
 				}
 
-				setSessionState(gameId, result.state);
+				setSessionState(gameId, finalState);
 				const events: GameEvent[] = result.events;
-				io.to(gameId).emit("state", { gameId, turn: newTurn, state: result.state, events });
+				io.to(gameId).emit("state", { gameId, turn: newTurn, state: finalState, events });
 
 				// If the hero died, update the Hero model
-				const hero = getHero(result.state);
+				const hero = getHero(finalState);
 				if (hero && !hero.alive) {
 					const session = await GameSession.findOne({ gameId }).lean().exec();
 					if (session) {

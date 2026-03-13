@@ -1,8 +1,10 @@
 import {
 	BASE_MONSTERS_PER_FLOOR,
+	computeWalkableMaskForFloor,
 	createRng,
 	getActorAtIdx,
 	getSpawnTable,
+	regenerateBaseMaps,
 	spawnMonster,
 	type GameState,
 	type MonsterInit,
@@ -81,4 +83,41 @@ export function spawnMonstersForFloor(
 	}
 
 	return current;
+}
+
+/**
+ * Handle side effects when the hero descends to a new floor: spawn monsters lazily on first visit.
+ * No-ops if the floor already has monsters (guards against re-spawning on repeated visits).
+ *
+ * Pass `walkMask` from the session cache to avoid a redundant regenerateBaseMaps call.
+ * If omitted it is derived on the spot (test / fallback path).
+ *
+ * NOTE: the hero is already placed on toFloor by the engine before this is called, so the
+ * populated check must look for monsters specifically — not all actors — to avoid treating
+ * the hero's presence as "already populated".
+ */
+export function applyDescendSideEffects(
+	state: GameState,
+	toFloor: number,
+	monstersById: Record<string, MonsterDefinition>,
+	walkMask?: Uint8Array,
+): GameState {
+	const floor = state.floors[toFloor];
+	if (!floor) return state;
+
+	const hasMonsters = Object.values(floor.state.actorsById).some((a) => a.def.type === "monster");
+	if (hasMonsters) return state;
+
+	if (!walkMask) {
+		const baseLayers = regenerateBaseMaps(
+			state.seed,
+			state.floors.map((f) => f.config),
+			state.mapGenVersion,
+		);
+		const base = baseLayers[toFloor];
+		if (!base) return state;
+		walkMask = computeWalkableMaskForFloor(base, floor.state.tileOverrides);
+	}
+
+	return spawnMonstersForFloor(state, toFloor, walkMask, monstersById);
 }

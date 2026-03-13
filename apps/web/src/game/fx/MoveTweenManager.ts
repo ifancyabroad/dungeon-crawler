@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { useGameStore } from "../../features/game/gameStore";
 
-const MOVE_DURATION_MS = 80;
+export const MOVE_DURATION_MS = 80;
 
 /**
  * Manages smooth slide tweens for entity movement.

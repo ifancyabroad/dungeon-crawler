@@ -19,16 +19,16 @@ import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
 import { VISION_RADIUS, XP_PER_LEVEL } from "./config";
 import { createInitialRngState, createRngFromState, type Rng } from "../rng";
-import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
+import { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { resolveAttack } from "../combat/combat";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
 import { runMonsterAI, type MonsterAIState } from "./monsterAI";
 
-/** Empty floor state (tileOverrides, actorsById, explored). Use when defaulting or building from persisted. */
+/** Empty floor state. Use when defaulting or building from persisted. spawnIdx and exitIdx are set after map generation. */
 export function createEmptyFloorState(): FloorState {
-	return { tileOverrides: {}, actorsById: {}, explored: [] };
+	return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx: 0, exitIdx: null };
 }
 
 /** Context required for applyAction: walkability + opacity masks per floor. */
@@ -116,55 +116,76 @@ export const DEFAULT_HERO_INIT: HeroInit = {
 };
 
 /**
- * Create initial game state: one floor, hero actor at spawn, rngState from seed.
- * Computes initial explored tiles from spawn visibility.
+ * Build a single floor's initial state from its base layer.
+ * Pass heroInit to populate the hero actor and initial visibility on the spawn tile.
+ * Pass null for floors the hero doesn't start on (they'll receive monsters lazily).
  */
-export function createInitialState(
-	seed: number,
-	floorConfig: FloorConfig,
-	hero: HeroInit,
-): GameState {
-	const rngState = createInitialRngState(seed);
-	const floorConfigs: FloorConfig[] = [floorConfig];
-	const baseLayers = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION);
-	const floor0 = baseLayers[0];
-	const width = floorConfig.width;
-	const height = floorConfig.height;
-	const spawnIdx = xyToIdx(floor0.spawn.x, floor0.spawn.y, width);
+function buildInitialFloorState(
+	base: BaseLayerFloor,
+	config: FloorConfig,
+	heroInit: HeroInit | null,
+): FloorState {
+	const { spawnIdx } = base;
+	const exitIdx = base.exitIdx === -1 ? null : base.exitIdx;
+
+	if (!heroInit) {
+		return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx, exitIdx };
+	}
 
 	const heroActor: Actor = {
 		id: "hero",
-		name: hero.name,
+		name: heroInit.name,
 		idx: spawnIdx,
 		alive: true,
-		hp: hero.hp,
-		maxHp: hero.maxHp,
-		armorClass: hero.armorClass ?? computeUnarmoredAC(hero.attributes.dexterity),
-		attributes: { ...hero.attributes },
+		hp: heroInit.hp,
+		maxHp: heroInit.maxHp,
+		armorClass: heroInit.armorClass ?? computeUnarmoredAC(heroInit.attributes.dexterity),
+		attributes: { ...heroInit.attributes },
 		skills: {},
-		def: { type: "hero", classId: hero.classId },
-		level: hero.level,
-		xp: hero.xp,
-		hitDie: hero.hitDie,
+		def: { type: "hero", classId: heroInit.classId },
+		level: heroInit.level,
+		xp: heroInit.xp,
+		hitDie: heroInit.hitDie,
 		xpReward: 0,
 	};
 
-	const opMask = computeOpacityMask(floor0.wall, width, height);
+	const { x: spawnX, y: spawnY } = idxToXY(spawnIdx, config.width);
+	const opMask = computeOpacityMask(base.wall, config.width, config.height);
 	const visible = computeVisibility(
-		floor0.spawn.x,
-		floor0.spawn.y,
-		width,
-		height,
+		spawnX,
+		spawnY,
+		config.width,
+		config.height,
 		opMask,
 		VISION_RADIUS,
 	);
-	const explored = mergeExplored([], visible, width * height);
+	const explored = mergeExplored([], visible, config.width * config.height);
 
-	const floorState: FloorState = {
-		...createEmptyFloorState(),
+	return {
+		tileOverrides: {},
 		actorsById: { hero: heroActor } as Record<ActorId, Actor>,
 		explored,
+		spawnIdx,
+		exitIdx,
 	};
+}
+
+/**
+ * Create initial game state: all floors pre-generated, hero on floor 0.
+ * Floors 1–N are empty (no actors); monsters are spawned lazily on first visit by the API.
+ */
+export function createInitialState(
+	seed: number,
+	floorConfigs: FloorConfig[],
+	hero: HeroInit,
+): GameState {
+	const rngState = createInitialRngState(seed);
+	const baseLayers = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION);
+
+	const floors = floorConfigs.map((config, i) => ({
+		config,
+		state: buildInitialFloorState(baseLayers[i], config, i === 0 ? hero : null),
+	}));
 
 	return {
 		turn: 0,
@@ -172,7 +193,7 @@ export function createInitialState(
 		heroFloorIndex: 0,
 		seed,
 		mapGenVersion: MAP_GEN_VERSION,
-		floors: [{ config: floorConfig, state: floorState }],
+		floors,
 		rngState,
 	};
 }
@@ -425,7 +446,7 @@ export function applyAction(
 
 			let newFloorState: FloorState = { ...floor.state, actorsById: newActorsById, explored };
 
-			// Enemy turns after move
+			// Enemy turns on current floor (before potential descend)
 			const { rng, getState: getRngState } = createRngFromState(state.rngState);
 			const enemyResult = processEnemyTurns(
 				newFloorState,
@@ -441,16 +462,82 @@ export function applyAction(
 			const newFloors = state.floors.slice();
 			newFloors[fi] = { ...floor, state: newFloorState };
 
-			return {
-				ok: true,
-				state: {
-					...state,
-					turn: state.turn + 1,
-					floors: newFloors,
-					rngState: getRngState(),
-				},
-				events: enemyResult.events,
+			let newState: GameState = {
+				...state,
+				turn: state.turn + 1,
+				floors: newFloors,
+				rngState: getRngState(),
 			};
+			const events: GameEvent[] = [...enemyResult.events];
+
+			// Auto-descend: hero stepped onto the exit tile and a next floor exists
+			const heroAfterMove = newFloorState.actorsById[state.heroId];
+			if (
+				heroAfterMove?.alive &&
+				floor.state.exitIdx !== null &&
+				newIdx === floor.state.exitIdx &&
+				fi < state.floors.length - 1
+			) {
+				const nextFi = fi + 1;
+				const nextFloor = newState.floors[nextFi];
+				if (nextFloor) {
+					// Remove hero from current floor, place on next floor at spawn
+					const departingFloorState: FloorState = {
+						...newFloorState,
+						actorsById: Object.fromEntries(
+							Object.entries(newFloorState.actorsById).filter(
+								([id]) => id !== state.heroId,
+							),
+						),
+					};
+					const descendingHero: Actor = {
+						...heroAfterMove,
+						idx: nextFloor.state.spawnIdx,
+					};
+
+					// Compute initial visibility on next floor
+					const nextWidth = nextFloor.config.width;
+					const nextHeight = nextFloor.config.height;
+					const nextOpMask = context.getOpacityMask(nextFi);
+					const { x: spawnX, y: spawnY } = idxToXY(nextFloor.state.spawnIdx, nextWidth);
+					const nextVisible = computeVisibility(
+						spawnX,
+						spawnY,
+						nextWidth,
+						nextHeight,
+						nextOpMask,
+						VISION_RADIUS,
+					);
+					const nextExplored = mergeExplored(
+						nextFloor.state.explored,
+						nextVisible,
+						nextWidth * nextHeight,
+					);
+
+					const nextFloorState: FloorState = {
+						...nextFloor.state,
+						actorsById: {
+							...nextFloor.state.actorsById,
+							[state.heroId]: descendingHero,
+						},
+						explored: nextExplored,
+					};
+
+					const descendFloors = newState.floors.slice();
+					descendFloors[fi] = { ...newState.floors[fi], state: departingFloorState };
+					descendFloors[nextFi] = { ...nextFloor, state: nextFloorState };
+
+					events.push({ type: "descend", fromFloor: fi, toFloor: nextFi });
+
+					newState = {
+						...newState,
+						heroFloorIndex: nextFi,
+						floors: descendFloors,
+					};
+				}
+			}
+
+			return { ok: true, state: newState, events };
 		}
 
 		case "attack": {
