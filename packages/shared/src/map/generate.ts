@@ -57,7 +57,7 @@ function buildShapeMask(width: number, height: number, voidTarget: number, rng: 
 		for (let x = 0; x < width; x++) {
 			const dist = Math.hypot(x - cx, y - cy);
 			const t = Math.max(0, 1 - dist / maxDist);
-			const baseThreshold = 0.2 + (1 - t) * 0.55 * (1 + voidTarget * 2);
+			const baseThreshold = 0.25 + (1 - t) * (0.4 + voidTarget * 0.6);
 			const jitter = (rng() - 0.5) * ROUGHNESS_JITTER;
 			playableRaw[y][x] = blur[y][x] > baseThreshold + jitter;
 		}
