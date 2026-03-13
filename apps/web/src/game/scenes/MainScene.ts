@@ -32,6 +32,11 @@ import {
 	toGroundTileIndices,
 	toWallTileIndices,
 } from "../tiles/mapTileMapping";
+import { MoveTweenManager } from "../fx/MoveTweenManager";
+import { AttackAnimator } from "../fx/AttackAnimator";
+import { HealthBarManager } from "../fx/HealthBarManager";
+import { DeathStainManager } from "../fx/DeathStainManager";
+import { DamageNumberManager } from "../fx/DamageNumberManager";
 
 const FOG_TINT = 0x555555;
 
@@ -59,6 +64,13 @@ export default class MainScene extends Phaser.Scene {
 	/** Set to true once the scene is shut down or destroyed; guards async subscription callbacks. */
 	private disposed = false;
 
+	// FX managers — created per map build, destroyed on cleanup
+	private moveTweens: MoveTweenManager | null = null;
+	private attackAnimator: AttackAnimator | null = null;
+	private healthBars: HealthBarManager | null = null;
+	private deathStains: DeathStainManager | null = null;
+	private damageNumbers: DamageNumberManager | null = null;
+
 	constructor() {
 		super("Main");
 	}
@@ -75,6 +87,7 @@ export default class MainScene extends Phaser.Scene {
 			this.unsubActorSync?.();
 			this.unsubActorSync = null;
 			this.monsterSprites.clear();
+			this.destroyFx();
 		};
 		this.events.once("shutdown", cleanup);
 		this.events.once("destroy", cleanup);
@@ -149,6 +162,14 @@ export default class MainScene extends Phaser.Scene {
 		// No setBounds: keep hero always centered; at map edges the camera may show empty space.
 		this.cameras.main.startFollow(this.player, true, 1, 1);
 
+		// Initialise FX managers for this map (destroys any previous ones first)
+		this.destroyFx();
+		this.moveTweens = new MoveTweenManager(this);
+		this.attackAnimator = new AttackAnimator(this, this.mapWidth);
+		this.healthBars = new HealthBarManager(this);
+		this.deathStains = new DeathStainManager(this, this.mapWidth);
+		this.damageNumbers = new DamageNumberManager(this, this.mapWidth);
+
 		const currentState = useGameStore.getState().state;
 		if (currentState) {
 			const explored = currentState.floors[currentState.heroFloorIndex]?.state.explored ?? [];
@@ -158,21 +179,65 @@ export default class MainScene extends Phaser.Scene {
 
 		let lastSyncedIdx = heroPos.idx;
 		let lastSyncedTurn = currentState?.turn ?? -1;
+		// Track which event-turn we already dispatched to FX managers so stale
+		// events in the store don't replay on every subsequent move turn.
+		let lastDispatchedEventTurn = -1;
 		this.unsubHeroSync = useGameStore.subscribe((storeState) => {
 			if (this.disposed) return;
 			const gs = storeState.state;
 			const turnChanged = gs != null && gs.turn !== lastSyncedTurn;
 
-			if (storeState.hero.idx !== lastSyncedIdx) {
-				lastSyncedIdx = storeState.hero.idx;
-				this.syncHeroToStore(storeState.hero.idx);
-			}
-
 			if (gs && turnChanged) {
 				lastSyncedTurn = gs.turn;
-				const explored = gs.floors[gs.heroFloorIndex]?.state.explored ?? [];
+				const floor = gs.floors[gs.heroFloorIndex];
+				const explored = floor?.state.explored ?? [];
 				this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
+
+				// Events are only fresh when the store's event-turn matches this turn.
+				// lastOptimisticEventTurn records which turn produced the current events[].
+				const eventTurn = storeState.lastOptimisticEventTurn;
+				const freshEvents =
+					storeState.events.length > 0 &&
+					eventTurn === gs.turn &&
+					eventTurn !== lastDispatchedEventTurn;
+				const events = freshEvents ? storeState.events : [];
+
+				if (freshEvents) lastDispatchedEventTurn = eventTurn;
+
+				const heroMoved = storeState.hero.idx !== lastSyncedIdx;
+				const hasHeroAttack = events.some(
+					(e): e is Extract<typeof e, { type: "attack" }> =>
+						e.type === "attack" && e.attackerId === gs.heroId,
+				);
+
+				// Move tween only fires when the hero actually changed tiles and
+				// this turn was not an attack (attacks stay in place, bump via AttackAnimator).
+				if (heroMoved && !hasHeroAttack) {
+					lastSyncedIdx = storeState.hero.idx;
+					this.syncHeroToStore(storeState.hero.idx);
+				}
+
+				// Dispatch fresh events to FX managers before syncMonsters removes dead sprites
+				if (events.length > 0 && floor) {
+					const actorsById = floor.state.actorsById;
+					const getActorIdx = (id: string) => actorsById[id]?.idx;
+
+					this.attackAnimator?.playEvents(
+						events,
+						gs.heroId,
+						this.player,
+						this.monsterSprites,
+						getActorIdx,
+					);
+					this.damageNumbers?.handleEvents(events, getActorIdx);
+					this.deathStains?.handleEvents(events, gs.heroId, getActorIdx);
+				}
+
 				this.syncMonsters(gs);
+			} else if (storeState.hero.idx !== lastSyncedIdx) {
+				// Turn unchanged but hero idx drifted (e.g. server correction).
+				lastSyncedIdx = storeState.hero.idx;
+				this.syncHeroToStore(storeState.hero.idx);
 			}
 		});
 	}
@@ -193,6 +258,7 @@ export default class MainScene extends Phaser.Scene {
 				if (existing) {
 					existing.destroy();
 					this.monsterSprites.delete(id);
+					this.healthBars?.remove(id);
 				}
 				continue;
 			}
@@ -206,24 +272,38 @@ export default class MainScene extends Phaser.Scene {
 			const isVisible = this.visibleMask?.[actor.idx] === 1;
 
 			if (existing) {
-				existing.setPosition(px, py);
+				this.moveTweens?.moveMonster(id, existing, px, py);
 				existing.setFrame(tileFrame);
 				existing.setVisible(isVisible);
+				if (isVisible) {
+					this.healthBars?.update(id, actor.hp, actor.maxHp, existing);
+				}
 			} else {
 				const sprite = this.add.sprite(px, py, TILESET_KEY, tileFrame);
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(9);
 				sprite.setVisible(isVisible);
 				this.monsterSprites.set(id, sprite);
+				if (isVisible) {
+					this.healthBars?.update(id, actor.hp, actor.maxHp, sprite);
+				}
 			}
 		}
 
-		// Remove sprites for actors no longer in state
+		// Remove sprites for actors that were removed from state entirely (not just marked dead —
+		// the alive=false case is handled above, but actors may also be absent from actorsById).
 		for (const [id, sprite] of this.monsterSprites) {
 			if (!actorsById[id] || !actorsById[id].alive) {
 				sprite.destroy();
 				this.monsterSprites.delete(id);
+				this.healthBars?.remove(id);
 			}
+		}
+
+		// Update hero health bar
+		const hero = actorsById[gameState.heroId];
+		if (hero && this.player) {
+			this.healthBars?.update(gameState.heroId, hero.hp, hero.maxHp, this.player);
 		}
 	}
 
@@ -274,13 +354,19 @@ export default class MainScene extends Phaser.Scene {
 		return { type: "move", direction };
 	}
 
-	/** Apply hero tile index from store to sprite position (called from store subscription). */
+	/** Apply hero tile index from store to sprite position via tween. */
 	private syncHeroToStore(idx: number) {
 		if (!this.player) return;
 		const { x, y } = idxToXY(idx, this.mapWidth);
 		this.playerTileX = x;
 		this.playerTileY = y;
-		this.player.setPosition(x * TILE_WIDTH + TILE_WIDTH / 2, y * TILE_HEIGHT + TILE_HEIGHT / 2);
+		const toX = x * TILE_WIDTH + TILE_WIDTH / 2;
+		const toY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
+		if (this.moveTweens) {
+			this.moveTweens.moveHero(this.player, toX, toY);
+		} else {
+			this.player.setPosition(toX, toY);
+		}
 	}
 
 	private createGroundLayer(groundData: number[][]) {
@@ -374,5 +460,18 @@ export default class MainScene extends Phaser.Scene {
 				}
 			}
 		}
+	}
+
+	private destroyFx(): void {
+		this.moveTweens?.destroy();
+		this.moveTweens = null;
+		this.attackAnimator?.destroy();
+		this.attackAnimator = null;
+		this.healthBars?.destroy();
+		this.healthBars = null;
+		this.deathStains?.destroy();
+		this.deathStains = null;
+		// DamageNumberManager has no state to clean up — labels self-destruct via tweens
+		this.damageNumbers = null;
 	}
 }
