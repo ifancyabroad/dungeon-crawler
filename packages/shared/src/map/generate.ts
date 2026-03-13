@@ -57,7 +57,7 @@ function buildShapeMask(width: number, height: number, voidTarget: number, rng: 
 		for (let x = 0; x < width; x++) {
 			const dist = Math.hypot(x - cx, y - cy);
 			const t = Math.max(0, 1 - dist / maxDist);
-			const baseThreshold = 0.2 + (1 - t) * 0.55 * (1 - voidTarget * 2);
+			const baseThreshold = 0.2 + (1 - t) * 0.55 * (1 + voidTarget * 2);
 			const jitter = (rng() - 0.5) * ROUGHNESS_JITTER;
 			playableRaw[y][x] = blur[y][x] > baseThreshold + jitter;
 		}
@@ -311,6 +311,10 @@ function generateCave(config: MapGenConfig, rng: Rng): GeneratedMap {
 	// 4) Keep only connected component containing map center (only through FLOOR)
 	const cx = Math.floor(mapCenterX);
 	const cy = Math.floor(mapCenterY);
+	// Guarantee the seed cell is FLOOR so the flood fill always finds a component.
+	if (mask[cy][cx] && ground[cy][cx] !== TILE_TYPE.FLOOR) {
+		ground[cy][cx] = TILE_TYPE.FLOOR;
+	}
 	const component = floodFillFloor(ground, cx, cy, width, height);
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
