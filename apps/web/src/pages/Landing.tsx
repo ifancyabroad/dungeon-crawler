@@ -1,11 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/Button";
 import { Modal } from "../components/Modal";
+import { Button } from "../components/Button";
+import { PanelBox } from "../components/PanelBox";
 import { useContinueGame, useGameStatus } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
 import { useErrorStore } from "../features/error/errorStore";
 import { getApiErrorMessage } from "../lib/errors";
+
+interface MenuItemProps {
+	hotkey: string;
+	label: string;
+	hint?: string;
+	disabled?: boolean;
+	onClick?: () => void;
+}
+
+function MenuItem({ hotkey, label, hint, disabled, onClick }: MenuItemProps) {
+	return (
+		<button
+			onClick={onClick}
+			disabled={disabled}
+			className={[
+				"group flex items-baseline gap-3 w-full text-left px-3 py-1 transition-colors",
+				"hover:bg-bg-elevated",
+				"focus:outline-none focus-visible:outline-none focus-visible:bg-bg-elevated",
+				"disabled:opacity-30 disabled:pointer-events-none",
+			].join(" ")}
+		>
+			<span className="text-primary font-mono w-6 shrink-0 select-none">[{hotkey}]</span>
+			<span className="text-text-bright font-mono tracking-wide uppercase group-hover:text-primary transition-colors">
+				{label}
+			</span>
+			{hint && <span className="text-text-muted font-mono text-xs ml-auto">{hint}</span>}
+		</button>
+	);
+}
 
 export default function Landing() {
 	const navigate = useNavigate();
@@ -20,6 +50,7 @@ export default function Landing() {
 
 	const hasActiveHero = gameStatus.data?.hasActiveHero ?? false;
 	const canContinue = hasActiveHero && !gameStatus.isLoading;
+	const isLoading = continueGame.isPending || gameStatus.isLoading;
 
 	function handleNewGame() {
 		const existingId = getStoredGameId();
@@ -42,42 +73,79 @@ export default function Landing() {
 	}
 
 	return (
-		<div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4">
-			{/* DCSS-style panel: amber border, warm dark background */}
-			<div className="border-2 border-border bg-bg-panel px-12 py-10 flex flex-col items-center">
-				{/* Title */}
-				<h1 className="text-primary text-4xl mb-6 tracking-wide">Dungeon Crawler</h1>
-
-				{/* Flavor text */}
-				<div className="text-center mb-6 space-y-1">
-					<p className="text-text">Descend into the depths of an ancient dungeon.</p>
-					<p className="text-text">Battle monsters, gain levels, grow in power.</p>
-					<p className="text-text">How far can you go before the darkness takes you?</p>
+		<>
+			<div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4 overflow-hidden">
+				{/* Version tag */}
+				<div className="absolute top-3 right-4 text-text-dim font-mono text-xs">
+					v0.1.0-alpha
 				</div>
 
-				<div className="w-full border-t-2 border-border mb-6" />
+				{/* Title */}
+				<div className="text-center mb-8">
+					<h1 className="font-mono text-5xl tracking-widest uppercase text-primary mb-2">
+						Dungeon Crawler
+					</h1>
+					<div className="flex items-center justify-center gap-3 mt-1">
+						<span className="text-border font-mono text-sm select-none">~*~</span>
+						<span className="text-text-label font-mono text-xs tracking-widest uppercase">
+							A Roguelike Dungeon Adventure
+						</span>
+						<span className="text-border font-mono text-sm select-none">~*~</span>
+					</div>
+				</div>
 
-				{/* Menu */}
-				<nav className="flex flex-col items-center gap-2 w-full">
-					<Button
-						variant="primary"
-						size="lg"
-						onClick={handleNewGame}
-						disabled={continueGame.isPending}
-						className="w-48"
+				{/* ── Main panel ── */}
+				<div className="w-full max-w-md">
+					<PanelBox
+						title="Main Menu"
+						footer={
+							<span className="text-text-dim font-mono text-xs">
+								Use letter keys or click to select
+							</span>
+						}
 					>
-						New Game
-					</Button>
-					<Button
-						variant="secondary"
-						size="lg"
-						onClick={() => handleContinue()}
-						disabled={!canContinue || continueGame.isPending}
-						className="w-48"
-					>
-						{continueGame.isPending ? "Loading…" : "Continue"}
-					</Button>
-				</nav>
+						{/* Flavor text */}
+						<div className="px-5 pt-4 pb-3 space-y-0.5 border-b border-border">
+							<p className="text-text-muted font-mono text-xs">
+								&gt; You stand at the entrance to an ancient dungeon.
+							</p>
+							<p className="text-text-muted font-mono text-xs">
+								&gt; Torchlight flickers. Something stirs below.
+							</p>
+						</div>
+
+						{/* Menu items */}
+						<div className="py-2">
+							<MenuItem
+								hotkey="n"
+								label="New Game"
+								onClick={handleNewGame}
+								disabled={isLoading}
+							/>
+							<MenuItem
+								hotkey="c"
+								label="Continue"
+								hint={canContinue ? "" : "(no save found)"}
+								onClick={handleContinue}
+								disabled={!canContinue || isLoading}
+							/>
+							<div className="mx-4 my-1 border-t border-border/50" />
+							<MenuItem
+								hotkey="l"
+								label="Leaderboard"
+								hint="(coming soon)"
+								disabled
+							/>
+							<MenuItem hotkey="r" label="Register" hint="(coming soon)" disabled />
+							<MenuItem hotkey="h" label="Help" hint="(coming soon)" disabled />
+						</div>
+					</PanelBox>
+				</div>
+
+				{/* Flavour line */}
+				<div className="mt-5 text-text-dim font-mono text-xs text-center">
+					<p>May fortune favour the bold.</p>
+				</div>
 			</div>
 
 			<Modal
@@ -106,6 +174,6 @@ export default function Landing() {
 					You have an active hero. Starting a new game will end their journey.
 				</p>
 			</Modal>
-		</div>
+		</>
 	);
 }

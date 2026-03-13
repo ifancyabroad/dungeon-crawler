@@ -75,10 +75,10 @@ export function CombatLog() {
 				{combatLog.length === 0 && (
 					<>
 						<p className="text-text-bright" style={{ lineHeight: `${LINE_HEIGHT}px` }}>
-							Welcome, adventurer. The dungeon awaits.
+							&gt; Welcome, adventurer. The dungeon awaits.
 						</p>
 						<p className="text-text-muted" style={{ lineHeight: `${LINE_HEIGHT}px` }}>
-							Move with WASD or arrow keys.
+							&gt; Move with WASD or arrow keys.
 						</p>
 					</>
 				)}
@@ -91,7 +91,7 @@ export function CombatLog() {
 							className={eventColorClass(event)}
 							style={{ lineHeight: `${LINE_HEIGHT}px` }}
 						>
-							{text}
+							&gt; {text}
 						</p>
 					);
 				})}

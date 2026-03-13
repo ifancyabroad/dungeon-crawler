@@ -25,18 +25,71 @@ type ClassCardProps = {
 	onSelect: () => void;
 };
 
+// Corner glyph style — matches PanelBox corners.
+const CORNER: React.CSSProperties = {
+	position: "absolute",
+	fontFamily: "'IBM VGA', monospace",
+	fontSize: "1rem",
+	lineHeight: 1,
+	pointerEvents: "none",
+	userSelect: "none",
+	zIndex: 1,
+};
+
 export function ClassCard({ cls, selected, onSelect }: ClassCardProps) {
 	return (
 		<button
 			type="button"
 			onClick={onSelect}
 			className={[
-				"text-left p-3 border-2 transition-colors",
+				"relative text-left p-3 border-2 transition-colors",
 				selected
 					? "border-border-bright bg-bg-elevated"
 					: "border-border bg-bg-panel hover:bg-bg-surface",
 			].join(" ")}
 		>
+			{/* Corner glyphs */}
+			<span
+				style={{
+					...CORNER,
+					top: -2,
+					left: -2,
+					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
+				}}
+			>
+				╔
+			</span>
+			<span
+				style={{
+					...CORNER,
+					top: -2,
+					right: -2,
+					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
+				}}
+			>
+				╗
+			</span>
+			<span
+				style={{
+					...CORNER,
+					bottom: -2,
+					left: -2,
+					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
+				}}
+			>
+				╚
+			</span>
+			<span
+				style={{
+					...CORNER,
+					bottom: -2,
+					right: -2,
+					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
+				}}
+			>
+				╝
+			</span>
+
 			{/* Sprite + name + HP */}
 			<div className="flex items-center gap-2 mb-2">
 				<TileSprite tileIndex={getHeroTile(cls.id)} size={32} />

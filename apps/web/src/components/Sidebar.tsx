@@ -60,8 +60,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 				className={[
 					"fixed md:static inset-y-0 left-0 z-50 md:z-0",
 					"w-64 max-w-full",
-					"bg-bg-panel border-r-2 border-border",
-					"md:bg-transparent md:border-0",
+					// On mobile the sidebar is an overlay panel; on desktop it sits flush beside the canvas.
+					"bg-bg-panel border-r-2 border-border md:bg-transparent md:border-0",
 					"overflow-y-auto flex flex-col",
 					"transform transition-transform duration-200",
 					open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
@@ -110,13 +110,11 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 						</div>
 
 						{/* Hero identity */}
-						<div>
-							<p className="text-text-bright">{hero.name}</p>
-							<p>
-								<span className="text-text-label">Level {hero.level} </span>
-								<span className="text-text-bright">
-									{classDef?.name ?? "Unknown"}
-								</span>
+						<div className="border-b border-border pb-2">
+							<p className="text-primary uppercase tracking-widest">{hero.name}</p>
+							<p className="text-text-label">
+								Level {hero.level}{" "}
+								<span className="text-text">{classDef?.name ?? "Unknown"}</span>
 							</p>
 						</div>
 

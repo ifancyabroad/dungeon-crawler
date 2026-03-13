@@ -4,6 +4,7 @@ import { classes } from "@app/content";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { ClassCard } from "../components/ClassCard";
+import { PanelBox } from "../components/PanelBox";
 import { useCreateGame } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
 import { useErrorStore } from "../features/error/errorStore";
@@ -59,79 +60,76 @@ export default function CharacterCreate() {
 
 	return (
 		<div className="min-h-screen bg-bg-base flex flex-col items-center px-4 py-8">
-			{/* Header */}
-			<div className="w-full max-w-3xl mb-6">
-				<div className="flex items-baseline justify-between mb-2">
-					<h1 className="text-primary text-xl">Choose your class</h1>
-					<button
-						type="button"
-						onClick={() => navigate("/")}
-						className="text-sm text-text-muted hover:text-text-bright transition-colors focus:outline-none"
-					>
-						← Back
-					</button>
-				</div>
-				<div className="border-b-2 border-border" />
-			</div>
-
-			{/* Class grid */}
-			<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-3xl mb-6">
-				{classes.map((cls) => (
-					<ClassCard
-						key={cls.id}
-						cls={cls}
-						selected={selectedClassId === cls.id}
-						onSelect={() => setSelectedClassId(cls.id)}
-					/>
-				))}
-			</div>
-
-			{/* Name section */}
-			{selectedClass && (
-				<div className="w-full max-w-sm">
-					<div className="border-b-2 border-border mb-5" />
-					<p className="text-text text-base mb-4">
-						You have chosen: <span className="text-primary">{selectedClass.name}</span>
-					</p>
-
-					<div className="flex items-end gap-2 mb-3">
-						<div className="flex-1">
-							<Input
-								label="Hero name"
-								value={heroName}
-								onChange={(e) => {
-									setHeroName(e.target.value);
-									if (nameError) setNameError(validateName(e.target.value));
-								}}
-								error={nameError}
-								maxLength={10}
-								placeholder="Enter a name..."
-							/>
-						</div>
-						<Button
-							variant="ghost"
-							size="md"
-							onClick={() => {
-								setHeroName(randomHeroName());
-								setNameError("");
-							}}
-							className="shrink-0 mb-[2px]"
-						>
-							Randomize
+			<div className="w-full max-w-3xl">
+				<PanelBox
+					title="Choose Your Class"
+					footer={
+						<Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+							← Back to menu
 						</Button>
+					}
+				>
+					{/* Class grid */}
+					<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
+						{classes.map((cls) => (
+							<ClassCard
+								key={cls.id}
+								cls={cls}
+								selected={selectedClassId === cls.id}
+								onSelect={() => setSelectedClassId(cls.id)}
+							/>
+						))}
 					</div>
 
-					<Button
-						variant="primary"
-						size="lg"
-						onClick={handleStart}
-						disabled={createGame.isPending}
-						className="w-full"
-					>
-						{createGame.isPending ? "Creating…" : "Begin Adventure"}
-					</Button>
-				</div>
-			)}
+					{/* Name section */}
+					{selectedClass && (
+						<div className="border-t border-border px-4 py-4">
+							<p className="text-text-label uppercase tracking-widest mb-4">
+								You have chosen:{" "}
+								<span className="text-primary">{selectedClass.name}</span>
+							</p>
+
+							<div className="flex items-end gap-2 mb-3 max-w-sm">
+								<div className="flex-1">
+									<Input
+										label="Hero name"
+										value={heroName}
+										onChange={(e) => {
+											setHeroName(e.target.value);
+											if (nameError)
+												setNameError(validateName(e.target.value));
+										}}
+										error={nameError}
+										maxLength={10}
+										placeholder="Enter a name..."
+									/>
+								</div>
+								<Button
+									variant="ghost"
+									size="md"
+									onClick={() => {
+										setHeroName(randomHeroName());
+										setNameError("");
+									}}
+									className="shrink-0 mb-[2px]"
+								>
+									Randomize
+								</Button>
+							</div>
+
+							<Button
+								variant="primary"
+								size="lg"
+								onClick={handleStart}
+								disabled={createGame.isPending}
+								className="w-full max-w-sm"
+							>
+								{createGame.isPending ? "Creating…" : "Begin Adventure"}
+							</Button>
+						</div>
+					)}
+				</PanelBox>
+			</div>
 		</div>
 	);
 }
