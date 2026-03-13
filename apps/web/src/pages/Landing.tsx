@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "../components/Modal";
 import { Button } from "../components/Button";
@@ -51,6 +51,26 @@ export default function Landing() {
 	const hasActiveHero = gameStatus.data?.hasActiveHero ?? false;
 	const canContinue = hasActiveHero && !gameStatus.isLoading;
 	const isLoading = continueGame.isPending || gameStatus.isLoading;
+
+	useEffect(() => {
+		function onKeyDown(e: KeyboardEvent) {
+			if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+			if (warnOpen) return;
+			if (isLoading) return;
+
+			switch (e.key.toLowerCase()) {
+				case "n":
+					handleNewGame();
+					break;
+				case "c":
+					if (canContinue) handleContinue();
+					break;
+			}
+		}
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [warnOpen, isLoading, canContinue]);
 
 	function handleNewGame() {
 		const existingId = getStoredGameId();
