@@ -26,8 +26,8 @@ export function LevelUpModal() {
 					</p>
 					<div className="border-t border-border pt-3">
 						<div className="flex justify-between">
-							<span className="text-sm text-text-label">HP gained</span>
-							<span className="text-sm text-hp-text">+{current.hpGained}</span>
+							<span className="text-text-label">HP gained</span>
+							<span className="text-hp-text">+{current.hpGained}</span>
 						</div>
 					</div>
 				</div>

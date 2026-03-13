@@ -29,7 +29,7 @@ export function Input({ label, error, className = "", id, ...rest }: InputProps)
 			{error && (
 				<p
 					id={inputId ? `${inputId}-error` : undefined}
-					className="mt-1 text-sm text-error"
+					className="mt-1 text-error"
 					role="alert"
 				>
 					{error}

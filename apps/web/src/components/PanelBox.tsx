@@ -49,17 +49,17 @@ export function PanelBox({ children, title, footer, glow = false, className = ""
 			{/* Title bar */}
 			{title != null && (
 				<div className="border-b border-border px-4 py-1.5 flex items-center gap-2 overflow-hidden">
-					<span className="text-border font-mono text-xs select-none shrink-0">+--</span>
-					<span className="text-text-label font-mono text-xs tracking-widest uppercase shrink-0">
+					<span className="text-border font-mono select-none shrink-0">+--</span>
+					<span className="text-text-label font-mono tracking-widest uppercase shrink-0">
 						{title}
 					</span>
 					<span
-						className="text-border font-mono text-xs select-none flex-1 overflow-hidden whitespace-nowrap"
+						className="text-border font-mono select-none flex-1 overflow-hidden whitespace-nowrap"
 						aria-hidden
 					>
 						{"─".repeat(80)}
 					</span>
-					<span className="text-border font-mono text-xs select-none shrink-0">--+</span>
+					<span className="text-border font-mono select-none shrink-0">--+</span>
 				</div>
 			)}
 
@@ -69,9 +69,9 @@ export function PanelBox({ children, title, footer, glow = false, className = ""
 			{/* Footer bar */}
 			{footer != null && (
 				<div className="border-t border-border px-4 py-1 flex items-center gap-2">
-					<span className="text-border font-mono text-xs select-none shrink-0">+--</span>
+					<span className="text-border font-mono select-none shrink-0">+--</span>
 					<div className="flex-1 min-w-0">{footer}</div>
-					<span className="text-border font-mono text-xs select-none shrink-0">--+</span>
+					<span className="text-border font-mono select-none shrink-0">--+</span>
 				</div>
 			)}
 		</div>

@@ -56,10 +56,7 @@ export function Modal({ open, onClose, title, children, footer, className = "" }
 					{/* ReactNode title fallback (non-string) */}
 					{title != null && titleString == null && (
 						<div className="shrink-0 border-b border-border px-4 py-2">
-							<h2
-								id="modal-title"
-								className="text-primary text-xs uppercase tracking-widest"
-							>
+							<h2 id="modal-title" className="text-primary uppercase tracking-widest">
 								{title}
 							</h2>
 						</div>

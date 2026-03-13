@@ -65,7 +65,7 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 			>
 				<div className="sticky top-0 z-10 border-b-2 border-border bg-bg-surface/95 backdrop-blur">
 					<div className="flex items-center justify-between px-4 py-3">
-						<h2 className="text-sm font-semibold text-text">Debug</h2>
+						<h2 className="text-text">Debug</h2>
 						<Button
 							variant="ghost"
 							size="icon"

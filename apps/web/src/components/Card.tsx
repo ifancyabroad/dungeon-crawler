@@ -19,7 +19,7 @@ export function Card({ children, title, className = "", variant = "default" }: C
 		<div className={containerClasses.trim()}>
 			{title != null && (
 				<div className="border-b-2 border-border px-4 py-2">
-					<span className="text-sm text-primary">{title}</span>
+					<span className="text-primary">{title}</span>
 				</div>
 			)}
 			<div className="p-4">{children}</div>
