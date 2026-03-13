@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { classes } from "@app/content";
 import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import { ClassCard } from "../components/ClassCard";
 import { PanelBox } from "../components/PanelBox";
+import { Modal } from "../components/Modal";
 import { useCreateGame } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
 import { useErrorStore } from "../features/error/errorStore";
@@ -19,12 +20,9 @@ export default function CharacterCreate() {
 	const showError = useErrorStore((s) => s.showError);
 
 	const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
-	const [heroName, setHeroName] = useState("");
+	const [namingOpen, setNamingOpen] = useState(false);
+	const [heroName, setHeroName] = useState(() => randomHeroName());
 	const [nameError, setNameError] = useState("");
-
-	useEffect(() => {
-		setHeroName(randomHeroName());
-	}, []);
 
 	const selectedClass = classes.find((c) => c.id === selectedClassId);
 
@@ -35,6 +33,18 @@ export default function CharacterCreate() {
 		if (!/^[A-Za-z][A-Za-z ' -]*$/.test(trimmed))
 			return "Only letters, spaces, hyphens, and apostrophes allowed";
 		return "";
+	}
+
+	function handleSelectClass(id: string) {
+		setSelectedClassId(id);
+		setHeroName(randomHeroName());
+		setNameError("");
+		setNamingOpen(true);
+	}
+
+	function handleCloseNaming() {
+		setNamingOpen(false);
+		setNameError("");
 	}
 
 	async function handleStart() {
@@ -59,77 +69,117 @@ export default function CharacterCreate() {
 	}
 
 	return (
-		<div className="min-h-screen bg-bg-base flex flex-col items-center px-4 py-8">
-			<div className="w-full max-w-3xl">
-				<PanelBox
-					title="Choose Your Class"
-					footer={
-						<Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-							← Back to menu
-						</Button>
-					}
-				>
-					{/* Class grid */}
-					<div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4">
-						{classes.map((cls) => (
-							<ClassCard
-								key={cls.id}
-								cls={cls}
-								selected={selectedClassId === cls.id}
-								onSelect={() => setSelectedClassId(cls.id)}
-							/>
-						))}
+		<>
+			<div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4 overflow-hidden">
+				{/* Back button — top-right, matching game page style */}
+				<div className="absolute top-3 right-3">
+					<Button
+						variant="secondary"
+						onClick={() => navigate("/")}
+						aria-label="Return to main menu"
+					>
+						← Menu
+					</Button>
+				</div>
+
+				{/* Title */}
+				<div className="text-center mb-8">
+					<h1 className="font-mono text-5xl tracking-widest uppercase text-primary mb-2">
+						Dungeon Crawler
+					</h1>
+					<div className="flex items-center justify-center gap-3 mt-1">
+						<span className="text-border font-mono select-none">~*~</span>
+						<span className="text-text-label font-mono tracking-widest uppercase">
+							Choose Your Class
+						</span>
+						<span className="text-border font-mono select-none">~*~</span>
 					</div>
+				</div>
 
-					{/* Name section */}
-					{selectedClass && (
-						<div className="border-t border-border px-4 py-4">
-							<p className="text-text-label uppercase tracking-widest mb-4">
-								You have chosen:{" "}
-								<span className="text-primary">{selectedClass.name}</span>
-							</p>
-
-							<div className="flex items-end gap-2 mb-3 max-w-sm">
-								<div className="flex-1">
-									<Input
-										label="Hero name"
-										value={heroName}
-										onChange={(e) => {
-											setHeroName(e.target.value);
-											if (nameError)
-												setNameError(validateName(e.target.value));
-										}}
-										error={nameError}
-										maxLength={10}
-										placeholder="Enter a name..."
-									/>
-								</div>
-								<Button
-									variant="ghost"
-									size="md"
-									onClick={() => {
-										setHeroName(randomHeroName());
-										setNameError("");
-									}}
-									className="shrink-0 mb-[2px]"
-								>
-									Randomize
-								</Button>
-							</div>
-
-							<Button
-								variant="primary"
-								size="lg"
-								onClick={handleStart}
-								disabled={createGame.isPending}
-								className="w-full max-w-sm"
-							>
-								{createGame.isPending ? "Creating…" : "Begin Adventure"}
-							</Button>
+				{/* Class selection panel */}
+				<div className="w-full max-w-2xl">
+					<PanelBox
+						footer={
+							<span className="text-text-dim font-mono">
+								Select a class to begin your adventure
+							</span>
+						}
+					>
+						<div className="grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-px bg-border">
+							{classes.map((cls) => (
+								<ClassCard
+									key={cls.id}
+									cls={cls}
+									selected={selectedClassId === cls.id}
+									onSelect={() => handleSelectClass(cls.id)}
+								/>
+							))}
 						</div>
-					)}
-				</PanelBox>
+					</PanelBox>
+				</div>
+
+				{/* Flavour line */}
+				<div className="mt-5 text-text-dim font-mono text-center">
+					<p>Choose wisely. Your fate awaits below.</p>
+				</div>
 			</div>
-		</div>
+
+			{/* Name hero modal */}
+			<Modal
+				open={namingOpen}
+				onClose={handleCloseNaming}
+				title={selectedClass ? `Name Your ${selectedClass.name}` : "Name Your Hero"}
+				footer={
+					<>
+						<Button variant="ghost" size="md" onClick={handleCloseNaming}>
+							← Back
+						</Button>
+						<Button
+							variant="primary"
+							size="md"
+							onClick={handleStart}
+							disabled={createGame.isPending}
+						>
+							{createGame.isPending ? "Creating…" : "Begin Adventure"}
+						</Button>
+					</>
+				}
+			>
+				<div className="space-y-4">
+					{selectedClass && (
+						<p className="text-text-muted font-mono">
+							&gt; A {selectedClass.name.toLowerCase()} steps forward from the
+							shadows. What is their name?
+						</p>
+					)}
+					<div className="flex items-end gap-2">
+						<div className="flex-1">
+							<Input
+								label="Hero name"
+								value={heroName}
+								onChange={(e) => {
+									setHeroName(e.target.value);
+									if (nameError) setNameError(validateName(e.target.value));
+								}}
+								error={nameError}
+								maxLength={10}
+								placeholder="Enter a name..."
+							/>
+						</div>
+						<Button
+							variant="ghost"
+							size="md"
+							onClick={() => {
+								setHeroName(randomHeroName());
+								setNameError("");
+							}}
+							className="shrink-0 mb-[2px]"
+						>
+							Randomize
+						</Button>
+					</div>
+				</div>
+			</Modal>
+		</>
 	);
 }

@@ -13,10 +13,13 @@ const STAT_LABELS: { key: StatKey; label: string }[] = [
 	{ key: "charisma", label: "CHA" },
 ];
 
-function statColor(value: number): string {
-	if (value >= 16) return "text-primary";
-	if (value >= 12) return "text-text-bright";
-	return "text-text";
+/** Returns the label of the stat with the highest value — the class's defining attribute. */
+function getPrimaryStatLabel(attrs: CharacterClassDefinition["baseAttributes"]): string {
+	let best = STAT_LABELS[0];
+	for (const stat of STAT_LABELS) {
+		if (attrs[stat.key] > attrs[best.key]) best = stat;
+	}
+	return best.label;
 }
 
 type ClassCardProps = {
@@ -25,100 +28,42 @@ type ClassCardProps = {
 	onSelect: () => void;
 };
 
-// Corner glyph style — matches PanelBox corners.
-const CORNER: React.CSSProperties = {
-	position: "absolute",
-	fontFamily: "'IBM VGA', monospace",
-	fontSize: "1rem",
-	lineHeight: 1,
-	pointerEvents: "none",
-	userSelect: "none",
-	zIndex: 1,
-};
-
 export function ClassCard({ cls, selected, onSelect }: ClassCardProps) {
+	const keyStatLabel = getPrimaryStatLabel(cls.baseAttributes);
+
 	return (
 		<button
 			type="button"
 			onClick={onSelect}
 			className={[
-				"relative text-left p-3 border-2 transition-colors",
-				selected
-					? "border-border-bright bg-bg-elevated"
-					: "border-border bg-bg-panel hover:bg-bg-surface",
+				"group relative flex flex-col text-left p-3 transition-colors focus:outline-none",
+				selected ? "bg-bg-elevated" : "bg-bg-panel hover:bg-bg-surface",
 			].join(" ")}
 		>
-			{/* Corner glyphs */}
-			<span
-				style={{
-					...CORNER,
-					top: -2,
-					left: -2,
-					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
-				}}
-			>
-				╔
-			</span>
-			<span
-				style={{
-					...CORNER,
-					top: -2,
-					right: -2,
-					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
-				}}
-			>
-				╗
-			</span>
-			<span
-				style={{
-					...CORNER,
-					bottom: -2,
-					left: -2,
-					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
-				}}
-			>
-				╚
-			</span>
-			<span
-				style={{
-					...CORNER,
-					bottom: -2,
-					right: -2,
-					color: selected ? "var(--color-border-bright)" : "var(--color-border)",
-				}}
-			>
-				╝
-			</span>
-
-			{/* Sprite + name + HP */}
+			{/* Sprite + name row */}
 			<div className="flex items-center gap-2 mb-2">
-				<TileSprite tileIndex={getHeroTile(cls.id)} size={32} />
-				<div className="flex-1 min-w-0">
-					<div className="flex items-baseline justify-between gap-2">
-						<span className={`${selected ? "text-primary" : "text-text-bright"}`}>
-							{cls.name}
-						</span>
-						<span className="text-text-label shrink-0">
-							HP <span className="text-text tabular-nums">{cls.startingHp}</span>
-						</span>
-					</div>
-				</div>
+				<TileSprite tileIndex={getHeroTile(cls.id)} size={28} />
+				<span
+					className={[
+						"font-mono tracking-widest uppercase transition-colors",
+						selected ? "text-primary" : "text-text-bright group-hover:text-primary",
+					].join(" ")}
+				>
+					{cls.name}
+				</span>
 			</div>
 
-			{/* Description */}
-			<p className="text-text mb-3 leading-snug">{cls.description}</p>
+			{/* Description — grows to keep footer pinned */}
+			<p className="flex-1 text-text-muted font-mono leading-snug mb-3">{cls.description}</p>
 
-			{/* Stats grid */}
-			<div className="grid grid-cols-3 gap-x-2 gap-y-0.5">
-				{STAT_LABELS.map(({ key, label }) => (
-					<div key={key} className="flex justify-between gap-1">
-						<span className="text-text-label">{label}</span>
-						<span className={`tabular-nums ${statColor(cls.baseAttributes[key])}`}>
-							{cls.baseAttributes[key]}
-						</span>
-					</div>
-				))}
+			{/* Footer: key stat */}
+			<div className="font-mono">
+				<span className="text-text-label uppercase tracking-widest">Key stat </span>
+				<span className="text-primary uppercase tracking-widest">{keyStatLabel}</span>
 			</div>
+
+			{/* Selected indicator */}
+			{selected && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
 		</button>
 	);
 }
