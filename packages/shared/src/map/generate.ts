@@ -9,72 +9,81 @@ import type { GeneratedMap, MapGenConfig } from "./types";
 
 /**
  * Builds a playable-shape mask: true = cell may be floor, false = void (always wall-bounded).
- * Uses value noise + radial falloff so edges tend to be void, then keeps the connected
- * component containing the map center so the playable area is one contiguous region.
+ *
+ * Uses two octaves of bilinearly-interpolated coherent noise combined with a radial falloff:
+ * - Coarse octave (4×4 grid): dominates to ensure large, fully-connected blobs.
+ * - Fine octave (10×10 grid): adds interior voids, tunnels, and rough irregular edges.
+ * The flood-filled center component is returned. If an unlucky seed produces a tiny component
+ * (< 20 % of map area), a plain ellipse fallback is used — consuming the same RNG budget
+ * so determinism is preserved.
  */
 function buildShapeMask(width: number, height: number, voidTarget: number, rng: Rng): boolean[][] {
 	const cx = (width - 1) / 2;
 	const cy = (height - 1) / 2;
-	const maxDist = Math.max(
-		Math.hypot(cx, cy),
-		Math.hypot(width - 1 - cx, cy),
-		Math.hypot(cx, height - 1 - cy),
-		Math.hypot(width - 1 - cx, height - 1 - cy),
-		1,
-	);
-
-	// 1) Raw value noise [0, 1] in deterministic order
-	const raw: number[][] = Array.from({ length: height }, () =>
-		Array.from({ length: width }, () => rng()),
-	);
-
-	// 2) Light 2x2-style blur for slight coherence but keep edges rough (no full 3x3)
-	const blur: number[][] = Array.from({ length: height }, () => Array(width).fill(0));
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			let sum = raw[y][x];
-			let n = 1;
-			for (const [dx, dy] of [
-				[0, 1],
-				[1, 0],
-				[1, 1],
-			]) {
-				const nx = x + dx;
-				const ny = y + dy;
-				if (nx < width && ny < height) {
-					sum += raw[ny][nx];
-					n++;
-				}
-			}
-			blur[y][x] = sum / n;
-		}
-	}
-
-	// 3) Playable = value above threshold; threshold rises toward edges. Per-cell jitter adds roughness.
-	const ROUGHNESS_JITTER = 0.28;
-	const playableRaw: boolean[][] = Array.from({ length: height }, () => Array(width).fill(false));
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			const dist = Math.hypot(x - cx, y - cy);
-			const t = Math.max(0, 1 - dist / maxDist);
-			const baseThreshold = 0.25 + (1 - t) * (0.4 + voidTarget * 0.6);
-			const jitter = (rng() - 0.5) * ROUGHNESS_JITTER;
-			playableRaw[y][x] = blur[y][x] > baseThreshold + jitter;
-		}
-	}
-
-	// 4) Keep only connected component containing map center
 	const scx = Math.floor(cx);
 	const scy = Math.floor(cy);
-	if (!playableRaw[scy][scx]) {
-		playableRaw[scy][scx] = true;
+
+	// Bilinearly interpolate a coarse RNG grid to full map resolution.
+	function sampleGrid(gridW: number, gridH: number): number[][] {
+		const grid: number[][] = Array.from({ length: gridH + 1 }, () =>
+			Array.from({ length: gridW + 1 }, () => rng()),
+		);
+		return Array.from({ length: height }, (_, y) =>
+			Array.from({ length: width }, (_, x) => {
+				const gx = (x / (width - 1)) * gridW;
+				const gy = (y / (height - 1)) * gridH;
+				const x0 = Math.floor(gx);
+				const x1 = Math.min(x0 + 1, gridW);
+				const y0 = Math.floor(gy);
+				const y1 = Math.min(y0 + 1, gridH);
+				const fx = gx - x0;
+				const fy = gy - y0;
+				return (
+					grid[y0][x0] * (1 - fx) * (1 - fy) +
+					grid[y0][x1] * fx * (1 - fy) +
+					grid[y1][x0] * (1 - fx) * fy +
+					grid[y1][x1] * fx * fy
+				);
+			}),
+		);
 	}
+
+	// Two octaves: coarse for connectivity, fine for interior detail and rough edges.
+	const coarse = sampleGrid(4, 4);
+	const fine = sampleGrid(10, 10);
+
+	const maxDist = Math.hypot(cx, cy);
+	const playableRaw: boolean[][] = Array.from({ length: height }, (_, y) =>
+		Array.from({ length: width }, (_, x) => {
+			const noise = coarse[y][x] * 0.65 + fine[y][x] * 0.35;
+			const dist = Math.hypot(x - cx, y - cy);
+			const t = Math.max(0, 1 - dist / maxDist);
+			// Center threshold ~0.25 (permissive); rises toward edges with voidTarget.
+			const threshold = 0.25 + (1 - t) * (0.35 + voidTarget * 0.5);
+			return noise > threshold;
+		}),
+	);
+
+	playableRaw[scy][scx] = true;
 	const component = floodFillMask(playableRaw, scx, scy, width, height);
+
+	// Fallback: if the center component is too small, use a plain ellipse so the
+	// map is always playable. RNG budget is identical so determinism is maintained.
+	const minSize = width * height * 0.2;
+	if (component.size < minSize) {
+		return Array.from({ length: height }, (_, y) =>
+			Array.from({ length: width }, (_, x) => {
+				const dx = x - cx;
+				const dy = y - cy;
+				return (dx * dx) / (cx * cx * 0.64) + (dy * dy) / (cy * cy * 0.64) <= 1;
+			}),
+		);
+	}
+
 	const mask: boolean[][] = Array.from({ length: height }, () => Array(width).fill(false));
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			mask[y][x] = component.has(`${x},${y}`);
-		}
+	for (const key of component) {
+		const comma = key.indexOf(",");
+		mask[+key.slice(comma + 1)][+key.slice(0, comma)] = true;
 	}
 	return mask;
 }
