@@ -3,7 +3,6 @@ import {
 	computeWalkableMaskForFloor,
 	createRng,
 	getActorAtIdx,
-	getSpawnTable,
 	regenerateBaseMaps,
 	spawnMonster,
 	type GameState,
@@ -14,7 +13,7 @@ import type { MonsterDefinition } from "@app/content";
 /**
  * Spawn monsters on a floor using a seeded RNG.
  *
- * - Theme determines the monster pool (see spawnTable.ts in @app/shared).
+ * - Spawns are defined inline on floor.config.spawns (see floorConfigs.ts in @app/shared).
  * - Count = BASE_MONSTERS_PER_FLOOR + floorIndex (one extra per deeper floor).
  * - RNG seed = state.seed + floorIndex + 1 (offset by 1 to avoid colliding with map gen).
  * - Each monster gets a random walkable, unoccupied tile via the seeded RNG.
@@ -28,12 +27,11 @@ export function spawnMonstersForFloor(
 	const floor = state.floors[floorIndex];
 	if (!floor) return state;
 
-	const theme = floor.config.theme;
 	const depth = floorIndex;
 	const count = BASE_MONSTERS_PER_FLOOR + depth;
 	const floorSize = floor.config.width * floor.config.height;
 
-	const pool = getSpawnTable(theme, depth);
+	const pool = floor.config.spawns;
 	if (pool.length === 0) return state;
 
 	const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);

@@ -28,6 +28,7 @@ export {
 	type DecorationType,
 	type MapGenAlgorithm,
 	type MapGenConfig,
+	type SpawnEntry,
 	type FloorTheme,
 	FLOOR_THEMES,
 	computeOpacityMask,
@@ -93,7 +94,6 @@ export {
 	type MoveAction,
 	type PersistedDynamicState,
 } from "./game";
-export { getSpawnTable, type SpawnEntry } from "./game";
 
 export {
 	abilityModifier,

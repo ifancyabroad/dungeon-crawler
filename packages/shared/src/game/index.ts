@@ -49,7 +49,6 @@ export {
 	type ApplyActionResult,
 } from "./engine";
 export { VISION_RADIUS, XP_PER_LEVEL, BASE_MONSTERS_PER_FLOOR } from "./config";
-export { getSpawnTable, type SpawnEntry } from "./spawnTable";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
 	ActorDefSchema,

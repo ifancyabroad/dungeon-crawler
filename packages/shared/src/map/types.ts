@@ -4,6 +4,12 @@
 
 import type { FloorTheme } from "./themes";
 
+/** A single entry in a floor's monster spawn pool. Weight values are relative — higher = more likely. */
+export interface SpawnEntry {
+	monsterId: string;
+	weight: number;
+}
+
 /** Map generation algorithm: BSP (room-corridor) or cave (cellular automata, organic). */
 export type MapGenAlgorithm = "bsp" | "cave";
 
@@ -25,6 +31,8 @@ export interface MapGenConfig {
 	scatterChance: number;
 	/** Target fraction of cells that are void (0–0.5). Higher = more irregular. */
 	shapeVoidTarget: number;
+	/** Monster spawn pool for this floor. Weighted random selection at spawn time. */
+	spawns: SpawnEntry[];
 }
 
 /** Result of generateMap: layers (logical tile types), spawn, and path mask for connected path decoration. */

@@ -54,4 +54,5 @@ export const DEFAULT_FLOOR_CONFIG: Omit<MapGenConfig, "seed"> = {
 	decorationWeights: DEFAULT_DECORATION_WEIGHTS,
 	scatterChance: DEFAULT_SCATTER_CHANCE,
 	shapeVoidTarget: DEFAULT_SHAPE_VOID_TARGET,
+	spawns: [],
 };
