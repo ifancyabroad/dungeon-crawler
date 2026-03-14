@@ -25,6 +25,13 @@ const getMinMoveInterval = () =>
 		? 0
 		: MIN_MOVE_SEND_INTERVAL_MS;
 
+const getMinInvalidRetry = () =>
+	typeof process !== "undefined" && process.env?.NODE_ENV === "test"
+		? 0
+		: MIN_INVALID_MOVE_RETRY_MS;
+
+const getNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+
 /** Action applied locally but not yet sent (e.g. socket was null). */
 interface PendingAction {
 	action: Action;
@@ -173,6 +180,16 @@ function buildMasks(state: GameState): Pick<GameStoreState, "walkableByFloor" | 
 	};
 }
 
+function canSendAction(
+	s: Pick<GameStoreState, "actionInProgress" | "lastMoveSentAt" | "lastInvalidMoveAt">,
+): boolean {
+	if (s.actionInProgress) return false;
+	const now = getNow();
+	if (s.lastMoveSentAt > 0 && now - s.lastMoveSentAt < getMinMoveInterval()) return false;
+	if (s.lastInvalidMoveAt > 0 && now - s.lastInvalidMoveAt < getMinInvalidRetry()) return false;
+	return true;
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
 	...initialState,
 
@@ -275,10 +292,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		) {
 			const { action, expectedTurn } = g.unsentMoves[0];
 			gameSocketRef.emit("action", { gameId: g.gameId, action, expectedTurn });
-			const now = typeof performance !== "undefined" ? performance.now() : Date.now();
 			set({
 				unsentMoves: g.unsentMoves.slice(1),
-				lastMoveSentAt: now,
+				lastMoveSentAt: getNow(),
 				lastInvalidMoveAt: 0,
 			});
 			g = get();
@@ -295,30 +311,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		const {
 			gameId,
 			state,
-			actionInProgress,
 			turn,
 			lastConfirmedState,
-			lastMoveSentAt,
-			lastInvalidMoveAt,
 			unsentMoves,
 			walkableByFloor,
 			opacityByFloor,
 		} = get();
 		if (!gameId) return;
-		if (actionInProgress) return;
+		if (!canSendAction(get())) return;
 		if (!state) {
 			if (gameSocketRef)
 				gameSocketRef.emit("action", { gameId, action, expectedTurn: get().turn });
 			return;
 		}
 		const confirmedTurn = lastConfirmedState?.turn ?? turn;
-		const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-		if (lastMoveSentAt > 0 && now - lastMoveSentAt < getMinMoveInterval()) return;
-		const minInvalidRetry =
-			typeof process !== "undefined" && process.env?.NODE_ENV === "test"
-				? 0
-				: MIN_INVALID_MOVE_RETRY_MS;
-		if (lastInvalidMoveAt > 0 && now - lastInvalidMoveAt < minInvalidRetry) return;
 
 		const hasCachedMasks =
 			walkableByFloor != null &&
@@ -329,7 +335,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			? applyAction(state, action, createActionContext(walkableByFloor!, opacityByFloor!))
 			: applyActionWithDerivedContext(state, action);
 		if (!result.ok) {
-			set({ lastInvalidMoveAt: now });
+			set({ lastInvalidMoveAt: getNow() });
 			return;
 		}
 
@@ -358,7 +364,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		if (gameSocketRef) {
 			if (inFlightAfterApply < MAX_MOVES_IN_FLIGHT) {
 				gameSocketRef.emit("action", { gameId, action, expectedTurn: state.turn });
-				set({ lastMoveSentAt: now, lastInvalidMoveAt: 0 });
+				set({ lastMoveSentAt: getNow(), lastInvalidMoveAt: 0 });
 			} else {
 				set({
 					unsentMoves: [...unsentMoves, { action, expectedTurn: state.turn }],

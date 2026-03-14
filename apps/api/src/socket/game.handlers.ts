@@ -191,13 +191,10 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				// If the hero died, update the Hero model
 				const hero = getHero(finalState);
 				if (hero && !hero.alive) {
-					const session = await GameSession.findOne({ gameId }).lean().exec();
-					if (session) {
-						await Hero.updateOne(
-							{ gameId, status: "active" },
-							{ $set: { status: "dead" } },
-						).exec();
-					}
+					await Hero.updateOne(
+						{ gameId, status: "active" },
+						{ $set: { status: "dead" } },
+					).exec();
 				}
 			});
 		},

@@ -25,7 +25,7 @@ import {
 	TILE_WIDTH,
 	TILESET_KEY,
 } from "../tiles/tilesetRegistry";
-import { useGameStore } from "../../features/game/gameStore";
+import { useGameStore, type GameStore } from "../../features/game/gameStore";
 import { useMapStore } from "../../features/map/mapStore";
 import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
 import {
@@ -42,6 +42,14 @@ import { monstersById } from "@app/content";
 import { DamageNumberManager } from "../fx/DamageNumberManager";
 
 const FOG_TINT = 0x555555;
+
+/** Mutable tracking refs shared between buildMapAndHero and onStoreUpdate. */
+interface SyncState {
+	lastSyncedIdx: number;
+	lastSyncedTurn: number;
+	lastFloorIndex: number;
+	lastDispatchedEventTurn: number;
+}
 
 export default class MainScene extends Phaser.Scene {
 	private groundLayer: Phaser.Tilemaps.TilemapLayer | null = null;
@@ -223,102 +231,111 @@ export default class MainScene extends Phaser.Scene {
 			this.syncMonsters(currentState);
 		}
 
-		let lastSyncedIdx = heroPos.idx;
-		let lastSyncedTurn = currentState?.turn ?? -1;
-		let lastFloorIndex = heroPos.floorIndex;
-		// Track which event-turn we already dispatched to FX managers so stale
-		// events in the store don't replay on every subsequent move turn.
-		let lastDispatchedEventTurn = -1;
+		const syncState: SyncState = {
+			lastSyncedIdx: heroPos.idx,
+			lastSyncedTurn: currentState?.turn ?? -1,
+			lastFloorIndex: heroPos.floorIndex,
+			lastDispatchedEventTurn: -1,
+		};
 		this.unsubHeroSync = useGameStore.subscribe((storeState) => {
 			if (this.disposed || this.isTransitioning) return;
-			const gs = storeState.state;
+			this.onStoreUpdate(storeState, syncState);
+		});
+	}
 
-			// Floor change: slide hero onto exit tile and fade out simultaneously, then rebuild → fade-in
-			if (gs && gs.heroFloorIndex !== lastFloorIndex) {
-				const fromFloor = lastFloorIndex;
-				lastFloorIndex = gs.heroFloorIndex;
-				const exitIdx = gs.floors[fromFloor]?.state.exitIdx;
-				if (exitIdx != null && this.player) {
-					const { x: ex, y: ey } = idxToXY(exitIdx, this.mapWidth);
-					this.tweens.add({
-						targets: this.player,
-						x: ex * TILE_WIDTH + TILE_WIDTH / 2,
-						y: ey * TILE_HEIGHT + TILE_HEIGHT / 2,
-						duration: MOVE_DURATION_MS,
-						ease: Phaser.Math.Easing.Sine.Out,
-					});
-				}
-				this.triggerFloorTransition(gs);
-				return;
+	/**
+	 * Per-turn rendering callback fired by the store subscription.
+	 * Owns all turn-driven logic: floor transition detection, hero sync,
+	 * fog of war, FX dispatch, and monster sync.
+	 */
+	private onStoreUpdate(storeState: GameStore, sync: SyncState) {
+		const gs = storeState.state;
+
+		// Floor change: slide hero onto exit tile and fade out simultaneously, then rebuild → fade-in
+		if (gs && gs.heroFloorIndex !== sync.lastFloorIndex) {
+			const fromFloor = sync.lastFloorIndex;
+			sync.lastFloorIndex = gs.heroFloorIndex;
+			const exitIdx = gs.floors[fromFloor]?.state.exitIdx;
+			if (exitIdx != null && this.player) {
+				const { x: ex, y: ey } = idxToXY(exitIdx, this.mapWidth);
+				this.tweens.add({
+					targets: this.player,
+					x: ex * TILE_WIDTH + TILE_WIDTH / 2,
+					y: ey * TILE_HEIGHT + TILE_HEIGHT / 2,
+					duration: MOVE_DURATION_MS,
+					ease: Phaser.Math.Easing.Sine.Out,
+				});
 			}
+			this.triggerFloorTransition(gs);
+			return;
+		}
 
-			const turnChanged = gs != null && gs.turn !== lastSyncedTurn;
+		const turnChanged = gs != null && gs.turn !== sync.lastSyncedTurn;
 
-			if (gs && turnChanged) {
-				lastSyncedTurn = gs.turn;
-				const floor = gs.floors[gs.heroFloorIndex];
-				const explored = floor?.state.explored ?? [];
+		if (gs && turnChanged) {
+			sync.lastSyncedTurn = gs.turn;
+			const floor = gs.floors[gs.heroFloorIndex];
+			const explored = floor?.state.explored ?? [];
 
-				// Events are only fresh when the store's event-turn matches this turn.
-				// lastOptimisticEventTurn records which turn produced the current events[].
-				const eventTurn = storeState.lastOptimisticEventTurn;
-				const freshEvents =
-					storeState.events.length > 0 &&
-					eventTurn === gs.turn &&
-					eventTurn !== lastDispatchedEventTurn;
-				const events = freshEvents ? storeState.events : [];
+			// Events are only fresh when the store's event-turn matches this turn.
+			// lastOptimisticEventTurn records which turn produced the current events[].
+			const eventTurn = storeState.lastOptimisticEventTurn;
+			const freshEvents =
+				storeState.events.length > 0 &&
+				eventTurn === gs.turn &&
+				eventTurn !== sync.lastDispatchedEventTurn;
+			const events = freshEvents ? storeState.events : [];
 
-				if (freshEvents) lastDispatchedEventTurn = eventTurn;
+			if (freshEvents) sync.lastDispatchedEventTurn = eventTurn;
 
-				const heroMoved = storeState.hero.idx !== lastSyncedIdx;
-				const hasHeroAttack = events.some(
-					(e): e is Extract<typeof e, { type: "attack" }> =>
-						e.type === "attack" && e.attackerId === gs.heroId,
-				);
+			const heroMoved = storeState.hero.idx !== sync.lastSyncedIdx;
+			const hasHeroAttack = events.some(
+				(e): e is Extract<typeof e, { type: "attack" }> =>
+					e.type === "attack" && e.attackerId === gs.heroId,
+			);
 
-				// Sync hero position first so applyFogOfWar computes visibility from
-				// the destination tile, not the tile the hero is tweening away from.
-				if (heroMoved && !hasHeroAttack) {
-					lastSyncedIdx = storeState.hero.idx;
-					this.syncHeroToStore(storeState.hero.idx);
-				}
-
-				this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
-
-				// Dispatch fresh events to FX managers before syncMonsters removes dead sprites
-				if (events.length > 0 && floor) {
-					const actorsById = floor.state.actorsById;
-					const getActorIdx = (id: string) => actorsById[id]?.idx;
-					// Hero always gets default (red) blood; monsters use their content-defined colour.
-					const getBloodColor = (id: string): string => {
-						const actor = actorsById[id];
-						if (!actor || actor.def.type !== "monster") return HERO_BLOOD_COLOR;
-						return (
-							(monstersById as Record<string, { bloodColor: string }>)[
-								actor.def.monsterId
-							]?.bloodColor ?? HERO_BLOOD_COLOR
-						);
-					};
-
-					this.attackAnimator?.playEvents(
-						events,
-						gs.heroId,
-						this.player,
-						this.monsterSprites,
-						getActorIdx,
-						getBloodColor,
-					);
-					this.damageNumbers?.handleEvents(events, getActorIdx);
-					this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
-				}
-
-				this.syncMonsters(gs);
-			} else if (storeState.hero.idx !== lastSyncedIdx) {
-				// Turn unchanged but hero idx drifted (e.g. server correction).
-				lastSyncedIdx = storeState.hero.idx;
+			// Sync hero position first so applyFogOfWar computes visibility from
+			// the destination tile, not the tile the hero is tweening away from.
+			if (heroMoved && !hasHeroAttack) {
+				sync.lastSyncedIdx = storeState.hero.idx;
 				this.syncHeroToStore(storeState.hero.idx);
 			}
-		});
+
+			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
+
+			// Dispatch fresh events to FX managers before syncMonsters removes dead sprites
+			if (events.length > 0 && floor) {
+				const actorsById = floor.state.actorsById;
+				const getActorIdx = (id: string) => actorsById[id]?.idx;
+				// Hero always gets default (red) blood; monsters use their content-defined colour.
+				const getBloodColor = (id: string): string => {
+					const actor = actorsById[id];
+					if (!actor || actor.def.type !== "monster") return HERO_BLOOD_COLOR;
+					return (
+						(monstersById as Record<string, { bloodColor: string }>)[
+							actor.def.monsterId
+						]?.bloodColor ?? HERO_BLOOD_COLOR
+					);
+				};
+
+				this.attackAnimator?.playEvents(
+					events,
+					gs.heroId,
+					this.player,
+					this.monsterSprites,
+					getActorIdx,
+					getBloodColor,
+				);
+				this.damageNumbers?.handleEvents(events, getActorIdx);
+				this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
+			}
+
+			this.syncMonsters(gs);
+		} else if (storeState.hero.idx !== sync.lastSyncedIdx) {
+			// Turn unchanged but hero idx drifted (e.g. server correction).
+			sync.lastSyncedIdx = storeState.hero.idx;
+			this.syncHeroToStore(storeState.hero.idx);
+		}
 	}
 
 	/**

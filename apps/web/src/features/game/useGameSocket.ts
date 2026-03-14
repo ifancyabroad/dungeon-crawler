@@ -13,6 +13,19 @@ import { useErrorStore } from "../error/errorStore";
  * "state" event. This prevents actions from being emitted on an unauthorised socket
  * between reconnect and the server's join acknowledgement.
  */
+
+/**
+ * Error reasons that are expected during normal gameplay and should not surface
+ * an error modal. Add new engine reasons here as they are introduced.
+ */
+const SILENT_ERROR_REASONS = new Set([
+	"move_blocked",
+	"move_blocked_by_enemy",
+	"move_out_of_bounds",
+	"attack_no_target",
+	"attack_out_of_bounds",
+	"turn_mismatch",
+]);
 export function useGameSocket(gameId: string | null) {
 	const joinedRef = useRef(false);
 
@@ -55,16 +68,7 @@ export function useGameSocket(gameId: string | null) {
 			if (reason !== "turn_mismatch") {
 				useGameStore.getState().revertToConfirmed();
 			}
-			// Only show modal for unexpected errors, not for invalid move or server catching up
-			const silentReasons = [
-				"move_blocked",
-				"move_blocked_by_enemy",
-				"move_out_of_bounds",
-				"attack_no_target",
-				"attack_out_of_bounds",
-				"turn_mismatch",
-			];
-			if (!silentReasons.includes(reason)) {
+			if (!SILENT_ERROR_REASONS.has(reason)) {
 				useErrorStore.getState().showError("Position synced with server.");
 			}
 		});
