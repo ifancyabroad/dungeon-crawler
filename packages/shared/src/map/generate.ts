@@ -438,22 +438,23 @@ function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 		}
 	}
 
-	// Apply shape: void cells outside mask
+	// Apply shape: void cells outside mask, but never void carved floor/corridor cells.
+	// Corridors must survive the shape mask to keep all rooms reachable.
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
-			if (!mask[y][x]) {
+			if (!mask[y][x] && !floor.has(`${x},${y}`)) {
 				ground[y][x] = TILE_TYPE.VOID;
 				wall[y][x] = TILE_TYPE.WALL;
 			}
 		}
 	}
 
-	// Spawn: room center closest to map center that remains in mask (and is floor)
+	// Spawn: room center closest to map center that is on a carved floor cell (wall = EMPTY)
 	let bestDist = Infinity;
-	let spawn = getRoomCenter(rooms[0]);
+	let spawn: { x: number; y: number } | null = null;
 	for (const room of rooms) {
 		const c = getRoomCenter(room);
-		if (!mask[c.y][c.x]) continue;
+		if (wall[c.y][c.x] !== TILE_TYPE.EMPTY) continue;
 		const dx = c.x - mapCenterX;
 		const dy = c.y - mapCenterY;
 		const dist = dx * dx + dy * dy;
@@ -462,7 +463,21 @@ function generateBsp(config: MapGenConfig, rng: Rng): GeneratedMap {
 			spawn = c;
 		}
 	}
-	if (ground[spawn.y][spawn.x] === TILE_TYPE.VOID) {
+	// Fallback: pick any carved floor cell closest to center
+	if (!spawn) {
+		for (const key of floor) {
+			const comma = key.indexOf(",");
+			const fx = +key.slice(0, comma);
+			const fy = +key.slice(comma + 1);
+			if (wall[fy][fx] !== TILE_TYPE.EMPTY) continue;
+			const dist = (fx - mapCenterX) ** 2 + (fy - mapCenterY) ** 2;
+			if (dist < bestDist) {
+				bestDist = dist;
+				spawn = { x: fx, y: fy };
+			}
+		}
+	}
+	if (!spawn) {
 		spawn = findSpawnInMask(mask, width, height, mapCenterX, mapCenterY);
 	}
 	return { ground, wall, spawn: { x: spawn.x, y: spawn.y }, pathLayer };
