@@ -12,7 +12,7 @@ export const TILE_WIDTH = 32;
 export const TILE_HEIGHT = 32;
 export const TILESET_KEY = "roguelike-tileset";
 
-export type TileRole = "floor" | "wall" | "decoration";
+export type TileRole = "floor" | "wall" | "decoration" | "entity";
 
 export interface TileMetadata {
 	theme: FloorTheme;
@@ -142,18 +142,25 @@ export function getHeroTile(classId: string): number {
 export const TILESET_COLUMNS = 21;
 
 /**
- * Exit tile frame index per theme (the "stairs down" or portal tile).
- * All themes share tile 533 by default; update per-theme here when different tile art is desired.
- * Tile 533 = row 25 col 8 in the Roguelike Remastered 21-col tileset.
+ * Sprite tile frame indices for world entities (exits, chests, traps, etc.) keyed by
+ * entity type and then floor theme. Add new interactable types here as they are introduced.
+ * Tile 533 = row 25 col 8 in the Roguelike Remastered 21-col tileset (stairs down / portal).
  */
-export const EXIT_TILE_BY_THEME: Record<FloorTheme, number> = {
-	green_forest: 533,
-	orange_forest: 533,
-	yellow_forest: 533,
-	dark_forest: 533,
+export const ENTITY_TILE_FRAMES: Record<string, Record<FloorTheme, number>> = {
+	exit: {
+		green_forest: 533,
+		orange_forest: 533,
+		yellow_forest: 533,
+		dark_forest: 533,
+	},
 };
+
+/** Get the sprite frame index for a world entity of a given type and floor theme. */
+export function getEntityTile(type: string, theme: FloorTheme): number | undefined {
+	return ENTITY_TILE_FRAMES[type]?.[theme];
+}
 
 /** Get the exit tile frame index for a given floor theme. */
 export function getExitTile(theme: FloorTheme): number {
-	return EXIT_TILE_BY_THEME[theme];
+	return ENTITY_TILE_FRAMES.exit[theme];
 }
