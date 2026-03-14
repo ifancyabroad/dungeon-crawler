@@ -27,7 +27,7 @@ function attrColor(value: number): string {
 
 function Bar({ pct, colorClass }: { pct: number; colorClass: string }) {
 	return (
-		<div className="h-4 bg-bg-elevated overflow-hidden">
+		<div className="h-4 bg-[#1a1a1a] overflow-hidden">
 			<div className={`h-full transition-all ${colorClass}`} style={{ width: `${pct}%` }} />
 		</div>
 	);
@@ -114,7 +114,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 							<p className="text-primary uppercase tracking-widest">{hero.name}</p>
 							<p className="text-text-label">
 								Level {hero.level}{" "}
-								<span className="text-text">{classDef?.name ?? "Unknown"}</span>
+								<span className="text-text-bright">
+									{classDef?.name ?? "Unknown"}
+								</span>
 							</p>
 						</div>
 

@@ -96,7 +96,7 @@ export default function Landing() {
 		<>
 			<div className="min-h-screen bg-bg-base flex flex-col items-center justify-center p-4 overflow-hidden">
 				{/* Version tag */}
-				<div className="absolute top-3 right-4 text-text-dim font-mono">v0.1.0-alpha</div>
+				<div className="absolute top-3 right-4 text-text-muted font-mono">v0.1.0-alpha</div>
 
 				{/* Title */}
 				<div className="text-center mb-8">
@@ -105,7 +105,7 @@ export default function Landing() {
 					</h1>
 					<div className="flex items-center justify-center gap-3 mt-1">
 						<span className="text-border font-mono select-none">~*~</span>
-						<span className="text-text-label font-mono tracking-widest uppercase">
+						<span className="text-secondary font-mono tracking-widest uppercase">
 							A Roguelike Dungeon Adventure
 						</span>
 						<span className="text-border font-mono select-none">~*~</span>
@@ -117,17 +117,17 @@ export default function Landing() {
 					<PanelBox
 						title="Main Menu"
 						footer={
-							<span className="text-text-dim font-mono">
+							<span className="text-text-muted font-mono">
 								Use letter keys or click to select
 							</span>
 						}
 					>
 						{/* Flavor text */}
 						<div className="px-5 pt-4 pb-3 space-y-0.5 border-b border-border">
-							<p className="text-text-muted font-mono">
+							<p className="text-text font-mono">
 								&gt; You stand at the entrance to an ancient dungeon.
 							</p>
-							<p className="text-text-muted font-mono">
+							<p className="text-text font-mono">
 								&gt; Torchlight flickers. Something stirs below.
 							</p>
 						</div>
@@ -161,7 +161,7 @@ export default function Landing() {
 				</div>
 
 				{/* Flavour line */}
-				<div className="mt-5 text-text-dim font-mono text-center">
+				<div className="mt-5 text-text-muted font-mono text-center">
 					<p>May fortune favour the bold.</p>
 				</div>
 			</div>

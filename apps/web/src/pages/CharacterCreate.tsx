@@ -89,7 +89,7 @@ export default function CharacterCreate() {
 					</h1>
 					<div className="flex items-center justify-center gap-3 mt-1">
 						<span className="text-border font-mono select-none">~*~</span>
-						<span className="text-text-label font-mono tracking-widest uppercase">
+						<span className="text-secondary font-mono tracking-widest uppercase">
 							Choose Your Class
 						</span>
 						<span className="text-border font-mono select-none">~*~</span>
@@ -100,7 +100,7 @@ export default function CharacterCreate() {
 				<div className="w-full max-w-2xl">
 					<PanelBox
 						footer={
-							<span className="text-text-dim font-mono">
+							<span className="text-text-muted font-mono">
 								Select a class to begin your adventure
 							</span>
 						}
@@ -119,7 +119,7 @@ export default function CharacterCreate() {
 				</div>
 
 				{/* Flavour line */}
-				<div className="mt-5 text-text-dim font-mono text-center">
+				<div className="mt-5 text-text-muted font-mono text-center">
 					<p>Choose wisely. Your fate awaits below.</p>
 				</div>
 			</div>
@@ -147,7 +147,7 @@ export default function CharacterCreate() {
 			>
 				<div className="space-y-4">
 					{selectedClass && (
-						<p className="text-text-muted font-mono">
+						<p className="text-text font-mono">
 							&gt; A {selectedClass.name.toLowerCase()} steps forward from the
 							shadows. What is their name?
 						</p>

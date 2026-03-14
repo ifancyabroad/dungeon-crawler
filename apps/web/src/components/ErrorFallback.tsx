@@ -25,7 +25,7 @@ export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 				<p className="text-sm text-text-muted">
 					An unexpected error occurred. Please try refreshing the page.
 				</p>
-				<pre className="overflow-auto border border-border bg-bg-surface p-3 text-xs text-text-muted">
+				<pre className="overflow-auto border border-border bg-bg-panel p-3 text-xs text-text-muted">
 					{errorMessage}
 				</pre>
 				<Button onClick={resetErrorBoundary} variant="primary" size="md">

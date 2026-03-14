@@ -33,7 +33,7 @@ const CORNER: React.CSSProperties = {
 export function PanelBox({ children, title, footer, glow = false, className = "" }: PanelBoxProps) {
 	return (
 		<div
-			className={`relative border-2 border-border bg-bg-panel ${className}`}
+			className={`relative border-2 border-border bg-black ${className}`}
 			style={
 				glow
 					? { boxShadow: "0 0 24px rgba(80,60,16,0.4), inset 0 0 32px rgba(0,0,0,0.4)" }

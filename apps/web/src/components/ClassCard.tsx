@@ -37,7 +37,7 @@ export function ClassCard({ cls, selected, onSelect }: ClassCardProps) {
 			onClick={onSelect}
 			className={[
 				"group relative flex flex-col text-left p-3 transition-colors focus:outline-none",
-				selected ? "bg-bg-elevated" : "bg-bg-panel hover:bg-bg-surface",
+				selected ? "bg-bg-elevated" : "bg-bg-panel hover:bg-bg-elevated",
 			].join(" ")}
 		>
 			{/* Sprite + name row */}

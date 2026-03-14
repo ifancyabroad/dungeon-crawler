@@ -20,7 +20,7 @@ const variantClasses: Record<ButtonVariant, string> = {
 	primary:
 		"bg-primary text-primary-contrast border-primary hover:bg-primary-dim focus-visible:ring-primary/50",
 	secondary:
-		"bg-bg-panel text-text-muted border-border hover:text-text hover:border-border-bright focus-visible:ring-border",
+		"bg-black text-text-muted border-border hover:text-text hover:border-border-bright focus-visible:ring-border",
 	ghost: "bg-transparent text-text-muted border-transparent hover:text-text hover:border-border focus-visible:ring-border",
 	danger: "bg-error text-text-bright border-error hover:bg-error/80 focus-visible:ring-error/50",
 };

@@ -35,7 +35,7 @@ export function StatBar({
 				<span className="tabular-nums text-text w-16 shrink-0 text-right">
 					{showNumbers ? numbers : ""}
 				</span>
-				<div className="flex-1 h-3 bg-bg-elevated overflow-hidden">
+				<div className="flex-1 h-3 bg-[#1a1a1a] overflow-hidden">
 					<div
 						className={`h-full transition-all ${barColorClasses[color]}`}
 						style={{ width: `${pct}%` }}
@@ -51,7 +51,7 @@ export function StatBar({
 				<span className="text-text-label">{label}</span>
 				{showNumbers && <span className="tabular-nums text-text">{numbers}</span>}
 			</div>
-			<div className="h-4 bg-bg-elevated overflow-hidden">
+			<div className="h-4 bg-[#1a1a1a] overflow-hidden">
 				<div
 					className={`h-full transition-all ${barColorClasses[color]}`}
 					style={{ width: `${pct}%` }}

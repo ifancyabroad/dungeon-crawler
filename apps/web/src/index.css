@@ -9,27 +9,30 @@
 }
 
 @theme {
-	/* Backgrounds — pure black base, very dark brown panels */
+	/* Backgrounds — pure black everywhere; panels defined by border only */
 	--color-bg-base: #000000;
-	--color-bg-panel: #0e0c08;
-	--color-bg-surface: #181410;
-	--color-bg-elevated: #221e14;
+	--color-bg-panel: #000000; /* reserved — set a tint here to give panels a background */
+	--color-bg-elevated: #1a1000; /* subtle warm tint — hover/active states only */
 
-	/* Primary accent — bright orange-gold, distinct from brown labels and amber borders */
-	--color-primary: #e8a020;
-	--color-primary-dim: #b87818;
+	/* Primary accent — bright arcade yellow, unmistakable on dark backgrounds */
+	--color-primary: #ffcc00;
+	--color-primary-dim: #cc9900;
 	--color-primary-contrast: #000000;
 
+	/* Secondary accent — phosphor green, used sparingly for decorative/subtitle text */
+	--color-secondary: #50c050;
+	--color-secondary-dim: #389038;
+	--color-secondary-contrast: #000000;
+
 	/* Text palette */
-	--color-text: #c8c0b0; /* light grey — default body text */
+	--color-text: #c8c0b0; /* warm light grey — default body text */
 	--color-text-bright: #f0ece0; /* near-white — emphasis / headings */
 	--color-text-label: #a07840; /* warm brown — labels */
-	--color-text-muted: #888070; /* de-emphasised, hints */
-	--color-text-dim: #504840; /* very dark, used sparingly */
+	--color-text-muted: #707070; /* neutral grey — de-emphasised, hints, placeholders */
 
-	/* Borders — amber-brown, thick enough to read as a frame */
-	--color-border: #806020;
-	--color-border-bright: #c09030;
+	/* Borders — warm amber, frames the ASCII box-drawing characters naturally */
+	--color-border: #604818;
+	--color-border-bright: #a07828;
 
 	/* Semantic */
 	--color-error: #cc3333;
@@ -38,7 +41,7 @@
 	/* Game-specific */
 	--color-hp: #992020;
 	--color-hp-text: #e04040;
-	--color-xp: #e8a020;
+	--color-xp: #8040c0; /* arcane violet — XP bar */
 	--color-kill: #44aa55;
 	--color-death: #e04040;
 

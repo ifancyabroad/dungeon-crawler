@@ -12,8 +12,8 @@ type CardProps = {
 export function Card({ children, title, className = "", variant = "default" }: CardProps) {
 	const containerClasses =
 		variant === "inset"
-			? `bg-bg-panel ${className}`
-			: `border-2 border-border bg-bg-panel ${className}`;
+			? `bg-black ${className}`
+			: `border-2 border-border bg-black ${className}`;
 
 	return (
 		<div className={containerClasses.trim()}>
