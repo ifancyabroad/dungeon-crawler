@@ -57,6 +57,11 @@ export function getSessionWalkable(gameId: string): Uint8Array[] | undefined {
 	return sessionStore.get(gameId)?.walkableByFloor;
 }
 
+/** Returns cached base layers per floor. Undefined if session not loaded. */
+export function getSessionBaseLayers(gameId: string): BaseLayerFloor[] | undefined {
+	return sessionStore.get(gameId)?.baseLayers;
+}
+
 /** Returns opacity mask per floor (Uint8Array, 1=opaque). Undefined if session not loaded. */
 export function getSessionOpacity(gameId: string): Uint8Array[] | undefined {
 	return sessionStore.get(gameId)?.opacityByFloor;

@@ -4,18 +4,20 @@
 	"height": 7,
 	"tags": ["chamber", "treasure", "alcove"],
 	"minDepth": 1,
-	"layout": [".......", ".b.c.b.", ".......", "...A...", ".......", ".a...a.", "......."],
+	"layout": [".......", "...dd..", ".fdddd.", ".ddAdd.", ".dddde.", "..dd...", "......."],
 	"legend": {
 		".": { "tile": "floor" },
+		"d": { "tile": "floor", "groundTileId": 236 },
 		"A": {
 			"tile": "floor",
 			"marker": "shrine_center",
+			"groundTileId": 236,
 			"decorationTileId": 412,
 			"collision": true
 		},
-		"a": { "tile": "floor", "decorationTileId": 595 },
-		"b": { "tile": "floor", "decorationTileId": 596 },
-		"c": { "tile": "floor", "decorationTileId": 597 }
+		"e": { "tile": "floor", "groundTileId": 236, "decorationTileId": 595, "collision": true },
+		"f": { "tile": "floor", "groundTileId": 236, "decorationTileId": 596, "collision": true },
+		"g": { "tile": "floor", "groundTileId": 236, "decorationTileId": 597, "collision": true }
 	},
 	"spawns": [{ "marker": "shrine_center", "encounterId": "goblin_guard" }]
 }

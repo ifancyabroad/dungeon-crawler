@@ -21,6 +21,7 @@ import {
 	persistAction,
 	applyAuthoritativeAction,
 	getSessionWalkable,
+	getSessionBaseLayers,
 	StateCorruptError,
 } from "../services/gameState.service";
 import { withGameLock } from "../services/gameLock";
@@ -150,12 +151,14 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					// Pass the cached walk mask so applyDescendSideEffects doesn't have to
 					// regenerate all floor maps — the session already has them pre-computed.
 					const cachedWalkMask = getSessionWalkable(gameId)?.[descendEvent.toFloor];
+					const cachedBase = getSessionBaseLayers(gameId)?.[descendEvent.toFloor];
 					finalState = applyDescendSideEffects(
 						finalState,
 						descendEvent.toFloor,
 						monstersById,
 						encountersById,
 						cachedWalkMask,
+						cachedBase,
 					);
 				}
 

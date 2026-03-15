@@ -201,34 +201,45 @@ export const vaults: readonly VaultDefinition[] = [
     "minDepth": 1,
     "layout": [
       ".......",
-      ".b.c.b.",
-      ".......",
-      "...A...",
-      ".......",
-      ".a...a.",
+      "...dd..",
+      ".fdddd.",
+      ".ddAdd.",
+      ".dddde.",
+      "..dd...",
       "......."
     ],
     "legend": {
       ".": {
         "tile": "floor"
       },
+      "d": {
+        "tile": "floor",
+        "groundTileId": 236
+      },
       "A": {
         "tile": "floor",
         "marker": "shrine_center",
+        "groundTileId": 236,
         "decorationTileId": 412,
         "collision": true
       },
-      "a": {
+      "e": {
         "tile": "floor",
-        "decorationTileId": 595
+        "groundTileId": 236,
+        "decorationTileId": 595,
+        "collision": true
       },
-      "b": {
+      "f": {
         "tile": "floor",
-        "decorationTileId": 596
+        "groundTileId": 236,
+        "decorationTileId": 596,
+        "collision": true
       },
-      "c": {
+      "g": {
         "tile": "floor",
-        "decorationTileId": 597
+        "groundTileId": 236,
+        "decorationTileId": 597,
+        "collision": true
       }
     },
     "spawns": [

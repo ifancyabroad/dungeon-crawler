@@ -81,7 +81,7 @@ export const createGame: RequestHandler = async (req, res) => {
 		baseLayers[0],
 		state.floors[0].state.tileOverrides,
 	);
-	state = spawnMonstersForFloor(state, 0, walkMask, monstersById, encountersById);
+	state = spawnMonstersForFloor(state, 0, walkMask, monstersById, encountersById, baseLayers[0]);
 
 	const persistedState = gameStateToPersisted(state);
 	PersistedDynamicStateSchema.parse(persistedState);

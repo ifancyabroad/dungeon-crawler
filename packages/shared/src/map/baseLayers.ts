@@ -82,16 +82,38 @@ export function findExitIdx(
 }
 
 /**
+ * Find the nearest walkable cell to (originX, originY) by expanding outward in rings.
+ * Returns undefined if no walkable cell is found within the map bounds.
+ */
+function findNearestWalkable(
+	ground: number[][],
+	wall: number[][],
+	blockedMask: boolean[][],
+	originX: number,
+	originY: number,
+	width: number,
+	height: number,
+): number | undefined {
+	for (let radius = 1; radius < Math.max(width, height); radius++) {
+		for (let dy = -radius; dy <= radius; dy++) {
+			for (let dx = -radius; dx <= radius; dx++) {
+				if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue;
+				const x = originX + dx;
+				const y = originY + dy;
+				if (x < 0 || x >= width || y < 0 || y >= height) continue;
+				if (isCellWalkable(ground, wall, blockedMask, x, y)) return y * width + x;
+			}
+		}
+	}
+	return undefined;
+}
+
+/**
  * Tag the start and exit rooms in the analyzed room list.
  * The room containing spawnIdx is tagged "start"; the one containing exitIdx is tagged "exit".
  * Modifies rooms in place.
  */
-function tagSpawnAndExitRooms(
-	rooms: AnalyzedRoom[],
-	spawnIdx: number,
-	exitIdx: number,
-	width: number,
-): void {
+function tagSpawnAndExitRooms(rooms: AnalyzedRoom[], spawnIdx: number, exitIdx: number): void {
 	for (const room of rooms) {
 		if (room.cells.includes(spawnIdx)) {
 			room.tag = "start";
@@ -190,14 +212,22 @@ export function regenerateBaseMaps(
 			}
 		}
 
+		// Stage 7: relocate spawn if vault injection placed a collision tile on it
+		let safeSpawnIdx = spawnIdx;
+		if (blockedMask[spawn.y]?.[spawn.x]) {
+			safeSpawnIdx =
+				findNearestWalkable(ground, wall, blockedMask, spawn.x, spawn.y, width, height) ??
+				spawnIdx;
+		}
+
 		// Exit: farthest walkable cell from spawn (last floor has no exit)
 		const exitIdx =
 			i === lastFloorIndex
 				? -1
-				: findExitIdx(ground, wall, blockedMask, spawnIdx, width, height);
+				: findExitIdx(ground, wall, blockedMask, safeSpawnIdx, width, height);
 
 		// Tag start / exit rooms for downstream encounter use
-		tagSpawnAndExitRooms(rooms, spawnIdx, exitIdx, width);
+		tagSpawnAndExitRooms(rooms, safeSpawnIdx, exitIdx);
 
 		// Apply boss room tag based on floor's bossRules
 		if (config.bossRules) {
@@ -222,7 +252,7 @@ export function regenerateBaseMaps(
 			decorationGrid,
 			width,
 			height,
-			spawnIdx,
+			spawnIdx: safeSpawnIdx,
 			exitIdx,
 			rooms,
 			vaultPlacements,
