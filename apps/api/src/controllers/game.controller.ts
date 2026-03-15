@@ -11,7 +11,13 @@ import {
 	resetMonsterCounter,
 	type HeroInit,
 } from "@app/shared";
-import { classesById, monstersById, type CharacterClassId } from "@app/content";
+import {
+	classesById,
+	encountersById,
+	monstersById,
+	vaults,
+	type CharacterClassId,
+} from "@app/content";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { Hero } from "../models/hero.model";
@@ -68,13 +74,14 @@ export const createGame: RequestHandler = async (req, res) => {
 		seed,
 		state.floors.map((f) => f.config),
 		state.mapGenVersion,
+		{ vaultDefs: vaults },
 	);
 	// Only spawn monsters on floor 0 at creation; other floors spawn on first visit
 	const walkMask = computeWalkableMaskForFloor(
 		baseLayers[0],
 		state.floors[0].state.tileOverrides,
 	);
-	state = spawnMonstersForFloor(state, 0, walkMask, monstersById);
+	state = spawnMonstersForFloor(state, 0, walkMask, monstersById, encountersById);
 
 	const persistedState = gameStateToPersisted(state);
 	PersistedDynamicStateSchema.parse(persistedState);
@@ -127,9 +134,9 @@ export const getGame: RequestHandler = async (_req, res) => {
 	if (cached) {
 		return res.json({ gameId: session.gameId, state: cached });
 	}
-	const state = await reconstructState(session.gameId);
-	if (state) {
-		return res.json({ gameId: session.gameId, state });
+	const result = await reconstructState(session.gameId);
+	if (result) {
+		return res.json({ gameId: session.gameId, state: result.state });
 	}
 	return res.status(404).json({ error: "Game state not found" });
 };

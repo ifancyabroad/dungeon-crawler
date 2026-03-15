@@ -1,0 +1,24 @@
+{
+	"id": "boss_chamber",
+	"width": 9,
+	"height": 9,
+	"tags": ["boss", "chamber"],
+	"minDepth": 3,
+	"layout": [
+		"#########",
+		"#.......#",
+		"#.......#",
+		"#...B...#",
+		"#.......#",
+		"#.......#",
+		"#.......#",
+		"#.......#",
+		"#########"
+	],
+	"legend": {
+		"#": { "tile": "wall" },
+		".": { "tile": "floor" },
+		"B": { "tile": "floor", "marker": "boss_spawn" }
+	},
+	"spawns": [{ "marker": "boss_spawn", "encounterId": "boss_encounter" }]
+}

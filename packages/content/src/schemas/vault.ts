@@ -1,0 +1,33 @@
+/**
+ * Zod schema and types for vault definitions (handcrafted map structures).
+ */
+
+import { z } from "zod";
+
+export const VaultLegendEntrySchema = z.object({
+	tile: z.enum(["wall", "floor"]),
+	marker: z.string().optional(),
+	decorationTileId: z.number().int().nonnegative().optional(),
+});
+
+export const VaultSpawnEntrySchema = z.object({
+	marker: z.string(),
+	encounterId: z.string(),
+});
+
+export const VaultDefSchema = z.object({
+	id: z.string(),
+	width: z.number().int().positive(),
+	height: z.number().int().positive(),
+	tags: z.array(
+		z.enum(["start", "exit", "boss", "treasure", "corridor", "chamber", "alcove", "generic"]),
+	),
+	minDepth: z.number().int().positive().optional(),
+	layout: z.array(z.string()),
+	legend: z.record(z.string(), VaultLegendEntrySchema),
+	spawns: z.array(VaultSpawnEntrySchema).optional(),
+});
+
+export type VaultDefinition = z.infer<typeof VaultDefSchema>;
+
+export const VaultsArraySchema = z.array(VaultDefSchema);

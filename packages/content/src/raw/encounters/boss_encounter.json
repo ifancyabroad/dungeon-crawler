@@ -1,0 +1,5 @@
+{
+	"id": "boss_encounter",
+	"minDepth": 3,
+	"entries": [{ "monsterId": "goblin", "count": 1, "weight": 1 }]
+}

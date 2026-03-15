@@ -12,10 +12,11 @@ export const TILE_WIDTH = 32;
 export const TILE_HEIGHT = 32;
 export const TILESET_KEY = "roguelike-tileset";
 
-export type TileRole = "floor" | "wall" | "decoration" | "entity";
+export type TileRole = "floor" | "wall" | "decoration" | "entity" | "vault_prop";
 
 export interface TileMetadata {
-	theme: FloorTheme;
+	/** Floor theme this tile belongs to, or "none" for theme-independent tiles (e.g. vault props). */
+	theme: FloorTheme | "none";
 	role: TileRole;
 	type: string;
 	collision: boolean;
@@ -66,6 +67,11 @@ export const TILE_METADATA: Record<number, TileMetadata> = {
 	238: { theme: "dark_forest", role: "floor", type: "ground", collision: false },
 	259: { theme: "dark_forest", role: "decoration", type: "path", collision: false },
 	301: { theme: "dark_forest", role: "floor", type: "water", collision: true },
+	// vault props — theme-independent, placed only by vault definitions (never scattered)
+	412: { theme: "none", role: "vault_prop", type: "shrine_altar", collision: true },
+	595: { theme: "none", role: "vault_prop", type: "bones_a", collision: false },
+	596: { theme: "none", role: "vault_prop", type: "bones_b", collision: false },
+	597: { theme: "none", role: "vault_prop", type: "bones_c", collision: false },
 };
 
 /**
@@ -83,7 +89,7 @@ export function getCollidingIndices(): number[] {
 export function getThemes(): FloorTheme[] {
 	const themes = new Set<FloorTheme>();
 	for (const meta of Object.values(TILE_METADATA)) {
-		themes.add(meta.theme);
+		if (meta.theme !== "none") themes.add(meta.theme);
 	}
 	return [...themes].sort();
 }
@@ -113,9 +119,6 @@ export function getDecorationsByTheme(theme: FloorTheme): { type: string; indice
 	}
 	return [...byType.entries()].map(([type, indices]) => ({ type, indices }));
 }
-
-/** Legacy: indices that block movement. Prefer getCollidingIndices(). */
-export const COLLIDING_INDICES: number[] = getCollidingIndices();
 
 import { classes, monsters } from "@app/content";
 

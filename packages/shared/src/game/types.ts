@@ -3,15 +3,15 @@
  * No nested 2D arrays in persisted state; walkability computed at runtime when needed.
  */
 
-import type { MapGenConfig } from "../map/types";
 import type { Action } from "./actions";
 import type { AttackResult } from "../combat/types";
 import type { MonsterAIState } from "./monsterAI";
+import type { FloorConfig } from "../map/types";
 
 export type TileId = number;
 
-/** Per-floor map config (no seed; seed is run seed + floor index). Same shape as MapGenConfig minus seed. */
-export type FloorConfig = Omit<MapGenConfig, "seed">;
+/** Per-floor map config. Re-exported from map/types for convenience. */
+export type { FloorConfig } from "../map/types";
 
 /** Opaque id for an actor (hero or monster). Hero uses constant "hero". */
 export type ActorId = string;
@@ -110,7 +110,7 @@ export type RngState =
 	| { algo: "xorshift32"; s: number }
 	| { algo: "sfc32"; a: number; b: number; c: number; d: number };
 
-export const MAP_GEN_VERSION = 1;
+export const MAP_GEN_VERSION = 2;
 
 /** In-memory game state. No walkableByFloor; engine computes walkability when needed. */
 export interface GameState {

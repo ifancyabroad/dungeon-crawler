@@ -11,6 +11,9 @@ import { wouldStayConnected } from "./connectivity";
 /** Decoration types that block movement. Must match client tileset metadata (collision === true). */
 export const BLOCKING_DECORATION_TYPES: ReadonlySet<string> = new Set(["rock"]);
 
+/** All scatter-eligible decoration types (excluding path, which is placed from pathLayer). */
+const SCATTER_DECORATION_TYPES: readonly DecorationType[] = ["grass", "plant", "bush", "rock"];
+
 export type DecorationType = "path" | "grass" | "plant" | "bush" | "rock";
 
 export interface BuildDecorationLayerResult {
@@ -41,7 +44,7 @@ export function buildDecorationLayer(
 	const blockedMask = waterMask.map((row) => [...row]);
 	const decorationGrid: string[][] = Array.from({ length: height }, () => Array(width).fill(""));
 
-	const decorationTypes: DecorationType[] = ["grass", "plant", "bush", "rock"];
+	const decorationTypes = SCATTER_DECORATION_TYPES;
 	const totalWeight = decorationTypes.reduce((sum, t) => sum + (weights[t] ?? 0), 0);
 
 	for (let y = 0; y < height; y++) {

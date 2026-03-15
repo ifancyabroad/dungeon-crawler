@@ -2,6 +2,8 @@
 
 import type { CharacterClassDefinition } from "../schemas/characterClass.js";
 import type { MonsterDefinition } from "../schemas/monster.js";
+import type { VaultDefinition } from "../schemas/vault.js";
+import type { EncounterDefinition } from "../schemas/encounter.js";
 
 export const characterClassIds = ["mage","rogue","warrior"] as const;
 export type CharacterClassId = (typeof characterClassIds)[number];
@@ -89,7 +91,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 10,
       "charisma": 12
     },
-    "startingHp": 14,
+    "startingHp": 140,
     "hitDie": 10,
     "startingEquipment": [
       "sword-basic",
@@ -146,3 +148,158 @@ export const monsters: readonly MonsterDefinition[] = [
 const _monstersById: Record<MonsterId, MonsterDefinition> = {} as Record<MonsterId, MonsterDefinition>;
 for (const m of monsters) { _monstersById[m.id as MonsterId] = m; }
 export const monstersById: Record<MonsterId, MonsterDefinition> = _monstersById;
+
+export const vaults: readonly VaultDefinition[] = [
+  {
+    "id": "boss_chamber",
+    "width": 9,
+    "height": 9,
+    "tags": [
+      "boss",
+      "chamber"
+    ],
+    "minDepth": 3,
+    "layout": [
+      "#########",
+      "#.......#",
+      "#.......#",
+      "#...B...#",
+      "#.......#",
+      "#.......#",
+      "#.......#",
+      "#.......#",
+      "#########"
+    ],
+    "legend": {
+      "#": {
+        "tile": "wall"
+      },
+      ".": {
+        "tile": "floor"
+      },
+      "B": {
+        "tile": "floor",
+        "marker": "boss_spawn"
+      }
+    },
+    "spawns": [
+      {
+        "marker": "boss_spawn",
+        "encounterId": "boss_encounter"
+      }
+    ]
+  },
+  {
+    "id": "goblin_shrine",
+    "width": 7,
+    "height": 7,
+    "tags": [
+      "chamber",
+      "treasure",
+      "alcove"
+    ],
+    "minDepth": 1,
+    "layout": [
+      ".......",
+      ".b.c.b.",
+      ".......",
+      "...A...",
+      ".......",
+      ".a...a.",
+      "......."
+    ],
+    "legend": {
+      ".": {
+        "tile": "floor"
+      },
+      "A": {
+        "tile": "floor",
+        "marker": "shrine_center",
+        "decorationTileId": 412
+      },
+      "a": {
+        "tile": "floor",
+        "decorationTileId": 595
+      },
+      "b": {
+        "tile": "floor",
+        "decorationTileId": 596
+      },
+      "c": {
+        "tile": "floor",
+        "decorationTileId": 597
+      }
+    },
+    "spawns": [
+      {
+        "marker": "shrine_center",
+        "encounterId": "goblin_guard"
+      }
+    ]
+  }
+] as readonly VaultDefinition[];
+
+const _vaultsById: Record<string, VaultDefinition> = {};
+for (const v of vaults) { _vaultsById[v.id] = v; }
+export const vaultsById: Record<string, VaultDefinition> = _vaultsById;
+
+export const encounters: readonly EncounterDefinition[] = [
+  {
+    "id": "boss_encounter",
+    "minDepth": 3,
+    "entries": [
+      {
+        "monsterId": "goblin",
+        "count": 1,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "goblin_guard",
+    "minDepth": 1,
+    "entries": [
+      {
+        "monsterId": "goblin",
+        "count": 1,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "goblin_horde",
+    "minDepth": 2,
+    "entries": [
+      {
+        "monsterId": "goblin",
+        "count": 4,
+        "weight": 2
+      },
+      {
+        "monsterId": "goblin",
+        "count": 5,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "goblin_patrol",
+    "minDepth": 1,
+    "entries": [
+      {
+        "monsterId": "goblin",
+        "count": 2,
+        "weight": 3
+      },
+      {
+        "monsterId": "goblin",
+        "count": 3,
+        "weight": 1
+      }
+    ]
+  }
+] as readonly EncounterDefinition[];
+
+const _encountersById: Record<string, EncounterDefinition> = {};
+for (const e of encounters) { _encountersById[e.id] = e; }
+export const encountersById: Record<string, EncounterDefinition> = _encountersById;

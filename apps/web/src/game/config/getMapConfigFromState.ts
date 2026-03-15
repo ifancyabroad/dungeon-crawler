@@ -1,13 +1,12 @@
 /**
  * Derive map config (with seed) and hero for the current floor from GameState.
  * Used by MainScene to avoid duplicating floor/config logic.
- * Merges floor.config with DEFAULT_FLOOR_CONFIG so all fields are present.
  */
 
-import { DEFAULT_FLOOR_CONFIG, getHero, type GameState, type MapGenConfig } from "@app/shared";
+import { getHero, type FloorConfig, type GameState } from "@app/shared";
 
 export interface MapConfigAndHero {
-	config: MapGenConfig;
+	config: FloorConfig & { seed: number };
 	hero: { floorIndex: number; idx: number; classId: string };
 }
 
@@ -20,8 +19,7 @@ export function getMapConfigAndHeroFromState(state: GameState): MapConfigAndHero
 	if (!floor) return null;
 	const hero = getHero(state);
 	if (!hero) return null;
-	const config: MapGenConfig = {
-		...DEFAULT_FLOOR_CONFIG,
+	const config = {
 		...floor.config,
 		seed: state.seed + floorIndex,
 	};

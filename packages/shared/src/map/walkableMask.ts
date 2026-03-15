@@ -7,7 +7,11 @@
 import type { BaseLayerFloor } from "./baseLayers";
 import { isCellWalkable } from "./walkability";
 
-/** Override tile walkability: for now no override tile is walkable. Centralized here. */
+/**
+ * Override tile walkability. Currently all override tiles block movement.
+ * TODO: when items/traps are placed via tileOverrides, extend this to return true for
+ * passable override types (e.g. items on the ground that the hero can walk onto).
+ */
 function isTileIdWalkable(_tileId: number): boolean {
 	return false;
 }

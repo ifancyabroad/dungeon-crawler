@@ -10,7 +10,7 @@
 		"wisdom": 10,
 		"charisma": 12
 	},
-	"startingHp": 14,
+	"startingHp": 140,
 	"hitDie": 10,
 	"startingEquipment": ["sword-basic", "shield-wood", "mail-hauberk"],
 	"startingSkills": ["weapon-mastery", "shield-block"],

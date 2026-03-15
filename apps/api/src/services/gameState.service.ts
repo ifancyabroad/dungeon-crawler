@@ -20,6 +20,7 @@ import {
 	type GameState,
 	type PersistedDynamicState,
 } from "@app/shared";
+import { vaults } from "@app/content";
 import { GameActionLog } from "../models/gameActionLog.model";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
@@ -83,6 +84,7 @@ export function setSessionState(
 			state.seed,
 			state.floors.map((f) => f.config),
 			state.mapGenVersion,
+			{ vaultDefs: vaults },
 		);
 
 	const opacityByFloor =
@@ -108,8 +110,8 @@ export async function ensureSessionLoaded(gameId: string): Promise<GameState | n
 		promise = (async (): Promise<GameState | null> => {
 			try {
 				const state = await reconstructState(gameId);
-				if (state) setSessionState(gameId, state);
-				return state;
+				if (state) setSessionState(gameId, state.state, state.baseLayers);
+				return state?.state ?? null;
 			} catch (err) {
 				if (err instanceof StateCorruptError) throw err;
 				console.error(
@@ -205,8 +207,11 @@ export async function persistAction(
  * Load latest snapshot, then replay action log entries where entry.turn > snapshotTurn (each entry's
  * turn is the state.turn after that action was applied). Build full GameState.
  * Invalid snapshot or action log entry throws (caller should catch and surface state_corrupt).
+ * Returns null if session or snapshot are missing.
  */
-export async function reconstructState(gameId: string): Promise<GameState | null> {
+export async function reconstructState(
+	gameId: string,
+): Promise<{ state: GameState; baseLayers: BaseLayerFloor[] } | null> {
 	const session = await GameSession.findOne({ gameId }).lean().exec();
 	if (!session) {
 		console.warn("[reconstructState] no session for gameId:", gameId);
@@ -257,6 +262,7 @@ export async function reconstructState(gameId: string): Promise<GameState | null
 		fullState.seed,
 		fullState.floors.map((f) => f.config),
 		fullState.mapGenVersion,
+		{ vaultDefs: vaults },
 	);
 	const walkable = baseLayers.map((base, i) =>
 		computeWalkableMaskForFloor(base, fullState.floors[i]?.state.tileOverrides ?? {}),
@@ -276,9 +282,14 @@ export async function reconstructState(gameId: string): Promise<GameState | null
 			throw new StateCorruptError(msg, err);
 		}
 		const result = applyAction(fullState, action, applyContext);
-		if (!result.ok) continue;
+		if (!result.ok) {
+			console.warn(
+				`[reconstructState] action replay failed (ok=false) for gameId: ${gameId}, turn: ${(entry as { turn?: number }).turn} — skipping`,
+			);
+			continue;
+		}
 		fullState = result.state;
 	}
 
-	return fullState;
+	return { state: fullState, baseLayers };
 }

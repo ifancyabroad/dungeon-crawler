@@ -1,20 +1,18 @@
 import Phaser from "phaser";
 import {
-	buildDecorationLayer,
-	buildWaterMask,
 	computeOpacityMask,
 	computeVisibility,
-	createRng,
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
-	generateMap,
 	getActorAtIdx,
 	idxToXY,
 	xyToIdx,
+	MAP_GEN_VERSION,
+	regenerateBaseMaps,
 	VISION_RADIUS,
 	type Action,
+	type FloorConfig,
 	type GameState,
-	type MapGenConfig,
 } from "@app/shared";
 import {
 	ENTITY_TILES,
@@ -38,7 +36,7 @@ import { AttackAnimator } from "../fx/AttackAnimator";
 import { HealthBarManager } from "../fx/HealthBarManager";
 import { DeathFxManager } from "../fx/DeathFxManager";
 import { BLOOD_TEXTURE_KEY, HERO_BLOOD_COLOR } from "../fx/particles";
-import { monstersById } from "@app/content";
+import { monstersById, vaults } from "@app/content";
 import { DamageNumberManager } from "../fx/DamageNumberManager";
 
 const FOG_TINT = 0x555555;
@@ -148,9 +146,8 @@ export default class MainScene extends Phaser.Scene {
 	}
 
 	private buildMapAndHero(
-		config: MapGenConfig,
+		config: FloorConfig & { seed: number },
 		heroPos: { floorIndex: number; idx: number; classId: string },
-		optionalConfigForSpawn?: MapGenConfig,
 	) {
 		// Reset fog diff state so the new tilemap (all tiles alpha=1 by default)
 		// is fully re-evaluated rather than diffed against a stale previous map.
@@ -160,24 +157,33 @@ export default class MainScene extends Phaser.Scene {
 		this.mapHeight = config.height;
 		useMapStore.getState().setMapConfigOverride(config);
 
-		const rng = createRng(config.seed);
-		const { ground, wall, spawn, pathLayer } = generateMap(config, rng);
-
-		const waterMask = buildWaterMask(ground, wall, spawn, config.seed);
-		const { decorationGrid } = buildDecorationLayer(
-			ground,
-			wall,
-			pathLayer,
-			waterMask,
-			spawn,
-			config.seed,
-			config.decorationWeights,
-			config.scatterChance,
-		);
+		// Run the full single-floor pipeline via shared — identical stages and order to the server.
+		// config.seed is already gameSeed + floorIndex (set by getMapConfigFromState).
+		// regenerateBaseMaps uses seed+0 for the first (only) floor, which equals config.seed.
+		const [base] = regenerateBaseMaps(config.seed, [config], MAP_GEN_VERSION, {
+			vaultDefs: vaults,
+		});
+		const { ground, wall, waterMask, decorationGrid, vaultPlacements } = base;
 
 		const groundData = toGroundTileIndices(ground, wall, waterMask, config.theme, config.seed);
 		const wallData = toWallTileIndices(wall, config.theme, config.seed);
-		const decorationData = decorationGridToTileIndices(decorationGrid, config.theme);
+		const decorationData = decorationGridToTileIndices(
+			decorationGrid,
+			config.theme,
+			config.seed,
+		);
+
+		// Bake vault prop tile IDs into the decoration data array before the tilemap
+		// is created. putTileAt cannot place tiles on cells that were -1 in the source
+		// data because Phaser creates no tile object for empty cells.
+		for (const placement of vaultPlacements) {
+			for (const [flatIdxStr, tileId] of Object.entries(placement.decorationOverrides)) {
+				const flatIdx = Number(flatIdxStr);
+				const x = flatIdx % config.width;
+				const y = Math.floor(flatIdx / config.width);
+				if (decorationData[y]) decorationData[y][x] = tileId;
+			}
+		}
 
 		this.createGroundLayer(groundData);
 		this.createDecorationLayer(decorationData);
@@ -202,9 +208,7 @@ export default class MainScene extends Phaser.Scene {
 			this.foggedSprites.push({ sprite: exitSprite, idx: exitIdx });
 		}
 
-		const spawnPos = optionalConfigForSpawn
-			? { x: spawn.x, y: spawn.y }
-			: idxToXY(heroPos.idx, config.width);
+		const spawnPos = idxToXY(heroPos.idx, config.width);
 		this.playerTileX = spawnPos.x;
 		this.playerTileY = spawnPos.y;
 		const startX = this.playerTileX * TILE_WIDTH + TILE_WIDTH / 2;
@@ -439,10 +443,10 @@ export default class MainScene extends Phaser.Scene {
 			}
 		}
 
-		// Remove sprites for actors that were removed from state entirely (not just marked dead —
-		// the alive=false case is handled above, but actors may also be absent from actorsById).
+		// Remove sprites for actors that were removed from state entirely.
+		// The alive=false case is fully handled in the loop above.
 		for (const [id, sprite] of this.monsterSprites) {
-			if (!actorsById[id] || !actorsById[id].alive) {
+			if (!actorsById[id]) {
 				sprite.destroy();
 				this.monsterSprites.delete(id);
 				this.healthBars?.remove(id);

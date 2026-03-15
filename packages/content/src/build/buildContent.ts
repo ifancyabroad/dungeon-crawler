@@ -1,6 +1,6 @@
 /**
- * Build step: read all JSON files from src/raw/classes and src/raw/monsters,
- * validate with Zod, write generated/index.ts.
+ * Build step: read all JSON files from src/raw/classes, src/raw/monsters, src/raw/vaults,
+ * and src/raw/encounters, validate with Zod, write generated/index.ts.
  *
  * Run: pnpm run generate (or tsx src/build/buildContent.ts)
  * Optional: --watch to re-run when raw or schemas change.
@@ -12,11 +12,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CharacterClassSchema, type CharacterClassDefinition } from "../schemas/characterClass.js";
 import { MonsterSchema, type MonsterDefinition } from "../schemas/monster.js";
+import { VaultDefSchema, type VaultDefinition } from "../schemas/vault.js";
+import { EncounterDefSchema, type EncounterDefinition } from "../schemas/encounter.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");
 const RAW_CLASSES_DIR = join(ROOT, "src", "raw", "classes");
 const RAW_MONSTERS_DIR = join(ROOT, "src", "raw", "monsters");
+const RAW_VAULTS_DIR = join(ROOT, "src", "raw", "vaults");
+const RAW_ENCOUNTERS_DIR = join(ROOT, "src", "raw", "encounters");
 const OUT_PATH = join(ROOT, "src", "generated", "index.ts");
 
 function getContentVersion(): string {
@@ -61,12 +65,7 @@ function loadAndValidate<T>(
 	return items;
 }
 
-/**
- * Run generation. Returns false on validation/parse error (caller may exit(1) in one-off mode).
- * In watch mode we never exit so the user can fix the file and save again.
- */
 function run(): boolean {
-	// --- Classes ---
 	const classes = loadAndValidate<CharacterClassDefinition>(
 		RAW_CLASSES_DIR,
 		CharacterClassSchema,
@@ -81,7 +80,6 @@ function run(): boolean {
 	}
 	const sortedClasses = [...classes].sort((a, b) => a.id.localeCompare(b.id, "en"));
 
-	// --- Monsters ---
 	const monsters = loadAndValidate<MonsterDefinition>(
 		RAW_MONSTERS_DIR,
 		MonsterSchema,
@@ -96,7 +94,30 @@ function run(): boolean {
 	}
 	const sortedMonsters = [...monsters].sort((a, b) => a.id.localeCompare(b.id, "en"));
 
-	// --- Generate ---
+	const vaults = loadAndValidate<VaultDefinition>(RAW_VAULTS_DIR, VaultDefSchema, "vaults");
+	if (!vaults) return false;
+
+	const vaultIds = [...new Set(vaults.map((v) => v.id))];
+	if (vaultIds.length !== vaults.length) {
+		console.error("Duplicate vault ids found.");
+		return false;
+	}
+	const sortedVaults = [...vaults].sort((a, b) => a.id.localeCompare(b.id, "en"));
+
+	const encounters = loadAndValidate<EncounterDefinition>(
+		RAW_ENCOUNTERS_DIR,
+		EncounterDefSchema,
+		"encounters",
+	);
+	if (!encounters) return false;
+
+	const encounterIds = [...new Set(encounters.map((e) => e.id))];
+	if (encounterIds.length !== encounters.length) {
+		console.error("Duplicate encounter ids found.");
+		return false;
+	}
+	const sortedEncounters = [...encounters].sort((a, b) => a.id.localeCompare(b.id, "en"));
+
 	const classIdValues = sortedClasses.map((c) => c.id);
 	const monsterIdValues = sortedMonsters.map((m) => m.id);
 	mkdirSync(dirname(OUT_PATH), { recursive: true });
@@ -106,6 +127,8 @@ function run(): boolean {
 		"",
 		'import type { CharacterClassDefinition } from "../schemas/characterClass.js";',
 		'import type { MonsterDefinition } from "../schemas/monster.js";',
+		'import type { VaultDefinition } from "../schemas/vault.js";',
+		'import type { EncounterDefinition } from "../schemas/encounter.js";',
 		"",
 		"export const characterClassIds = " + JSON.stringify(classIdValues) + " as const;",
 		"export type CharacterClassId = (typeof characterClassIds)[number];",
@@ -131,6 +154,22 @@ function run(): boolean {
 		"for (const m of monsters) { _monstersById[m.id as MonsterId] = m; }",
 		"export const monstersById: Record<MonsterId, MonsterDefinition> = _monstersById;",
 		"",
+		"export const vaults: readonly VaultDefinition[] = " +
+			JSON.stringify(sortedVaults, null, 2) +
+			" as readonly VaultDefinition[];",
+		"",
+		"const _vaultsById: Record<string, VaultDefinition> = {};",
+		"for (const v of vaults) { _vaultsById[v.id] = v; }",
+		"export const vaultsById: Record<string, VaultDefinition> = _vaultsById;",
+		"",
+		"export const encounters: readonly EncounterDefinition[] = " +
+			JSON.stringify(sortedEncounters, null, 2) +
+			" as readonly EncounterDefinition[];",
+		"",
+		"const _encountersById: Record<string, EncounterDefinition> = {};",
+		"for (const e of encounters) { _encountersById[e.id] = e; }",
+		"export const encountersById: Record<string, EncounterDefinition> = _encountersById;",
+		"",
 	];
 	writeFileSync(OUT_PATH, lines.join("\n"), "utf-8");
 	console.log("Wrote", OUT_PATH);
@@ -140,8 +179,10 @@ function run(): boolean {
 const isWatch = process.argv.includes("--watch");
 if (isWatch) {
 	run();
-	watch(RAW_CLASSES_DIR, () => run());
-	watch(RAW_MONSTERS_DIR, () => run());
+	if (existsSync(RAW_CLASSES_DIR)) watch(RAW_CLASSES_DIR, () => run());
+	if (existsSync(RAW_MONSTERS_DIR)) watch(RAW_MONSTERS_DIR, () => run());
+	if (existsSync(RAW_VAULTS_DIR)) watch(RAW_VAULTS_DIR, () => run());
+	if (existsSync(RAW_ENCOUNTERS_DIR)) watch(RAW_ENCOUNTERS_DIR, () => run());
 	watch(join(ROOT, "src", "schemas"), () => run());
 } else {
 	if (!run()) process.exit(1);

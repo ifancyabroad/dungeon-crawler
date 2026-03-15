@@ -1,69 +1,121 @@
 /**
  * Canonical floor configuration for all dungeon floors.
- * Edit this file to tune floor themes, map sizes, generation parameters, and monster spawns.
- * One entry per floor, in order. The last floor has no exit (enforced by the engine).
+ *
+ * Each entry defines a floor's generation parameters, visual theme, encounter pool,
+ * vault eligibility, and special features. The seed is injected at runtime
+ * (seed = gameSeed + floorIndex).
+ *
+ * Add more floors to the array to extend the dungeon. The last entry must have
+ * bossRules set (or not) — the engine automatically suppresses the exit for the final floor.
  */
 
-import type { FloorConfig } from "../game/types";
+import type { FloorConfig } from "./types";
 import {
-	DEFAULT_BSP_ROOM_INSET,
-	DEFAULT_CAVE_FLOOR_CHANCE,
+	DEFAULT_BSP_PARAMS,
+	DEFAULT_CAVE_PARAMS,
 	DEFAULT_DECORATION_WEIGHTS,
 	DEFAULT_SCATTER_CHANCE,
 	DEFAULT_SHAPE_VOID_TARGET,
 } from "./config";
 
 export const FLOOR_CONFIGS: FloorConfig[] = [
-	// Floor 1 — Green Forest (cave, medium)
+	// ── Floor 1: Green Forest — cave, intro difficulty ──────────────────────
 	{
 		theme: "green_forest",
-		algorithm: "cave",
+		floorDepth: 1,
 		width: 50,
 		height: 50,
-		caveFloorChance: DEFAULT_CAVE_FLOOR_CHANCE,
-		bspRoomInset: DEFAULT_BSP_ROOM_INSET,
-		decorationWeights: DEFAULT_DECORATION_WEIGHTS,
-		scatterChance: DEFAULT_SCATTER_CHANCE,
 		shapeVoidTarget: DEFAULT_SHAPE_VOID_TARGET,
-		spawns: [{ monsterId: "goblin", weight: 1 }],
+		algorithm: "cave",
+		algorithmParams: { ...DEFAULT_CAVE_PARAMS },
+		decorationWeights: { ...DEFAULT_DECORATION_WEIGHTS },
+		scatterChance: DEFAULT_SCATTER_CHANCE,
+		waterEnabled: true,
+		encounterTable: [
+			{ encounterId: "goblin_patrol", weight: 3 },
+			{ encounterId: "goblin_guard", weight: 1 },
+		],
+		enemyDensity: 0.3,
+		itemDensity: 0.0,
+		vaultIds: ["goblin_shrine"],
+		specialRoomFrequency: 0.2,
+		bossRules: null,
 	},
-	// Floor 2 — Orange Forest (BSP, slightly larger)
+
+	// ── Floor 2: Orange Forest — BSP rooms, slightly harder ─────────────────
 	{
 		theme: "orange_forest",
-		algorithm: "bsp",
+		floorDepth: 2,
 		width: 55,
 		height: 55,
-		caveFloorChance: DEFAULT_CAVE_FLOOR_CHANCE,
-		bspRoomInset: 2,
+		shapeVoidTarget: 0.22,
+		algorithm: "bsp",
+		algorithmParams: { ...DEFAULT_BSP_PARAMS, roomInset: 2, maxRoomSize: 14 },
 		decorationWeights: { ...DEFAULT_DECORATION_WEIGHTS, rock: 4 },
 		scatterChance: DEFAULT_SCATTER_CHANCE,
-		shapeVoidTarget: 0.22,
-		spawns: [{ monsterId: "goblin", weight: 1 }],
+		waterEnabled: true,
+		encounterTable: [
+			{ encounterId: "goblin_patrol", weight: 2 },
+			{ encounterId: "goblin_horde", weight: 1 },
+		],
+		enemyDensity: 0.4,
+		itemDensity: 0.0,
+		vaultIds: ["goblin_shrine"],
+		specialRoomFrequency: 0.25,
+		bossRules: null,
 	},
-	// Floor 3 — Yellow Forest (cave, larger)
+
+	// ── Floor 3: Yellow Forest — hybrid, mid-game ────────────────────────────
 	{
 		theme: "yellow_forest",
-		algorithm: "cave",
+		floorDepth: 3,
 		width: 60,
 		height: 60,
-		caveFloorChance: 0.48,
-		bspRoomInset: DEFAULT_BSP_ROOM_INSET,
+		shapeVoidTarget: 0.18,
+		algorithm: "hybrid",
+		algorithmParams: {
+			caveFloorChance: 0.48,
+			roomCount: 8,
+			roomInset: 2,
+		},
 		decorationWeights: { ...DEFAULT_DECORATION_WEIGHTS, plant: 7, bush: 5 },
 		scatterChance: 0.32,
-		shapeVoidTarget: 0.18,
-		spawns: [{ monsterId: "goblin", weight: 1 }],
+		waterEnabled: true,
+		encounterTable: [
+			{ encounterId: "goblin_horde", weight: 2 },
+			{ encounterId: "goblin_patrol", weight: 1 },
+		],
+		enemyDensity: 0.45,
+		itemDensity: 0.0,
+		vaultIds: ["goblin_shrine", "boss_chamber"],
+		specialRoomFrequency: 0.3,
+		bossRules: null,
 	},
-	// Floor 4 — Dark Forest (BSP, largest; no exit spawned)
+
+	// ── Floor 4: Dark Forest — BSP large rooms, final floor with boss ────────
 	{
 		theme: "dark_forest",
-		algorithm: "bsp",
+		floorDepth: 4,
 		width: 65,
 		height: 65,
-		caveFloorChance: DEFAULT_CAVE_FLOOR_CHANCE,
-		bspRoomInset: 3,
+		shapeVoidTarget: 0.25,
+		algorithm: "bsp",
+		algorithmParams: { ...DEFAULT_BSP_PARAMS, roomInset: 3, minRoomSize: 6, maxRoomSize: 18 },
 		decorationWeights: { ...DEFAULT_DECORATION_WEIGHTS, rock: 5, bush: 4 },
 		scatterChance: 0.3,
-		shapeVoidTarget: 0.25,
-		spawns: [{ monsterId: "goblin", weight: 1 }],
+		waterEnabled: false,
+		encounterTable: [
+			{ encounterId: "goblin_horde", weight: 3 },
+			{ encounterId: "goblin_patrol", weight: 1 },
+			{ encounterId: "boss_encounter", weight: 1, minDepth: 4 },
+		],
+		enemyDensity: 0.55,
+		itemDensity: 0.0,
+		vaultIds: ["boss_chamber"],
+		specialRoomFrequency: 0.35,
+		bossRules: {
+			monsterId: "goblin",
+			preferredRoomTag: "boss",
+		},
 	},
 ];

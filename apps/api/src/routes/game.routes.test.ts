@@ -136,7 +136,7 @@ describe("GET /api/game", () => {
 				exec: vi.fn().mockResolvedValueOnce({ gameId, tokenHash }),
 			}),
 		});
-		mockReconstructState.mockResolvedValueOnce(state);
+		mockReconstructState.mockResolvedValueOnce({ state, baseLayers: [] });
 
 		const res = await request(app)
 			.get("/api/game")

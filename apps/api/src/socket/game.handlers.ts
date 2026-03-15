@@ -27,7 +27,7 @@ import { withGameLock } from "../services/gameLock";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
 import { applyDescendSideEffects } from "../lib/spawnMonstersForFloor";
-import { monstersById } from "@app/content";
+import { encountersById, monstersById } from "@app/content";
 
 /** Auth context set on socket after successful join. */
 interface GameSocketData {
@@ -154,6 +154,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 						finalState,
 						descendEvent.toFloor,
 						monstersById,
+						encountersById,
 						cachedWalkMask,
 					);
 				}
@@ -173,11 +174,11 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				if (!persisted) {
 					const current = await reconstructState(gameId);
 					if (current) {
-						setSessionState(gameId, current);
+						setSessionState(gameId, current.state, current.baseLayers);
 						io.to(gameId).emit("state", {
 							gameId,
-							turn: current.turn,
-							state: current,
+							turn: current.state.turn,
+							state: current.state,
 							events: [],
 						});
 					}

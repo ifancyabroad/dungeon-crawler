@@ -11,6 +11,7 @@ import {
 	type GameEvent,
 	type GameState,
 } from "@app/shared";
+import { vaults } from "@app/content";
 
 const GAME_ID_KEY = "dungeon_gameId";
 
@@ -32,14 +33,8 @@ const getMinInvalidRetry = () =>
 
 const getNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
-/** Action applied locally but not yet sent (e.g. socket was null). */
-interface PendingAction {
-	action: Action;
-	expectedTurn: number;
-}
-
-/** Move applied for display but not yet sent (we were at in-flight cap). Sent when server catches up. */
-interface UnsentMove {
+/** Action buffered client-side, not yet confirmed by the server. */
+interface BufferedAction {
 	action: Action;
 	expectedTurn: number;
 }
@@ -63,9 +58,9 @@ interface GameStoreState {
 	/** Last state received from server; used for rollback on error. */
 	lastConfirmedState: GameState | null;
 	/** Actions applied locally but not yet sent (socket was null). Flushed when we receive state. */
-	pendingActions: PendingAction[];
+	pendingActions: BufferedAction[];
 	/** Moves applied for display but not yet sent (at in-flight cap). Flushed when we receive state. */
-	unsentMoves: UnsentMove[];
+	unsentMoves: BufferedAction[];
 	/**
 	 * True while the current action's feedback is playing (e.g. move tween, attack animation).
 	 * Blocks sendAction until the scene/UI calls setActionInProgress(false).
@@ -169,6 +164,7 @@ function buildMasks(state: GameState): Pick<GameStoreState, "walkableByFloor" | 
 		state.seed,
 		state.floors.map((f) => f.config),
 		state.mapGenVersion,
+		{ vaultDefs: vaults },
 	);
 	return {
 		walkableByFloor: baseLayers.map((base, i) =>

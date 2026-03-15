@@ -2,8 +2,8 @@
  * Map constants and default config. Client maps TILE_TYPE to tileset indices; shared stays platform-agnostic.
  */
 
-import type { MapGenConfig } from "./types";
 import type { FloorTheme } from "./themes";
+import type { BspParams, CaveParams, FloorConfig } from "./types";
 
 /** Logical tile types for map generation. Client maps these to tileset indices. */
 export const TILE_TYPE = {
@@ -25,34 +25,41 @@ export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
 	rock: 2,
 };
 
-/** Default scatter chance for non-path decorations (0–1). Used by baseLayers and API. */
 export const DEFAULT_SCATTER_CHANCE = 0.28;
-
-/** Default theme name for client tile mapping (e.g. green_forest). */
 export const DEFAULT_FLOOR_THEME: FloorTheme = "green_forest";
-
-/** Default map algorithm: "bsp" (rooms) or "cave" (cellular automata). */
 export const DEFAULT_MAP_ALGORITHM = "cave" as const;
-
-/** Cave only: default initial floor chance for cellular automata (0.35–0.55). */
 export const DEFAULT_CAVE_FLOOR_CHANCE = 0.45;
-
-/** BSP only: default room inset from leaf bounds (1–3). */
 export const DEFAULT_BSP_ROOM_INSET = 1;
-
-/** Default target fraction of map cells that are void (0–0.5). Single source of truth for map gen. */
 export const DEFAULT_SHAPE_VOID_TARGET = 0.2;
 
-/** Default floor config for new games (no seed; seed is run seed + floor index). Same shape as FloorConfig. */
-export const DEFAULT_FLOOR_CONFIG: Omit<MapGenConfig, "seed"> = {
+export const DEFAULT_BSP_PARAMS: BspParams = {
+	roomInset: 1,
+	minRoomSize: 4,
+	maxRoomSize: 12,
+};
+
+export const DEFAULT_CAVE_PARAMS: CaveParams = {
+	floorChance: DEFAULT_CAVE_FLOOR_CHANCE,
+	caIterations: 5,
+	birthThreshold: 4,
+};
+
+/** Default floor config for tests and fallback scenarios. Satisfies the new FloorConfig shape. */
+export const DEFAULT_FLOOR_CONFIG: FloorConfig = {
 	width: DEFAULT_MAP_WIDTH,
 	height: DEFAULT_MAP_HEIGHT,
 	theme: DEFAULT_FLOOR_THEME,
+	floorDepth: 1,
 	algorithm: DEFAULT_MAP_ALGORITHM,
-	caveFloorChance: DEFAULT_CAVE_FLOOR_CHANCE,
-	bspRoomInset: DEFAULT_BSP_ROOM_INSET,
+	algorithmParams: { ...DEFAULT_CAVE_PARAMS },
+	shapeVoidTarget: DEFAULT_SHAPE_VOID_TARGET,
 	decorationWeights: DEFAULT_DECORATION_WEIGHTS,
 	scatterChance: DEFAULT_SCATTER_CHANCE,
-	shapeVoidTarget: DEFAULT_SHAPE_VOID_TARGET,
-	spawns: [],
+	waterEnabled: true,
+	encounterTable: [],
+	enemyDensity: 0.3,
+	itemDensity: 0.0,
+	vaultIds: [],
+	specialRoomFrequency: 0.0,
+	bossRules: null,
 };

@@ -3,7 +3,7 @@
  * Presentation only; walkability is determined by shared isCellWalkable + blockedMask.
  */
 
-import { TILE_TYPE } from "@app/shared";
+import { TILE_TYPE, type FloorTheme } from "@app/shared";
 import { getTileIndicesByThemeAndRole, getTileIndicesByThemeAndType } from "./tilesetRegistry";
 
 /**
@@ -39,7 +39,7 @@ export function toGroundTileIndices(
 	ground: number[][],
 	wall: number[][],
 	waterMask: boolean[][],
-	theme: string,
+	theme: FloorTheme,
 	seed?: number,
 ): number[][] {
 	const groundIndices = getTileIndicesByThemeAndType(theme, "ground");
@@ -49,8 +49,7 @@ export function toGroundTileIndices(
 	return ground.map((row, y) =>
 		row.map((cell, x) => {
 			const w = row.length;
-			if (cell !== TILE_TYPE.FLOOR) return pickTile(groundIndices, x, y, w, seed) ?? fallback;
-			if (wall[y][x] === TILE_TYPE.WALL)
+			if (cell !== TILE_TYPE.FLOOR || wall[y][x] === TILE_TYPE.WALL)
 				return pickTile(groundIndices, x, y, w, seed) ?? fallback;
 			if (waterMask[y][x] && waterIndices.length > 0)
 				return pickTile(waterIndices, x, y, w, seed) ?? fallback;
@@ -61,8 +60,13 @@ export function toGroundTileIndices(
 
 /**
  * Map shared decoration grid (logical types) to tileset indices by theme.
+ * Accepts an optional seed for deterministic variety (same as ground/wall layers).
  */
-export function decorationGridToTileIndices(decorationGrid: string[][], theme: string): number[][] {
+export function decorationGridToTileIndices(
+	decorationGrid: string[][],
+	theme: FloorTheme,
+	seed?: number,
+): number[][] {
 	const height = decorationGrid.length;
 	const width = decorationGrid[0]?.length ?? 0;
 	const result: number[][] = Array.from({ length: height }, () => Array(width).fill(-1));
@@ -71,15 +75,15 @@ export function decorationGridToTileIndices(decorationGrid: string[][], theme: s
 			const type = decorationGrid[y][x];
 			if (!type) continue;
 			const indices = getTileIndicesByThemeAndType(theme, type);
-			const index = indices[Math.floor((y * width + x) % indices.length)] ?? -1;
-			result[y][x] = index;
+			if (indices.length === 0) continue;
+			result[y][x] = indices[hashForTile(seed ?? 0, x, y) % indices.length] ?? -1;
 		}
 	}
 	return result;
 }
 
 /** Wall layer: wall tile or empty by theme. Optional seed gives random-looking but deterministic wall variety. */
-export function toWallTileIndices(layer: number[][], theme: string, seed?: number): number[][] {
+export function toWallTileIndices(layer: number[][], theme: FloorTheme, seed?: number): number[][] {
 	const wallIndices = getTileIndicesByThemeAndRole(theme, "wall");
 	const fallback = wallIndices[0] ?? 0;
 	return layer.map((row, y) =>
