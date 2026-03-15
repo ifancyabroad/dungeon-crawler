@@ -7,7 +7,10 @@ import { z } from "zod";
 export const VaultLegendEntrySchema = z.object({
 	tile: z.enum(["wall", "floor"]),
 	marker: z.string().optional(),
+	groundTileId: z.number().int().nonnegative().optional(),
+	wallTileId: z.number().int().nonnegative().optional(),
 	decorationTileId: z.number().int().nonnegative().optional(),
+	collision: z.boolean().optional(),
 });
 
 export const VaultSpawnEntrySchema = z.object({

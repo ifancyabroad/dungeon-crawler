@@ -215,7 +215,8 @@ export const vaults: readonly VaultDefinition[] = [
       "A": {
         "tile": "floor",
         "marker": "shrine_center",
-        "decorationTileId": 412
+        "decorationTileId": 412,
+        "collision": true
       },
       "a": {
         "tile": "floor",

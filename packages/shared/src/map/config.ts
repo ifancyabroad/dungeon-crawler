@@ -17,7 +17,13 @@ export const TILE_TYPE = {
 
 export const DEFAULT_MAP_WIDTH = 50;
 export const DEFAULT_MAP_HEIGHT = 50;
+export const DEFAULT_FLOOR_THEME: FloorTheme = "green_forest";
+export const DEFAULT_MAP_ALGORITHM = "cave" as const;
 
+/**
+ * Shared decoration weights used as the base for all floor configs.
+ * Individual floors may spread and override specific keys.
+ */
 export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
 	grass: 10,
 	plant: 5,
@@ -26,12 +32,12 @@ export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
 };
 
 export const DEFAULT_SCATTER_CHANCE = 0.28;
-export const DEFAULT_FLOOR_THEME: FloorTheme = "green_forest";
-export const DEFAULT_MAP_ALGORITHM = "cave" as const;
-export const DEFAULT_CAVE_FLOOR_CHANCE = 0.45;
-export const DEFAULT_BSP_ROOM_INSET = 1;
 export const DEFAULT_SHAPE_VOID_TARGET = 0.2;
 
+/**
+ * Default algorithm param objects. Floors spread these and override specific fields
+ * rather than duplicating every value.
+ */
 export const DEFAULT_BSP_PARAMS: BspParams = {
 	roomInset: 1,
 	minRoomSize: 4,
@@ -39,22 +45,26 @@ export const DEFAULT_BSP_PARAMS: BspParams = {
 };
 
 export const DEFAULT_CAVE_PARAMS: CaveParams = {
-	floorChance: DEFAULT_CAVE_FLOOR_CHANCE,
+	floorChance: 0.45,
 	caIterations: 5,
 	birthThreshold: 4,
 };
 
-/** Default floor config for tests and fallback scenarios. Satisfies the new FloorConfig shape. */
+/**
+ * Fallback floor config used in tests and engine bootstrap.
+ * All values are self-contained inline literals — this is a fixture, not a composition of
+ * the shared defaults above. If you change a shared default, this does not change.
+ */
 export const DEFAULT_FLOOR_CONFIG: FloorConfig = {
-	width: DEFAULT_MAP_WIDTH,
-	height: DEFAULT_MAP_HEIGHT,
-	theme: DEFAULT_FLOOR_THEME,
+	width: 50,
+	height: 50,
+	theme: "green_forest",
 	floorDepth: 1,
-	algorithm: DEFAULT_MAP_ALGORITHM,
-	algorithmParams: { ...DEFAULT_CAVE_PARAMS },
-	shapeVoidTarget: DEFAULT_SHAPE_VOID_TARGET,
-	decorationWeights: DEFAULT_DECORATION_WEIGHTS,
-	scatterChance: DEFAULT_SCATTER_CHANCE,
+	algorithm: "cave",
+	algorithmParams: { floorChance: 0.45, caIterations: 5, birthThreshold: 4 },
+	shapeVoidTarget: 0.2,
+	decorationWeights: { grass: 10, plant: 5, bush: 3, rock: 2 },
+	scatterChance: 0.28,
 	waterEnabled: true,
 	encounterTable: [],
 	enemyDensity: 0.3,

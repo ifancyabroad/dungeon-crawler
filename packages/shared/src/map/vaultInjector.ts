@@ -13,20 +13,13 @@
  * - At most one vault is injected per room.
  * - Vault tiles overwrite existing floor/wall tiles in the raw map.
  *
- * The injector does NOT modify blockedMask. Callers (baseLayers.ts) are
- * responsible for applying vault prop collision after injection, using
- * BLOCKING_VAULT_TILE_IDS and the decorationOverrides on each VaultPlacement.
+ * The injector does NOT modify blockedMask. Callers (baseLayers.ts) apply vault prop
+ * collision after injection using the `collision` flag on each decorationOverride entry.
  */
 
 import { TILE_TYPE } from "./config";
 import type { Rng } from "../rng";
 import type { AnalyzedRoom, FloorConfig, RawMap, VaultDef, VaultPlacement } from "./types";
-
-/**
- * Tile IDs that should block movement when stamped as vault decoration props.
- * Must be kept in sync with tilesetRegistry TILE_METADATA (collision: true, role: "vault_prop").
- */
-export const BLOCKING_VAULT_TILE_IDS: ReadonlySet<number> = new Set([412]);
 
 export function injectVaults(
 	rawMap: RawMap,
@@ -56,10 +49,8 @@ export function injectVaults(
 	for (const room of sortedRooms) {
 		if (usedRoomIds.has(room.id)) continue;
 
-		// Find eligible vaults for this room's tag — sort by id for stable RNG consumption
-		const matching = candidates
-			.filter((v) => v.tags.includes(room.tag))
-			.sort((a, b) => a.id.localeCompare(b.id, "en"));
+		// Find eligible vaults for this room's tag
+		const matching = candidates.filter((v) => v.tags.includes(room.tag));
 		if (matching.length === 0) continue;
 
 		// Pick a vault
@@ -100,7 +91,11 @@ export function injectVaults(
 
 		// Stamp the vault: mutates ground and wall in place
 		const markerCells: Record<string, number[]> = {};
+		const groundOverrides: Record<number, number> = {};
+		const wallOverrides: Record<number, number> = {};
 		const decorationOverrides: Record<number, number> = {};
+		const collisionCells = new Set<number>();
+
 		for (let vy = 0; vy < pick.height; vy++) {
 			const row = pick.layout[vy];
 			if (!row) continue;
@@ -118,7 +113,7 @@ export function injectVaults(
 				const my = originY + vy;
 				const flatIdx = my * width + mx;
 
-				if (entry.tile === "wall") {
+				if (entry.tile === "wall" || entry.wallTileId !== undefined) {
 					ground[my][mx] = TILE_TYPE.FLOOR;
 					wall[my][mx] = TILE_TYPE.WALL;
 				} else {
@@ -131,9 +126,11 @@ export function injectVaults(
 					markerCells[entry.marker].push(flatIdx);
 				}
 
-				if (entry.decorationTileId !== undefined) {
+				if (entry.groundTileId !== undefined) groundOverrides[flatIdx] = entry.groundTileId;
+				if (entry.wallTileId !== undefined) wallOverrides[flatIdx] = entry.wallTileId;
+				if (entry.decorationTileId !== undefined)
 					decorationOverrides[flatIdx] = entry.decorationTileId;
-				}
+				if (entry.collision) collisionCells.add(flatIdx);
 			}
 		}
 
@@ -141,7 +138,10 @@ export function injectVaults(
 			vaultId: pick.id,
 			originIdx: originY * width + originX,
 			markerCells,
+			groundOverrides,
+			wallOverrides,
 			decorationOverrides,
+			collisionCells: [...collisionCells],
 		});
 		usedRoomIds.add(room.id);
 	}

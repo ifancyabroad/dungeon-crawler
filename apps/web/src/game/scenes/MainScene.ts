@@ -16,7 +16,6 @@ import {
 } from "@app/shared";
 import {
 	ENTITY_TILES,
-	getCollidingIndices,
 	getExitTile,
 	getHeroTile,
 	TILE_HEIGHT,
@@ -173,10 +172,22 @@ export default class MainScene extends Phaser.Scene {
 			config.seed,
 		);
 
-		// Bake vault prop tile IDs into the decoration data array before the tilemap
-		// is created. putTileAt cannot place tiles on cells that were -1 in the source
-		// data because Phaser creates no tile object for empty cells.
+		// Bake vault tile overrides into the layer data arrays before the tilemaps are created.
+		// putTileAt cannot place tiles on cells that were -1 in the source data because Phaser
+		// creates no tile object for empty cells.
 		for (const placement of vaultPlacements) {
+			for (const [flatIdxStr, tileId] of Object.entries(placement.groundOverrides)) {
+				const flatIdx = Number(flatIdxStr);
+				const x = flatIdx % config.width;
+				const y = Math.floor(flatIdx / config.width);
+				if (groundData[y]) groundData[y][x] = tileId;
+			}
+			for (const [flatIdxStr, tileId] of Object.entries(placement.wallOverrides)) {
+				const flatIdx = Number(flatIdxStr);
+				const x = flatIdx % config.width;
+				const y = Math.floor(flatIdx / config.width);
+				if (wallData[y]) wallData[y][x] = tileId;
+			}
 			for (const [flatIdxStr, tileId] of Object.entries(placement.decorationOverrides)) {
 				const flatIdx = Number(flatIdxStr);
 				const x = flatIdx % config.width;
@@ -538,7 +549,6 @@ export default class MainScene extends Phaser.Scene {
 			console.error("Failed to create ground layer");
 			return;
 		}
-		map.setCollision(getCollidingIndices());
 	}
 
 	private createDecorationLayer(decorationData: number[][]) {
@@ -571,7 +581,6 @@ export default class MainScene extends Phaser.Scene {
 			console.error("Failed to create wall layer");
 			return;
 		}
-		wallMap.setCollision(getCollidingIndices());
 	}
 
 	/**

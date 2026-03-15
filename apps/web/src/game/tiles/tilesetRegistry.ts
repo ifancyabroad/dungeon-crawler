@@ -2,168 +2,139 @@
  * Single source of truth for the Roguelike Remastered tileset (32×32).
  * Tile indices are row-major: index = row * tilesPerRow + col.
  *
- * Tag each tile with theme and role in TILE_METADATA. Use getTileIndicesByThemeAndRole
- * for procedural map rendering and getCollidingIndices for collision.
+ * There are two distinct tile registries:
+ *
+ * 1. TILE_METADATA — tilemap layer tiles (ground, wall, decoration).
+ *    Queried by theme+type to build Phaser tilemaps.
+ *
+ * 2. ENTITY_TILES — Phaser sprite tiles for world entities (heroes, monsters, exits).
+ *    These are sprites placed on top of the tilemap, not part of any tile layer.
+ *    Heroes and monsters are keyed by content id (theme-independent).
+ *    Exits are keyed by floor theme.
+ *
+ * Collision is authoritative in @app/shared (blockedMask). TILE_METADATA does not
+ * drive movement — only rendering and tile lookups by theme/type.
+ * Vault tiles placed via decorationTileId/groundTileId/wallTileId in vault JSON
+ * do not need to be registered here.
  */
 
 import type { FloorTheme } from "@app/shared";
+import { classes, monsters } from "@app/content";
+
+// ---------------------------------------------------------------------------
+// Tilemap constants
+// ---------------------------------------------------------------------------
 
 export const TILE_WIDTH = 32;
 export const TILE_HEIGHT = 32;
+export const TILESET_COLUMNS = 21;
 export const TILESET_KEY = "roguelike-tileset";
 
-export type TileRole = "floor" | "wall" | "decoration" | "entity" | "vault_prop";
+// ---------------------------------------------------------------------------
+// Tilemap layer tile registry
+// ---------------------------------------------------------------------------
+
+export type TileRole = "floor" | "wall" | "decoration";
 
 export interface TileMetadata {
-	/** Floor theme this tile belongs to, or "none" for theme-independent tiles (e.g. vault props). */
-	theme: FloorTheme | "none";
+	theme: FloorTheme;
 	role: TileRole;
+	/** Logical type within the role, e.g. "ground", "rock". */
 	type: string;
-	collision: boolean;
 }
 
 /**
- * Explicit tile metadata: one entry per tileset index.
- * When adding a tile, add { theme, role }. Optional tags can be extended later.
+ * All procedural terrain tiles. One entry per tileset index.
+ * When adding a new tile, add it here with the correct theme and role.
+ * Vault-specific tiles do not need to be registered here.
  */
 export const TILE_METADATA: Record<number, TileMetadata> = {
-	// green forest theme
-	109: { theme: "green_forest", role: "wall", type: "tree", collision: true },
-	130: { theme: "green_forest", role: "wall", type: "tree", collision: true },
-	151: { theme: "green_forest", role: "decoration", type: "grass", collision: false },
-	172: { theme: "green_forest", role: "decoration", type: "plant", collision: false },
-	193: { theme: "green_forest", role: "decoration", type: "bush", collision: false },
-	214: { theme: "green_forest", role: "decoration", type: "rock", collision: true },
-	235: { theme: "green_forest", role: "floor", type: "ground", collision: false },
-	256: { theme: "green_forest", role: "decoration", type: "path", collision: false },
-	298: { theme: "green_forest", role: "floor", type: "water", collision: true },
-	// orange forest theme
-	110: { theme: "orange_forest", role: "wall", type: "tree", collision: true },
-	131: { theme: "orange_forest", role: "wall", type: "tree", collision: true },
-	152: { theme: "orange_forest", role: "decoration", type: "grass", collision: false },
-	173: { theme: "orange_forest", role: "decoration", type: "plant", collision: false },
-	194: { theme: "orange_forest", role: "decoration", type: "bush", collision: false },
-	215: { theme: "orange_forest", role: "decoration", type: "rock", collision: true },
-	236: { theme: "orange_forest", role: "floor", type: "ground", collision: false },
-	257: { theme: "orange_forest", role: "decoration", type: "path", collision: false },
-	299: { theme: "orange_forest", role: "floor", type: "water", collision: true },
-	// yellow forest theme
-	111: { theme: "yellow_forest", role: "wall", type: "tree", collision: true },
-	132: { theme: "yellow_forest", role: "wall", type: "tree", collision: true },
-	153: { theme: "yellow_forest", role: "decoration", type: "grass", collision: false },
-	174: { theme: "yellow_forest", role: "decoration", type: "plant", collision: false },
-	195: { theme: "yellow_forest", role: "decoration", type: "bush", collision: false },
-	216: { theme: "yellow_forest", role: "decoration", type: "rock", collision: true },
-	237: { theme: "yellow_forest", role: "floor", type: "ground", collision: false },
-	258: { theme: "yellow_forest", role: "decoration", type: "path", collision: false },
-	300: { theme: "yellow_forest", role: "floor", type: "water", collision: true },
-	// dark forest theme
-	112: { theme: "dark_forest", role: "wall", type: "tree", collision: true },
-	133: { theme: "dark_forest", role: "wall", type: "tree", collision: true },
-	154: { theme: "dark_forest", role: "decoration", type: "grass", collision: false },
-	175: { theme: "dark_forest", role: "decoration", type: "plant", collision: false },
-	196: { theme: "dark_forest", role: "decoration", type: "bush", collision: false },
-	217: { theme: "dark_forest", role: "decoration", type: "rock", collision: true },
-	238: { theme: "dark_forest", role: "floor", type: "ground", collision: false },
-	259: { theme: "dark_forest", role: "decoration", type: "path", collision: false },
-	301: { theme: "dark_forest", role: "floor", type: "water", collision: true },
-	// vault props — theme-independent, placed only by vault definitions (never scattered)
-	412: { theme: "none", role: "vault_prop", type: "shrine_altar", collision: true },
-	595: { theme: "none", role: "vault_prop", type: "bones_a", collision: false },
-	596: { theme: "none", role: "vault_prop", type: "bones_b", collision: false },
-	597: { theme: "none", role: "vault_prop", type: "bones_c", collision: false },
+	// green_forest
+	109: { theme: "green_forest", role: "wall", type: "tree" },
+	130: { theme: "green_forest", role: "wall", type: "tree" },
+	151: { theme: "green_forest", role: "decoration", type: "grass" },
+	172: { theme: "green_forest", role: "decoration", type: "plant" },
+	193: { theme: "green_forest", role: "decoration", type: "bush" },
+	214: { theme: "green_forest", role: "decoration", type: "rock" },
+	235: { theme: "green_forest", role: "floor", type: "ground" },
+	256: { theme: "green_forest", role: "decoration", type: "path" },
+	298: { theme: "green_forest", role: "floor", type: "water" },
+	// orange_forest
+	110: { theme: "orange_forest", role: "wall", type: "tree" },
+	131: { theme: "orange_forest", role: "wall", type: "tree" },
+	152: { theme: "orange_forest", role: "decoration", type: "grass" },
+	173: { theme: "orange_forest", role: "decoration", type: "plant" },
+	194: { theme: "orange_forest", role: "decoration", type: "bush" },
+	215: { theme: "orange_forest", role: "decoration", type: "rock" },
+	236: { theme: "orange_forest", role: "floor", type: "ground" },
+	257: { theme: "orange_forest", role: "decoration", type: "path" },
+	299: { theme: "orange_forest", role: "floor", type: "water" },
+	// yellow_forest
+	111: { theme: "yellow_forest", role: "wall", type: "tree" },
+	132: { theme: "yellow_forest", role: "wall", type: "tree" },
+	153: { theme: "yellow_forest", role: "decoration", type: "grass" },
+	174: { theme: "yellow_forest", role: "decoration", type: "plant" },
+	195: { theme: "yellow_forest", role: "decoration", type: "bush" },
+	216: { theme: "yellow_forest", role: "decoration", type: "rock" },
+	237: { theme: "yellow_forest", role: "floor", type: "ground" },
+	258: { theme: "yellow_forest", role: "decoration", type: "path" },
+	300: { theme: "yellow_forest", role: "floor", type: "water" },
+	// dark_forest
+	112: { theme: "dark_forest", role: "wall", type: "tree" },
+	133: { theme: "dark_forest", role: "wall", type: "tree" },
+	154: { theme: "dark_forest", role: "decoration", type: "grass" },
+	175: { theme: "dark_forest", role: "decoration", type: "plant" },
+	196: { theme: "dark_forest", role: "decoration", type: "bush" },
+	217: { theme: "dark_forest", role: "decoration", type: "rock" },
+	238: { theme: "dark_forest", role: "floor", type: "ground" },
+	259: { theme: "dark_forest", role: "decoration", type: "path" },
+	301: { theme: "dark_forest", role: "floor", type: "water" },
 };
 
-/**
- * Tile indices that have collision (for Phaser setCollision / display only).
- * Authoritative walkability is in @app/shared: isCellWalkable + blockedMask from buildDecorationLayer.
- * When adding a new decoration type with collision: true, also add it to BLOCKING_DECORATION_TYPES in shared.
- */
-export function getCollidingIndices(): number[] {
-	return Object.entries(TILE_METADATA)
-		.filter(([, meta]) => meta.collision)
-		.map(([index]) => Number(index));
-}
-
-/** Unique theme names from TILE_METADATA (for UI e.g. theme selector). */
-export function getThemes(): FloorTheme[] {
-	const themes = new Set<FloorTheme>();
-	for (const meta of Object.values(TILE_METADATA)) {
-		if (meta.theme !== "none") themes.add(meta.theme);
-	}
-	return [...themes].sort();
-}
-
-/** Tile indices for a given theme and role (e.g. for procedural map rendering). */
+/** Tile indices for a given theme and role (e.g. all wall tiles for green_forest). */
 export function getTileIndicesByThemeAndRole(theme: FloorTheme, role: TileRole): number[] {
 	return Object.entries(TILE_METADATA)
 		.filter(([, meta]) => meta.theme === theme && meta.role === role)
 		.map(([index]) => Number(index));
 }
 
-/** Tile indices for a given theme and type (e.g. decoration type "path", "grass"). */
+/** Tile indices for a given theme and logical type (e.g. "grass", "path", "ground"). */
 export function getTileIndicesByThemeAndType(theme: FloorTheme, type: string): number[] {
 	return Object.entries(TILE_METADATA)
 		.filter(([, meta]) => meta.theme === theme && meta.type === type)
 		.map(([index]) => Number(index));
 }
 
-/** Decoration types (role === "decoration") grouped by type for a theme. Path is separate for connected placement. */
-export function getDecorationsByTheme(theme: FloorTheme): { type: string; indices: number[] }[] {
-	const byType = new Map<string, number[]>();
-	for (const [index, meta] of Object.entries(TILE_METADATA)) {
-		if (meta.theme !== theme || meta.role !== "decoration") continue;
-		const list = byType.get(meta.type) ?? [];
-		list.push(Number(index));
-		byType.set(meta.type, list);
-	}
-	return [...byType.entries()].map(([type, indices]) => ({ type, indices }));
-}
-
-import { classes, monsters } from "@app/content";
-
-const heroTileMap: Record<string, number> = {};
-for (const c of classes) heroTileMap[c.id] = c.tileId;
-
-const monsterTileMap: Record<string, number> = {};
-for (const m of monsters) monsterTileMap[m.id] = m.tileId;
-
-/** Entity tile indices keyed by content id, derived from content JSON definitions. */
-export const ENTITY_TILES = {
-	heroes: heroTileMap,
-	monsters: monsterTileMap,
-} as const;
-
-export const DEFAULT_HERO_TILE = heroTileMap["warrior"] ?? 742;
-
-/** Resolve tileset index for a hero class. Falls back to warrior tile for unknown ids. */
-export function getHeroTile(classId: string): number {
-	return heroTileMap[classId] ?? DEFAULT_HERO_TILE;
-}
-
-/** Number of tile columns in the tileset spritesheet (used for CSS background-position). */
-export const TILESET_COLUMNS = 21;
+// ---------------------------------------------------------------------------
+// Entity sprite registry (heroes, monsters, exits)
+// ---------------------------------------------------------------------------
 
 /**
- * Sprite tile frame indices for world entities (exits, chests, traps, etc.) keyed by
- * entity type and then floor theme. Add new interactable types here as they are introduced.
- * Tile 533 = row 25 col 8 in the Roguelike Remastered 21-col tileset (stairs down / portal).
+ * Sprite tile frame indices for all world entities.
+ *
+ * - heroes / monsters: keyed by content id (theme-independent; defined in content JSON).
+ * - exits: keyed by floor theme (the staircase tile varies per theme in future; currently
+ *   all themes share tile 533).
+ *
+ * When adding a new entity type, add a key here and a typed accessor below.
  */
-export const ENTITY_TILE_FRAMES: Record<string, Record<FloorTheme, number>> = {
-	exit: {
+export const ENTITY_TILES = {
+	heroes: Object.fromEntries(classes.map((c) => [c.id, c.tileId])) as Record<string, number>,
+	monsters: Object.fromEntries(monsters.map((m) => [m.id, m.tileId])) as Record<string, number>,
+	exits: {
 		green_forest: 533,
 		orange_forest: 533,
 		yellow_forest: 533,
 		dark_forest: 533,
-	},
-};
+	} satisfies Record<FloorTheme, number>,
+} as const;
 
-/** Get the sprite frame index for a world entity of a given type and floor theme. */
-export function getEntityTile(type: string, theme: FloorTheme): number | undefined {
-	return ENTITY_TILE_FRAMES[type]?.[theme];
+/** Resolve sprite tile for a hero class. Falls back to warrior for unknown ids. */
+export function getHeroTile(classId: string): number {
+	return ENTITY_TILES.heroes[classId] ?? ENTITY_TILES.heroes["warrior"] ?? 742;
 }
 
-/** Get the exit tile frame index for a given floor theme. */
+/** Resolve sprite tile for a floor exit given the current theme. */
 export function getExitTile(theme: FloorTheme): number {
-	return ENTITY_TILE_FRAMES.exit[theme];
+	return ENTITY_TILES.exits[theme];
 }

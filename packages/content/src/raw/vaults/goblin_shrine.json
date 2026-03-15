@@ -7,7 +7,12 @@
 	"layout": [".......", ".b.c.b.", ".......", "...A...", ".......", ".a...a.", "......."],
 	"legend": {
 		".": { "tile": "floor" },
-		"A": { "tile": "floor", "marker": "shrine_center", "decorationTileId": 412 },
+		"A": {
+			"tile": "floor",
+			"marker": "shrine_center",
+			"decorationTileId": 412,
+			"collision": true
+		},
 		"a": { "tile": "floor", "decorationTileId": 595 },
 		"b": { "tile": "floor", "decorationTileId": 596 },
 		"c": { "tile": "floor", "decorationTileId": 597 }

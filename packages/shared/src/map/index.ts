@@ -5,8 +5,6 @@
 
 export {
 	DEFAULT_BSP_PARAMS,
-	DEFAULT_BSP_ROOM_INSET,
-	DEFAULT_CAVE_FLOOR_CHANCE,
 	DEFAULT_CAVE_PARAMS,
 	DEFAULT_DECORATION_WEIGHTS,
 	DEFAULT_FLOOR_CONFIG,
@@ -15,6 +13,7 @@ export {
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	DEFAULT_SCATTER_CHANCE,
+	DEFAULT_SHAPE_VOID_TARGET,
 	TILE_TYPE,
 } from "./config";
 export type {
@@ -57,4 +56,4 @@ export { FLOOR_CONFIGS } from "./floorConfigs";
 export { computeOpacityMask, computeVisibility, mergeExplored } from "./visibility";
 export { bfsNextStep } from "./pathfinding";
 export { analyzeRooms } from "./roomAnalysis";
-export { injectVaults, BLOCKING_VAULT_TILE_IDS } from "./vaultInjector";
+export { injectVaults } from "./vaultInjector";

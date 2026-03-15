@@ -113,8 +113,17 @@ export interface AnalyzedRoom {
 export interface VaultLegendEntry {
 	tile: "wall" | "floor";
 	marker?: string;
-	/** Fixed tileset index to stamp onto the decoration layer. Theme-independent. */
+	/** Override the ground layer tile at this cell with a specific tileset index. */
+	groundTileId?: number;
+	/**
+	 * Override the wall layer tile at this cell with a specific tileset index.
+	 * When set, this cell is treated as a wall regardless of the `tile` field.
+	 */
+	wallTileId?: number;
+	/** Stamp a specific tileset tile onto the decoration layer at this cell. */
 	decorationTileId?: number;
+	/** Whether this cell blocks movement. Drives the server-side walkability mask. */
+	collision?: boolean;
 }
 
 export interface VaultSpawnEntry {
@@ -141,12 +150,14 @@ export interface VaultPlacement {
 	originIdx: number;
 	/** Marker → flat tile index, for downstream encounter seeding. */
 	markerCells: Record<string, number[]>;
-	/**
-	 * Flat tile index → tileset tile ID for vault-specific decoration props.
-	 * Applied by the client after the procedural decoration layer is built,
-	 * overwriting any scattered decoration at those cells.
-	 */
+	/** Flat tile index → tileset tile ID for ground layer overrides. */
+	groundOverrides: Record<number, number>;
+	/** Flat tile index → tileset tile ID for wall layer overrides. */
+	wallOverrides: Record<number, number>;
+	/** Flat tile index → tileset tile ID for decoration layer overrides. */
 	decorationOverrides: Record<number, number>;
+	/** Flat tile indices of cells that block movement. */
+	collisionCells: number[];
 }
 
 // ---------------------------------------------------------------------------

@@ -2,21 +2,16 @@
  * Regenerate base map layers from seed + floor configs (deterministic).
  *
  * Pipeline per floor:
- *   1. buildShapeMask + algorithm (generate.ts)
+ *   1. Generate raw map shape (generate.ts)
  *   2. Room analysis (roomAnalysis.ts)
- *   3. Vault injection (vaultInjector.ts)  ← must be before water/decoration
- *   4. Water mask (buildWaterMask)
- *   5. Scatter decoration (buildDecorationLayer)
- *   6. Apply vault prop collision to blockedMask
+ *   3. Vault injection (vaultInjector.ts)  ← must run before water/decoration
+ *   4. Water mask (buildWaterMask) + clear water over vault footprints
+ *   5. Scatter decoration (buildDecorationLayer) → produces initial blockedMask
+ *   6. Apply vault collision cells to blockedMask
  *   7. Spawn / exit point selection
  *
- * Vault injection runs before water and decoration so those stages see the
- * final terrain. Decoration scatter will therefore never land on vault cells,
- * and the water mask respects vault walls.
- *
  * All stages share a single Rng per floor (seed = gameSeed + floorIndex).
- * Vault / encounter defs are passed in from the API layer so @app/shared
- * never imports @app/content.
+ * Vault defs are passed in from the API layer so @app/shared never imports @app/content.
  */
 
 import { createRng } from "../rng";
@@ -25,7 +20,7 @@ import { generateMap } from "./generate";
 import { buildWaterMask } from "./water";
 import { isCellWalkable } from "./walkability";
 import { analyzeRooms } from "./roomAnalysis";
-import { injectVaults, BLOCKING_VAULT_TILE_IDS } from "./vaultInjector";
+import { injectVaults } from "./vaultInjector";
 import { TILE_TYPE } from "./config";
 import type { FloorConfig, RawMap, VaultDef, AnalyzedRoom, VaultPlacement } from "./types";
 import { MAP_GEN_VERSION } from "../game/types";
@@ -148,10 +143,9 @@ export function regenerateBaseMaps(
 			vaultPlacements = injectVaults(rawMap, rooms, vaultDefs, config, rng);
 		}
 
-		// Stage 4: spawn / exit point selection
 		const spawnIdx = spawn.y * width + spawn.x;
 
-		// Stage 5a: water mask — runs on post-vault terrain
+		// Stage 4: water mask — runs on post-vault terrain
 		const waterMask = config.waterEnabled
 			? buildWaterMask(ground, wall, spawn, seed + i)
 			: (Array.from({ length: height }, () => Array(width).fill(false)) as boolean[][]);
@@ -175,7 +169,7 @@ export function regenerateBaseMaps(
 			}
 		}
 
-		// Stage 5b: scatter decoration — runs on post-vault terrain; blockedMask from this
+		// Stage 5: scatter decoration — runs on post-vault terrain; produces initial blockedMask
 		const { blockedMask, decorationGrid } = buildDecorationLayer(
 			ground,
 			wall,
@@ -187,15 +181,12 @@ export function regenerateBaseMaps(
 			config.scatterChance,
 		);
 
-		// Stage 6: apply vault prop collision to blockedMask
+		// Stage 6: apply vault collision cells to blockedMask
 		for (const placement of vaultPlacements) {
-			for (const [flatIdxStr, tileId] of Object.entries(placement.decorationOverrides)) {
-				if (BLOCKING_VAULT_TILE_IDS.has(tileId)) {
-					const flatIdx = Number(flatIdxStr);
-					const x = flatIdx % width;
-					const y = Math.floor(flatIdx / width);
-					blockedMask[y][x] = true;
-				}
+			for (const flatIdx of placement.collisionCells) {
+				const x = flatIdx % width;
+				const y = Math.floor(flatIdx / width);
+				blockedMask[y][x] = true;
 			}
 		}
 
