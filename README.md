@@ -1,15 +1,11 @@
 # Dungeon Crawler
 
-A dungeon crawler game (server-authoritative, turn-based). Monorepo: React + Phaser (web), Express + MongoDB (API), shared game engine in `packages/shared`.
+A server-authoritative, turn-based dungeon crawler. Explore procedurally generated floors, fight monsters, and level up your hero — all driven by a deterministic shared game engine.
 
-## Tech Stack
+## Documentation
 
-| Layer    | Technologies                                       |
-| -------- | -------------------------------------------------- |
-| Frontend | React, TypeScript, Vite, Tailwind, Phaser, Zustand |
-| Backend  | Node.js, Express, Mongoose, Zod                    |
-| Tooling  | TypeScript, ESLint, Prettier, Vitest, Husky        |
-| Package  | pnpm workspaces                                    |
+- [Architecture](docs/ARCHITECTURE.md) — system design, authority model, persistence, socket protocol
+- [PRD](docs/PRD.md) — product vision, current features, and planned work
 
 ## Prerequisites
 
@@ -24,16 +20,6 @@ pnpm install
 pnpm dev
 # Web: http://localhost:5173
 # API: http://localhost:4000
-```
-
-## Project Layout
-
-```
-apps/
-  api/      # Express API + persistence
-  web/      # React + Phaser client
-packages/
-  shared/   # Deterministic game engine + shared schemas
 ```
 
 ## Environment
