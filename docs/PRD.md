@@ -33,20 +33,11 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 
 ### Classes
 
-| Class   | Key Stat | Hit Die | Starting HP |
-| ------- | -------- | ------- | ----------- |
-| Warrior | STR 16   | d10     | 140         |
-| Mage    | INT 16   | d6      | 8           |
-| Rogue   | DEX 16   | d8      | 10          |
+The game currently ships with **three starter classes**. Class definitions (including stats) live in `packages/content/src/raw/classes/`.
 
 ### Floors
 
-| Floor | Theme         | Algorithm | Size  |
-| ----- | ------------- | --------- | ----- |
-| 1     | green_forest  | cave      | 50×50 |
-| 2     | orange_forest | bsp       | 55×55 |
-| 3     | yellow_forest | hybrid    | 60×60 |
-| 4     | dark_forest   | bsp       | 65×65 |
+The dungeon currently has **four floors** with increasing difficulty and different generation styles. Floor progression and generation parameters live in `packages/shared/src/map/floorConfigs.ts`.
 
 ### Combat
 
@@ -58,9 +49,7 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 
 ### Monsters
 
-| Monster | HP  | AC  | XP  | AI    |
-| ------- | --- | --- | --- | ----- |
-| Goblin  | 7   | 12  | 25  | melee |
+The current monster roster is intentionally small while core systems stabilise. Canonical monster definitions live in `packages/content/src/raw/monsters/`, with encounters in `packages/content/src/raw/encounters/`.
 
 Floor 4 has a boss encounter that currently uses a Goblin as a placeholder.
 
