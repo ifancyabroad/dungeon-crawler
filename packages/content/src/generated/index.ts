@@ -4,6 +4,7 @@ import type { CharacterClassDefinition } from "../schemas/characterClass.js";
 import type { MonsterDefinition } from "../schemas/monster.js";
 import type { VaultDefinition } from "../schemas/vault.js";
 import type { EncounterDefinition } from "../schemas/encounter.js";
+import type { SkillDefinition } from "../schemas/skill.js";
 
 export const characterClassIds = ["mage","rogue","warrior"] as const;
 export type CharacterClassId = (typeof characterClassIds)[number];
@@ -33,8 +34,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "robe-cloth"
     ],
     "startingSkills": [
-      "arcane-lore",
-      "spellcasting"
+      "fireball"
     ],
     "weaponProficiencies": [
       "staff",
@@ -65,8 +65,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "leather-jacket"
     ],
     "startingSkills": [
-      "stealth",
-      "lockpick"
+      "stealth"
     ],
     "weaponProficiencies": [
       "dagger",
@@ -99,8 +98,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "mail-hauberk"
     ],
     "startingSkills": [
-      "weapon-mastery",
-      "shield-block"
+      "charge"
     ],
     "weaponProficiencies": [
       "sword",
@@ -315,3 +313,59 @@ export const encounters: readonly EncounterDefinition[] = [
 const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
+
+export const skillIds = ["charge","fireball","stealth"] as const;
+export type SkillId = (typeof skillIds)[number];
+
+export const skills: readonly SkillDefinition[] = [
+  {
+    "id": "charge",
+    "name": "Charge",
+    "description": "Sprint toward a distant enemy in a straight line and deliver a devastating blow on arrival.",
+    "cooldown": 10,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "charge_attack",
+        "maxRangeTiles": 4,
+        "bonusDice": "1d8"
+      }
+    ]
+  },
+  {
+    "id": "fireball",
+    "name": "Fireball",
+    "description": "Hurl a ball of fire that explodes on impact, scorching all enemies in the blast radius.",
+    "cooldown": 20,
+    "targetType": "tile",
+    "range": 5,
+    "effects": [
+      {
+        "type": "area_damage",
+        "dice": "2d6",
+        "radiusTiles": 1,
+        "scalingStat": "intelligence"
+      }
+    ]
+  },
+  {
+    "id": "stealth",
+    "name": "Stealth",
+    "description": "Melt into the shadows. Enemies lose track of you and cannot detect your presence.",
+    "cooldown": 30,
+    "targetType": "none",
+    "maintainsStealth": true,
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "stealth",
+        "durationTurns": 20
+      }
+    ]
+  }
+] as readonly SkillDefinition[];
+
+const _skillsById: Record<string, SkillDefinition> = {};
+for (const s of skills) { _skillsById[s.id] = s; }
+export const skillsById: Record<string, SkillDefinition> = _skillsById;

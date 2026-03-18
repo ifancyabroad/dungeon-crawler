@@ -14,6 +14,7 @@ import { CharacterClassSchema, type CharacterClassDefinition } from "../schemas/
 import { MonsterSchema, type MonsterDefinition } from "../schemas/monster.js";
 import { VaultDefSchema, type VaultDefinition } from "../schemas/vault.js";
 import { EncounterDefSchema, type EncounterDefinition } from "../schemas/encounter.js";
+import { SkillDefinitionSchema, type SkillDefinition } from "../schemas/skill.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");
@@ -21,6 +22,7 @@ const RAW_CLASSES_DIR = join(ROOT, "src", "raw", "classes");
 const RAW_MONSTERS_DIR = join(ROOT, "src", "raw", "monsters");
 const RAW_VAULTS_DIR = join(ROOT, "src", "raw", "vaults");
 const RAW_ENCOUNTERS_DIR = join(ROOT, "src", "raw", "encounters");
+const RAW_SKILLS_DIR = join(ROOT, "src", "raw", "skills");
 const OUT_PATH = join(ROOT, "src", "generated", "index.ts");
 
 function getContentVersion(): string {
@@ -118,6 +120,20 @@ function run(): boolean {
 	}
 	const sortedEncounters = [...encounters].sort((a, b) => a.id.localeCompare(b.id, "en"));
 
+	const skills = loadAndValidate<SkillDefinition>(
+		RAW_SKILLS_DIR,
+		SkillDefinitionSchema,
+		"skills",
+	);
+	if (!skills) return false;
+
+	const skillIdValues = [...new Set(skills.map((s) => s.id))];
+	if (skillIdValues.length !== skills.length) {
+		console.error("Duplicate skill ids found.");
+		return false;
+	}
+	const sortedSkills = [...skills].sort((a, b) => a.id.localeCompare(b.id, "en"));
+
 	const classIdValues = sortedClasses.map((c) => c.id);
 	const monsterIdValues = sortedMonsters.map((m) => m.id);
 	mkdirSync(dirname(OUT_PATH), { recursive: true });
@@ -129,6 +145,7 @@ function run(): boolean {
 		'import type { MonsterDefinition } from "../schemas/monster.js";',
 		'import type { VaultDefinition } from "../schemas/vault.js";',
 		'import type { EncounterDefinition } from "../schemas/encounter.js";',
+		'import type { SkillDefinition } from "../schemas/skill.js";',
 		"",
 		"export const characterClassIds = " + JSON.stringify(classIdValues) + " as const;",
 		"export type CharacterClassId = (typeof characterClassIds)[number];",
@@ -170,6 +187,17 @@ function run(): boolean {
 		"for (const e of encounters) { _encountersById[e.id] = e; }",
 		"export const encountersById: Record<string, EncounterDefinition> = _encountersById;",
 		"",
+		"export const skillIds = " + JSON.stringify(skillIdValues) + " as const;",
+		"export type SkillId = (typeof skillIds)[number];",
+		"",
+		"export const skills: readonly SkillDefinition[] = " +
+			JSON.stringify(sortedSkills, null, 2) +
+			" as readonly SkillDefinition[];",
+		"",
+		"const _skillsById: Record<string, SkillDefinition> = {};",
+		"for (const s of skills) { _skillsById[s.id] = s; }",
+		"export const skillsById: Record<string, SkillDefinition> = _skillsById;",
+		"",
 	];
 	writeFileSync(OUT_PATH, lines.join("\n"), "utf-8");
 	console.log("Wrote", OUT_PATH);
@@ -183,6 +211,7 @@ if (isWatch) {
 	if (existsSync(RAW_MONSTERS_DIR)) watch(RAW_MONSTERS_DIR, () => run());
 	if (existsSync(RAW_VAULTS_DIR)) watch(RAW_VAULTS_DIR, () => run());
 	if (existsSync(RAW_ENCOUNTERS_DIR)) watch(RAW_ENCOUNTERS_DIR, () => run());
+	if (existsSync(RAW_SKILLS_DIR)) watch(RAW_SKILLS_DIR, () => run());
 	watch(join(ROOT, "src", "schemas"), () => run());
 } else {
 	if (!run()) process.exit(1);

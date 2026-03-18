@@ -30,6 +30,18 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ---
 
+## Adding a New Skill
+
+1. Create `packages/content/src/raw/skills/<name>.json`. Follow existing skill files (`fireball.json`, `charge.json`, `stealth.json`) for the required shape: `id`, `name`, `description`, `cooldown`, and an `effects` array of `SkillEffectDescriptor` objects.
+2. If the skill needs a new effect type, add a new variant to `SkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts` and mirror the type in `packages/shared/src/skills/types.ts`. Implement the handler under `packages/shared/src/skills/effects/` and register it in `resolveSkill.ts`.
+3. Run `pnpm --filter @app/content generate` to regenerate `skillsById`.
+4. Grant the skill to the relevant class by adding its `id` to `startingSkills` in `packages/content/src/raw/classes/<class>.json`.
+5. If the skill has a visual effect, add a handler in `apps/web/src/game/fx/skills/<name>.ts` and register it in `apps/web/src/game/fx/skills/index.ts` (`SKILL_ANIM_REGISTRY`).
+6. If the skill requires a targeting mode (tile or actor selection), dispatch `useTargetingStore.getState().enterTargeting(...)` from the hotbar click handler — `TargetingSystem` and the store handle the overlay and input automatically.
+7. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
+
+---
+
 ## Adding a New Action
 
 1. Define the Zod schema and TypeScript type in `packages/shared/src/game/actions.ts`. Add it to the `ActionSchema` discriminated union.

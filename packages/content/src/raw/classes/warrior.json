@@ -13,7 +13,7 @@
 	"startingHp": 140,
 	"hitDie": 10,
 	"startingEquipment": ["sword-basic", "shield-wood", "mail-hauberk"],
-	"startingSkills": ["weapon-mastery", "shield-block"],
+	"startingSkills": ["charge"],
 	"weaponProficiencies": ["sword", "axe", "mace", "polearm"],
 	"armorProficiencies": ["light", "medium", "heavy", "shield"],
 	"resource": "stamina",

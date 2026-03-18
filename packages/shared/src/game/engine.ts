@@ -25,23 +25,33 @@ import { resolveAttack } from "../combat/combat";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
 import { runMonsterAI, type MonsterAIState } from "./monsterAI";
+import { resolveSkill, hasStatusEffect, tickStatusEffects } from "../skills";
+import type { SkillDefinition } from "../skills";
 
 /** Empty floor state. Use when defaulting or building from persisted. spawnIdx and exitIdx are set after map generation. */
 export function createEmptyFloorState(): FloorState {
 	return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx: 0, exitIdx: null };
 }
 
-/** Context required for applyAction: walkability + opacity masks per floor. */
+/** Context required for applyAction: walkability + opacity masks per floor, plus content lookups. */
 export interface ApplyActionContext {
 	getWalkableMask(floorIndex: number): Uint8Array;
 	/** 1 = opaque (blocks LoS), 0 = transparent. Required for explored-state updates. */
 	getOpacityMask(floorIndex: number): Uint8Array;
+	/**
+	 * Look up a skill definition by id. Used by the "use_skill" action branch.
+	 * Returns undefined if the skill is not found (invalid id → engine rejects the action).
+	 * In production, this is backed by skillsById from @app/content.
+	 * In tests, pass a map of mock definitions.
+	 */
+	getSkillDef(skillId: string): SkillDefinition | undefined;
 }
 
 /** Build context from precomputed walkability and opacity masks (O(1) per apply). */
 export function createActionContext(
 	walkableMasks: Uint8Array[],
 	opacityMasks: Uint8Array[],
+	skillDefs?: Record<string, SkillDefinition>,
 ): ApplyActionContext {
 	return {
 		getWalkableMask(fi: number): Uint8Array {
@@ -57,6 +67,9 @@ export function createActionContext(
 				throw new Error(`createActionContext: missing opacity mask for floor ${fi}`);
 			}
 			return mask;
+		},
+		getSkillDef(skillId: string): SkillDefinition | undefined {
+			return skillDefs?.[skillId];
 		},
 	};
 }
@@ -113,6 +126,7 @@ export const DEFAULT_HERO_INIT: HeroInit = {
 	level: 1,
 	xp: 0,
 	hitDie: 10,
+	skills: [],
 };
 
 /**
@@ -132,6 +146,11 @@ function buildInitialFloorState(
 		return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx, exitIdx };
 	}
 
+	const initialSkills: Record<string, { cooldownRemaining: number }> = {};
+	for (const skillId of heroInit.skills ?? []) {
+		initialSkills[skillId] = { cooldownRemaining: 0 };
+	}
+
 	const heroActor: Actor = {
 		id: "hero",
 		name: heroInit.name,
@@ -141,7 +160,8 @@ function buildInitialFloorState(
 		maxHp: heroInit.maxHp,
 		armorClass: heroInit.armorClass ?? computeUnarmoredAC(heroInit.attributes.dexterity),
 		attributes: { ...heroInit.attributes },
-		skills: {},
+		skills: initialSkills,
+		statusEffects: [],
 		def: { type: "hero", classId: heroInit.classId },
 		level: heroInit.level,
 		xp: heroInit.xp,
@@ -268,6 +288,7 @@ export function spawnMonster(
 		armorClass: init.armorClass,
 		attributes: { ...init.attributes },
 		skills: {},
+		statusEffects: [],
 		def: { type: "monster", monsterId: init.monsterId },
 		level: 0,
 		xp: 0,
@@ -287,9 +308,45 @@ export function spawnMonster(
 // ---------------------------------------------------------------------------
 
 /**
+ * Award XP to an actor for a kill, levelling them up if the threshold is crossed.
+ * Returns the updated actor and any level_up events emitted.
+ */
+function grantXpForKill(
+	actor: Actor,
+	actorId: ActorId,
+	xpReward: number,
+	rng: Rng,
+): { actor: Actor; events: GameEvent[] } {
+	if (xpReward <= 0) return { actor, events: [] };
+	const events: GameEvent[] = [];
+	let newXp = actor.xp + xpReward;
+	let newLevel = actor.level;
+	let newMaxHp = actor.maxHp;
+	let newCurrentHp = actor.hp;
+
+	const nextLevelXp = XP_PER_LEVEL[newLevel + 1] ?? Infinity;
+	if (newXp >= nextLevelXp) {
+		newXp -= nextLevelXp;
+		newLevel += 1;
+		const conMod = Math.floor((actor.attributes.constitution - 10) / 2);
+		const roll = Math.floor(rng() * actor.hitDie) + 1;
+		const hpGained = Math.max(1, roll + conMod);
+		newMaxHp += hpGained;
+		newCurrentHp += hpGained;
+		events.push({ type: "level_up", actorId, newLevel, hpGained });
+	}
+
+	return {
+		actor: { ...actor, xp: newXp, level: newLevel, maxHp: newMaxHp, hp: newCurrentHp },
+		events,
+	};
+}
+
+/**
  * After a player action, each living monster on the hero's floor acts.
- * Each monster runs its AI strategy: chase/roam/attack based on LoS.
+ * Each monster runs its AI strategy: chase/roam/attack/skill based on LoS.
  * Sorted by actor ID for deterministic order.
+ * `getSkillDef` is required to resolve monster skill actions.
  */
 function processEnemyTurns(
 	floorState: FloorState,
@@ -299,6 +356,7 @@ function processEnemyTurns(
 	walkableMask: Uint8Array,
 	opacityMask: Uint8Array,
 	rng: Rng,
+	getSkillDef: (skillId: string) => SkillDefinition | undefined,
 ): { floorState: FloorState; events: GameEvent[] } {
 	const events: GameEvent[] = [];
 	let actorsById = { ...floorState.actorsById };
@@ -312,6 +370,9 @@ function processEnemyTurns(
 		.sort();
 
 	let currentHero = hero;
+	// If the hero is stealthed, monsters cannot see them regardless of LoS.
+	const heroIsStealthed = hasStatusEffect(currentHero, "stealth");
+
 	for (const mid of monsterIds) {
 		if (!currentHero.alive) break;
 		const monster = actorsById[mid];
@@ -321,14 +382,13 @@ function processEnemyTurns(
 		if (!aiState) continue;
 
 		const { x, y } = idxToXY(monster.idx, width);
-		const visibleFromMonster = computeVisibility(
-			x,
-			y,
-			width,
-			height,
-			opacityMask,
-			VISION_RADIUS,
-		);
+		let visibleFromMonster = computeVisibility(x, y, width, height, opacityMask, VISION_RADIUS);
+
+		// Stealth: mask hero tile so all AI strategies treat the hero as invisible.
+		if (heroIsStealthed) {
+			visibleFromMonster = visibleFromMonster.slice() as Uint8Array;
+			visibleFromMonster[currentHero.idx] = 0;
+		}
 
 		// Build a temporary floor state snapshot so AI sees the current actor positions
 		const currentFloorState: FloorState = { ...floorState, actorsById };
@@ -374,6 +434,50 @@ function processEnemyTurns(
 				...actorsById,
 				[mid]: { ...monster, idx: result.toIdx, aiState: newAIState },
 			};
+		} else if (result.kind === "skill") {
+			// Monster uses a skill — resolved the same way as hero skills.
+			const skillDef = getSkillDef(result.skillId);
+			const skillState = monster.skills?.[result.skillId];
+			if (skillDef && skillState && skillState.cooldownRemaining === 0) {
+				const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
+				const resolution = resolveSkill({
+					skillDef,
+					caster: { ...monster, aiState: newAIState },
+					casterId: mid,
+					floorState: currentFloorSnapshot,
+					width,
+					height,
+					rng,
+					targetTileIdx: result.targetTileIdx,
+					targetActorId: result.targetActorId,
+				});
+				if (!("error" in resolution)) {
+					const monsterAfterSkill = resolution.floorState.actorsById[mid];
+					if (monsterAfterSkill) {
+						actorsById = {
+							...resolution.floorState.actorsById,
+							[mid]: {
+								...monsterAfterSkill,
+								skills: {
+									...monsterAfterSkill.skills,
+									[result.skillId]: { cooldownRemaining: skillDef.cooldown },
+								},
+							},
+						};
+					} else {
+						actorsById = resolution.floorState.actorsById;
+					}
+					events.push(...resolution.events);
+					const heroAfterSkill = actorsById[heroId];
+					if (heroAfterSkill) currentHero = heroAfterSkill;
+					if (!currentHero.alive) break;
+				} else {
+					actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
+				}
+			} else {
+				// Skill on cooldown or unknown — fall back to idle
+				actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
+			}
 		} else {
 			// idle — just persist updated aiState (e.g. cleared lastKnownHeroIdx)
 			actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
@@ -404,6 +508,71 @@ function computeTargetCell(
 // ---------------------------------------------------------------------------
 // Apply action
 // ---------------------------------------------------------------------------
+
+/**
+ * Decrement cooldownRemaining by 1 for every skill on the hero, removing any that reach 0.
+ * Called at the end of every player turn so cooldowns count down with each action.
+ */
+function tickSkillCooldowns(state: GameState): GameState {
+	const fi = state.heroFloorIndex;
+	const floor = state.floors[fi];
+	if (!floor) return state;
+	const hero = floor.state.actorsById[state.heroId];
+	if (!hero) return state;
+
+	const updatedSkills: Record<string, { level?: number; cooldownRemaining: number }> = {};
+	for (const [id, s] of Object.entries(hero.skills)) {
+		updatedSkills[id] = {
+			...s,
+			cooldownRemaining: Math.max(0, s.cooldownRemaining - 1),
+		};
+	}
+
+	const updatedHero: Actor = { ...hero, skills: updatedSkills };
+	const newFloors = state.floors.slice();
+	newFloors[fi] = {
+		...floor,
+		state: {
+			...floor.state,
+			actorsById: { ...floor.state.actorsById, [state.heroId]: updatedHero },
+		},
+	};
+	return { ...state, floors: newFloors };
+}
+
+/**
+ * If the hero is stealthed, remove the stealth effect and alert all living monsters
+ * to the hero's current position. Called before enemy turns on attack and skill use,
+ * so enemies can retaliate immediately after the hero reveals themselves.
+ */
+function breakStealth(
+	hero: Actor,
+	heroId: ActorId,
+	floorState: FloorState,
+): { hero: Actor; floorState: FloorState } {
+	if (!hasStatusEffect(hero, "stealth")) return { hero, floorState };
+
+	const updatedHero: Actor = {
+		...hero,
+		statusEffects: hero.statusEffects.filter((e) => e.id !== "stealth"),
+	};
+
+	let actorsById: Record<string, Actor> = {
+		...floorState.actorsById,
+		[heroId]: updatedHero,
+	};
+
+	for (const [id, actor] of Object.entries(actorsById)) {
+		if (id === heroId || !actor.alive || actor.def.type !== "monster" || !actor.aiState)
+			continue;
+		actorsById = {
+			...actorsById,
+			[id]: { ...actor, aiState: { ...actor.aiState!, lastKnownHeroIdx: hero.idx } },
+		};
+	}
+
+	return { hero: updatedHero, floorState: { ...floorState, actorsById } };
+}
 
 /**
  * Apply one action to state. Context is required (use applyActionWithDerivedContext in dev/test only).
@@ -456,6 +625,7 @@ export function applyAction(
 				mask,
 				opacityMask,
 				rng,
+				context.getSkillDef,
 			);
 			newFloorState = enemyResult.floorState;
 
@@ -537,6 +707,9 @@ export function applyAction(
 				}
 			}
 
+			newState = tickStatusEffects(newState);
+			newState = tickSkillCooldowns(newState);
+
 			return { ok: true, state: newState, events };
 		}
 
@@ -558,8 +731,17 @@ export function applyAction(
 			const { rng, getState: getRngState } = createRngFromState(state.rngState);
 			const events: GameEvent[] = [];
 
+			// Attacking breaks stealth — hero is revealed before enemy turns.
+			const { hero: heroAfterBreak, floorState: floorAfterBreak } = breakStealth(
+				hero,
+				state.heroId,
+				floor.state,
+			);
+			const activeHero = heroAfterBreak;
+			const activeFloorState = floorAfterBreak;
+
 			// Hero attacks enemy
-			const attackResult = resolveAttack(hero, defender, rng, UNARMED_WEAPON);
+			const attackResult = resolveAttack(activeHero, defender, rng, UNARMED_WEAPON);
 			events.push({
 				type: "attack",
 				attackerId: state.heroId,
@@ -567,58 +749,30 @@ export function applyAction(
 				result: attackResult,
 			});
 
-			let updatedHero: Actor = hero;
+			let updatedHero: Actor = activeHero;
 			let updatedDefender: Actor | undefined;
 			if (attackResult.hit) {
 				const newHp = Math.max(0, defender.hp - attackResult.damage);
 				updatedDefender = { ...defender, hp: newHp, alive: newHp > 0 };
 				if (!updatedDefender.alive) {
 					events.push({ type: "death", actorId: defender.id });
-
-					// Grant XP to the hero
-					const gainedXp = defender.xpReward;
-					if (gainedXp > 0) {
-						let newXp = hero.xp + gainedXp;
-						let newLevel = hero.level;
-						let newMaxHp = hero.maxHp;
-						let newCurrentHp = hero.hp;
-
-						// Check for level-up (can only level up once per kill in practice, but loop for safety)
-						const nextLevelXp = XP_PER_LEVEL[newLevel + 1] ?? Infinity;
-						if (newXp >= nextLevelXp) {
-							newXp -= nextLevelXp;
-							newLevel += 1;
-							// Roll hit die + CON modifier, minimum 1
-							const conMod = Math.floor((hero.attributes.constitution - 10) / 2);
-							const roll = Math.floor(rng() * hero.hitDie) + 1;
-							const hpGained = Math.max(1, roll + conMod);
-							newMaxHp += hpGained;
-							newCurrentHp += hpGained;
-							events.push({
-								type: "level_up",
-								actorId: state.heroId,
-								newLevel,
-								hpGained,
-							});
-						}
-
-						updatedHero = {
-							...hero,
-							xp: newXp,
-							level: newLevel,
-							maxHp: newMaxHp,
-							hp: newCurrentHp,
-						};
-					}
+					const { actor: heroWithXp, events: xpEvents } = grantXpForKill(
+						activeHero,
+						state.heroId,
+						defender.xpReward,
+						rng,
+					);
+					updatedHero = heroWithXp;
+					events.push(...xpEvents);
 				}
 			}
 			const newActorsById = {
-				...floor.state.actorsById,
+				...activeFloorState.actorsById,
 				[state.heroId]: updatedHero,
 				...(updatedDefender ? { [defender.id]: updatedDefender } : {}),
 			};
 
-			let newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };
+			let newFloorState: FloorState = { ...activeFloorState, actorsById: newActorsById };
 
 			// Enemy turns after attack
 			const attackWalkMask = context.getWalkableMask(fi);
@@ -631,6 +785,7 @@ export function applyAction(
 				attackWalkMask,
 				attackOpacityMask,
 				rng,
+				context.getSkillDef,
 			);
 			newFloorState = enemyResult.floorState;
 			events.push(...enemyResult.events);
@@ -638,15 +793,131 @@ export function applyAction(
 			const newFloors = state.floors.slice();
 			newFloors[fi] = { ...floor, state: newFloorState };
 
+			let attackNewState: GameState = {
+				...state,
+				turn: state.turn + 1,
+				floors: newFloors,
+				rngState: getRngState(),
+			};
+			attackNewState = tickStatusEffects(attackNewState);
+			attackNewState = tickSkillCooldowns(attackNewState);
+
+			return { ok: true, state: attackNewState, events };
+		}
+
+		case "use_skill": {
+			const hero = getHero(state);
+			if (!hero || !hero.alive) return { ok: false, reason: "skill_no_hero" };
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) return { ok: false, reason: "skill_no_floor" };
+
+			const skillDef = context.getSkillDef(action.skillId);
+			if (!skillDef) return { ok: false, reason: "skill_unknown" };
+
+			// Validate that the hero has this skill (it was awarded at creation)
+			const skillState = hero.skills[action.skillId];
+			if (!skillState) return { ok: false, reason: "skill_not_owned" };
+			if (skillState.cooldownRemaining > 0) return { ok: false, reason: "skill_on_cooldown" };
+
+			const width = floor.config.width;
+			const height = floor.config.height;
+			const { rng, getState: getRngState } = createRngFromState(state.rngState);
+
+			// Using a skill that doesn't explicitly maintain stealth reveals the hero.
+			const { hero: heroForSkill, floorState: floorForSkill } = !skillDef.maintainsStealth
+				? breakStealth(hero, state.heroId, floor.state)
+				: { hero, floorState: floor.state };
+
+			const resolution = resolveSkill({
+				skillDef,
+				caster: heroForSkill,
+				casterId: state.heroId,
+				floorState: floorForSkill,
+				width,
+				height,
+				rng,
+				targetTileIdx: action.targetTileIdx,
+				targetActorId: action.targetActorId,
+			});
+
+			if ("error" in resolution) return { ok: false, reason: resolution.error };
+
+			// Set cooldown on the caster (hero)
+			const heroAfterSkill: Actor = {
+				...resolution.caster,
+				skills: {
+					...resolution.caster.skills,
+					[action.skillId]: { ...skillState, cooldownRemaining: skillDef.cooldown },
+				},
+			};
+
+			let newFloorState: FloorState = {
+				...resolution.floorState,
+				actorsById: {
+					...resolution.floorState.actorsById,
+					[state.heroId]: heroAfterSkill,
+				},
+			};
+
+			// Grant XP for any kills caused by the skill
+			let updatedHero = heroAfterSkill;
+			const skillXpEvents: GameEvent[] = [];
+			for (const event of resolution.events) {
+				if (event.type === "death") {
+					const dead = newFloorState.actorsById[event.actorId];
+					if (dead?.def.type === "monster") {
+						const { actor: heroWithXp, events: xpEvents } = grantXpForKill(
+							updatedHero,
+							state.heroId,
+							dead.xpReward,
+							rng,
+						);
+						updatedHero = heroWithXp;
+						skillXpEvents.push(...xpEvents);
+					}
+				}
+			}
+
+			// Re-sync updated hero (XP/level may have changed) and emit XP events
+			newFloorState = {
+				...newFloorState,
+				actorsById: { ...newFloorState.actorsById, [state.heroId]: updatedHero },
+			};
+
+			// Enemy turns
+			const skillWalkMask = context.getWalkableMask(fi);
+			const skillOpacityMask = context.getOpacityMask(fi);
+			const enemyResult = processEnemyTurns(
+				newFloorState,
+				state.heroId,
+				width,
+				height,
+				skillWalkMask,
+				skillOpacityMask,
+				rng,
+				context.getSkillDef,
+			);
+			newFloorState = enemyResult.floorState;
+
+			const newFloors = state.floors.slice();
+			newFloors[fi] = { ...floor, state: newFloorState };
+
+			// Tick down status effects and cooldowns at end of turn
+			let newState: GameState = tickStatusEffects({
+				...state,
+				turn: state.turn + 1,
+				floors: newFloors,
+				rngState: getRngState(),
+			});
+
+			// Decrement all skill cooldowns on the hero
+			newState = tickSkillCooldowns(newState);
+
 			return {
 				ok: true,
-				state: {
-					...state,
-					turn: state.turn + 1,
-					floors: newFloors,
-					rngState: getRngState(),
-				},
-				events,
+				state: newState,
+				events: [...resolution.events, ...skillXpEvents, ...enemyResult.events],
 			};
 		}
 

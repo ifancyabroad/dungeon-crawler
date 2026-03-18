@@ -62,6 +62,7 @@ export const createGame: RequestHandler = async (req, res) => {
 		level: 1,
 		xp: 0,
 		hitDie: classDef.hitDie,
+		skills: classDef.startingSkills,
 	};
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);

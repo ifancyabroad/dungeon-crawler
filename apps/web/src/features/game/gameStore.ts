@@ -11,7 +11,7 @@ import {
 	type GameEvent,
 	type GameState,
 } from "@app/shared";
-import { vaults } from "@app/content";
+import { skillsById, vaults } from "@app/content";
 
 const GAME_ID_KEY = "dungeon_gameId";
 
@@ -234,7 +234,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			// Use cached masks when available (normal case); fall back to derived context only if
 			// masks haven't been initialised yet (should not happen in practice).
 			const { walkableByFloor: wb, opacityByFloor: ob } = get();
-			const replayCtx = wb && ob ? createActionContext(wb, ob) : null;
+			const replayCtx = wb && ob ? createActionContext(wb, ob, skillsById) : null;
 			let nextState = payload.state;
 			for (const { action } of pendingActions) {
 				const result = replayCtx
@@ -328,7 +328,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			opacityByFloor != null &&
 			opacityByFloor[state.heroFloorIndex] != null;
 		const result = hasCachedMasks
-			? applyAction(state, action, createActionContext(walkableByFloor!, opacityByFloor!))
+			? applyAction(
+					state,
+					action,
+					createActionContext(walkableByFloor!, opacityByFloor!, skillsById),
+				)
 			: applyActionWithDerivedContext(state, action);
 		if (!result.ok) {
 			set({ lastInvalidMoveAt: getNow() });

@@ -24,3 +24,25 @@ export function abilityModifier(score: number): number {
 export function computeUnarmoredAC(dexterity: number): number {
 	return 10 + abilityModifier(dexterity);
 }
+
+/**
+ * Parse a dice expression string like "2d6" into count and sides.
+ * Throws if the expression is not in NdM format.
+ */
+export function parseDice(expr: string): { count: number; sides: number } {
+	const match = /^(\d+)d(\d+)$/i.exec(expr.trim());
+	if (!match) throw new Error(`Invalid dice expression: "${expr}"`);
+	return { count: parseInt(match[1], 10), sides: parseInt(match[2], 10) };
+}
+
+/**
+ * Roll a dice expression string (e.g. "2d6"). Returns the raw total before any modifier.
+ * `critMultiplier` doubles the number of dice rolled (D&D 5e critical hit rule).
+ */
+export function rollDiceExpr(rng: Rng, expr: string, critMultiplier = 1): number {
+	const { count, sides } = parseDice(expr);
+	const rolls = count * critMultiplier;
+	let total = 0;
+	for (let i = 0; i < rolls; i++) total += rollDice(rng, sides);
+	return total;
+}

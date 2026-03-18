@@ -30,6 +30,33 @@ function formatEvent(event: GameEvent): string {
 		return `${actor} has been slain!`;
 	}
 
+	if (event.type === "skill_hit") {
+		const skillName = formatSkillId(event.skillId);
+		const defender =
+			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
+		if (!event.result.hit) return `${skillName} missed ${defender}.`;
+		const critLabel = event.result.critical ? "[CRIT] " : "";
+		return `${critLabel}${skillName} hits ${defender} for ${event.result.damage} dmg.`;
+	}
+
+	if (event.type === "area_hit") {
+		const skillName = formatSkillId(event.skillId);
+		const defender =
+			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
+		return `${skillName} hits ${defender} for ${event.damage} dmg.`;
+	}
+
+	if (event.type === "skill_used") {
+		return event.actorId === "hero" ? `You use ${capitalize(event.skillId)}!` : "";
+	}
+
+	if (event.type === "status_applied") {
+		if (event.actorId === "hero") {
+			return `You enter ${capitalize(event.statusId)} for ${event.durationTurns} turns.`;
+		}
+		return "";
+	}
+
 	return "";
 }
 
@@ -37,16 +64,25 @@ function capitalize(s: string): string {
 	return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/** "lightning_bolt" → "Lightning Bolt" */
+function formatSkillId(id: string): string {
+	return id
+		.split("_")
+		.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+		.join(" ");
+}
+
 function eventColorClass(event: GameEvent): string {
 	if (event.type === "death") {
 		return event.actorId === "hero" ? "text-death" : "text-kill";
 	}
-	if (event.type === "attack" && event.result.critical) {
-		return "text-primary";
-	}
-	if (event.type === "attack" && event.attackerId === "hero") {
-		return "text-text-bright";
-	}
+	if (event.type === "attack" && event.result.critical) return "text-primary";
+	if (event.type === "attack" && event.attackerId === "hero") return "text-text-bright";
+	if (event.type === "skill_hit" && event.result.critical) return "text-primary";
+	if (event.type === "skill_hit") return "text-text-bright";
+	if (event.type === "area_hit") return "text-primary";
+	if (event.type === "skill_used") return "text-primary";
+	if (event.type === "status_applied") return "text-secondary";
 	return "text-text";
 }
 

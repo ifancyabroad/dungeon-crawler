@@ -41,7 +41,12 @@ export interface AIContext {
 	rng: Rng;
 }
 
-export type AIResult = { kind: "attack" } | { kind: "move"; toIdx: number } | { kind: "idle" };
+export type AIResult =
+	| { kind: "attack" }
+	| { kind: "move"; toIdx: number }
+	| { kind: "idle" }
+	/** Monster chooses to use a skill. The engine resolves it via resolveSkill. */
+	| { kind: "skill"; skillId: string; targetTileIdx?: number; targetActorId?: string };
 
 export interface AITurnResult {
 	result: AIResult;

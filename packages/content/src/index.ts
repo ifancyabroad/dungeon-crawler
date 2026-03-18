@@ -13,10 +13,14 @@ export {
 	monsterIds,
 	monsters,
 	monstersById,
+	skillIds,
+	skills,
+	skillsById,
 	vaults,
 	vaultsById,
 	type CharacterClassId,
 	type MonsterId,
+	type SkillId,
 } from "./generated/index.js";
 export {
 	CharacterClassSchema,
@@ -30,3 +34,10 @@ export {
 	EncountersArraySchema,
 	type EncounterDefinition,
 } from "./schemas/encounter.js";
+export {
+	SkillDefinitionSchema,
+	SkillEffectDescriptorSchema,
+	SkillsArraySchema,
+	type SkillDefinition,
+	type SkillEffectDescriptor,
+} from "./schemas/skill.js";

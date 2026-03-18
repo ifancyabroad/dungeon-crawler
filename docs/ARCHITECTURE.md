@@ -42,10 +42,10 @@ The deterministic game engine. **All authoritative game rules live here** — mo
 
 ### `packages/content`
 
-Static game data as validated JSON. Defines what exists in the game world (classes, monsters, encounters, vaults) but contains no logic.
+Static game data as validated JSON. Defines what exists in the game world (classes, monsters, encounters, vaults, skills) but contains no logic.
 
 - Each content type lives under `src/raw/<type>/` as a JSON file validated by a Zod schema.
-- A build script generates typed lookup objects (`monstersById`, `encountersById`, etc.) consumed by `apps/api` and `apps/web`.
+- A build script generates typed lookup objects (`monstersById`, `encountersById`, `skillsById`, etc.) consumed by `apps/api` and `apps/web`.
 - Never hardcode content values in logic files — always source from `@app/content`.
 
 ### `apps/api`
@@ -195,13 +195,16 @@ Every entity on the map (hero and monsters) is an `Actor`. Key fields:
 - `idx` — flat tile index (not x/y)
 - `def` — `{ type: "hero"; classId }` or `{ type: "monster"; monsterId }`
 - `aiState` — present on monsters; drives `MonsterAIState`
+- `skills` — map of `skillId → { cooldownRemaining }` for all skills the actor knows
+- `statusEffects` — array of active `{ id, remainingTurns }` entries (e.g. `stealth`)
 
 ### Actions
 
 ```typescript
 type Action =
 	| { type: "move"; direction: "up" | "down" | "left" | "right" }
-	| { type: "attack"; direction: "up" | "down" | "left" | "right" };
+	| { type: "attack"; direction: "up" | "down" | "left" | "right" }
+	| { type: "use_skill"; skillId: string; targetTileIdx?: number; targetActorId?: string };
 ```
 
 All actions have Zod schemas exported from `@app/shared`.
@@ -213,6 +216,10 @@ All actions have Zod schemas exported from `@app/shared`.
 ```typescript
 type GameEvent =
 	| { type: "attack"; attackerId; defenderId; result: AttackResult }
+	| { type: "skill_hit"; attackerId; defenderId; skillId; result: AttackResult } // physical skill hit (e.g. Charge); ignored by bump animator
+	| { type: "area_hit"; attackerId; defenderId; skillId; damage: number } // AoE damage (e.g. Fireball); no to-hit roll
+	| { type: "skill_used"; actorId; skillId; targetTileIdx?; targetActorId? }
+	| { type: "status_applied"; actorId; statusId; durationTurns }
 	| { type: "death"; actorId }
 	| { type: "level_up"; actorId; newLevel; hpGained }
 	| { type: "descend"; fromFloor; toFloor };
@@ -251,6 +258,12 @@ Turn-based melee. After every player action, all living monsters on the current 
 - XP on kill feeds a D&D 5e XP table (max level 20).
 - Level-up: roll hit die + CON modifier HP gain (minimum 1).
 
+### Skills
+
+Active skills are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, which dispatches skill-specific effect handlers (e.g. `area_damage`, `apply_status`, `charge_attack`). Skill definitions are content-driven JSON under `packages/content/src/raw/skills/` and are injected into the engine through `ApplyActionContext.getSkillDef(skillId)` to keep `packages/shared` content-agnostic.
+
+Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed by `parseDice` / `rollDiceExpr` in `packages/shared/src/combat/dice.ts`.
+
 ---
 
 ## Socket Protocol
@@ -273,15 +286,19 @@ Authentication uses an HttpOnly `game_token` cookie verified against `session.to
 
 ```
 apps/web/src/
-  components/     Design system (Button, Modal, Input, Card, Sidebar, CombatLog, …)
+  components/     Design system (Button, Modal, Input, Card, Sidebar, CombatLog, SkillHotbar, …)
   features/
     game/         gameStore (Zustand) — holds GameState, optimistic turn queue
     map/          mapStore
     error/        errorStore
+    targeting/    targetingStore — active skill-targeting mode state
   game/           Phaser integration
     scenes/       MainScene (render loop), PreloadScene (asset loading)
     tiles/        tilesetRegistry, mapTileMapping
     fx/           MoveTweenManager, AttackAnimator, HealthBarManager, DeathFxManager, DamageNumberManager
+    fx/skills/    Per-skill visual effect handlers (fireball.ts, charge.ts); registry pattern
+    skills/       SkillAnimationController — dispatches skill animations by skill ID
+    targeting/    TargetingSystem — DCSS-style targeting overlay and pointer input
   pages/          Landing, CharacterCreate, Game, NotFound
   lib/            api helpers (ky), error types, nameGenerator
 ```

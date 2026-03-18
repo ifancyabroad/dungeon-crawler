@@ -13,7 +13,7 @@
 	"startingHp": 10,
 	"hitDie": 8,
 	"startingEquipment": ["dagger-basic", "leather-jacket"],
-	"startingSkills": ["stealth", "lockpick"],
+	"startingSkills": ["stealth"],
 	"weaponProficiencies": ["dagger", "shortbow", "short-sword"],
 	"armorProficiencies": ["light"],
 	"resource": "stamina",

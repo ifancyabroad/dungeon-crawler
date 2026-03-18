@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import GameCanvas from "../components/GameCanvas";
 import { CombatLog } from "../components/CombatLog";
+import { SkillHotbar } from "../components/SkillHotbar";
 import { DeathModal } from "../components/DeathModal";
 import { LevelUpModal } from "../components/LevelUpModal";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
@@ -77,6 +78,7 @@ export default function Game() {
 						</div>
 					</div>
 
+					<SkillHotbar />
 					<CombatLog />
 				</div>
 			</div>

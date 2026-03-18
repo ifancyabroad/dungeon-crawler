@@ -13,7 +13,7 @@
 	"startingHp": 8,
 	"hitDie": 6,
 	"startingEquipment": ["staff-basic", "robe-cloth"],
-	"startingSkills": ["arcane-lore", "spellcasting"],
+	"startingSkills": ["fireball"],
 	"weaponProficiencies": ["staff", "dagger"],
 	"armorProficiencies": ["cloth"],
 	"resource": "mana",

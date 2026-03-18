@@ -59,6 +59,7 @@ export {
 	ActionSchema,
 	AttackActionSchema,
 	MoveActionSchema,
+	UseSkillActionSchema,
 	actorKind,
 	applyAction,
 	applyActionWithDerivedContext,
@@ -82,16 +83,19 @@ export {
 	VISION_RADIUS,
 	XP_PER_LEVEL,
 	BASE_MONSTERS_PER_FLOOR,
+	ActiveEffectSchema,
 	ActorAttributesSchema,
 	ActorDefSchema,
 	ActorsByIdSchema,
 	ActorSchema,
 	ActorSkillStateSchema,
 	FloorStateSchema,
+	MonsterAIStateSchema,
 	PersistedDynamicStateSchema,
 	RngStateSchema,
 	type Action,
 	type ActionLogEntry,
+	type ActiveEffect,
 	type Actor,
 	type ActorAttributes,
 	type ActorDef,
@@ -101,6 +105,7 @@ export {
 	type ApplyActionResult,
 	type AttackAction,
 	type BaseLayerFloor,
+	type FloorState,
 	type GameEvent,
 	type GameSessionDoc,
 	type GameSnapshotDoc,
@@ -109,7 +114,15 @@ export {
 	type MonsterInit,
 	type MoveAction,
 	type PersistedDynamicState,
+	type UseSkillAction,
 } from "./game";
+
+export {
+	hasStatusEffect,
+	resolveSkill,
+	type SkillDefinition,
+	type SkillEffectDescriptor,
+} from "./skills";
 
 export {
 	abilityModifier,

@@ -30,6 +30,11 @@ export const ActorSkillStateSchema = z.object({
 	cooldownRemaining: z.number(),
 });
 
+export const ActiveEffectSchema = z.object({
+	id: z.string(),
+	remainingTurns: z.number().int().min(0),
+});
+
 export const ActorDefSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("hero"), classId: z.string() }),
 	z.object({ type: z.literal("monster"), monsterId: z.string() }),
@@ -50,6 +55,7 @@ export const ActorSchema = z.object({
 	armorClass: z.number(),
 	attributes: ActorAttributesSchema,
 	skills: z.record(z.string(), ActorSkillStateSchema),
+	statusEffects: z.array(ActiveEffectSchema).default([]),
 	def: ActorDefSchema,
 	level: z.number(),
 	xp: z.number(),

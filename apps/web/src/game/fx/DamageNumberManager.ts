@@ -27,21 +27,29 @@ export class DamageNumberManager {
 
 	handleEvents(events: GameEvent[], getActorIdx: (id: string) => number | undefined): void {
 		for (const event of events) {
-			if (event.type !== "attack") continue;
+			if (event.type === "attack" || event.type === "skill_hit") {
+				const idx = getActorIdx(event.defenderId);
+				if (idx === undefined) continue;
 
-			const idx = getActorIdx(event.defenderId);
-			if (idx === undefined) continue;
+				const { x, y } = idxToXY(idx, this.mapWidth);
+				const px = x * TILE_WIDTH + TILE_WIDTH / 2;
+				const py = y * TILE_HEIGHT + TILE_HEIGHT / 2 - 8;
 
-			const { x, y } = idxToXY(idx, this.mapWidth);
-			const px = x * TILE_WIDTH + TILE_WIDTH / 2;
-			const py = y * TILE_HEIGHT + TILE_HEIGHT / 2 - 8;
+				if (!event.result.hit) {
+					this.spawnLabel("miss", px, py, COLOR_MISS);
+				} else if (event.result.critical) {
+					this.spawnLabel(`${event.result.damage}!`, px, py, COLOR_CRIT);
+				} else {
+					this.spawnLabel(`${event.result.damage}`, px, py, COLOR_NORMAL);
+				}
+			} else if (event.type === "area_hit") {
+				const idx = getActorIdx(event.defenderId);
+				if (idx === undefined) continue;
 
-			if (!event.result.hit) {
-				this.spawnLabel("miss", px, py, COLOR_MISS);
-			} else if (event.result.critical) {
-				this.spawnLabel(`${event.result.damage}!`, px, py, COLOR_CRIT);
-			} else {
-				this.spawnLabel(`${event.result.damage}`, px, py, COLOR_NORMAL);
+				const { x, y } = idxToXY(idx, this.mapWidth);
+				const px = x * TILE_WIDTH + TILE_WIDTH / 2;
+				const py = y * TILE_HEIGHT + TILE_HEIGHT / 2 - 8;
+				this.spawnLabel(`${event.damage}`, px, py, "#ff8800");
 			}
 		}
 	}

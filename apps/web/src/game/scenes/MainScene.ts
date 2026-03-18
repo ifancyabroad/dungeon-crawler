@@ -5,6 +5,7 @@ import {
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	getActorAtIdx,
+	hasStatusEffect,
 	idxToXY,
 	xyToIdx,
 	MAP_GEN_VERSION,
@@ -12,6 +13,8 @@ import {
 	VISION_RADIUS,
 	type Action,
 	type FloorConfig,
+	type FloorState,
+	type GameEvent,
 	type GameState,
 } from "@app/shared";
 import {
@@ -24,6 +27,7 @@ import {
 } from "../tiles/tilesetRegistry";
 import { useGameStore, type GameStore } from "../../features/game/gameStore";
 import { useMapStore } from "../../features/map/mapStore";
+import { useTargetingStore } from "../../features/targeting/targetingStore";
 import { getMapConfigAndHeroFromState } from "../config/getMapConfigFromState";
 import {
 	decorationGridToTileIndices,
@@ -37,6 +41,8 @@ import { DeathFxManager } from "../fx/DeathFxManager";
 import { BLOOD_TEXTURE_KEY, HERO_BLOOD_COLOR } from "../fx/particles";
 import { monstersById, vaults } from "@app/content";
 import { DamageNumberManager } from "../fx/DamageNumberManager";
+import { SkillAnimationController } from "../skills/SkillAnimationController";
+import { TargetingSystem } from "../targeting/TargetingSystem";
 
 const FOG_TINT = 0x555555;
 
@@ -93,6 +99,9 @@ export default class MainScene extends Phaser.Scene {
 	private healthBars: HealthBarManager | null = null;
 	private deathFx: DeathFxManager | null = null;
 	private damageNumbers: DamageNumberManager | null = null;
+	private skillAnimController: SkillAnimationController | null = null;
+	/** Created once in create(); survives floor transitions (input handlers stay attached). */
+	private targetingSystem: TargetingSystem | null = null;
 
 	constructor() {
 		super("Main");
@@ -113,7 +122,13 @@ export default class MainScene extends Phaser.Scene {
 			this.unsubActorSync?.();
 			this.unsubActorSync = null;
 			this.monsterSprites.clear();
+			this.targetingSystem?.destroy();
+			this.targetingSystem = null;
 			this.destroyFx();
+			// Exit targeting mode if active when scene shuts down
+			if (useTargetingStore.getState().active) {
+				useTargetingStore.getState().exitTargeting();
+			}
 			// Blood particle texture is shared across FX managers; remove it once on scene teardown
 			if (this.textures.exists(BLOOD_TEXTURE_KEY)) {
 				this.textures.remove(BLOOD_TEXTURE_KEY);
@@ -129,6 +144,14 @@ export default class MainScene extends Phaser.Scene {
 			if (fromState) this.buildMapAndHero(fromState.config, fromState.hero);
 			else this.subscribeUntilStateArrives();
 			this.attachKeyboardOnline();
+			this.attachTargetingEscapeKey();
+			// TargetingSystem attaches input/store listeners once; survives floor transitions.
+			this.targetingSystem = new TargetingSystem(
+				this,
+				fromState?.config.width ?? DEFAULT_MAP_WIDTH,
+				fromState?.config.height ?? DEFAULT_MAP_HEIGHT,
+			);
+			this.targetingSystem.attach();
 		}
 	}
 
@@ -231,13 +254,17 @@ export default class MainScene extends Phaser.Scene {
 		// No setBounds: keep hero always centered; at map edges the camera may show empty space.
 		this.cameras.main.startFollow(this.player, true, 1, 1);
 
-		// Initialise FX managers for this map (destroys any previous ones first)
+		// Update TargetingSystem dimensions for the new floor (it survives buildMapAndHero).
+		this.targetingSystem?.updateDimensions(this.mapWidth, this.mapHeight);
+
+		// Initialise per-map FX managers (destroyed and re-created on each floor).
 		this.destroyFx();
 		this.moveTweens = new MoveTweenManager(this);
 		this.attackAnimator = new AttackAnimator(this, this.mapWidth);
 		this.healthBars = new HealthBarManager(this);
 		this.deathFx = new DeathFxManager(this, this.mapWidth);
 		this.damageNumbers = new DamageNumberManager(this, this.mapWidth);
+		this.skillAnimController = new SkillAnimationController(this, this.mapWidth);
 
 		const currentState = useGameStore.getState().state;
 		if (currentState) {
@@ -304,53 +331,93 @@ export default class MainScene extends Phaser.Scene {
 			if (freshEvents) sync.lastDispatchedEventTurn = eventTurn;
 
 			const heroMoved = storeState.hero.idx !== sync.lastSyncedIdx;
-			const hasHeroAttack = events.some(
-				(e): e is Extract<typeof e, { type: "attack" }> =>
-					e.type === "attack" && e.attackerId === gs.heroId,
+
+			// Check for a hero skill event to drive special animations.
+			const skillUsedEvent = events.find(
+				(e): e is Extract<typeof e, { type: "skill_used" }> =>
+					e.type === "skill_used" && e.actorId === gs.heroId,
 			);
 
-			// Sync hero position first so applyFogOfWar computes visibility from
-			// the destination tile, not the tile the hero is tweening away from.
-			if (heroMoved && !hasHeroAttack) {
+			let fxDeferred = false;
+			if (skillUsedEvent && this.skillAnimController) {
+				const onImpact = () => this.dispatchFxAndSync(events, gs, floor?.state ?? null);
+				const animResult = this.skillAnimController.handle(
+					skillUsedEvent,
+					this.player,
+					storeState.hero.idx,
+					heroMoved,
+					onImpact,
+				);
+
+				if (animResult.handled) {
+					sync.lastSyncedIdx = storeState.hero.idx;
+					fxDeferred = animResult.fxDeferred;
+					// Skill moved the hero (e.g. charge): update tile tracker for LoS.
+					if (animResult.newHeroTilePos) {
+						this.playerTileX = animResult.newHeroTilePos.x;
+						this.playerTileY = animResult.newHeroTilePos.y;
+					}
+				} else if (heroMoved) {
+					sync.lastSyncedIdx = storeState.hero.idx;
+					this.syncHeroToStore(storeState.hero.idx);
+				}
+			} else if (heroMoved) {
 				sync.lastSyncedIdx = storeState.hero.idx;
 				this.syncHeroToStore(storeState.hero.idx);
 			}
 
 			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
 
-			// Dispatch fresh events to FX managers before syncMonsters removes dead sprites
-			if (events.length > 0 && floor) {
-				const actorsById = floor.state.actorsById;
-				const getActorIdx = (id: string) => actorsById[id]?.idx;
-				// Hero always gets default (red) blood; monsters use their content-defined colour.
-				const getBloodColor = (id: string): string => {
-					const actor = actorsById[id];
-					if (!actor || actor.def.type !== "monster") return HERO_BLOOD_COLOR;
-					return (
-						(monstersById as Record<string, { bloodColor: string }>)[
-							actor.def.monsterId
-						]?.bloodColor ?? HERO_BLOOD_COLOR
-					);
-				};
-
-				this.attackAnimator?.playEvents(
-					events,
-					gs.heroId,
-					this.player,
-					this.monsterSprites,
-					getActorIdx,
-					getBloodColor,
-				);
-				this.damageNumbers?.handleEvents(events, getActorIdx);
-				this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
+			// Apply stealth alpha to hero sprite.
+			if (this.player && floor) {
+				const heroActor = floor.state.actorsById[gs.heroId];
+				if (heroActor) {
+					this.player.setAlpha(hasStatusEffect(heroActor, "stealth") ? 0.4 : 1.0);
+				}
 			}
 
-			this.syncMonsters(gs);
+			// If no skill animation deferred FX, dispatch immediately.
+			if (!fxDeferred) {
+				this.dispatchFxAndSync(events, gs, floor?.state ?? null);
+			}
 		} else if (storeState.hero.idx !== sync.lastSyncedIdx) {
 			// Turn unchanged but hero idx drifted (e.g. server correction).
 			sync.lastSyncedIdx = storeState.hero.idx;
 			this.syncHeroToStore(storeState.hero.idx);
 		}
+	}
+
+	/**
+	 * Dispatch events to all FX managers (attack bumps, damage numbers, death particles)
+	 * and then sync the monster sprite map.  Extracted so it can be called either
+	 * immediately (normal turns) or deferred inside a skill animation callback (fireball,
+	 * charge) so that monsters remain visible until the animation resolves.
+	 */
+	private dispatchFxAndSync(events: GameEvent[], gs: GameState, floor: FloorState | null): void {
+		if (events.length > 0 && floor) {
+			const actorsById = floor.actorsById;
+			const getActorIdx = (id: string) => actorsById[id]?.idx;
+			const getBloodColor = (id: string): string => {
+				const actor = actorsById[id];
+				if (!actor || actor.def.type !== "monster") return HERO_BLOOD_COLOR;
+				return (
+					(monstersById as Record<string, { bloodColor: string }>)[actor.def.monsterId]
+						?.bloodColor ?? HERO_BLOOD_COLOR
+				);
+			};
+
+			this.attackAnimator?.playEvents(
+				events,
+				gs.heroId,
+				this.player,
+				this.monsterSprites,
+				getActorIdx,
+				getBloodColor,
+			);
+			this.damageNumbers?.handleEvents(events, getActorIdx);
+			this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
+		}
+		this.syncMonsters(gs);
 	}
 
 	/**
@@ -473,6 +540,11 @@ export default class MainScene extends Phaser.Scene {
 
 	private attachKeyboardOnline() {
 		const directionAction = (direction: "up" | "down" | "left" | "right") => {
+			// Moving cancels targeting mode without sending a move action.
+			if (useTargetingStore.getState().active) {
+				useTargetingStore.getState().exitTargeting();
+				return;
+			}
 			const { sendAction, state } = useGameStore.getState();
 			if (!state) return;
 			const action = this.resolveDirectionAction(state, direction);
@@ -660,6 +732,19 @@ export default class MainScene extends Phaser.Scene {
 		}
 	}
 
+	// ---------------------------------------------------------------------------
+	// Targeting overlay
+	// ---------------------------------------------------------------------------
+
+	/** ESC key cancels targeting mode. Pointer handling lives in TargetingSystem. */
+	private attachTargetingEscapeKey(): void {
+		this.input.keyboard?.on("keydown-ESC", () => {
+			if (useTargetingStore.getState().active) {
+				useTargetingStore.getState().exitTargeting();
+			}
+		});
+	}
+
 	private destroyFx(): void {
 		this.moveTweens?.destroy();
 		this.moveTweens = null;
@@ -667,6 +752,7 @@ export default class MainScene extends Phaser.Scene {
 		this.attackAnimator = null;
 		this.healthBars?.destroy();
 		this.healthBars = null;
+		this.skillAnimController = null;
 		// DeathFxManager and DamageNumberManager have no state to clean up —
 		// all emitters and labels self-destruct via tweens/delayedCall
 		this.deathFx = null;

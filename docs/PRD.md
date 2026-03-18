@@ -17,7 +17,7 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 | **Turn**   | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                      |
 | **Floor**  | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles). |
 | **Actor**  | Any entity that occupies a tile and can act — the hero and all monsters. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                           |
-| **Action** | A player intent sent from the client to the server. Currently `move` and `attack`, each with a cardinal direction. Actions are the only input the server accepts.                                            |
+| **Action** | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), and `use_skill` (skillId + optional target). Actions are the only input the server accepts. |
 | **Event**  | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                            |
 
 ---
@@ -47,6 +47,18 @@ The dungeon currently has **four floors** with increasing difficulty and differe
 - Monsters act after every player action (BFS pathfinding, line-of-sight chase).
 - XP on kill; levelling uses the D&D 5e XP table (max level 20). HP gain on level-up: hit die roll + CON modifier (min 1).
 
+### Skills
+
+Each class starts with one active skill, activated via the on-screen hotbar:
+
+| Class   | Skill    | Mechanic                                                                                                     |
+| ------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| Mage    | Fireball | Tile-targeted AoE (2d6 + INT, radius 1). 20-turn cooldown.                                                   |
+| Rogue   | Stealth  | No target. Monsters treat hero as invisible for 20 turns. 30-turn cooldown.                                  |
+| Warrior | Charge   | Actor-targeted (straight cardinal line, ≤4 tiles). Hero moves adjacent; melee + 1d8 bonus. 10-turn cooldown. |
+
+Skill definitions live in `packages/content/src/raw/skills/`. Effects are data-driven via a discriminated `SkillEffectDescriptor` union resolved in `packages/shared/src/skills/`.
+
 ### Monsters
 
 The current monster roster is intentionally small while core systems stabilise. Canonical monster definitions live in `packages/content/src/raw/monsters/`, with encounters in `packages/content/src/raw/encounters/`.
@@ -67,11 +79,12 @@ Floor 4 has a boss encounter that currently uses a Goblin as a placeholder.
 - Character sheet modal
 - Fog-of-war (raycasting visibility)
 - Damage numbers, health bars, attack animations, death effects
+- Skill hotbar (cooldown display, click to activate; DCSS-style targeting overlay for tile/actor selection)
 
 ### UI / UX (stubbed — data model exists, UI shell present)
 
 - Inventory modal
-- Skills modal
+- Skills modal (full skill list / descriptions)
 
 ---
 
@@ -102,22 +115,22 @@ Features are listed in priority order. Implementation details below are starting
 
 ---
 
-### 2. Skills & Class Abilities
+### 2. Skills & Class Abilities (foundation shipped)
 
 **Goal:** Differentiate classes beyond starting stats. Each class should have a distinct playstyle driven by unique active and/or passive abilities.
 
-**Scope:**
+**Shipped:** One starting skill per class (Fireball, Stealth, Charge). The engine, content pipeline, and hotbar UI are in place and extensible.
 
-- Active skills triggered as a new `Action` type (e.g. `{ type: "skill"; skillId: string }`).
+**Remaining scope:**
+
+- Additional skills per class (unlocked at level-up milestones or available from the start — TBD).
 - Passive skills applied transparently inside the shared engine.
-- Skills defined in `packages/content/src/raw/classes/`.
-- Skills modal already stubbed in `apps/web`.
+- Full skills modal (currently stubbed) showing descriptions and unlock state.
 
-<!-- TODO: Define the skill set for each class.
+<!-- TODO: Define the expanded skill set for each class.
      - How many skills per class at launch?
-     - Are skills unlocked at level-up milestones or all available from the start?
-     - What are cooldown / resource mechanics (mana, charges, turns)?
-     - Example ideas: Warrior "Shield Bash" stun, Mage "Fireball" AoE, Rogue "Backstab" bonus damage. -->
+     - Are additional skills unlocked at level-up milestones?
+     - Passive skill support (engine hook exists via SkillEffectDescriptor; no UI needed). -->
 
 ---
 

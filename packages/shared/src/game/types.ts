@@ -32,6 +32,17 @@ export interface ActorSkillState {
 	cooldownRemaining: number;
 }
 
+/**
+ * A status effect currently active on an actor.
+ * Each effect has a known id (e.g. "stealth") and a remaining turn count.
+ * The engine decrements remainingTurns at the end of the actor's owning turn and removes it at 0.
+ */
+export interface ActiveEffect {
+	/** Identifies the effect so engine systems can query it (e.g. "stealth"). */
+	id: string;
+	remainingTurns: number;
+}
+
 /** Definition reference: hero (classId from content) or monster. */
 export type ActorDef = { type: "hero"; classId: string } | { type: "monster"; monsterId: string };
 
@@ -46,6 +57,8 @@ export interface HeroInit {
 	level: number;
 	xp: number;
 	hitDie: number;
+	/** Skill ids to initialise on the hero (each gets cooldownRemaining: 0). */
+	skills?: string[];
 }
 
 /** Data the caller provides to spawn a monster actor. Keeps the engine content-agnostic. */
@@ -71,6 +84,8 @@ export interface Actor {
 	armorClass: number;
 	attributes: ActorAttributes;
 	skills: Record<string, ActorSkillState>;
+	/** Active status effects (buffs/debuffs) currently applied to this actor. */
+	statusEffects: ActiveEffect[];
 	def: ActorDef;
 	level: number;
 	xp: number;
@@ -84,9 +99,39 @@ export interface Actor {
 /** Events emitted during a turn for combat log and client feedback. */
 export type GameEvent =
 	| { type: "attack"; attackerId: ActorId; defenderId: ActorId; result: AttackResult }
+	/**
+	 * A physical hit triggered by a skill (e.g. Charge) rather than a standard WASD attack.
+	 * Carries a full AttackResult (so miss/crit show correctly) but AttackAnimator ignores it,
+	 * preventing a conflicting bump when the skill already animates movement.
+	 */
+	| {
+			type: "skill_hit";
+			attackerId: ActorId;
+			defenderId: ActorId;
+			skillId: string;
+			result: AttackResult;
+	  }
 	| { type: "death"; actorId: ActorId }
 	| { type: "level_up"; actorId: ActorId; newLevel: number; hpGained: number }
-	| { type: "descend"; fromFloor: number; toFloor: number };
+	| { type: "descend"; fromFloor: number; toFloor: number }
+	| {
+			type: "skill_used";
+			actorId: ActorId;
+			skillId: string;
+			/** Tile index the skill was targeted at (tile-targeted skills). */
+			targetTileIdx?: number;
+			/** Actor id the skill was targeted at (actor-targeted skills). */
+			targetActorId?: string;
+	  }
+	| { type: "status_applied"; actorId: ActorId; statusId: string; durationTurns: number }
+	/** Damage from area-of-effect skills — no to-hit roll, always hits. */
+	| {
+			type: "area_hit";
+			attackerId: ActorId;
+			defenderId: ActorId;
+			damage: number;
+			skillId: string;
+	  };
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;

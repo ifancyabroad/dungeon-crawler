@@ -1,0 +1,154 @@
+/**
+ * SkillHotbar — shows the hero's active skills with cooldown overlays.
+ * Clicking a skill with targetType "none" fires immediately;
+ * "tile" or "actor" skills enter targeting mode in Phaser.
+ */
+
+import { skillsById } from "@app/content";
+import { getHero, idxToXY, type Actor, type UseSkillAction } from "@app/shared";
+import { useGameStore } from "../features/game/gameStore";
+import { useTargetingStore } from "../features/targeting/targetingStore";
+
+// ---------------------------------------------------------------------------
+// Valid-target computation helpers
+// ---------------------------------------------------------------------------
+
+/** All flat tile indices within Chebyshev distance `range` of `heroIdx`. */
+function tilesInRange(heroIdx: number, width: number, height: number, range: number): number[] {
+	const { x: hx, y: hy } = idxToXY(heroIdx, width);
+	const result: number[] = [];
+	for (let dy = -range; dy <= range; dy++) {
+		for (let dx = -range; dx <= range; dx++) {
+			if (dx === 0 && dy === 0) continue;
+			const nx = hx + dx;
+			const ny = hy + dy;
+			if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+				result.push(ny * width + nx);
+			}
+		}
+	}
+	return result;
+}
+
+/**
+ * Enemy actor ids that are in a straight cardinal line within maxRange tiles of the hero.
+ * Must be at least 2 tiles away (charge requires room to close the gap).
+ */
+function actorsInChargeRange(
+	hero: Actor,
+	actors: Record<string, Actor>,
+	width: number,
+	maxRange: number,
+): string[] {
+	const { x: hx, y: hy } = idxToXY(hero.idx, width);
+	const result: string[] = [];
+
+	for (const [id, actor] of Object.entries(actors)) {
+		if (id === "hero" || !actor.alive || actor.def.type !== "monster") continue;
+
+		const { x: ax, y: ay } = idxToXY(actor.idx, width);
+		const dx = ax - hx;
+		const dy = ay - hy;
+
+		// Must be on the same cardinal axis (not diagonal)
+		if (dx !== 0 && dy !== 0) continue;
+
+		const dist = Math.abs(dx) + Math.abs(dy);
+		if (dist < 2 || dist > maxRange) continue;
+
+		result.push(id);
+	}
+
+	return result;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function SkillHotbar() {
+	const state = useGameStore((s) => s.state);
+	const sendAction = useGameStore((s) => s.sendAction);
+	const enterTargeting = useTargetingStore((s) => s.enterTargeting);
+
+	if (!state) return null;
+
+	const hero = getHero(state);
+	if (!hero || !hero.alive || Object.keys(hero.skills).length === 0) return null;
+
+	const floor = state.floors[state.heroFloorIndex];
+	function handleSkillClick(skillId: string) {
+		if (!hero || !floor) return;
+		const skillDef = skillsById[skillId as keyof typeof skillsById];
+		if (!skillDef) return;
+
+		const skillState = hero.skills[skillId];
+		if (!skillState || skillState.cooldownRemaining > 0) return;
+
+		if (skillDef.targetType === "none") {
+			const action: UseSkillAction = { type: "use_skill", skillId };
+			sendAction(action);
+			return;
+		}
+
+		const range = skillDef.range ?? 4;
+		const fw = floor.config.width;
+		const fh = floor.config.height;
+
+		if (skillDef.targetType === "tile") {
+			const validTileIndices = tilesInRange(hero.idx, fw, fh, range);
+			enterTargeting(skillDef, validTileIndices, []);
+			return;
+		}
+
+		if (skillDef.targetType === "actor") {
+			void fh;
+			const validActorIds = actorsInChargeRange(hero, floor.state.actorsById, fw, range);
+			enterTargeting(skillDef, [], validActorIds);
+		}
+	}
+
+	const skillEntries = Object.entries(hero.skills);
+
+	return (
+		<div className="shrink-0 flex items-center justify-center gap-2 px-3 py-2 border-t border-border bg-bg-base">
+			{skillEntries.map(([skillId, skillState]) => {
+				const skillDef = skillsById[skillId as keyof typeof skillsById];
+				const onCooldown = skillState.cooldownRemaining > 0;
+
+				return (
+					<button
+						key={skillId}
+						onClick={() => handleSkillClick(skillId)}
+						disabled={onCooldown}
+						title={skillDef ? `${skillDef.name}: ${skillDef.description}` : skillId}
+						className={[
+							"relative flex flex-col items-center justify-center",
+							"w-16 h-16 border text-xs font-mono transition-colors",
+							onCooldown
+								? "border-border text-text-muted cursor-not-allowed opacity-50"
+								: "border-border-bright text-text-bright hover:bg-bg-elevated cursor-pointer",
+						].join(" ")}
+					>
+						{/* Skill name */}
+						<span className="text-center leading-tight px-0.5 truncate w-full text-center">
+							{skillDef?.name ?? skillId}
+						</span>
+
+						{/* Cooldown overlay */}
+						{onCooldown && (
+							<span className="absolute inset-0 flex items-center justify-center bg-black/60 text-primary text-base font-bold">
+								{skillState.cooldownRemaining}
+							</span>
+						)}
+
+						{/* Ready indicator */}
+						{!onCooldown && (
+							<span className="text-secondary text-xs mt-0.5">READY</span>
+						)}
+					</button>
+				);
+			})}
+		</div>
+	);
+}

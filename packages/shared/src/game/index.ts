@@ -1,5 +1,6 @@
 export type {
 	ActionLogEntry,
+	ActiveEffect,
 	Actor,
 	ActorAttributes,
 	ActorDef,
@@ -23,9 +24,11 @@ export {
 	ActionSchema,
 	AttackActionSchema,
 	MoveActionSchema,
+	UseSkillActionSchema,
 	type Action,
 	type AttackAction,
 	type MoveAction,
+	type UseSkillAction,
 } from "./actions";
 export {
 	actorKind,
@@ -51,6 +54,7 @@ export {
 export { VISION_RADIUS, XP_PER_LEVEL, BASE_MONSTERS_PER_FLOOR } from "./config";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
+	ActiveEffectSchema,
 	ActorDefSchema,
 	ActorSchema,
 	ActorsByIdSchema,
