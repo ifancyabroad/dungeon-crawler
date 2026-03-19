@@ -51,7 +51,7 @@ Shared must remain platform-agnostic.
 - One valid action = one turn.
 - `applyAction` must return a structured result, for example:
 
-  `{ ok: true, state }`  
+  `{ ok: true, state, events }`  
   or  
   `{ ok: false, reason: string }`
 

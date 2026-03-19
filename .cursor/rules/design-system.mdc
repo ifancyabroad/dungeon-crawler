@@ -14,28 +14,15 @@ UI in `apps/web` must use the shared theme and components.
 
 Theme tokens live in [apps/web/src/index.css](apps/web/src/index.css) (`@theme` block).
 
-Use Tailwind utilities that reference these tokens instead of raw palette classes:
-
-- **Backgrounds**: `bg-bg-base`, `bg-bg-surface`, `bg-bg-elevated`
-- **Actions**: `bg-primary` / `text-primary-contrast`, `bg-secondary` / `text-secondary-contrast`
-- **Text**: `text-text`, `text-text-muted`
-- **Borders**: `border-border`
-- **Semantic**: `text-error`, `text-success`, `bg-error`, etc.
-
-Do not use raw neutrals (e.g. `neutral-900`, `neutral-500`) or other palette colours (e.g. `sky-500`, `red-500`) when a theme token exists for the intent.
+Use Tailwind utilities that reference these tokens instead of raw palette classes (e.g. `neutral-900`, `sky-500`). When a token exists for the intent — background, text, border, semantic state — use it. Do not hardcode palette colours.
 
 ---
 
 ## Components
 
-Reusable components live in [apps/web/src/components](apps/web/src/components).
+Reusable components live in [apps/web/src/components](apps/web/src/components). Before writing UI markup, check there for an existing component. Do not add one-off styled `<button>`, `<input>`, or modal markup when the design system provides an equivalent.
 
-- **Buttons**: Use the `Button` component with `variant` (primary, secondary, ghost, danger) and `size` (sm, md, lg). Use `asChild` with `Link` for navigation that should look like a button.
-- **Modals**: Use the `Modal` component (title, body, optional footer, `onClose`).
-- **Forms**: Use `Input` (with optional `label`, `error`) and `Label` for form fields.
-- **Panels**: Use `Card` for bordered content blocks (optional `title`).
-
-Do not add one-off styled `<button>`, `<input>`, or modal markup when the design system provides an equivalent component.
+Use `asChild` with `Link` for navigation elements that should render as a button.
 
 ---
 

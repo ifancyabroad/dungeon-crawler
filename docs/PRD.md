@@ -41,20 +41,16 @@ The dungeon currently has **four floors** with increasing difficulty and differe
 
 ### Combat
 
-- Turn-based melee: move or attack in a cardinal direction each turn.
-- Attack roll: d20 + STR modifier vs. AC. Natural 20 = crit (double damage dice).
-- Unarmed damage: 1d4 + STR modifier.
-- Monsters act after every player action (BFS pathfinding, line-of-sight chase).
-- XP on kill; levelling uses the D&D 5e XP table (max level 20). HP gain on level-up: hit die roll + CON modifier (min 1).
+Turn-based melee using D&D-inspired dice rolls — move or attack in a cardinal direction each turn. Monsters act after every player action. Full mechanics (roll formula, crit rules, resistance/immunity math, XP table) are in the Combat section of [docs/ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Skills
 
 Skills are split into two types:
 
-- **Active skills** are used from the hotbar. Each class starts with one: Fireball (Mage), Stealth (Rogue), Charge (Warrior). Additional active skills are acquired through level-up.
+- **Active skills** are used from the hotbar. Each class starts with one active skill; additional skills are acquired through level-up.
 - **Passive skills** are granted at level-up and apply permanent buffs to the hero (stat modifiers, extra damage dice, resistances, immunities, etc.). They are listed in the sidebar.
 
-**Level-up acquisition**: on reaching a new level the game pauses and offers the player a choice of up to 3 skills. Whether the offer is active or passive alternates by level (configurable via `LEVEL_UP_SCHEDULE`). The player may reroll the offer before picking. Regular actions are blocked until a skill is chosen.
+On reaching a new level the game pauses and offers the player a choice of up to 3 skills. The player may reroll the offer before picking. Regular actions are blocked until a skill is chosen.
 
 Skill definitions live in `packages/content/src/raw/skills/` and are data-driven.
 
@@ -62,13 +58,13 @@ Skill definitions live in `packages/content/src/raw/skills/` and are data-driven
 
 The current monster roster is intentionally small while core systems stabilise. Canonical monster definitions live in `packages/content/src/raw/monsters/`, with encounters in `packages/content/src/raw/encounters/`.
 
-Floor 4 has a boss encounter that currently uses a Goblin as a placeholder.
+A boss encounter placeholder is in place on the final floor.
 
 ### Persistence
 
 - Each run is an independent hero record.
 - State is stored as a snapshot + full action log (enables deterministic replay).
-- Snapshots are written every 50 turns and on every floor descent.
+- Snapshots are written periodically and on every floor descent.
 
 ### UI / UX (implemented)
 

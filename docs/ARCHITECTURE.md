@@ -162,96 +162,35 @@ A per-game async lock (`withGameLock`) serialises concurrent action handling for
 
 ## Domain Model
 
+All core types are defined in `packages/shared/src/game/types.ts` and `packages/shared/src/game/actions.ts`.
+
 ### GameState
 
-```typescript
-interface GameState {
-	turn: number;
-	heroId: ActorId; // always "hero"
-	heroFloorIndex: number;
-	seed: number;
-	mapGenVersion: number;
-	floors: Floor[]; // Floor = { config: FloorConfig; state: FloorState }
-	rngState: RngState;
-	pendingInteraction: PendingInteraction; // non-null while awaiting player input (e.g. skill choice)
-}
-```
+`GameState` is the top-level serializable snapshot of a run. It holds the turn counter, the hero's current floor index, RNG state, and an array of `Floor` objects — each pairing an immutable `FloorConfig` with a mutable `FloorState`.
 
 When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and `use_skill` actions are rejected by the engine until the interaction is resolved. This is the general mechanism for any future blocking interaction (shrines, NPC dialogue, etc.).
 
-### FloorState (mutable per turn)
+### FloorState
 
-```typescript
-interface FloorState {
-	tileOverrides: Record<string, TileId>;
-	actorsById: Record<ActorId, Actor>;
-	explored: number[]; // flat fog-of-war mask
-	spawnIdx: number;
-	exitIdx: number | null;
-}
-```
+`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, and exit position. It changes on every turn; `FloorConfig` does not.
 
 ### Actor
 
-Every entity on the map (hero and monsters) is an `Actor`. Key fields:
-
-- `idx` — flat tile index (not x/y)
-- `def` — `{ type: "hero"; classId }` or `{ type: "monster"; monsterId }`
-- `aiState` — present on monsters; drives `MonsterAIState`
-- `skills` — map of `skillId → { cooldownRemaining }` for all skills the actor knows (both active and passive)
-- `statusEffects` — array of active `{ id, remainingTurns }` entries (e.g. `stealth`)
-- `passiveDamageBonuses` — extra damage packets added at combat resolution time by passive skills
-- `statusImmunities` — status effect ids the actor is immune to (passive skill grants)
+Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, active status effects, passive damage bonuses applied by passive skills at combat resolution time, and status immunities.
 
 ### Actions
 
-```typescript
-type Action =
-	| { type: "move"; direction: "up" | "down" | "left" | "right" }
-	| { type: "attack"; direction: "up" | "down" | "left" | "right" }
-	| { type: "use_skill"; skillId: string; targetTileIdx?: number; targetActorId?: string }
-	| { type: "select_skill_choice"; skillId: string } // resolve a pending level-up offer
-	| { type: "reroll_skill_choice" }; // re-sample the current offer set
-```
-
-All actions have Zod schemas exported from `@app/shared`.
+Actions represent player intent only — never outcomes. The `Action` discriminated union covers movement, attacks, skill use, and level-up skill selection. All variants have co-located Zod schemas in `packages/shared/src/game/actions.ts` and are exported from `@app/shared`.
 
 ### Events
 
-`applyAction` returns events alongside the new state:
-
-```typescript
-type GameEvent =
-	| { type: "attack"; attackerId; defenderId; result: AttackResult }
-	| { type: "skill_hit"; attackerId; defenderId; skillId; result: AttackResult } // physical skill hit (e.g. Charge); ignored by bump animator
-	| {
-			type: "area_hit";
-			attackerId;
-			defenderId;
-			skillId;
-			damage: number; // total effective damage after resistances/immunities
-			damagePackets: { damageType: string; rawAmount: number; effectiveAmount: number }[]; // per-type breakdown
-	  } // AoE damage (e.g. Fireball); no to-hit roll
-	| { type: "skill_used"; actorId; skillId; targetTileIdx?; targetActorId? }
-	| { type: "status_applied"; actorId; statusId; durationTurns }
-	| { type: "death"; actorId }
-	| { type: "level_up"; actorId; newLevel; hpGained }
-	| { type: "skill_granted"; actorId; skillId }
-	| { type: "descend"; fromFloor; toFloor };
-```
+`applyAction` returns a `GameEvent[]` alongside the new state. Events describe side-effects (attacks, deaths, level-ups, floor descents, status applications) and are used by the client for animations and UI feedback. See `GameEvent` in `packages/shared/src/game/types.ts`.
 
 ---
 
 ## Map Generation
 
-Maps are generated deterministically from `seed + floorIndex`. Four floors of increasing size:
-
-| Floor | Theme         | Algorithm | Size  |
-| ----- | ------------- | --------- | ----- |
-| 0     | green_forest  | cave      | 50×50 |
-| 1     | orange_forest | bsp       | 55×55 |
-| 2     | yellow_forest | hybrid    | 60×60 |
-| 3     | dark_forest   | bsp       | 65×65 |
+Maps are generated deterministically from `seed + floorIndex`. Generation parameters, biome themes, and algorithm selection for each floor live in `packages/shared/src/map/floorConfigs.ts`.
 
 The pipeline:
 
@@ -288,7 +227,7 @@ Turn-based melee. After every player action, all living monsters on the current 
 
 Skills are split into two types, both defined in `packages/content/src/raw/skills/`:
 
-**Active skills** are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, dispatching typed effect handlers (`area_damage`, `apply_status`, `charge_attack`). They appear on the hotbar and have cooldowns.
+**Active skills** are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, dispatching typed effect handlers defined in `packages/shared/src/skills/effects/`. They appear on the hotbar and have cooldowns.
 
 **Passive skills** are granted at level-up and apply permanent buffs to the hero immediately (`applyPassiveSkill`). They never appear on the hotbar; they are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
 
@@ -316,24 +255,12 @@ Authentication uses an HttpOnly `game_token` cookie verified against `session.to
 
 ## Client Architecture
 
-```
-apps/web/src/
-  components/     Design system (Button, Modal, Input, Card, Sidebar, CombatLog, SkillHotbar, …)
-  features/
-    game/         gameStore (Zustand) — holds GameState, optimistic turn queue
-    map/          mapStore
-    error/        errorStore
-    targeting/    targetingStore — active skill-targeting mode state
-  game/           Phaser integration
-    scenes/       MainScene (render loop), PreloadScene (asset loading)
-    tiles/        tilesetRegistry, mapTileMapping
-    fx/           MoveTweenManager, AttackAnimator, HealthBarManager, DeathFxManager, DamageNumberManager
-    fx/skills/    Per-skill visual effect handlers (fireball.ts, charge.ts); registry pattern
-    skills/       SkillAnimationController — dispatches skill animations by skill ID
-    targeting/    TargetingSystem — DCSS-style targeting overlay and pointer input
-  pages/          Landing, CharacterCreate, Game, NotFound
-  lib/            api helpers (ky), error types, nameGenerator
-```
+The client source under `apps/web/src/` is organised into four layers:
+
+- `components/` — shared design-system components (buttons, modals, inputs, panels, and game HUD elements like the combat log and skill hotbar).
+- `features/` — co-located Zustand stores and TanStack Query hooks, one subdirectory per feature (`game`, `map`, `error`, `targeting`).
+- `game/` — Phaser integration: scenes, tile rendering, visual effect managers, per-skill animation handlers (registry pattern), and the DCSS-style targeting overlay.
+- `pages/` — top-level route components.
 
 **React + Tailwind** handles all menus, HUD, and non-world UI.  
 **Phaser (`MainScene`)** renders the dungeon, tile layers, fog-of-war, sprites, and in-world animations. It does not own game logic.  

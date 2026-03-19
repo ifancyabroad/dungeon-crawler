@@ -6,7 +6,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New Monster
 
-1. Create `packages/content/src/raw/monsters/<name>.json` following the shape of `goblin.json` (name, hp, ac, xpReward, aiStrategy, hitDie, attributes, and optional `damageResistances`/`damageImmunities`).
+1. Create `packages/content/src/raw/monsters/<name>.json` following the shape defined by `MonsterSchema` in `packages/content/src/schemas/monster.ts`. Use an existing file (e.g. `goblin.json`) as a reference.
 2. Add a Zod schema for the new monster if its shape differs from the existing `MonsterDef` schema; otherwise the existing schema covers it.
 3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
 4. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new monster.
@@ -35,7 +35,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 > Items are not yet implemented. This workflow describes the intended pattern based on existing content conventions.
 
 1. Create `packages/content/src/raw/items/<name>.json` with the item definition (name, type, slot, stat modifiers).
-2. Define or extend a Zod schema for `ItemDef` in `packages/content/src/build/buildContent.ts`.
+2. Define a Zod schema for `ItemDef` following the existing content schema pattern in `packages/content/src/schemas/` (see `monster.ts` or `skill.ts` as examples).
 3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup (`itemsById`).
 4. Add item stat application logic inside `packages/shared` (e.g. a helper that merges equipped item bonuses into an actor's effective stats at combat resolution time).
 5. Add item drop logic to the relevant floor or monster definition.
@@ -51,8 +51,8 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 
 ### Active skill
 
-1. Create `packages/content/src/raw/skills/<name>.json` with `skillType: "active"`, `id`, `name`, `description`, `cooldown`, `targetType`, and an `effects` array of `ActiveSkillEffectDescriptor` objects. Follow existing files (`fireball.json`, `charge.json`).
-2. If a new effect type is needed, add a variant to `ActiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`.
+1. Create `packages/content/src/raw/skills/<name>.json` following the shape defined by `ActiveSkillDefinitionSchema` in `packages/content/src/schemas/skill.ts`. Use an existing file (e.g. `fireball.json`, `charge.json`) as a reference.
+2. If a new effect type is needed, add a variant to `ActiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. The effect descriptor schemas are the canonical contract — the JSON files must satisfy them.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the class's `activeSkillPool` (or `startingSkills`) in `packages/content/src/raw/classes/<class>.json`.
 5. If the skill has a visual effect, add a handler in `apps/web/src/game/fx/skills/<name>.ts` and register it in `SKILL_ANIM_REGISTRY` in `apps/web/src/game/fx/skills/index.ts`.
@@ -60,7 +60,7 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 
 ### Passive skill
 
-1. Create `packages/content/src/raw/skills/<name>.json` with `skillType: "passive"`, `id`, `name`, `description`, and an `effects` array of `PassiveSkillEffectDescriptor` objects. Follow existing passive skill files.
+1. Create `packages/content/src/raw/skills/<name>.json` following the shape defined by `PassiveSkillDefinitionSchema` in `packages/content/src/schemas/skill.ts`. Use an existing passive skill file as a reference.
 2. If a new passive effect type is needed, add a variant to `PassiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, and add a case in `packages/shared/src/skills/applyPassiveEffect.ts`. If the effect needs to be read at combat resolution time (e.g. extra damage dice), add the corresponding field to `Actor` and read it in the relevant combat handler.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the class's `passiveSkillPool` in `packages/content/src/raw/classes/<class>.json`.
@@ -76,7 +76,7 @@ Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 1. Define the Zod schema and TypeScript type in `packages/shared/src/game/actions.ts`. Add it to the `ActionSchema` discriminated union.
 2. Add a handler case in `applyAction` inside `packages/shared/src/game/engine.ts`. Return `{ ok: true, state, events }` or `{ ok: false, reason }`.
 3. Ensure the action is deterministic: no `Math.random` or `Date.now`; use the injected RNG from `ApplyActionContext`.
-4. The socket handler in `apps/api/src/socket/game.handlers.ts` requires no changes — it validates all actions via `ActionSchema` generically.
+4. The API socket handler validates all actions generically via `ActionSchema`; no handler changes are needed for the new action type.
 5. Wire up the client input in `apps/web` (keyboard binding or UI button) and dispatch via `gameStore`.
 6. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 

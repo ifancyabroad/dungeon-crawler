@@ -60,15 +60,13 @@ Each function, module, and file should do one thing. If a function is doing two 
 
 These rules are always enforced, regardless of the task:
 
-1. **Server is authoritative.** Never compute game outcomes on the client only. The client may optimistically apply actions using `applyAction` from `@app/shared`, but the server result is always authoritative.
+1. **Server is authoritative and the engine is deterministic.** See the Authority Model and Determinism sections in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full rules. In short: never compute game outcomes on the client only; no `Math.random` or `Date.now` inside `packages/shared`.
 
-2. **Determinism.** No `Math.random`, `Date.now`, or environment reads inside `packages/shared`. RNG is always injected via `ApplyActionContext`. State must remain JSON-serializable.
+2. **Locked stack.** Do not substitute core technologies. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full stack. In brief: React + Vite + Tailwind + Phaser on the client; Express + MongoDB/Mongoose on the server; Zustand for UI state; TanStack Query for server state; ky for HTTP; Zod for validation.
 
-3. **Locked stack.** Do not substitute core technologies. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full stack. In brief: React + Vite + Tailwind + Phaser on the client; Express + MongoDB/Mongoose on the server; Zustand for UI state; TanStack Query for server state; ky for HTTP; Zod for validation.
+3. **Zod validation on every API/socket input.** Prefer schemas from `@app/shared`. Never trust client-computed results or client-provided RNG seeds.
 
-4. **Zod validation on every API/socket input.** Prefer schemas from `@app/shared`. Never trust client-computed results or client-provided RNG seeds.
-
-5. **Persist every action.** Every player action must be appended to `gameactionlogs` and an authoritative state returned. Do not silently drop actions.
+4. **Persist every action.** Every player action must be appended to `gameactionlogs` and an authoritative state returned. Do not silently drop actions.
 
 ---
 
