@@ -4,6 +4,9 @@
  */
 
 import { z } from "zod";
+import { DAMAGE_TYPES } from "../combat/damageTypes";
+
+const DamageTypeSchema = z.enum(DAMAGE_TYPES);
 
 export const RngStateSchema = z.discriminatedUnion("algo", [
 	z.object({ algo: z.literal("xorshift32"), s: z.number() }),
@@ -54,6 +57,8 @@ export const ActorSchema = z.object({
 	maxHp: z.number(),
 	armorClass: z.number(),
 	attributes: ActorAttributesSchema,
+	damageResistances: z.array(DamageTypeSchema).default([]),
+	damageImmunities: z.array(DamageTypeSchema).default([]),
 	skills: z.record(z.string(), ActorSkillStateSchema),
 	statusEffects: z.array(ActiveEffectSchema).default([]),
 	def: ActorDefSchema,

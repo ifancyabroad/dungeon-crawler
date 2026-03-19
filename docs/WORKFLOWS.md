@@ -6,7 +6,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New Monster
 
-1. Create `packages/content/src/raw/monsters/<name>.json` following the shape of `goblin.json` (name, hp, ac, xpReward, aiStrategy, hitDie, attributes).
+1. Create `packages/content/src/raw/monsters/<name>.json` following the shape of `goblin.json` (name, hp, ac, xpReward, aiStrategy, hitDie, attributes, and optional `damageResistances`/`damageImmunities`).
 2. Add a Zod schema for the new monster if its shape differs from the existing `MonsterDef` schema; otherwise the existing schema covers it.
 3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
 4. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new monster.
@@ -48,6 +48,9 @@ Common step-by-step workflows for this repository. For package responsibilities 
 ## Adding a New Skill
 
 1. Create `packages/content/src/raw/skills/<name>.json`. Follow existing skill files (`fireball.json`, `charge.json`, `stealth.json`) for the required shape: `id`, `name`, `description`, `cooldown`, and an `effects` array of `SkillEffectDescriptor` objects.
+    - For damage effects, you must include a D&D damage type in content:
+        - `area_damage` requires `damageType`
+        - `charge_attack` requires `bonusDamageType`
 2. If the skill needs a new effect type, add a new variant to `SkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts` and mirror the type in `packages/shared/src/skills/types.ts`. Implement the handler under `packages/shared/src/skills/effects/` and register it in `resolveSkill.ts`.
 3. Run `pnpm --filter @app/content generate` to regenerate `skillsById`.
 4. Grant the skill to the relevant class by adding its `id` to `startingSkills` in `packages/content/src/raw/classes/<class>.json`.

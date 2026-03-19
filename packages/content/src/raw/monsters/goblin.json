@@ -12,6 +12,8 @@
 	},
 	"hp": 7,
 	"armorClass": 12,
+	"damageResistances": [],
+	"damageImmunities": [],
 	"tileId": 677,
 	"xpReward": 25,
 	"aiStrategy": "melee",

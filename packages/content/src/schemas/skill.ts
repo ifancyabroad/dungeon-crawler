@@ -11,6 +11,11 @@
 
 import { z } from "zod";
 
+import { DAMAGE_TYPES } from "@app/shared";
+
+type DamageType = (typeof DAMAGE_TYPES)[number];
+const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);
+
 // ---------------------------------------------------------------------------
 // Effect descriptors — one variant per skill mechanic
 // ---------------------------------------------------------------------------
@@ -24,6 +29,7 @@ const AreaDamageEffectSchema = z.object({
 	radiusTiles: z.number().int().min(0),
 	/** Attribute whose modifier is added to each damage roll. */
 	scalingStat: z.enum(["intelligence", "strength"]).optional(),
+	damageType: DamageTypeSchema,
 });
 
 /** Applies a named status effect to the caster for a number of turns. */
@@ -45,6 +51,7 @@ const ChargeAttackEffectSchema = z.object({
 	 * STR is already included in the base weapon damage roll.
 	 */
 	bonusDice: z.string(),
+	bonusDamageType: DamageTypeSchema,
 });
 
 export const SkillEffectDescriptorSchema = z.discriminatedUnion("type", [

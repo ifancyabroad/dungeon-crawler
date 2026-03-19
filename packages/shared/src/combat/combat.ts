@@ -8,6 +8,7 @@ import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
 import { UNARMED_WEAPON } from "./types";
 import { rollD20, rollDice, abilityModifier } from "./dice";
+import { resolveDamagePackets } from "./resolveDamage";
 
 /**
  * Resolve a melee attack from attacker against defender.
@@ -31,14 +32,28 @@ export function resolveAttack(
 	const hit = critical || totalAttackRoll >= targetAc;
 
 	let damage = 0;
+	let damagePackets: AttackResult["damagePackets"] = [];
 	if (hit) {
 		const diceCount = (weapon.count ?? 1) * (critical ? 2 : 1);
 		let diceTotal = 0;
 		for (let i = 0; i < diceCount; i++) {
 			diceTotal += rollDice(rng, weapon.sides);
 		}
-		damage = Math.max(0, diceTotal + strMod);
+		const rawAmount = Math.max(0, diceTotal + strMod);
+		const resolved = resolveDamagePackets(
+			[
+				{
+					damageType: weapon.damageType,
+					rawAmount,
+					// Placeholder; resolveDamagePackets will overwrite effectiveAmount.
+					effectiveAmount: 0,
+				},
+			],
+			defender,
+		);
+		damage = resolved.totalEffectiveDamage;
+		damagePackets = resolved.packets;
 	}
 
-	return { hit, critical, naturalRoll, totalAttackRoll, damage, targetAc };
+	return { hit, critical, naturalRoll, totalAttackRoll, damage, damagePackets, targetAc };
 }

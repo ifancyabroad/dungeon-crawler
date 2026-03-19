@@ -30,6 +30,7 @@
 		"lint": "eslint ."
 	},
 	"dependencies": {
+		"@app/shared": "workspace:*",
 		"zod": "^4.3.6"
 	},
 	"devDependencies": {

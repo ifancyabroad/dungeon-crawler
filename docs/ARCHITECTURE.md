@@ -217,7 +217,14 @@ All actions have Zod schemas exported from `@app/shared`.
 type GameEvent =
 	| { type: "attack"; attackerId; defenderId; result: AttackResult }
 	| { type: "skill_hit"; attackerId; defenderId; skillId; result: AttackResult } // physical skill hit (e.g. Charge); ignored by bump animator
-	| { type: "area_hit"; attackerId; defenderId; skillId; damage: number } // AoE damage (e.g. Fireball); no to-hit roll
+	| {
+			type: "area_hit";
+			attackerId;
+			defenderId;
+			skillId;
+			damage: number; // total effective damage after resistances/immunities
+			damagePackets: { damageType: string; rawAmount: number; effectiveAmount: number }[]; // per-type breakdown
+	  } // AoE damage (e.g. Fireball); no to-hit roll
 	| { type: "skill_used"; actorId; skillId; targetTileIdx?; targetActorId? }
 	| { type: "status_applied"; actorId; statusId; durationTurns }
 	| { type: "death"; actorId }
@@ -265,13 +272,13 @@ Turn-based melee. After every player action, all living monsters on the current 
 
 - Attack roll: d20 + STR modifier vs. target AC.
 - Natural 20 = critical hit (double damage dice).
-- Damage: weapon dice + STR modifier (unarmed = 1d4), minimum 0.
+- Damage: weapon dice + STR modifier (unarmed = 1d4), minimum 0; then reduced by defender resistances/immunities for each damage type (resistance halves; immunity makes it 0).
 - XP on kill feeds a D&D 5e XP table (max level 20).
 - Level-up: roll hit die + CON modifier HP gain (minimum 1).
 
 ### Skills
 
-Active skills are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, which dispatches skill-specific effect handlers (e.g. `area_damage`, `apply_status`, `charge_attack`). Skill definitions are content-driven JSON under `packages/content/src/raw/skills/` and are injected into the engine through `ApplyActionContext.getSkillDef(skillId)` to keep `packages/shared` content-agnostic.
+Active skills are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, which dispatches skill-specific effect handlers (e.g. `area_damage`, `apply_status`, `charge_attack`). Damage effects declare D&D damage types in content (`damageType` for `area_damage`, `bonusDamageType` for `charge_attack`) and the shared engine applies defender resistances/immunities per damage packet.
 
 Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed by `parseDice` / `rollDiceExpr` in `packages/shared/src/combat/dice.ts`.
 

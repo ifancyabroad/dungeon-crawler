@@ -17,10 +17,16 @@ function formatEvent(event: GameEvent): string {
 			return `${attacker} missed ${defender}. (Rolled ${result.naturalRoll})`;
 		}
 		const critLabel = result.critical ? "[CRIT] " : "";
+		const breakdown =
+			result.damagePackets.length > 1
+				? ` (${result.damagePackets
+						.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`)
+						.join(", ")})`
+				: "";
 		if (attackerId === "hero") {
-			return `${critLabel}You hit ${defender} for ${result.damage} dmg. (Rolled ${result.naturalRoll})`;
+			return `${critLabel}You hit ${defender} for ${result.damage} dmg.${breakdown} (Rolled ${result.naturalRoll})`;
 		}
-		return `${critLabel}${attacker} hit ${defender} for ${result.damage} dmg. (Rolled ${result.naturalRoll})`;
+		return `${critLabel}${attacker} hit ${defender} for ${result.damage} dmg.${breakdown} (Rolled ${result.naturalRoll})`;
 	}
 
 	if (event.type === "death") {
@@ -36,14 +42,26 @@ function formatEvent(event: GameEvent): string {
 			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
 		if (!event.result.hit) return `${skillName} missed ${defender}.`;
 		const critLabel = event.result.critical ? "[CRIT] " : "";
-		return `${critLabel}${skillName} hits ${defender} for ${event.result.damage} dmg.`;
+		const breakdown =
+			event.result.damagePackets.length > 1
+				? ` (${event.result.damagePackets
+						.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`)
+						.join(", ")})`
+				: "";
+		return `${critLabel}${skillName} hits ${defender} for ${event.result.damage} dmg${breakdown}.`;
 	}
 
 	if (event.type === "area_hit") {
 		const skillName = formatSkillId(event.skillId);
 		const defender =
 			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
-		return `${skillName} hits ${defender} for ${event.damage} dmg.`;
+		const breakdown =
+			event.damagePackets.length > 1
+				? ` (${event.damagePackets
+						.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`)
+						.join(", ")})`
+				: "";
+		return `${skillName} hits ${defender} for ${event.damage} dmg${breakdown}.`;
 	}
 
 	if (event.type === "skill_used") {

@@ -4,7 +4,8 @@
  */
 
 import type { Action } from "./actions";
-import type { AttackResult } from "../combat/types";
+import type { AttackResult, DamagePacket } from "../combat/types";
+import type { DamageType } from "../combat/damageTypes";
 import type { MonsterAIState } from "./monsterAI";
 import type { FloorConfig } from "../map/types";
 
@@ -69,6 +70,8 @@ export interface MonsterInit {
 	maxHp: number;
 	armorClass: number;
 	attributes: ActorAttributes;
+	damageResistances: DamageType[];
+	damageImmunities: DamageType[];
 	xpReward: number;
 	aiStrategy: MonsterAIState["strategy"];
 }
@@ -83,6 +86,8 @@ export interface Actor {
 	maxHp: number;
 	armorClass: number;
 	attributes: ActorAttributes;
+	damageResistances: DamageType[];
+	damageImmunities: DamageType[];
 	skills: Record<string, ActorSkillState>;
 	/** Active status effects (buffs/debuffs) currently applied to this actor. */
 	statusEffects: ActiveEffect[];
@@ -130,6 +135,7 @@ export type GameEvent =
 			attackerId: ActorId;
 			defenderId: ActorId;
 			damage: number;
+			damagePackets: DamagePacket[];
 			skillId: string;
 	  };
 

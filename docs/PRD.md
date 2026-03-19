@@ -51,11 +51,11 @@ The dungeon currently has **four floors** with increasing difficulty and differe
 
 Each class starts with one active skill, activated via the on-screen hotbar:
 
-| Class   | Skill    | Mechanic                                                                                                     |
-| ------- | -------- | ------------------------------------------------------------------------------------------------------------ |
-| Mage    | Fireball | Tile-targeted AoE (2d6 + INT, radius 1). 20-turn cooldown.                                                   |
-| Rogue   | Stealth  | No target. Monsters treat hero as invisible for 20 turns. 30-turn cooldown.                                  |
-| Warrior | Charge   | Actor-targeted (straight cardinal line, ≤4 tiles). Hero moves adjacent; melee + 1d8 bonus. 10-turn cooldown. |
+| Class   | Skill    | Mechanic                                                                                                                                                              |
+| ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mage    | Fireball | Tile-targeted AoE (2d6 + INT fire damage, radius 1; reduced by fire resistance/immunity). 20-turn cooldown.                                                           |
+| Rogue   | Stealth  | No target. Monsters treat hero as invisible for 20 turns. 30-turn cooldown.                                                                                           |
+| Warrior | Charge   | Actor-targeted (straight cardinal line, ≤4 tiles). Hero moves adjacent; melee + 1d8 bludgeoning bonus (reduced by bludgeoning resistance/immunity). 10-turn cooldown. |
 
 Skill definitions live in `packages/content/src/raw/skills/`. Effects are data-driven via a discriminated `SkillEffectDescriptor` union resolved in `packages/shared/src/skills/`.
 

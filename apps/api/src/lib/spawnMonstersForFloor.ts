@@ -20,6 +20,8 @@ function monsterInitFromDef(def: MonsterDefinition): MonsterInit {
 		maxHp: def.hp,
 		armorClass: def.armorClass,
 		attributes: { ...def.baseAttributes },
+		damageResistances: def.damageResistances,
+		damageImmunities: def.damageImmunities,
 		xpReward: def.xpReward,
 		aiStrategy: def.aiStrategy,
 	};

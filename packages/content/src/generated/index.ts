@@ -139,6 +139,8 @@ export const monsters: readonly MonsterDefinition[] = [
     "tileId": 677,
     "xpReward": 25,
     "aiStrategy": "melee",
+    "damageResistances": [],
+    "damageImmunities": [],
     "bloodColor": "#cc0000"
   }
 ] as readonly MonsterDefinition[];
@@ -329,7 +331,8 @@ export const skills: readonly SkillDefinition[] = [
       {
         "type": "charge_attack",
         "maxRangeTiles": 4,
-        "bonusDice": "1d8"
+        "bonusDice": "1d8",
+        "bonusDamageType": "bludgeoning"
       }
     ]
   },
@@ -345,7 +348,8 @@ export const skills: readonly SkillDefinition[] = [
         "type": "area_damage",
         "dice": "2d6",
         "radiusTiles": 1,
-        "scalingStat": "intelligence"
+        "scalingStat": "intelligence",
+        "damageType": "fire"
       }
     ]
   },

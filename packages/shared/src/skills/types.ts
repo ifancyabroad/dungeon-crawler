@@ -13,11 +13,14 @@
 // Effect descriptors (plain TypeScript — no Zod)
 // ---------------------------------------------------------------------------
 
+import type { DamageType } from "../combat/damageTypes";
+
 export interface AreaDamageEffect {
 	type: "area_damage";
 	dice: string;
 	radiusTiles: number;
 	scalingStat?: "intelligence" | "strength";
+	damageType: DamageType;
 }
 
 export interface ApplyStatusEffect {
@@ -34,6 +37,7 @@ export interface ChargeAttackEffect {
 	 * Doubled on a critical hit; no ability modifier added.
 	 */
 	bonusDice: string;
+	bonusDamageType: DamageType;
 }
 
 export type SkillEffectDescriptor = AreaDamageEffect | ApplyStatusEffect | ChargeAttackEffect;

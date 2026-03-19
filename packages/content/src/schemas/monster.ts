@@ -5,6 +5,11 @@
 import { z } from "zod";
 import { BaseAttributesSchema } from "./common.js";
 
+import { DAMAGE_TYPES } from "@app/shared";
+
+type DamageType = (typeof DAMAGE_TYPES)[number];
+const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);
+
 export const MonsterSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -15,6 +20,8 @@ export const MonsterSchema = z.object({
 	tileId: z.number(),
 	xpReward: z.number(),
 	aiStrategy: z.enum(["melee"]),
+	damageResistances: z.array(DamageTypeSchema).default([]),
+	damageImmunities: z.array(DamageTypeSchema).default([]),
 	/** CSS hex colour for blood/death particle effects. */
 	bloodColor: z.string(),
 });

@@ -13,6 +13,17 @@ function makeInitialState(): GameState {
 	return createInitialState(42, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT);
 }
 
+const DIRECTIONS = ["right", "down", "left", "up"] as const;
+type MoveDirection = (typeof DIRECTIONS)[number];
+
+function findValidMoveDirection(state: GameState): MoveDirection {
+	for (const direction of DIRECTIONS) {
+		const result = applyActionWithDerivedContext(state, { type: "move", direction });
+		if (result.ok) return direction;
+	}
+	throw new Error("No valid move found from initial state");
+}
+
 describe("gameStore (optimistic)", () => {
 	beforeEach(() => {
 		setGameSocket(null);
@@ -85,7 +96,8 @@ describe("gameStore (optimistic)", () => {
 		const emit = vi.fn();
 		setGameSocket({ emit });
 
-		useGameStore.getState().sendAction({ type: "move", direction: "right" });
+		const direction = findValidMoveDirection(state);
+		useGameStore.getState().sendAction({ type: "move", direction });
 
 		const s = useGameStore.getState();
 		expect(s.turn).toBe(1);
@@ -94,7 +106,7 @@ describe("gameStore (optimistic)", () => {
 		expect(emit).toHaveBeenCalledTimes(1);
 		expect(emit).toHaveBeenCalledWith("action", {
 			gameId: "g1",
-			action: { type: "move", direction: "right" },
+			action: { type: "move", direction },
 			expectedTurn: 0,
 		});
 	});
@@ -110,8 +122,16 @@ describe("gameStore (optimistic)", () => {
 		const emit = vi.fn();
 		setGameSocket({ emit });
 
-		useGameStore.getState().sendAction({ type: "move", direction: "right" });
-		useGameStore.getState().sendAction({ type: "move", direction: "down" });
+		const firstDir = findValidMoveDirection(state);
+		const firstResult = applyActionWithDerivedContext(state, {
+			type: "move",
+			direction: firstDir,
+		});
+		if (!firstResult.ok) throw new Error("expected ok");
+		const secondDir = findValidMoveDirection(firstResult.state);
+
+		useGameStore.getState().sendAction({ type: "move", direction: firstDir });
+		useGameStore.getState().sendAction({ type: "move", direction: secondDir });
 
 		expect(useGameStore.getState().turn).toBe(2);
 		expect(emit).toHaveBeenCalledTimes(2);
@@ -120,7 +140,7 @@ describe("gameStore (optimistic)", () => {
 		const stateAfterOne = createInitialState(42, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT);
 		const result = applyActionWithDerivedContext(stateAfterOne, {
 			type: "move",
-			direction: "right",
+			direction: firstDir,
 		});
 		if (!result.ok) throw new Error("expected ok");
 		useGameStore.getState().setStateFromServer({
@@ -144,7 +164,8 @@ describe("gameStore (optimistic)", () => {
 
 		const emit = vi.fn();
 		setGameSocket({ emit });
-		useGameStore.getState().sendAction({ type: "move", direction: "right" });
+		const direction = findValidMoveDirection(state);
+		useGameStore.getState().sendAction({ type: "move", direction });
 		expect(useGameStore.getState().turn).toBe(1);
 
 		const message = useGameStore.getState().revertToConfirmed();
@@ -193,12 +214,13 @@ describe("gameStore (optimistic)", () => {
 			turn: state.turn,
 			state,
 		});
-		useGameStore.getState().sendAction({ type: "move", direction: "up" });
+		const direction = findValidMoveDirection(state);
+		useGameStore.getState().sendAction({ type: "move", direction });
 		const s = useGameStore.getState();
 		expect(s.turn).toBe(1);
 		expect(s.pendingActions).toHaveLength(1);
 		expect(s.pendingActions[0]).toEqual({
-			action: { type: "move", direction: "up" },
+			action: { type: "move", direction },
 			expectedTurn: 0,
 		});
 	});
@@ -225,8 +247,16 @@ describe("gameStore (optimistic)", () => {
 			turn: state.turn,
 			state,
 		});
-		useGameStore.getState().sendAction({ type: "move", direction: "right" });
-		useGameStore.getState().sendAction({ type: "move", direction: "down" });
+		const firstDir = findValidMoveDirection(state);
+		const firstResult = applyActionWithDerivedContext(state, {
+			type: "move",
+			direction: firstDir,
+		});
+		if (!firstResult.ok) throw new Error("expected ok");
+		const secondDir = findValidMoveDirection(firstResult.state);
+
+		useGameStore.getState().sendAction({ type: "move", direction: firstDir });
+		useGameStore.getState().sendAction({ type: "move", direction: secondDir });
 		expect(useGameStore.getState().pendingActions).toHaveLength(2);
 
 		const emit = vi.fn();
@@ -242,12 +272,12 @@ describe("gameStore (optimistic)", () => {
 		expect(emit).toHaveBeenCalledTimes(2);
 		expect(emit).toHaveBeenNthCalledWith(1, "action", {
 			gameId: "g1",
-			action: { type: "move", direction: "right" },
+			action: { type: "move", direction: firstDir },
 			expectedTurn: 0,
 		});
 		expect(emit).toHaveBeenNthCalledWith(2, "action", {
 			gameId: "g1",
-			action: { type: "move", direction: "down" },
+			action: { type: "move", direction: secondDir },
 			expectedTurn: 1,
 		});
 	});

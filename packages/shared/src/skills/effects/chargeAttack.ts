@@ -10,6 +10,7 @@ import type { ChargeAttackEffect } from "../types";
 import { resolveAttack } from "../../combat/combat";
 import { UNARMED_WEAPON } from "../../combat/types";
 import { rollDiceExpr } from "../../combat/dice";
+import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { idxToXY, xyToIdx, getAdjacentIndices } from "../../game/engine";
 
 /**
@@ -72,11 +73,30 @@ export function applyChargeAttack(
 	// Resolve base melee attack, then add bonus dice on a hit.
 	// Bonus dice are doubled on a crit (5e rule), no ability modifier added.
 	const baseResult = resolveAttack(movedCaster, target, rng, UNARMED_WEAPON);
-	const bonusRoll = baseResult.hit
+	const bonusRawRoll = baseResult.hit
 		? rollDiceExpr(rng, effect.bonusDice, baseResult.critical ? 2 : 1)
 		: 0;
-	const damage = baseResult.hit ? baseResult.damage + bonusRoll : 0;
-	const attackResult = { ...baseResult, damage };
+	const bonusResolved =
+		baseResult.hit && bonusRawRoll > 0
+			? resolveDamagePackets(
+					[
+						{
+							damageType: effect.bonusDamageType,
+							rawAmount: bonusRawRoll,
+							// resolveDamagePackets overwrites effectiveAmount.
+							effectiveAmount: 0,
+						},
+					],
+					target,
+				)
+			: { packets: [], totalEffectiveDamage: 0 };
+
+	const damage = baseResult.hit ? baseResult.damage + bonusResolved.totalEffectiveDamage : 0;
+	const attackResult = {
+		...baseResult,
+		damage,
+		damagePackets: [...baseResult.damagePackets, ...bonusResolved.packets],
+	};
 
 	const events: GameEvent[] = [
 		{

@@ -1,3 +1,5 @@
+import type { DamageType } from "./damageTypes";
+
 /** Combat result types. JSON-serializable for events and replay. */
 
 export interface AttackResult {
@@ -6,7 +8,18 @@ export interface AttackResult {
 	naturalRoll: number;
 	totalAttackRoll: number;
 	damage: number;
+	/** Damage breakdown (after resistances/immunities) for multi-type attacks. */
+	damagePackets: DamagePacket[];
 	targetAc: number;
+}
+
+/** One damage packet represents a single damage type instance. */
+export interface DamagePacket {
+	damageType: DamageType;
+	/** Pre-resistance amount (>= 0). */
+	rawAmount: number;
+	/** Post-resistance amount (>= 0). */
+	effectiveAmount: number;
 }
 
 /** Weapon dice configuration for attack resolution. */
@@ -15,7 +28,9 @@ export interface WeaponDice {
 	sides: number;
 	/** Number of dice to roll (default 1). */
 	count?: number;
+	/** D&D 5e damage type this weapon deals. */
+	damageType: DamageType;
 }
 
 /** Default unarmed weapon: 1d4. */
-export const UNARMED_WEAPON: WeaponDice = { sides: 4, count: 1 };
+export const UNARMED_WEAPON: WeaponDice = { sides: 4, count: 1, damageType: "bludgeoning" };

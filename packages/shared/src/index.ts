@@ -135,4 +135,6 @@ export {
 	type WeaponDice,
 } from "./combat";
 
+export { DAMAGE_TYPES, type DamageType } from "./combat";
+
 export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";

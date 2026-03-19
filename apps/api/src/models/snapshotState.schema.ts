@@ -52,6 +52,8 @@ const ActorSchema = new Schema(
 		maxHp: Number,
 		armorClass: Number,
 		attributes: ActorAttributesSchema,
+		damageResistances: { type: [String], default: [] },
+		damageImmunities: { type: [String], default: [] },
 		skills: { type: Map, of: ActorSkillStateSchema, default: () => new Map() },
 		def: ActorDefSchema,
 		level: Number,

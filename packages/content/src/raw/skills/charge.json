@@ -9,7 +9,8 @@
 		{
 			"type": "charge_attack",
 			"maxRangeTiles": 4,
-			"bonusDice": "1d8"
+			"bonusDice": "1d8",
+			"bonusDamageType": "bludgeoning"
 		}
 	]
 }

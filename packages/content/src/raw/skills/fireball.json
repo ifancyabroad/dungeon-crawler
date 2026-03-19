@@ -9,6 +9,7 @@
 		{
 			"type": "area_damage",
 			"dice": "2d6",
+			"damageType": "fire",
 			"radiusTiles": 1,
 			"scalingStat": "intelligence"
 		}
