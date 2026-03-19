@@ -242,9 +242,20 @@ The pipeline:
 
 1. **Algorithm** generates a raw tile grid (`cave`, `bsp`, `hybrid`, or `arena`).
 2. **Room analysis** tags rooms (`start`, `exit`, `boss`, `treasure`, `corridor`, `chamber`, `alcove`, `generic`).
-3. **Vault injector** stamps ASCII-layout vaults into eligible rooms.
+3. **Vault injector** stamps ASCII-layout vaults into eligible rooms (vault definitions are validated; stamps must fit within the target room footprint).
 4. **Base layers** (ground, wall, decoration) are computed and cached server-side.
-5. **Fog-of-war** uses raycasting visibility; explored state is stored in `FloorState.explored`.
+5. **Spawn + exit placement**:
+    - spawn is relocated if it lands on a blocked collision tile
+    - exit selection is based on _reachable_ path distance from spawn (not Euclidean distance)
+6. **Final validation/sanity pass** (hard guarantee):
+    - recomputes reachability from spawn using the final walkability mask
+    - prunes unreachable walkable tiles (so “walkable but unreachable” can’t survive)
+7. **Fog-of-war** uses raycasting visibility; explored state is stored in `FloorState.explored`.
+
+## Content Contract: Vault Entrances
+
+Vaults are stamped as authored ASCII layouts. To ensure the resulting vault is navigable (and not sealed off by its own walls), vault JSON layouts must include at least one perimeter opening/walkable cell that allows connectivity into the stamped interior.
+In other words: a vault layout made of walls on its entire boundary may become inaccessible once stamped.
 
 ---
 

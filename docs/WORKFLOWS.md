@@ -15,6 +15,21 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ---
 
+## Adding a New Vault
+
+1. Create/update `packages/content/src/raw/vaults/<vault>.json`.
+2. Ensure `width`, `height`, `layout[]`, and `legend{}` are consistent:
+    - `layout.length === height`
+    - every layout row string length is exactly `width`
+    - every character used in `layout` exists in `legend`
+3. Treat entrances as part of the content contract:
+    - vault perimeter wall tiles can seal the vault once stamped
+    - include at least one perimeter walkable cell/doorway so the stamped vault remains reachable from the surrounding room
+4. Regenerate typed lookups with `pnpm --filter @app/content generate`.
+5. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
+
+---
+
 ## Adding a New Item
 
 > Items are not yet implemented. This workflow describes the intended pattern based on existing content conventions.
