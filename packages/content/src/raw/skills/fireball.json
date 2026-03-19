@@ -1,4 +1,5 @@
 {
+	"skillType": "active",
 	"id": "fireball",
 	"name": "Fireball",
 	"description": "Hurl a ball of fire that explodes on impact, scorching all enemies in the blast radius.",
@@ -9,9 +10,9 @@
 		{
 			"type": "area_damage",
 			"dice": "2d6",
-			"damageType": "fire",
 			"radiusTiles": 1,
-			"scalingStat": "intelligence"
+			"scalingStat": "intelligence",
+			"damageType": "fire"
 		}
 	]
 }

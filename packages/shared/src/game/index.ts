@@ -15,6 +15,8 @@ export type {
 	GameState,
 	HeroInit,
 	MonsterInit,
+	PassiveDamageBonus,
+	PendingInteraction,
 	PersistedDynamicState,
 	RngState,
 	TileId,
@@ -24,10 +26,14 @@ export {
 	ActionSchema,
 	AttackActionSchema,
 	MoveActionSchema,
+	RerollSkillChoiceActionSchema,
+	SelectSkillChoiceActionSchema,
 	UseSkillActionSchema,
 	type Action,
 	type AttackAction,
 	type MoveAction,
+	type RerollSkillChoiceAction,
+	type SelectSkillChoiceAction,
 	type UseSkillAction,
 } from "./actions";
 export {
@@ -45,11 +51,13 @@ export {
 	getAdjacentIndices,
 	getHero,
 	idxToXY,
+	LEVEL_UP_SCHEDULE,
 	resetMonsterCounter,
 	spawnMonster,
 	xyToIdx,
 	type ApplyActionContext,
 	type ApplyActionResult,
+	type ClassSkillPools,
 } from "./engine";
 export { VISION_RADIUS, XP_PER_LEVEL, BASE_MONSTERS_PER_FLOOR } from "./config";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
@@ -62,6 +70,8 @@ export {
 	ActorSkillStateSchema,
 	FloorStateSchema,
 	MonsterAIStateSchema,
+	PassiveDamageBonusSchema,
+	PendingInteractionSchema,
 	PersistedDynamicStateSchema,
 	RngStateSchema,
 } from "./schemas";

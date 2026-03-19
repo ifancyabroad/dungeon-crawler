@@ -11,14 +11,14 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 
 ## Terminology
 
-| Term       | Definition                                                                                                                                                                                                   |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Run**    | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                           |
-| **Turn**   | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                      |
-| **Floor**  | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles). |
-| **Actor**  | Any entity that occupies a tile and can act — the hero and all monsters. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                           |
-| **Action** | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), and `use_skill` (skillId + optional target). Actions are the only input the server accepts. |
-| **Event**  | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                            |
+| Term       | Definition                                                                                                                                                                                                                                                 |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Run**    | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                                                                         |
+| **Turn**   | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                                                                    |
+| **Floor**  | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles).                                               |
+| **Actor**  | Any entity that occupies a tile and can act — the hero and all monsters. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                         |
+| **Action** | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), `use_skill` (skillId + optional target), `select_skill_choice`, and `reroll_skill_choice`. Actions are the only input the server accepts. |
+| **Event**  | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                                                                          |
 
 ---
 
@@ -49,15 +49,14 @@ The dungeon currently has **four floors** with increasing difficulty and differe
 
 ### Skills
 
-Each class starts with one active skill, activated via the on-screen hotbar:
+Skills are split into two types:
 
-| Class   | Skill    | Mechanic                                                                                                                                                              |
-| ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Mage    | Fireball | Tile-targeted AoE (2d6 + INT fire damage, radius 1; reduced by fire resistance/immunity). 20-turn cooldown.                                                           |
-| Rogue   | Stealth  | No target. Monsters treat hero as invisible for 20 turns. 30-turn cooldown.                                                                                           |
-| Warrior | Charge   | Actor-targeted (straight cardinal line, ≤4 tiles). Hero moves adjacent; melee + 1d8 bludgeoning bonus (reduced by bludgeoning resistance/immunity). 10-turn cooldown. |
+- **Active skills** are used from the hotbar. Each class starts with one: Fireball (Mage), Stealth (Rogue), Charge (Warrior). Additional active skills are acquired through level-up.
+- **Passive skills** are granted at level-up and apply permanent buffs to the hero (stat modifiers, extra damage dice, resistances, immunities, etc.). They are listed in the sidebar.
 
-Skill definitions live in `packages/content/src/raw/skills/`. Effects are data-driven via a discriminated `SkillEffectDescriptor` union resolved in `packages/shared/src/skills/`.
+**Level-up acquisition**: on reaching a new level the game pauses and offers the player a choice of up to 3 skills. Whether the offer is active or passive alternates by level (configurable via `LEVEL_UP_SCHEDULE`). The player may reroll the offer before picking. Regular actions are blocked until a skill is chosen.
+
+Skill definitions live in `packages/content/src/raw/skills/` and are data-driven.
 
 ### Monsters
 
@@ -119,18 +118,13 @@ Features are listed in priority order. Implementation details below are starting
 
 **Goal:** Differentiate classes beyond starting stats. Each class should have a distinct playstyle driven by unique active and/or passive abilities.
 
-**Shipped:** One starting skill per class (Fireball, Stealth, Charge). The engine, content pipeline, and hotbar UI are in place and extensible.
+**Shipped:** Starting skill per class, passive skill system, level-up pick-from-3 acquisition, skill pools per class, reroll support, and sidebar passive skill listing.
 
 **Remaining scope:**
 
-- Additional skills per class (unlocked at level-up milestones or available from the start — TBD).
-- Passive skills applied transparently inside the shared engine.
-- Full skills modal (currently stubbed) showing descriptions and unlock state.
-
-<!-- TODO: Define the expanded skill set for each class.
-     - How many skills per class at launch?
-     - Are additional skills unlocked at level-up milestones?
-     - Passive skill support (engine hook exists via SkillEffectDescriptor; no UI needed). -->
+- Expand skill pools per class (more active and passive options).
+- Reroll cost in gold (currently free).
+- Full skills modal (currently stubbed) showing all acquired skills with descriptions.
 
 ---
 

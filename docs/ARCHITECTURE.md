@@ -173,8 +173,11 @@ interface GameState {
 	mapGenVersion: number;
 	floors: Floor[]; // Floor = { config: FloorConfig; state: FloorState }
 	rngState: RngState;
+	pendingInteraction: PendingInteraction; // non-null while awaiting player input (e.g. skill choice)
 }
 ```
+
+When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and `use_skill` actions are rejected by the engine until the interaction is resolved. This is the general mechanism for any future blocking interaction (shrines, NPC dialogue, etc.).
 
 ### FloorState (mutable per turn)
 
@@ -195,8 +198,10 @@ Every entity on the map (hero and monsters) is an `Actor`. Key fields:
 - `idx` — flat tile index (not x/y)
 - `def` — `{ type: "hero"; classId }` or `{ type: "monster"; monsterId }`
 - `aiState` — present on monsters; drives `MonsterAIState`
-- `skills` — map of `skillId → { cooldownRemaining }` for all skills the actor knows
+- `skills` — map of `skillId → { cooldownRemaining }` for all skills the actor knows (both active and passive)
 - `statusEffects` — array of active `{ id, remainingTurns }` entries (e.g. `stealth`)
+- `passiveDamageBonuses` — extra damage packets added at combat resolution time by passive skills
+- `statusImmunities` — status effect ids the actor is immune to (passive skill grants)
 
 ### Actions
 
@@ -204,7 +209,9 @@ Every entity on the map (hero and monsters) is an `Actor`. Key fields:
 type Action =
 	| { type: "move"; direction: "up" | "down" | "left" | "right" }
 	| { type: "attack"; direction: "up" | "down" | "left" | "right" }
-	| { type: "use_skill"; skillId: string; targetTileIdx?: number; targetActorId?: string };
+	| { type: "use_skill"; skillId: string; targetTileIdx?: number; targetActorId?: string }
+	| { type: "select_skill_choice"; skillId: string } // resolve a pending level-up offer
+	| { type: "reroll_skill_choice" }; // re-sample the current offer set
 ```
 
 All actions have Zod schemas exported from `@app/shared`.
@@ -229,6 +236,7 @@ type GameEvent =
 	| { type: "status_applied"; actorId; statusId; durationTurns }
 	| { type: "death"; actorId }
 	| { type: "level_up"; actorId; newLevel; hpGained }
+	| { type: "skill_granted"; actorId; skillId }
 	| { type: "descend"; fromFloor; toFloor };
 ```
 
@@ -278,9 +286,15 @@ Turn-based melee. After every player action, all living monsters on the current 
 
 ### Skills
 
-Active skills are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, which dispatches skill-specific effect handlers (e.g. `area_damage`, `apply_status`, `charge_attack`). Damage effects declare D&D damage types in content (`damageType` for `area_damage`, `bonusDamageType` for `charge_attack`) and the shared engine applies defender resistances/immunities per damage packet.
+Skills are split into two types, both defined in `packages/content/src/raw/skills/`:
 
-Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed by `parseDice` / `rollDiceExpr` in `packages/shared/src/combat/dice.ts`.
+**Active skills** are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, dispatching typed effect handlers (`area_damage`, `apply_status`, `charge_attack`). They appear on the hotbar and have cooldowns.
+
+**Passive skills** are granted at level-up and apply permanent buffs to the hero immediately (`applyPassiveSkill`). They never appear on the hotbar; they are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
+
+**Level-up acquisition**: on level-up the engine generates a deterministic offer of up to 3 skills (active or passive, alternating by level per `LEVEL_UP_SCHEDULE`). The player must pick one via `select_skill_choice` before regular actions resume. Rerolling is supported via `reroll_skill_choice`. This sets `pendingInteraction` on `GameState` until resolved.
+
+Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed by `rollDiceExpr` in `packages/shared/src/combat/dice.ts`.
 
 ---
 

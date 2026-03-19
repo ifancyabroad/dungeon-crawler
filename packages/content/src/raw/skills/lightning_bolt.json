@@ -1,0 +1,18 @@
+{
+	"skillType": "active",
+	"id": "lightning_bolt",
+	"name": "Lightning Bolt",
+	"description": "Call down a bolt of lightning that strikes a target tile with devastating force.",
+	"cooldown": 15,
+	"targetType": "tile",
+	"range": 6,
+	"effects": [
+		{
+			"type": "area_damage",
+			"dice": "3d6",
+			"radiusTiles": 0,
+			"scalingStat": "intelligence",
+			"damageType": "lightning"
+		}
+	]
+}

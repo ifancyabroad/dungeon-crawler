@@ -1,0 +1,18 @@
+{
+	"skillType": "passive",
+	"id": "predators_instinct",
+	"name": "Predator's Instinct",
+	"description": "Your predatory senses sharpen. +2 Charisma and +2 Wisdom.",
+	"effects": [
+		{
+			"type": "modify_attribute",
+			"attribute": "charisma",
+			"amount": 2
+		},
+		{
+			"type": "modify_attribute",
+			"attribute": "wisdom",
+			"amount": 2
+		}
+	]
+}

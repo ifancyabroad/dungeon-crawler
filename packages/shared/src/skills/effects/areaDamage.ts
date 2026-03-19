@@ -1,6 +1,7 @@
 /**
  * Area damage effect: deals damage to every living actor within radiusTiles of a target tile.
  * Dice expression is parsed (e.g. "2d6"), optionally scaled by a stat modifier.
+ * Passive damage bonuses from the caster that apply to "area" or "any" are also added.
  */
 
 import type { Actor, FloorState, GameEvent } from "../../game/types";
@@ -43,18 +44,28 @@ export function applyAreaDamage(
 		const rawDamage = rollDiceExpr(rng, effect.dice);
 		const rawAmount = Math.max(0, rawDamage + statMod);
 
-		const resolved = resolveDamagePackets(
-			[
-				{
-					damageType: effect.damageType,
-					rawAmount,
-					// resolveDamagePackets overwrites effectiveAmount.
-					effectiveAmount: 0,
-				},
-			],
-			actor,
-		);
+		const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
+			{
+				damageType: effect.damageType,
+				rawAmount,
+				effectiveAmount: 0,
+			},
+		];
 
+		// Apply passive area/any damage bonuses from the caster
+		for (const bonus of caster.passiveDamageBonuses) {
+			if (bonus.appliesTo !== "area" && bonus.appliesTo !== "any") continue;
+			// onCritOnly bonuses don't apply to area damage (no crit concept)
+			if (bonus.onCritOnly) continue;
+			const bonusRoll = rollDiceExpr(rng, bonus.dice);
+			rawPackets.push({
+				damageType: bonus.damageType,
+				rawAmount: bonusRoll,
+				effectiveAmount: 0,
+			});
+		}
+
+		const resolved = resolveDamagePackets(rawPackets, actor);
 		const effectiveDamage = resolved.totalEffectiveDamage;
 		const newHp = Math.max(0, actor.hp - effectiveDamage);
 		const updatedActor: Actor = { ...actor, hp: newHp, alive: newHp > 0 };

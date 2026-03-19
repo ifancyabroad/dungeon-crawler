@@ -1,0 +1,13 @@
+{
+	"skillType": "passive",
+	"id": "arcane_wisdom",
+	"name": "Arcane Wisdom",
+	"description": "Deep study expands your magical perception. +2 Wisdom.",
+	"effects": [
+		{
+			"type": "modify_attribute",
+			"attribute": "wisdom",
+			"amount": 2
+		}
+	]
+}

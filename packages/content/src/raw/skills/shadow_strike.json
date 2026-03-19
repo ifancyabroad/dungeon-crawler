@@ -1,0 +1,15 @@
+{
+	"skillType": "passive",
+	"id": "shadow_strike",
+	"name": "Shadow Strike",
+	"description": "Your attacks from the darkness pierce deep. Add 1d4 piercing damage to every melee attack.",
+	"effects": [
+		{
+			"type": "add_damage_dice",
+			"dice": "1d4",
+			"damageType": "piercing",
+			"appliesTo": "melee",
+			"onCritOnly": false
+		}
+	]
+}

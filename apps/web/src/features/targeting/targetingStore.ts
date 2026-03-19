@@ -7,13 +7,13 @@
  */
 
 import { create } from "zustand";
-import type { SkillDefinition } from "@app/content";
+import type { ActiveSkillDefinition } from "@app/content";
 
 interface TargetingState {
 	/** Whether targeting mode is active. */
 	active: boolean;
-	/** The skill being targeted. Null when inactive. */
-	skillDef: SkillDefinition | null;
+	/** The active skill being targeted. Null when inactive. Passive skills cannot be targeted. */
+	skillDef: ActiveSkillDefinition | null;
 	/**
 	 * For "tile" targetType: flat tile indices the player may select (within skill range
 	 * relative to hero position). Computed by the UI on enter.
@@ -32,9 +32,9 @@ interface TargetingState {
 }
 
 interface TargetingActions {
-	/** Enter targeting mode for a skill. Provides pre-computed valid targets. */
+	/** Enter targeting mode for an active skill. Provides pre-computed valid targets. */
 	enterTargeting: (
-		skillDef: SkillDefinition,
+		skillDef: ActiveSkillDefinition,
 		validTileIndices: number[],
 		validActorIds: string[],
 	) => void;

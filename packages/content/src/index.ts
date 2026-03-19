@@ -35,9 +35,15 @@ export {
 	type EncounterDefinition,
 } from "./schemas/encounter.js";
 export {
+	ActiveSkillDefinitionSchema,
+	ActiveSkillEffectDescriptorSchema,
+	PassiveSkillDefinitionSchema,
+	PassiveSkillEffectDescriptorSchema,
 	SkillDefinitionSchema,
-	SkillEffectDescriptorSchema,
 	SkillsArraySchema,
+	type ActiveSkillDefinition,
+	type ActiveSkillEffectDescriptor,
+	type PassiveSkillDefinition,
+	type PassiveSkillEffectDescriptor,
 	type SkillDefinition,
-	type SkillEffectDescriptor,
 } from "./schemas/skill.js";

@@ -5,6 +5,7 @@
  */
 
 import { skillsById } from "@app/content";
+import type { ActiveSkillDefinition } from "@app/content";
 import { getHero, idxToXY, type Actor, type UseSkillAction } from "@app/shared";
 import { useGameStore } from "../features/game/gameStore";
 import { useTargetingStore } from "../features/targeting/targetingStore";
@@ -80,40 +81,50 @@ export function SkillHotbar() {
 	function handleSkillClick(skillId: string) {
 		if (!hero || !floor) return;
 		const skillDef = skillsById[skillId as keyof typeof skillsById];
-		if (!skillDef) return;
+		if (!skillDef || skillDef.skillType !== "active") return;
+
+		const activeDef = skillDef as ActiveSkillDefinition;
 
 		const skillState = hero.skills[skillId];
 		if (!skillState || skillState.cooldownRemaining > 0) return;
 
-		if (skillDef.targetType === "none") {
+		if (activeDef.targetType === "none") {
 			const action: UseSkillAction = { type: "use_skill", skillId };
 			sendAction(action);
 			return;
 		}
 
-		const range = skillDef.range ?? 4;
+		const range = activeDef.range ?? 4;
 		const fw = floor.config.width;
 		const fh = floor.config.height;
 
-		if (skillDef.targetType === "tile") {
+		if (activeDef.targetType === "tile") {
 			const validTileIndices = tilesInRange(hero.idx, fw, fh, range);
-			enterTargeting(skillDef, validTileIndices, []);
+			enterTargeting(activeDef, validTileIndices, []);
 			return;
 		}
 
-		if (skillDef.targetType === "actor") {
+		if (activeDef.targetType === "actor") {
 			void fh;
 			const validActorIds = actorsInChargeRange(hero, floor.state.actorsById, fw, range);
-			enterTargeting(skillDef, [], validActorIds);
+			enterTargeting(activeDef, [], validActorIds);
 		}
 	}
 
-	const skillEntries = Object.entries(hero.skills);
+	// Only show active skills in the hotbar; passive skills are displayed in the sidebar.
+	const skillEntries = Object.entries(hero.skills).filter(([skillId]) => {
+		const def = skillsById[skillId as keyof typeof skillsById];
+		return def?.skillType === "active";
+	});
+
+	if (skillEntries.length === 0) return null;
 
 	return (
 		<div className="shrink-0 flex items-center justify-center gap-2 px-3 py-2 border-t border-border bg-bg-base">
 			{skillEntries.map(([skillId, skillState]) => {
-				const skillDef = skillsById[skillId as keyof typeof skillsById];
+				const skillDef = skillsById[skillId as keyof typeof skillsById] as
+					| ActiveSkillDefinition
+					| undefined;
 				const onCooldown = skillState.cooldownRemaining > 0;
 
 				return (

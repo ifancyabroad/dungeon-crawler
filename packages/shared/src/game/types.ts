@@ -34,6 +34,20 @@ export interface ActorSkillState {
 }
 
 /**
+ * A passive damage bonus stored on the actor.
+ * Consulted during combat resolution to add extra damage packets.
+ */
+export interface PassiveDamageBonus {
+	/** Dice expression, e.g. "1d6". */
+	dice: string;
+	damageType: DamageType;
+	/** Which attack types this bonus applies to. */
+	appliesTo: "melee" | "area" | "any";
+	/** If true, only fires on a critical hit (melee only). */
+	onCritOnly: boolean;
+}
+
+/**
  * A status effect currently active on an actor.
  * Each effect has a known id (e.g. "stealth") and a remaining turn count.
  * The engine decrements remainingTurns at the end of the actor's owning turn and removes it at 0.
@@ -91,6 +105,16 @@ export interface Actor {
 	skills: Record<string, ActorSkillState>;
 	/** Active status effects (buffs/debuffs) currently applied to this actor. */
 	statusEffects: ActiveEffect[];
+	/**
+	 * Passive damage bonuses applied permanently from passive skills.
+	 * Consulted during resolveAttack, applyAreaDamage, applyChargeAttack.
+	 */
+	passiveDamageBonuses: PassiveDamageBonus[];
+	/**
+	 * Status effect ids the actor is immune to.
+	 * applyStatus silently skips effects in this list.
+	 */
+	statusImmunities: string[];
 	def: ActorDef;
 	level: number;
 	xp: number;
@@ -137,7 +161,8 @@ export type GameEvent =
 			damage: number;
 			damagePackets: DamagePacket[];
 			skillId: string;
-	  };
+	  }
+	| { type: "skill_granted"; actorId: ActorId; skillId: string };
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;
@@ -163,6 +188,23 @@ export type RngState =
 
 export const MAP_GEN_VERSION = 2;
 
+/**
+ * Pending player interaction — when non-null, the game is "paused":
+ * move/attack/use_skill actions are rejected until this is resolved.
+ * Serialized into PersistedDynamicState so page refreshes correctly restore state.
+ */
+export type PendingInteraction = {
+	type: "skill_choice";
+	/** Whether the player is choosing an active or passive skill this level-up. */
+	offerType: "active" | "passive";
+	/** The level just reached. */
+	levelReached: number;
+	/** Up to 3 skill ids the player may pick from. */
+	offers: string[];
+	/** How many times the player has rerolled this offer set. */
+	rerollsUsed: number;
+} | null;
+
 /** In-memory game state. No walkableByFloor; engine computes walkability when needed. */
 export interface GameState {
 	turn: number;
@@ -172,6 +214,12 @@ export interface GameState {
 	mapGenVersion: number;
 	floors: Floor[];
 	rngState: RngState;
+	/**
+	 * When non-null, the game is paused awaiting player interaction.
+	 * Regular actions (move/attack/use_skill) are rejected by the engine.
+	 * Extensible: add new union members for future interaction types (NPC dialogue, shrines, etc.).
+	 */
+	pendingInteraction: PendingInteraction;
 }
 
 // --- Persisted (no 2D arrays) ---
@@ -195,6 +243,7 @@ export interface PersistedDynamicState {
 	heroFloorIndex: number;
 	floors: FloorState[];
 	rngState: RngState;
+	pendingInteraction: PendingInteraction;
 }
 
 /** Action log: turn = state.turn BEFORE applying this action (expectedTurn). Unique (gameId, turn). */

@@ -15,7 +15,7 @@
 	"damageResistances": [],
 	"damageImmunities": [],
 	"tileId": 677,
-	"xpReward": 25,
+	"xpReward": 30,
 	"aiStrategy": "melee",
 	"bloodColor": "#cc0000"
 }

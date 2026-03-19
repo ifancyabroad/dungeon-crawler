@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "evasion",
+	"name": "Evasion",
+	"description": "You move like water, deflecting blows with fluid grace. +2 Armour Class.",
+	"effects": [
+		{
+			"type": "modify_armor_class",
+			"amount": 2
+		}
+	]
+}

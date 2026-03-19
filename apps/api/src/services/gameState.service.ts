@@ -20,7 +20,8 @@ import {
 	type GameState,
 	type PersistedDynamicState,
 } from "@app/shared";
-import { skillsById, vaults } from "@app/content";
+import { classes, skillsById, vaults } from "@app/content";
+import type { ClassSkillPools } from "@app/shared";
 import { GameActionLog } from "../models/gameActionLog.model";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
@@ -134,6 +135,20 @@ export async function ensureSessionLoaded(gameId: string): Promise<GameState | n
 	return promise;
 }
 
+/** Build classSkillPools lookup from content data (cheap, computed once per context build). */
+function buildClassSkillPools(): Record<string, ClassSkillPools> {
+	const pools: Record<string, ClassSkillPools> = {};
+	for (const cls of classes) {
+		pools[cls.id] = {
+			activeSkillPool: cls.activeSkillPool,
+			passiveSkillPool: cls.passiveSkillPool,
+		};
+	}
+	return pools;
+}
+
+const classSkillPools = buildClassSkillPools();
+
 function makeSessionContext(gameId: string, errorContext?: string): ApplyActionContext {
 	const walkable = getSessionWalkable(gameId);
 	const opacity = getSessionOpacity(gameId);
@@ -144,7 +159,7 @@ function makeSessionContext(gameId: string, errorContext?: string): ApplyActionC
 				: `missing cached masks for game ${gameId}`,
 		);
 	}
-	return createActionContext(walkable, opacity, skillsById);
+	return createActionContext(walkable, opacity, skillsById, classSkillPools);
 }
 
 /**
@@ -275,7 +290,7 @@ export async function reconstructState(
 	const opacity = baseLayers.map((base) =>
 		computeOpacityMask(base.wall, base.width, base.height),
 	);
-	const applyContext = createActionContext(walkable, opacity, skillsById);
+	const applyContext = createActionContext(walkable, opacity, skillsById, classSkillPools);
 
 	for (const entry of logEntries) {
 		let action;

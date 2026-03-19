@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "fire_immunity",
+	"name": "Fire Immunity",
+	"description": "Your mastery of flame makes you completely immune to fire damage.",
+	"effects": [
+		{
+			"type": "add_damage_immunity",
+			"damageType": "fire"
+		}
+	]
+}

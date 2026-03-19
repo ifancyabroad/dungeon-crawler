@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "battle_hardened",
+	"name": "Battle Hardened",
+	"description": "Countless wounds have left you resistant to bludgeoning damage.",
+	"effects": [
+		{
+			"type": "add_damage_resistance",
+			"damageType": "bludgeoning"
+		}
+	]
+}

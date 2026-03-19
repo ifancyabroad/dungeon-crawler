@@ -38,6 +38,13 @@ export const ActiveEffectSchema = z.object({
 	remainingTurns: z.number().int().min(0),
 });
 
+export const PassiveDamageBonusSchema = z.object({
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	appliesTo: z.enum(["melee", "area", "any"]),
+	onCritOnly: z.boolean(),
+});
+
 export const ActorDefSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("hero"), classId: z.string() }),
 	z.object({ type: z.literal("monster"), monsterId: z.string() }),
@@ -61,6 +68,8 @@ export const ActorSchema = z.object({
 	damageImmunities: z.array(DamageTypeSchema).default([]),
 	skills: z.record(z.string(), ActorSkillStateSchema),
 	statusEffects: z.array(ActiveEffectSchema).default([]),
+	passiveDamageBonuses: z.array(PassiveDamageBonusSchema).default([]),
+	statusImmunities: z.array(z.string()).default([]),
 	def: ActorDefSchema,
 	level: z.number(),
 	xp: z.number(),
@@ -80,6 +89,16 @@ export const FloorStateSchema = z.object({
 	exitIdx: z.number().nullable(),
 });
 
+export const PendingInteractionSchema = z
+	.object({
+		type: z.literal("skill_choice"),
+		offerType: z.enum(["active", "passive"]),
+		levelReached: z.number(),
+		offers: z.array(z.string()),
+		rerollsUsed: z.number(),
+	})
+	.nullable();
+
 /** Persisted dynamic state; validate snapshots with this (includes RngState). */
 export const PersistedDynamicStateSchema = z.object({
 	turn: z.number(),
@@ -87,4 +106,5 @@ export const PersistedDynamicStateSchema = z.object({
 	heroFloorIndex: z.number(),
 	floors: z.array(FloorStateSchema),
 	rngState: RngStateSchema,
+	pendingInteraction: PendingInteractionSchema.default(null),
 });

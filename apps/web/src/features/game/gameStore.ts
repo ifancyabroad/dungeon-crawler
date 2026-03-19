@@ -11,7 +11,16 @@ import {
 	type GameEvent,
 	type GameState,
 } from "@app/shared";
-import { skillsById, vaults } from "@app/content";
+import { classes, skillsById, vaults } from "@app/content";
+import type { ClassSkillPools } from "@app/shared";
+
+/** Pre-built classSkillPools lookup from content data. Static for the session lifetime. */
+const classSkillPools: Record<string, ClassSkillPools> = Object.fromEntries(
+	classes.map((cls) => [
+		cls.id,
+		{ activeSkillPool: cls.activeSkillPool, passiveSkillPool: cls.passiveSkillPool },
+	]),
+);
 
 const GAME_ID_KEY = "dungeon_gameId";
 
@@ -234,7 +243,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			// Use cached masks when available (normal case); fall back to derived context only if
 			// masks haven't been initialised yet (should not happen in practice).
 			const { walkableByFloor: wb, opacityByFloor: ob } = get();
-			const replayCtx = wb && ob ? createActionContext(wb, ob, skillsById) : null;
+			const replayCtx =
+				wb && ob ? createActionContext(wb, ob, skillsById, classSkillPools) : null;
 			let nextState = payload.state;
 			for (const { action } of pendingActions) {
 				const result = replayCtx
@@ -331,7 +341,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			? applyAction(
 					state,
 					action,
-					createActionContext(walkableByFloor!, opacityByFloor!, skillsById),
+					createActionContext(
+						walkableByFloor!,
+						opacityByFloor!,
+						skillsById,
+						classSkillPools,
+					),
 				)
 			: applyActionWithDerivedContext(state, action);
 		if (!result.ok) {

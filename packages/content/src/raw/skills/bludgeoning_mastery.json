@@ -1,0 +1,15 @@
+{
+	"skillType": "passive",
+	"id": "bludgeoning_mastery",
+	"name": "Crushing Blows",
+	"description": "Your strikes land with bone-breaking force. Add 1d6 bludgeoning damage to every melee attack.",
+	"effects": [
+		{
+			"type": "add_damage_dice",
+			"dice": "1d6",
+			"damageType": "bludgeoning",
+			"appliesTo": "melee",
+			"onCritOnly": false
+		}
+	]
+}

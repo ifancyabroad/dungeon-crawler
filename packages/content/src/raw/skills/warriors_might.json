@@ -1,0 +1,13 @@
+{
+	"skillType": "passive",
+	"id": "warriors_might",
+	"name": "Warrior's Might",
+	"description": "Years of combat training have strengthened your body. +2 Strength.",
+	"effects": [
+		{
+			"type": "modify_attribute",
+			"attribute": "strength",
+			"amount": 2
+		}
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "mage_armor",
+	"name": "Mage Armour",
+	"description": "An invisible arcane barrier surrounds you. +3 Armour Class.",
+	"effects": [
+		{
+			"type": "modify_armor_class",
+			"amount": 3
+		}
+	]
+}

@@ -3,10 +3,18 @@
  * Skills are data-driven: each skill declares typed effect descriptors
  * that the shared engine resolves at runtime.
  *
- * To add a new effect type:
- * 1. Add a new variant to SkillEffectDescriptorSchema (and the SkillEffectDescriptor union).
+ * Active skills are used via the hotbar and resolved by the use_skill action.
+ * Passive skills are granted at level-up and apply permanent buffs to the hero.
+ *
+ * To add a new active effect type:
+ * 1. Add a new variant to ActiveSkillEffectDescriptorSchema.
  * 2. Add a handler in packages/shared/src/skills/effects/.
- * 3. Author JSON files in src/raw/skills/ using the new effect type.
+ * 3. Author JSON files in src/raw/skills/ with skillType: "active".
+ *
+ * To add a new passive effect type:
+ * 1. Add a new variant to PassiveSkillEffectDescriptorSchema.
+ * 2. Add a case in packages/shared/src/skills/applyPassiveEffect.ts.
+ * 3. Author JSON files in src/raw/skills/ with skillType: "passive".
  */
 
 import { z } from "zod";
@@ -17,7 +25,7 @@ type DamageType = (typeof DAMAGE_TYPES)[number];
 const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);
 
 // ---------------------------------------------------------------------------
-// Effect descriptors — one variant per skill mechanic
+// Active skill effect descriptors
 // ---------------------------------------------------------------------------
 
 /** Deals damage to all actors within radiusTiles of a target tile. */
@@ -54,19 +62,89 @@ const ChargeAttackEffectSchema = z.object({
 	bonusDamageType: DamageTypeSchema,
 });
 
-export const SkillEffectDescriptorSchema = z.discriminatedUnion("type", [
+export const ActiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AreaDamageEffectSchema,
 	ApplyStatusEffectSchema,
 	ChargeAttackEffectSchema,
 ]);
 
-export type SkillEffectDescriptor = z.infer<typeof SkillEffectDescriptorSchema>;
+export type ActiveSkillEffectDescriptor = z.infer<typeof ActiveSkillEffectDescriptorSchema>;
 
 // ---------------------------------------------------------------------------
-// Skill definition
+// Passive skill effect descriptors
 // ---------------------------------------------------------------------------
 
-export const SkillDefinitionSchema = z.object({
+/** Permanently increases one of the hero's core attributes. */
+const ModifyAttributeEffectSchema = z.object({
+	type: z.literal("modify_attribute"),
+	attribute: z.enum([
+		"strength",
+		"dexterity",
+		"constitution",
+		"intelligence",
+		"wisdom",
+		"charisma",
+	]),
+	amount: z.number().int(),
+});
+
+/** Permanently adjusts the hero's armour class. */
+const ModifyArmorClassEffectSchema = z.object({
+	type: z.literal("modify_armor_class"),
+	amount: z.number().int(),
+});
+
+/** Grants the hero resistance to a damage type (halves incoming damage). */
+const AddDamageResistanceEffectSchema = z.object({
+	type: z.literal("add_damage_resistance"),
+	damageType: DamageTypeSchema,
+});
+
+/** Grants the hero full immunity to a damage type. */
+const AddDamageImmunityEffectSchema = z.object({
+	type: z.literal("add_damage_immunity"),
+	damageType: DamageTypeSchema,
+});
+
+/**
+ * Adds extra damage dice of a specific type to every qualifying hit.
+ * Applied as an additional damage packet so defender resistances/immunities apply.
+ * When onCritOnly is true, the bonus only fires on a critical hit.
+ */
+const AddDamageDiceEffectSchema = z.object({
+	type: z.literal("add_damage_dice"),
+	/** Dice expression, e.g. "1d6". */
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	/** Which attack types this bonus applies to. */
+	appliesTo: z.enum(["melee", "area", "any"]).default("any"),
+	/** If true, only adds dice on a critical hit. */
+	onCritOnly: z.boolean().default(false),
+});
+
+/** Grants immunity to a specific status effect (silently ignored when applied). */
+const AddStatusImmunityEffectSchema = z.object({
+	type: z.literal("add_status_immunity"),
+	statusId: z.string(),
+});
+
+export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
+	ModifyAttributeEffectSchema,
+	ModifyArmorClassEffectSchema,
+	AddDamageResistanceEffectSchema,
+	AddDamageImmunityEffectSchema,
+	AddDamageDiceEffectSchema,
+	AddStatusImmunityEffectSchema,
+]);
+
+export type PassiveSkillEffectDescriptor = z.infer<typeof PassiveSkillEffectDescriptorSchema>;
+
+// ---------------------------------------------------------------------------
+// Skill definitions — discriminated by skillType
+// ---------------------------------------------------------------------------
+
+export const ActiveSkillDefinitionSchema = z.object({
+	skillType: z.literal("active"),
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
@@ -86,8 +164,25 @@ export const SkillDefinitionSchema = z.object({
 	 * Default false — most active skills reveal the hero.
 	 */
 	maintainsStealth: z.boolean().optional(),
-	effects: z.array(SkillEffectDescriptorSchema).min(1),
+	effects: z.array(ActiveSkillEffectDescriptorSchema).min(1),
 });
+
+export type ActiveSkillDefinition = z.infer<typeof ActiveSkillDefinitionSchema>;
+
+export const PassiveSkillDefinitionSchema = z.object({
+	skillType: z.literal("passive"),
+	id: z.string(),
+	name: z.string(),
+	description: z.string(),
+	effects: z.array(PassiveSkillEffectDescriptorSchema).min(1),
+});
+
+export type PassiveSkillDefinition = z.infer<typeof PassiveSkillDefinitionSchema>;
+
+export const SkillDefinitionSchema = z.discriminatedUnion("skillType", [
+	ActiveSkillDefinitionSchema,
+	PassiveSkillDefinitionSchema,
+]);
 
 export type SkillDefinition = z.infer<typeof SkillDefinitionSchema>;
 

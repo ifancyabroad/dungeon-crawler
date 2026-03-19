@@ -47,16 +47,27 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New Skill
 
-1. Create `packages/content/src/raw/skills/<name>.json`. Follow existing skill files (`fireball.json`, `charge.json`, `stealth.json`) for the required shape: `id`, `name`, `description`, `cooldown`, and an `effects` array of `SkillEffectDescriptor` objects.
-    - For damage effects, you must include a D&D damage type in content:
-        - `area_damage` requires `damageType`
-        - `charge_attack` requires `bonusDamageType`
-2. If the skill needs a new effect type, add a new variant to `SkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts` and mirror the type in `packages/shared/src/skills/types.ts`. Implement the handler under `packages/shared/src/skills/effects/` and register it in `resolveSkill.ts`.
-3. Run `pnpm --filter @app/content generate` to regenerate `skillsById`.
-4. Grant the skill to the relevant class by adding its `id` to `startingSkills` in `packages/content/src/raw/classes/<class>.json`.
-5. If the skill has a visual effect, add a handler in `apps/web/src/game/fx/skills/<name>.ts` and register it in `apps/web/src/game/fx/skills/index.ts` (`SKILL_ANIM_REGISTRY`).
-6. If the skill requires a targeting mode (tile or actor selection), dispatch `useTargetingStore.getState().enterTargeting(...)` from the hotbar click handler — `TargetingSystem` and the store handle the overlay and input automatically.
-7. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
+Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (permanent buff, granted at level-up). Both share the same JSON/content pipeline but differ in their effect schema.
+
+### Active skill
+
+1. Create `packages/content/src/raw/skills/<name>.json` with `skillType: "active"`, `id`, `name`, `description`, `cooldown`, `targetType`, and an `effects` array of `ActiveSkillEffectDescriptor` objects. Follow existing files (`fireball.json`, `charge.json`).
+2. If a new effect type is needed, add a variant to `ActiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`.
+3. Run `pnpm --filter @app/content generate`.
+4. Add the skill id to the class's `activeSkillPool` (or `startingSkills`) in `packages/content/src/raw/classes/<class>.json`.
+5. If the skill has a visual effect, add a handler in `apps/web/src/game/fx/skills/<name>.ts` and register it in `SKILL_ANIM_REGISTRY` in `apps/web/src/game/fx/skills/index.ts`.
+6. If the skill requires targeting (tile or actor), the hotbar dispatches `enterTargeting(...)` — `TargetingSystem` handles the overlay automatically.
+
+### Passive skill
+
+1. Create `packages/content/src/raw/skills/<name>.json` with `skillType: "passive"`, `id`, `name`, `description`, and an `effects` array of `PassiveSkillEffectDescriptor` objects. Follow existing passive skill files.
+2. If a new passive effect type is needed, add a variant to `PassiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, and add a case in `packages/shared/src/skills/applyPassiveEffect.ts`. If the effect needs to be read at combat resolution time (e.g. extra damage dice), add the corresponding field to `Actor` and read it in the relevant combat handler.
+3. Run `pnpm --filter @app/content generate`.
+4. Add the skill id to the class's `passiveSkillPool` in `packages/content/src/raw/classes/<class>.json`.
+
+### Both types
+
+Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ---
 

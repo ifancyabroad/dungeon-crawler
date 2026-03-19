@@ -7,7 +7,11 @@
  */
 
 import type { GameEvent } from "../game/types";
-import type { SkillResolutionInput, SkillResolutionOutput } from "./types";
+import type {
+	SkillResolutionInput,
+	SkillResolutionOutput,
+	ActiveSkillEffectDescriptor,
+} from "./types";
 import { applyAreaDamage } from "./effects/areaDamage";
 import { applyStatusEffect } from "./effects/applyStatus";
 import { applyChargeAttack } from "./effects/chargeAttack";
@@ -47,14 +51,15 @@ export function resolveSkill(
 		},
 	];
 
-	for (const effect of skillDef.effects) {
+	for (const effect of skillDef.effects as ActiveSkillEffectDescriptor[]) {
 		switch (effect.type) {
 			case "area_damage": {
-				if (targetTileIdx === undefined) return { error: "skill_missing_tile_target" };
+				// "none" target type: emanate from caster's own tile (e.g. War Cry)
+				const areaTarget = targetTileIdx !== undefined ? targetTileIdx : currentCaster.idx;
 				const result = applyAreaDamage(
 					effect,
 					currentCaster,
-					targetTileIdx,
+					areaTarget,
 					floorState,
 					width,
 					rng,

@@ -1,0 +1,13 @@
+{
+	"skillType": "passive",
+	"id": "quick_reflexes",
+	"name": "Quick Reflexes",
+	"description": "Your agility becomes legendary. +2 Dexterity.",
+	"effects": [
+		{
+			"type": "modify_attribute",
+			"attribute": "dexterity",
+			"amount": 2
+		}
+	]
+}

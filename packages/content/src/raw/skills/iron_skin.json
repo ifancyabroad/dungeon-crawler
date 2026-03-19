@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "iron_skin",
+	"name": "Iron Skin",
+	"description": "Your skin hardens through relentless training. +2 Armour Class.",
+	"effects": [
+		{
+			"type": "modify_armor_class",
+			"amount": 2
+		}
+	]
+}

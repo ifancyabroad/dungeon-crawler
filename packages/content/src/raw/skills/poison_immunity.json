@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "poison_immunity",
+	"name": "Poison Immunity",
+	"description": "Years of exposure to toxins have made you completely immune to poison.",
+	"effects": [
+		{
+			"type": "add_damage_immunity",
+			"damageType": "poison"
+		}
+	]
+}

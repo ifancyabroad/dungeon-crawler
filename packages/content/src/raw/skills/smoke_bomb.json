@@ -1,0 +1,22 @@
+{
+	"skillType": "active",
+	"id": "smoke_bomb",
+	"name": "Smoke Bomb",
+	"description": "Hurl a choking smoke bomb that poisons adjacent enemies and vanishes you from sight.",
+	"cooldown": 18,
+	"targetType": "none",
+	"maintainsStealth": true,
+	"effects": [
+		{
+			"type": "area_damage",
+			"dice": "1d4",
+			"radiusTiles": 1,
+			"damageType": "poison"
+		},
+		{
+			"type": "apply_status",
+			"statusId": "stealth",
+			"durationTurns": 8
+		}
+	]
+}

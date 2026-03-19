@@ -1,0 +1,13 @@
+{
+	"skillType": "passive",
+	"id": "arcane_mind",
+	"name": "Arcane Mind",
+	"description": "Your intellect sharpens through arcane study. +2 Intelligence.",
+	"effects": [
+		{
+			"type": "modify_attribute",
+			"attribute": "intelligence",
+			"amount": 2
+		}
+	]
+}

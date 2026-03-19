@@ -1,0 +1,13 @@
+{
+	"skillType": "passive",
+	"id": "toughness",
+	"name": "Toughness",
+	"description": "Your constitution hardens through battle. +2 Constitution.",
+	"effects": [
+		{
+			"type": "modify_attribute",
+			"attribute": "constitution",
+			"amount": 2
+		}
+	]
+}

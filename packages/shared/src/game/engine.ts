@@ -14,6 +14,7 @@ import type {
 	GameState,
 	HeroInit,
 	MonsterInit,
+	PendingInteraction,
 } from "./types";
 import type { PersistedDynamicState } from "./types";
 import { MAP_GEN_VERSION } from "./types";
@@ -25,8 +26,55 @@ import { resolveAttack } from "../combat/combat";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
 import { runMonsterAI, type MonsterAIState } from "./monsterAI";
-import { resolveSkill, hasStatusEffect, tickStatusEffects } from "../skills";
-import type { SkillDefinition } from "../skills";
+import { resolveSkill, hasStatusEffect, tickStatusEffects, applyPassiveSkill } from "../skills";
+import type { ActiveSkillDefinition, SkillDefinition } from "../skills";
+
+/**
+ * Configurable schedule for level-up offer types.
+ * Keys are level numbers (1-indexed). Missing levels repeat the last seen pattern.
+ * Default: first level-up (reaching level 2) is passive, then alternates.
+ */
+export const LEVEL_UP_SCHEDULE: Record<number, "active" | "passive"> = {
+	2: "passive",
+	3: "active",
+	4: "passive",
+	5: "active",
+	6: "passive",
+	7: "active",
+	8: "passive",
+	9: "active",
+	10: "passive",
+};
+
+function getOfferTypeForLevel(level: number): "active" | "passive" {
+	if (level in LEVEL_UP_SCHEDULE) return LEVEL_UP_SCHEDULE[level]!;
+	// Beyond schedule: alternate based on parity (even = passive, odd = active)
+	return level % 2 === 0 ? "passive" : "active";
+}
+
+/**
+ * Sample up to `count` items from `pool` without replacement using deterministic RNG.
+ * Fisher-Yates partial shuffle.
+ */
+function sampleWithoutReplacement(pool: string[], count: number, rng: Rng): string[] {
+	const arr = pool.slice();
+	const result: string[] = [];
+	const take = Math.min(count, arr.length);
+	for (let i = 0; i < take; i++) {
+		const j = i + Math.floor(rng() * (arr.length - i));
+		const temp = arr[i]!;
+		arr[i] = arr[j]!;
+		arr[j] = temp;
+		result.push(arr[i]!);
+	}
+	return result;
+}
+
+/** Class skill pools passed via context for deterministic offer generation. */
+export interface ClassSkillPools {
+	activeSkillPool: string[];
+	passiveSkillPool: string[];
+}
 
 /** Empty floor state. Use when defaulting or building from persisted. spawnIdx and exitIdx are set after map generation. */
 export function createEmptyFloorState(): FloorState {
@@ -39,12 +87,18 @@ export interface ApplyActionContext {
 	/** 1 = opaque (blocks LoS), 0 = transparent. Required for explored-state updates. */
 	getOpacityMask(floorIndex: number): Uint8Array;
 	/**
-	 * Look up a skill definition by id. Used by the "use_skill" action branch.
+	 * Look up a skill definition by id. Used by the "use_skill" and "select_skill_choice" branches.
 	 * Returns undefined if the skill is not found (invalid id → engine rejects the action).
 	 * In production, this is backed by skillsById from @app/content.
 	 * In tests, pass a map of mock definitions.
 	 */
 	getSkillDef(skillId: string): SkillDefinition | undefined;
+	/**
+	 * Returns the active/passive skill pools for a given class id.
+	 * Used to generate deterministic level-up offers.
+	 * Returns undefined if the class is not found.
+	 */
+	getClassSkillPools(classId: string): ClassSkillPools | undefined;
 }
 
 /** Build context from precomputed walkability and opacity masks (O(1) per apply). */
@@ -52,6 +106,7 @@ export function createActionContext(
 	walkableMasks: Uint8Array[],
 	opacityMasks: Uint8Array[],
 	skillDefs?: Record<string, SkillDefinition>,
+	classSkillPools?: Record<string, ClassSkillPools>,
 ): ApplyActionContext {
 	return {
 		getWalkableMask(fi: number): Uint8Array {
@@ -70,6 +125,9 @@ export function createActionContext(
 		},
 		getSkillDef(skillId: string): SkillDefinition | undefined {
 			return skillDefs?.[skillId];
+		},
+		getClassSkillPools(classId: string): ClassSkillPools | undefined {
+			return classSkillPools?.[classId];
 		},
 	};
 }
@@ -164,6 +222,8 @@ function buildInitialFloorState(
 		damageImmunities: [],
 		skills: initialSkills,
 		statusEffects: [],
+		passiveDamageBonuses: [],
+		statusImmunities: [],
 		def: { type: "hero", classId: heroInit.classId },
 		level: heroInit.level,
 		xp: heroInit.xp,
@@ -217,6 +277,7 @@ export function createInitialState(
 		mapGenVersion: MAP_GEN_VERSION,
 		floors,
 		rngState,
+		pendingInteraction: null,
 	};
 }
 
@@ -293,6 +354,8 @@ export function spawnMonster(
 		damageImmunities: [...init.damageImmunities],
 		skills: {},
 		statusEffects: [],
+		passiveDamageBonuses: [],
+		statusImmunities: [],
 		def: { type: "monster", monsterId: init.monsterId },
 		level: 0,
 		xp: 0,
@@ -313,15 +376,17 @@ export function spawnMonster(
 
 /**
  * Award XP to an actor for a kill, levelling them up if the threshold is crossed.
- * Returns the updated actor and any level_up events emitted.
+ * Returns the updated actor, any level_up events, and a pendingInteraction to set
+ * on the game state if a level-up occurred and skill offers could be generated.
  */
 function grantXpForKill(
 	actor: Actor,
 	actorId: ActorId,
 	xpReward: number,
 	rng: Rng,
-): { actor: Actor; events: GameEvent[] } {
-	if (xpReward <= 0) return { actor, events: [] };
+	context: ApplyActionContext,
+): { actor: Actor; events: GameEvent[]; pendingInteraction: PendingInteraction } {
+	if (xpReward <= 0) return { actor, events: [], pendingInteraction: null };
 	const events: GameEvent[] = [];
 	let newXp = actor.xp + xpReward;
 	let newLevel = actor.level;
@@ -329,6 +394,8 @@ function grantXpForKill(
 	let newCurrentHp = actor.hp;
 
 	const nextLevelXp = XP_PER_LEVEL[newLevel + 1] ?? Infinity;
+	let pendingInteraction: PendingInteraction = null;
+
 	if (newXp >= nextLevelXp) {
 		newXp -= nextLevelXp;
 		newLevel += 1;
@@ -338,11 +405,33 @@ function grantXpForKill(
 		newMaxHp += hpGained;
 		newCurrentHp += hpGained;
 		events.push({ type: "level_up", actorId, newLevel, hpGained });
+
+		// Generate deterministic level-up skill offers
+		const classId = actor.def.type === "hero" ? actor.def.classId : null;
+		const pools = classId ? context.getClassSkillPools(classId) : undefined;
+		if (pools) {
+			const offerType = getOfferTypeForLevel(newLevel);
+			const pool = offerType === "active" ? pools.activeSkillPool : pools.passiveSkillPool;
+			// Filter out skills the hero already owns
+			const ownedSkillIds = new Set(Object.keys(actor.skills));
+			const eligible = pool.filter((id) => !ownedSkillIds.has(id));
+			const offers = sampleWithoutReplacement(eligible, 3, rng);
+			if (offers.length > 0) {
+				pendingInteraction = {
+					type: "skill_choice",
+					offerType,
+					levelReached: newLevel,
+					offers,
+					rerollsUsed: 0,
+				};
+			}
+		}
 	}
 
 	return {
 		actor: { ...actor, xp: newXp, level: newLevel, maxHp: newMaxHp, hp: newCurrentHp },
 		events,
+		pendingInteraction,
 	};
 }
 
@@ -440,7 +529,11 @@ function processEnemyTurns(
 			};
 		} else if (result.kind === "skill") {
 			// Monster uses a skill — resolved the same way as hero skills.
-			const skillDef = getSkillDef(result.skillId);
+			const rawSkillDef = getSkillDef(result.skillId);
+			const skillDef =
+				rawSkillDef?.skillType === "active"
+					? (rawSkillDef as ActiveSkillDefinition)
+					: undefined;
 			const skillState = monster.skills?.[result.skillId];
 			if (skillDef && skillState && skillState.cooldownRemaining === 0) {
 				const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
@@ -588,6 +681,16 @@ export function applyAction(
 	action: Action,
 	context: ApplyActionContext,
 ): ApplyActionResult {
+	// -------------------------------------------------------------------------
+	// Pause gate: when a pendingInteraction is active, all regular game actions
+	// are blocked. Only meta-actions that resolve the interaction may proceed.
+	// -------------------------------------------------------------------------
+	const isInteractionAction =
+		action.type === "select_skill_choice" || action.type === "reroll_skill_choice";
+	if (state.pendingInteraction !== null && !isInteractionAction) {
+		return { ok: false, reason: "interaction_required" };
+	}
+
 	switch (action.type) {
 		case "move": {
 			const hero = getHero(state);
@@ -755,19 +858,20 @@ export function applyAction(
 
 			let updatedHero: Actor = activeHero;
 			let updatedDefender: Actor | undefined;
+			let attackPendingInteraction: PendingInteraction = null;
 			if (attackResult.hit) {
 				const newHp = Math.max(0, defender.hp - attackResult.damage);
 				updatedDefender = { ...defender, hp: newHp, alive: newHp > 0 };
 				if (!updatedDefender.alive) {
 					events.push({ type: "death", actorId: defender.id });
-					const { actor: heroWithXp, events: xpEvents } = grantXpForKill(
-						activeHero,
-						state.heroId,
-						defender.xpReward,
-						rng,
-					);
+					const {
+						actor: heroWithXp,
+						events: xpEvents,
+						pendingInteraction: xpInteraction,
+					} = grantXpForKill(activeHero, state.heroId, defender.xpReward, rng, context);
 					updatedHero = heroWithXp;
 					events.push(...xpEvents);
+					if (xpInteraction) attackPendingInteraction = xpInteraction;
 				}
 			}
 			const newActorsById = {
@@ -778,21 +882,23 @@ export function applyAction(
 
 			let newFloorState: FloorState = { ...activeFloorState, actorsById: newActorsById };
 
-			// Enemy turns after attack
-			const attackWalkMask = context.getWalkableMask(fi);
-			const attackOpacityMask = context.getOpacityMask(fi);
-			const enemyResult = processEnemyTurns(
-				newFloorState,
-				state.heroId,
-				width,
-				height,
-				attackWalkMask,
-				attackOpacityMask,
-				rng,
-				context.getSkillDef,
-			);
-			newFloorState = enemyResult.floorState;
-			events.push(...enemyResult.events);
+			// Enemy turns after attack (skip if we're about to pause for a skill choice)
+			if (!attackPendingInteraction) {
+				const attackWalkMask = context.getWalkableMask(fi);
+				const attackOpacityMask = context.getOpacityMask(fi);
+				const enemyResult = processEnemyTurns(
+					newFloorState,
+					state.heroId,
+					width,
+					height,
+					attackWalkMask,
+					attackOpacityMask,
+					rng,
+					context.getSkillDef,
+				);
+				newFloorState = enemyResult.floorState;
+				events.push(...enemyResult.events);
+			}
 
 			const newFloors = state.floors.slice();
 			newFloors[fi] = { ...floor, state: newFloorState };
@@ -802,9 +908,13 @@ export function applyAction(
 				turn: state.turn + 1,
 				floors: newFloors,
 				rngState: getRngState(),
+				pendingInteraction: attackPendingInteraction,
 			};
-			attackNewState = tickStatusEffects(attackNewState);
-			attackNewState = tickSkillCooldowns(attackNewState);
+			// Only tick status/cooldowns when game is not pausing
+			if (!attackPendingInteraction) {
+				attackNewState = tickStatusEffects(attackNewState);
+				attackNewState = tickSkillCooldowns(attackNewState);
+			}
 
 			return { ok: true, state: attackNewState, events };
 		}
@@ -819,6 +929,9 @@ export function applyAction(
 			const skillDef = context.getSkillDef(action.skillId);
 			if (!skillDef) return { ok: false, reason: "skill_unknown" };
 
+			// Passive skills cannot be used via the hotbar
+			if (skillDef.skillType === "passive") return { ok: false, reason: "skill_is_passive" };
+
 			// Validate that the hero has this skill (it was awarded at creation)
 			const skillState = hero.skills[action.skillId];
 			if (!skillState) return { ok: false, reason: "skill_not_owned" };
@@ -829,12 +942,14 @@ export function applyAction(
 			const { rng, getState: getRngState } = createRngFromState(state.rngState);
 
 			// Using a skill that doesn't explicitly maintain stealth reveals the hero.
-			const { hero: heroForSkill, floorState: floorForSkill } = !skillDef.maintainsStealth
+			const { hero: heroForSkill, floorState: floorForSkill } = !(
+				skillDef as ActiveSkillDefinition
+			).maintainsStealth
 				? breakStealth(hero, state.heroId, floor.state)
 				: { hero, floorState: floor.state };
 
 			const resolution = resolveSkill({
-				skillDef,
+				skillDef: skillDef as ActiveSkillDefinition,
 				caster: heroForSkill,
 				casterId: state.heroId,
 				floorState: floorForSkill,
@@ -867,18 +982,19 @@ export function applyAction(
 			// Grant XP for any kills caused by the skill
 			let updatedHero = heroAfterSkill;
 			const skillXpEvents: GameEvent[] = [];
+			let skillPendingInteraction: PendingInteraction = null;
 			for (const event of resolution.events) {
 				if (event.type === "death") {
 					const dead = newFloorState.actorsById[event.actorId];
 					if (dead?.def.type === "monster") {
-						const { actor: heroWithXp, events: xpEvents } = grantXpForKill(
-							updatedHero,
-							state.heroId,
-							dead.xpReward,
-							rng,
-						);
+						const {
+							actor: heroWithXp,
+							events: xpEvents,
+							pendingInteraction: xpInteraction,
+						} = grantXpForKill(updatedHero, state.heroId, dead.xpReward, rng, context);
 						updatedHero = heroWithXp;
 						skillXpEvents.push(...xpEvents);
+						if (xpInteraction) skillPendingInteraction = xpInteraction;
 					}
 				}
 			}
@@ -889,40 +1005,139 @@ export function applyAction(
 				actorsById: { ...newFloorState.actorsById, [state.heroId]: updatedHero },
 			};
 
-			// Enemy turns
-			const skillWalkMask = context.getWalkableMask(fi);
-			const skillOpacityMask = context.getOpacityMask(fi);
-			const enemyResult = processEnemyTurns(
-				newFloorState,
-				state.heroId,
-				width,
-				height,
-				skillWalkMask,
-				skillOpacityMask,
-				rng,
-				context.getSkillDef,
-			);
-			newFloorState = enemyResult.floorState;
+			// Enemy turns (skip if we're about to pause for a skill choice)
+			if (!skillPendingInteraction) {
+				const skillWalkMask = context.getWalkableMask(fi);
+				const skillOpacityMask = context.getOpacityMask(fi);
+				const enemyResult = processEnemyTurns(
+					newFloorState,
+					state.heroId,
+					width,
+					height,
+					skillWalkMask,
+					skillOpacityMask,
+					rng,
+					context.getSkillDef,
+				);
+				newFloorState = enemyResult.floorState;
+				skillXpEvents.push(...enemyResult.events);
+			}
 
 			const newFloors = state.floors.slice();
 			newFloors[fi] = { ...floor, state: newFloorState };
 
-			// Tick down status effects and cooldowns at end of turn
-			let newState: GameState = tickStatusEffects({
+			let newState: GameState = {
 				...state,
 				turn: state.turn + 1,
 				floors: newFloors,
 				rngState: getRngState(),
-			});
+				pendingInteraction: skillPendingInteraction,
+			};
 
-			// Decrement all skill cooldowns on the hero
-			newState = tickSkillCooldowns(newState);
+			// Only tick status/cooldowns when game is not pausing
+			if (!skillPendingInteraction) {
+				newState = tickStatusEffects(newState);
+				newState = tickSkillCooldowns(newState);
+			}
 
 			return {
 				ok: true,
 				state: newState,
-				events: [...resolution.events, ...skillXpEvents, ...enemyResult.events],
+				events: [...resolution.events, ...skillXpEvents],
 			};
+		}
+
+		case "select_skill_choice": {
+			const pi = state.pendingInteraction;
+			if (pi?.type !== "skill_choice") {
+				return { ok: false, reason: "no_pending_choice" };
+			}
+			if (!pi.offers.includes(action.skillId)) {
+				return { ok: false, reason: "skill_not_in_offers" };
+			}
+
+			const skillDef = context.getSkillDef(action.skillId);
+			if (!skillDef) return { ok: false, reason: "skill_unknown" };
+
+			// Find hero on the current floor
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) return { ok: false, reason: "no_floor" };
+			const hero = getHero(state);
+			if (!hero) return { ok: false, reason: "no_hero" };
+
+			// Grant the skill to the hero's skill list
+			let heroWithSkill: Actor = {
+				...hero,
+				skills: { ...hero.skills, [action.skillId]: { cooldownRemaining: 0 } },
+			};
+
+			// Apply passive effects permanently
+			if (skillDef.skillType === "passive") {
+				heroWithSkill = applyPassiveSkill(heroWithSkill, skillDef);
+			}
+
+			const newFloors = state.floors.slice();
+			newFloors[fi] = {
+				...floor,
+				state: {
+					...floor.state,
+					actorsById: { ...floor.state.actorsById, [state.heroId]: heroWithSkill },
+				},
+			};
+
+			const skillGrantedState: GameState = {
+				...state,
+				turn: state.turn + 1,
+				floors: newFloors,
+				pendingInteraction: null,
+			};
+
+			return {
+				ok: true,
+				state: skillGrantedState,
+				events: [{ type: "skill_granted", actorId: state.heroId, skillId: action.skillId }],
+			};
+		}
+
+		case "reroll_skill_choice": {
+			const pi = state.pendingInteraction;
+			if (pi?.type !== "skill_choice") {
+				return { ok: false, reason: "no_pending_choice" };
+			}
+
+			// Find the hero to get classId and owned skills
+			const hero = getHero(state);
+			if (!hero) return { ok: false, reason: "no_hero" };
+			const classId = hero.def.type === "hero" ? hero.def.classId : null;
+			const pools = classId ? context.getClassSkillPools(classId) : undefined;
+			if (!pools) return { ok: false, reason: "no_skill_pools" };
+
+			const { rng, getState: getRngState } = createRngFromState(state.rngState);
+
+			const pool = pi.offerType === "active" ? pools.activeSkillPool : pools.passiveSkillPool;
+			const ownedSkillIds = new Set(Object.keys(hero.skills));
+			// Also exclude the current offers so reroll always shows different options
+			const currentOffers = new Set(pi.offers);
+			const eligible = pool.filter((id) => !ownedSkillIds.has(id) && !currentOffers.has(id));
+
+			// If there are fewer or equal eligible skills than current offers, don't exclude current
+			const finalEligible =
+				eligible.length > 0 ? eligible : pool.filter((id) => !ownedSkillIds.has(id));
+			const newOffers = sampleWithoutReplacement(finalEligible, 3, rng);
+
+			const rerolledState: GameState = {
+				...state,
+				turn: state.turn + 1,
+				rngState: getRngState(),
+				pendingInteraction: {
+					...pi,
+					offers: newOffers,
+					rerollsUsed: pi.rerollsUsed + 1,
+				},
+			};
+
+			return { ok: true, state: rerolledState, events: [] };
 		}
 
 		case "unknown":
@@ -978,6 +1193,7 @@ export function buildGameStateFromPersisted(
 		mapGenVersion,
 		floors,
 		rngState: persisted.rngState,
+		pendingInteraction: persisted.pendingInteraction ?? null,
 	};
 }
 
@@ -989,5 +1205,6 @@ export function gameStateToPersisted(state: GameState): PersistedDynamicState {
 		heroFloorIndex: state.heroFloorIndex,
 		floors: state.floors.map((f) => f.state),
 		rngState: state.rngState,
+		pendingInteraction: state.pendingInteraction,
 	};
 }

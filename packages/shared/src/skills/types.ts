@@ -2,18 +2,25 @@
  * Shared skill types. Mirror the structure from @app/content/schemas/skill
  * but without any Zod dependency, keeping packages/shared platform-agnostic.
  *
- * When adding a new effect type:
- * 1. Add a new variant to SkillEffectDescriptor here.
+ * When adding a new active effect type:
+ * 1. Add a new variant to ActiveSkillEffectDescriptor here.
  * 2. Add the matching Zod variant in packages/content/src/schemas/skill.ts.
  * 3. Add a handler in packages/shared/src/skills/effects/.
  * 4. Handle the new type in resolveSkill.ts.
+ *
+ * When adding a new passive effect type:
+ * 1. Add a new variant to PassiveSkillEffectDescriptor here.
+ * 2. Add the matching Zod variant in packages/content/src/schemas/skill.ts.
+ * 3. Add a case in packages/shared/src/skills/applyPassiveEffect.ts.
  */
 
-// ---------------------------------------------------------------------------
-// Effect descriptors (plain TypeScript — no Zod)
-// ---------------------------------------------------------------------------
-
 import type { DamageType } from "../combat/damageTypes";
+import type { Actor, ActorId, FloorState, GameEvent, GameState } from "../game/types";
+import type { Rng } from "../rng";
+
+// ---------------------------------------------------------------------------
+// Active skill effect descriptors (plain TypeScript — no Zod)
+// ---------------------------------------------------------------------------
 
 export interface AreaDamageEffect {
 	type: "area_damage";
@@ -40,13 +47,62 @@ export interface ChargeAttackEffect {
 	bonusDamageType: DamageType;
 }
 
-export type SkillEffectDescriptor = AreaDamageEffect | ApplyStatusEffect | ChargeAttackEffect;
+export type ActiveSkillEffectDescriptor = AreaDamageEffect | ApplyStatusEffect | ChargeAttackEffect;
 
 // ---------------------------------------------------------------------------
-// Skill definition (plain TypeScript)
+// Passive skill effect descriptors (plain TypeScript — no Zod)
 // ---------------------------------------------------------------------------
 
-export interface SkillDefinition {
+export interface ModifyAttributeEffect {
+	type: "modify_attribute";
+	attribute: "strength" | "dexterity" | "constitution" | "intelligence" | "wisdom" | "charisma";
+	amount: number;
+}
+
+export interface ModifyArmorClassEffect {
+	type: "modify_armor_class";
+	amount: number;
+}
+
+export interface AddDamageResistanceEffect {
+	type: "add_damage_resistance";
+	damageType: DamageType;
+}
+
+export interface AddDamageImmunityEffect {
+	type: "add_damage_immunity";
+	damageType: DamageType;
+}
+
+export interface AddDamageDiceEffect {
+	type: "add_damage_dice";
+	dice: string;
+	damageType: DamageType;
+	/** Which attack types this bonus applies to. */
+	appliesTo: "melee" | "area" | "any";
+	/** If true, only adds dice on a critical hit (melee only). */
+	onCritOnly: boolean;
+}
+
+export interface AddStatusImmunityEffect {
+	type: "add_status_immunity";
+	statusId: string;
+}
+
+export type PassiveSkillEffectDescriptor =
+	| ModifyAttributeEffect
+	| ModifyArmorClassEffect
+	| AddDamageResistanceEffect
+	| AddDamageImmunityEffect
+	| AddDamageDiceEffect
+	| AddStatusImmunityEffect;
+
+// ---------------------------------------------------------------------------
+// Skill definitions (plain TypeScript)
+// ---------------------------------------------------------------------------
+
+export interface ActiveSkillDefinition {
+	skillType: "active";
 	id: string;
 	name: string;
 	description: string;
@@ -58,18 +114,25 @@ export interface SkillDefinition {
 	 * Default false — most active skills reveal the hero.
 	 */
 	maintainsStealth?: boolean;
-	effects: SkillEffectDescriptor[];
+	effects: ActiveSkillEffectDescriptor[];
 }
 
-// ---------------------------------------------------------------------------
-// Resolution input — everything the engine passes to the skill resolver
-// ---------------------------------------------------------------------------
+export interface PassiveSkillDefinition {
+	skillType: "passive";
+	id: string;
+	name: string;
+	description: string;
+	effects: PassiveSkillEffectDescriptor[];
+}
 
-import type { Actor, ActorId, FloorState, GameEvent, GameState } from "../game/types";
-import type { Rng } from "../rng";
+export type SkillDefinition = ActiveSkillDefinition | PassiveSkillDefinition;
+
+// ---------------------------------------------------------------------------
+// Resolution input/output — everything the engine passes to the skill resolver
+// ---------------------------------------------------------------------------
 
 export interface SkillResolutionInput {
-	skillDef: SkillDefinition;
+	skillDef: ActiveSkillDefinition;
 	/** The actor using the skill (hero or, in future, a monster). */
 	caster: Actor;
 	casterId: ActorId;

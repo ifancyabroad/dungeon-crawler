@@ -36,6 +36,16 @@ export const classes: readonly CharacterClassDefinition[] = [
     "startingSkills": [
       "fireball"
     ],
+    "activeSkillPool": [
+      "lightning_bolt"
+    ],
+    "passiveSkillPool": [
+      "arcane_mind",
+      "fire_affinity",
+      "mage_armor",
+      "fire_immunity",
+      "arcane_wisdom"
+    ],
     "weaponProficiencies": [
       "staff",
       "dagger"
@@ -67,6 +77,16 @@ export const classes: readonly CharacterClassDefinition[] = [
     "startingSkills": [
       "stealth"
     ],
+    "activeSkillPool": [
+      "smoke_bomb"
+    ],
+    "passiveSkillPool": [
+      "quick_reflexes",
+      "evasion",
+      "shadow_strike",
+      "predators_instinct",
+      "poison_immunity"
+    ],
     "weaponProficiencies": [
       "dagger",
       "shortbow",
@@ -90,7 +110,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 10,
       "charisma": 12
     },
-    "startingHp": 140,
+    "startingHp": 14,
     "hitDie": 10,
     "startingEquipment": [
       "sword-basic",
@@ -99,6 +119,16 @@ export const classes: readonly CharacterClassDefinition[] = [
     ],
     "startingSkills": [
       "charge"
+    ],
+    "activeSkillPool": [
+      "war_cry"
+    ],
+    "passiveSkillPool": [
+      "warriors_might",
+      "iron_skin",
+      "toughness",
+      "bludgeoning_mastery",
+      "battle_hardened"
     ],
     "weaponProficiencies": [
       "sword",
@@ -137,7 +167,7 @@ export const monsters: readonly MonsterDefinition[] = [
     "hp": 7,
     "armorClass": 12,
     "tileId": 677,
-    "xpReward": 25,
+    "xpReward": 30,
     "aiStrategy": "melee",
     "damageResistances": [],
     "damageImmunities": [],
@@ -316,11 +346,65 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["charge","fireball","stealth"] as const;
+export const skillIds = ["arcane_mind","arcane_wisdom","battle_hardened","bludgeoning_mastery","charge","evasion","fire_affinity","fire_immunity","fireball","iron_skin","lightning_bolt","mage_armor","poison_immunity","predators_instinct","quick_reflexes","shadow_strike","smoke_bomb","stealth","toughness","war_cry","warriors_might"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
   {
+    "skillType": "passive",
+    "id": "arcane_mind",
+    "name": "Arcane Mind",
+    "description": "Your intellect sharpens through arcane study. +2 Intelligence.",
+    "effects": [
+      {
+        "type": "modify_attribute",
+        "attribute": "intelligence",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "arcane_wisdom",
+    "name": "Arcane Wisdom",
+    "description": "Deep study expands your magical perception. +2 Wisdom.",
+    "effects": [
+      {
+        "type": "modify_attribute",
+        "attribute": "wisdom",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "battle_hardened",
+    "name": "Battle Hardened",
+    "description": "Countless wounds have left you resistant to bludgeoning damage.",
+    "effects": [
+      {
+        "type": "add_damage_resistance",
+        "damageType": "bludgeoning"
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "bludgeoning_mastery",
+    "name": "Crushing Blows",
+    "description": "Your strikes land with bone-breaking force. Add 1d6 bludgeoning damage to every melee attack.",
+    "effects": [
+      {
+        "type": "add_damage_dice",
+        "dice": "1d6",
+        "damageType": "bludgeoning",
+        "appliesTo": "melee",
+        "onCritOnly": false
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "charge",
     "name": "Charge",
     "description": "Sprint toward a distant enemy in a straight line and deliver a devastating blow on arrival.",
@@ -337,6 +421,46 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "passive",
+    "id": "evasion",
+    "name": "Evasion",
+    "description": "You move like water, deflecting blows with fluid grace. +2 Armour Class.",
+    "effects": [
+      {
+        "type": "modify_armor_class",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "fire_affinity",
+    "name": "Fire Affinity",
+    "description": "Your attunement to fire magic adds a burst of flame to every area spell.",
+    "effects": [
+      {
+        "type": "add_damage_dice",
+        "dice": "1d4",
+        "damageType": "fire",
+        "appliesTo": "area",
+        "onCritOnly": false
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "fire_immunity",
+    "name": "Fire Immunity",
+    "description": "Your mastery of flame makes you completely immune to fire damage.",
+    "effects": [
+      {
+        "type": "add_damage_immunity",
+        "damageType": "fire"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "fireball",
     "name": "Fireball",
     "description": "Hurl a ball of fire that explodes on impact, scorching all enemies in the blast radius.",
@@ -354,6 +478,129 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "passive",
+    "id": "iron_skin",
+    "name": "Iron Skin",
+    "description": "Your skin hardens through relentless training. +2 Armour Class.",
+    "effects": [
+      {
+        "type": "modify_armor_class",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "lightning_bolt",
+    "name": "Lightning Bolt",
+    "description": "Call down a bolt of lightning that strikes a target tile with devastating force.",
+    "cooldown": 15,
+    "targetType": "tile",
+    "range": 6,
+    "effects": [
+      {
+        "type": "area_damage",
+        "dice": "3d6",
+        "radiusTiles": 0,
+        "scalingStat": "intelligence",
+        "damageType": "lightning"
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "mage_armor",
+    "name": "Mage Armour",
+    "description": "An invisible arcane barrier surrounds you. +3 Armour Class.",
+    "effects": [
+      {
+        "type": "modify_armor_class",
+        "amount": 3
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "poison_immunity",
+    "name": "Poison Immunity",
+    "description": "Years of exposure to toxins have made you completely immune to poison.",
+    "effects": [
+      {
+        "type": "add_damage_immunity",
+        "damageType": "poison"
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "predators_instinct",
+    "name": "Predator's Instinct",
+    "description": "Your predatory senses sharpen. +2 Charisma and +2 Wisdom.",
+    "effects": [
+      {
+        "type": "modify_attribute",
+        "attribute": "charisma",
+        "amount": 2
+      },
+      {
+        "type": "modify_attribute",
+        "attribute": "wisdom",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "quick_reflexes",
+    "name": "Quick Reflexes",
+    "description": "Your agility becomes legendary. +2 Dexterity.",
+    "effects": [
+      {
+        "type": "modify_attribute",
+        "attribute": "dexterity",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "shadow_strike",
+    "name": "Shadow Strike",
+    "description": "Your attacks from the darkness pierce deep. Add 1d4 piercing damage to every melee attack.",
+    "effects": [
+      {
+        "type": "add_damage_dice",
+        "dice": "1d4",
+        "damageType": "piercing",
+        "appliesTo": "melee",
+        "onCritOnly": false
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "smoke_bomb",
+    "name": "Smoke Bomb",
+    "description": "Hurl a choking smoke bomb that poisons adjacent enemies and vanishes you from sight.",
+    "cooldown": 18,
+    "targetType": "none",
+    "maintainsStealth": true,
+    "effects": [
+      {
+        "type": "area_damage",
+        "dice": "1d4",
+        "radiusTiles": 1,
+        "damageType": "poison"
+      },
+      {
+        "type": "apply_status",
+        "statusId": "stealth",
+        "durationTurns": 8
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "stealth",
     "name": "Stealth",
     "description": "Melt into the shadows. Enemies lose track of you and cannot detect your presence.",
@@ -365,6 +612,49 @@ export const skills: readonly SkillDefinition[] = [
         "type": "apply_status",
         "statusId": "stealth",
         "durationTurns": 20
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "toughness",
+    "name": "Toughness",
+    "description": "Your constitution hardens through battle. +2 Constitution.",
+    "effects": [
+      {
+        "type": "modify_attribute",
+        "attribute": "constitution",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "war_cry",
+    "name": "War Cry",
+    "description": "Unleash a thunderous battle cry that rattles all nearby enemies.",
+    "cooldown": 15,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "area_damage",
+        "dice": "1d6",
+        "radiusTiles": 1,
+        "scalingStat": "strength",
+        "damageType": "thunder"
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "warriors_might",
+    "name": "Warrior's Might",
+    "description": "Years of combat training have strengthened your body. +2 Strength.",
+    "effects": [
+      {
+        "type": "modify_attribute",
+        "attribute": "strength",
+        "amount": 2
       }
     ]
   }

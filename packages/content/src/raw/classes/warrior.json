@@ -10,10 +10,18 @@
 		"wisdom": 10,
 		"charisma": 12
 	},
-	"startingHp": 140,
+	"startingHp": 14,
 	"hitDie": 10,
 	"startingEquipment": ["sword-basic", "shield-wood", "mail-hauberk"],
 	"startingSkills": ["charge"],
+	"activeSkillPool": ["war_cry"],
+	"passiveSkillPool": [
+		"warriors_might",
+		"iron_skin",
+		"toughness",
+		"bludgeoning_mastery",
+		"battle_hardened"
+	],
 	"weaponProficiencies": ["sword", "axe", "mace", "polearm"],
 	"armorProficiencies": ["light", "medium", "heavy", "shield"],
 	"resource": "stamina",

@@ -16,6 +16,15 @@ export const CharacterClassSchema = z.object({
 	hitDie: z.number(),
 	startingEquipment: z.array(z.string()),
 	startingSkills: z.array(z.string()),
+	/**
+	 * Active skills available in the level-up offer pool for this class.
+	 * Starting skills are granted automatically and excluded from offers.
+	 */
+	activeSkillPool: z.array(z.string()),
+	/**
+	 * Passive skills available in the level-up offer pool for this class.
+	 */
+	passiveSkillPool: z.array(z.string()),
 	weaponProficiencies: z.array(z.string()),
 	armorProficiencies: z.array(z.string()),
 	resource: ResourceSchema,

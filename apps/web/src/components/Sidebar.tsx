@@ -1,6 +1,6 @@
 import { Backpack, Sparkles, User } from "lucide-react";
 import { getHero, XP_PER_LEVEL } from "@app/shared";
-import { classesById, type CharacterClassId } from "@app/content";
+import { classesById, skillsById, type CharacterClassId } from "@app/content";
 import { useGameStore } from "../features/game/gameStore";
 import { useUiStore } from "../features/ui/uiStore";
 import { Button } from "./Button";
@@ -170,6 +170,40 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 								<span className="text-text tabular-nums">0</span>
 							</div>
 						</div>
+
+						{/* Passive skills */}
+						{(() => {
+							const passiveSkillIds = Object.keys(hero.skills).filter((id) => {
+								const def = skillsById[id as keyof typeof skillsById];
+								return def?.skillType === "passive";
+							});
+							if (passiveSkillIds.length === 0) return null;
+							return (
+								<div className="border-t border-border pt-2 space-y-1">
+									<p className="text-text-label uppercase tracking-wider">
+										Passive Skills
+									</p>
+									{passiveSkillIds.map((id) => {
+										const def = skillsById[id as keyof typeof skillsById];
+										if (!def) return null;
+										return (
+											<div
+												key={id}
+												className="flex flex-col gap-0.5"
+												title={def.description}
+											>
+												<span className="text-secondary font-mono">
+													{def.name}
+												</span>
+												<span className="text-text-muted leading-tight">
+													{def.description}
+												</span>
+											</div>
+										);
+									})}
+								</div>
+							);
+						})()}
 					</div>
 				) : (
 					<div className="p-3">

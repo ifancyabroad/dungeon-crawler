@@ -14,6 +14,14 @@
 	"hitDie": 6,
 	"startingEquipment": ["staff-basic", "robe-cloth"],
 	"startingSkills": ["fireball"],
+	"activeSkillPool": ["lightning_bolt"],
+	"passiveSkillPool": [
+		"arcane_mind",
+		"fire_affinity",
+		"mage_armor",
+		"fire_immunity",
+		"arcane_wisdom"
+	],
 	"weaponProficiencies": ["staff", "dagger"],
 	"armorProficiencies": ["cloth"],
 	"resource": "mana",

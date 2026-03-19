@@ -7,7 +7,7 @@ import type { Rng } from "../rng";
 import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
 import { UNARMED_WEAPON } from "./types";
-import { rollD20, rollDice, abilityModifier } from "./dice";
+import { rollD20, rollDice, abilityModifier, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
 
 /**
@@ -17,6 +17,8 @@ import { resolveDamagePackets } from "./resolveDamage";
  * - Natural 20: always hits + critical (double damage dice).
  * - Damage: weapon dice + STR modifier (minimum 0 total).
  * - Critical: roll weapon dice twice, then add modifier once.
+ * - Passive bonuses: extra damage packets from attacker.passiveDamageBonuses
+ *   that apply to "melee" or "any". onCritOnly bonuses only fire on a critical.
  */
 export function resolveAttack(
 	attacker: Actor,
@@ -39,18 +41,29 @@ export function resolveAttack(
 		for (let i = 0; i < diceCount; i++) {
 			diceTotal += rollDice(rng, weapon.sides);
 		}
-		const rawAmount = Math.max(0, diceTotal + strMod);
-		const resolved = resolveDamagePackets(
-			[
-				{
-					damageType: weapon.damageType,
-					rawAmount,
-					// Placeholder; resolveDamagePackets will overwrite effectiveAmount.
-					effectiveAmount: 0,
-				},
-			],
-			defender,
-		);
+		const rawWeaponAmount = Math.max(0, diceTotal + strMod);
+
+		const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
+			{
+				damageType: weapon.damageType,
+				rawAmount: rawWeaponAmount,
+				effectiveAmount: 0,
+			},
+		];
+
+		// Apply passive damage bonuses from the attacker
+		for (const bonus of attacker.passiveDamageBonuses) {
+			if (bonus.appliesTo !== "melee" && bonus.appliesTo !== "any") continue;
+			if (bonus.onCritOnly && !critical) continue;
+			const bonusRoll = rollDiceExpr(rng, bonus.dice);
+			rawPackets.push({
+				damageType: bonus.damageType,
+				rawAmount: bonusRoll,
+				effectiveAmount: 0,
+			});
+		}
+
+		const resolved = resolveDamagePackets(rawPackets, defender);
 		damage = resolved.totalEffectiveDamage;
 		damagePackets = resolved.packets;
 	}
