@@ -50,9 +50,79 @@ export interface RegenerateOptions {
 	vaultDefs?: readonly VaultDef[];
 }
 
+const MIN_FLOOR_SIDE = 7;
+
+interface ReachabilityResult {
+	reachable: Set<number>;
+	distances: Int32Array;
+}
+
+function validateFloorConfig(config: FloorConfig): void {
+	if (config.width < MIN_FLOOR_SIDE || config.height < MIN_FLOOR_SIDE) {
+		throw new Error(
+			`Invalid floor dimensions ${config.width}x${config.height}; minimum is ${MIN_FLOOR_SIDE}x${MIN_FLOOR_SIDE}`,
+		);
+	}
+}
+
+function computeReachability(
+	ground: number[][],
+	wall: number[][],
+	blockedMask: boolean[][],
+	spawnIdx: number,
+	width: number,
+	height: number,
+): ReachabilityResult {
+	const distances = new Int32Array(width * height).fill(-1);
+	const reachable = new Set<number>();
+	const sx = spawnIdx % width;
+	const sy = Math.floor(spawnIdx / width);
+	if (!isCellWalkable(ground, wall, blockedMask, sx, sy)) return { reachable, distances };
+	const queue: number[] = [spawnIdx];
+	distances[spawnIdx] = 0;
+	for (let head = 0; head < queue.length; head++) {
+		const idx = queue[head];
+		reachable.add(idx);
+		const x = idx % width;
+		const y = Math.floor(idx / width);
+		for (const [dx, dy] of [
+			[1, 0],
+			[-1, 0],
+			[0, 1],
+			[0, -1],
+		] as const) {
+			const nx = x + dx;
+			const ny = y + dy;
+			if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+			const nIdx = ny * width + nx;
+			if (distances[nIdx] !== -1) continue;
+			if (!isCellWalkable(ground, wall, blockedMask, nx, ny)) continue;
+			distances[nIdx] = distances[idx] + 1;
+			queue.push(nIdx);
+		}
+	}
+	return { reachable, distances };
+}
+
+function countWalkableCells(
+	ground: number[][],
+	wall: number[][],
+	blockedMask: boolean[][],
+	width: number,
+	height: number,
+): number {
+	let count = 0;
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			if (isCellWalkable(ground, wall, blockedMask, x, y)) count++;
+		}
+	}
+	return count;
+}
+
 /**
- * Find the walkable tile farthest from the spawn point (Euclidean distance).
- * Returns -1 if no walkable tile is found.
+ * Find the walkable tile farthest from the spawn point by reachable path distance.
+ * Returns -1 if no reachable tile is found.
  */
 export function findExitIdx(
 	ground: number[][],
@@ -62,23 +132,26 @@ export function findExitIdx(
 	width: number,
 	height: number,
 ): number {
-	const spawnX = spawnIdx % width;
-	const spawnY = Math.floor(spawnIdx / width);
+	const { reachable, distances } = computeReachability(
+		ground,
+		wall,
+		blockedMask,
+		spawnIdx,
+		width,
+		height,
+	);
+	if (reachable.size === 0) return -1;
 	let bestIdx = -1;
 	let bestDist = -1;
-	for (let y = 0; y < height; y++) {
-		for (let x = 0; x < width; x++) {
-			if (!isCellWalkable(ground, wall, blockedMask, x, y)) continue;
-			const dx = x - spawnX;
-			const dy = y - spawnY;
-			const dist = dx * dx + dy * dy;
-			if (dist > bestDist) {
-				bestDist = dist;
-				bestIdx = y * width + x;
-			}
+	for (const idx of reachable) {
+		if (idx === spawnIdx) continue;
+		const dist = distances[idx];
+		if (dist > bestDist) {
+			bestDist = dist;
+			bestIdx = idx;
 		}
 	}
-	return bestIdx;
+	return bestIdx >= 0 ? bestIdx : spawnIdx;
 }
 
 /**
@@ -94,6 +167,8 @@ function findNearestWalkable(
 	width: number,
 	height: number,
 ): number | undefined {
+	if (isCellWalkable(ground, wall, blockedMask, originX, originY))
+		return originY * width + originX;
 	for (let radius = 1; radius < Math.max(width, height); radius++) {
 		for (let dy = -radius; dy <= radius; dy++) {
 			for (let dx = -radius; dx <= radius; dx++) {
@@ -117,7 +192,8 @@ function tagSpawnAndExitRooms(rooms: AnalyzedRoom[], spawnIdx: number, exitIdx: 
 	for (const room of rooms) {
 		if (room.cells.includes(spawnIdx)) {
 			room.tag = "start";
-		} else if (exitIdx >= 0 && room.cells.includes(exitIdx)) {
+		}
+		if (exitIdx >= 0 && room.cells.includes(exitIdx) && room.tag !== "start") {
 			room.tag = "exit";
 		}
 	}
@@ -147,6 +223,7 @@ export function regenerateBaseMaps(
 
 	for (let i = 0; i < floorConfigs.length; i++) {
 		const config = floorConfigs[i];
+		validateFloorConfig(config);
 		const rng = createRng(seed + i);
 
 		// Stage 1: algorithm
@@ -156,16 +233,14 @@ export function regenerateBaseMaps(
 		const height = config.height;
 
 		// Stage 2: room analysis
-		const rooms = analyzeRooms(rawMap, config, rng);
+		const roomsForVaults = analyzeRooms(rawMap, config, rng);
 
 		// Stage 3: vault injection — must run before water/decoration so those
 		// stages see the final terrain (vault walls, vault floor cells).
 		let vaultPlacements: VaultPlacement[] = [];
 		if (vaultDefs.length > 0 && config.vaultIds.length > 0) {
-			vaultPlacements = injectVaults(rawMap, rooms, vaultDefs, config, rng);
+			vaultPlacements = injectVaults(rawMap, roomsForVaults, vaultDefs, config, rng);
 		}
-
-		const spawnIdx = spawn.y * width + spawn.x;
 
 		// Stage 4: water mask — runs on post-vault terrain
 		const waterMask = config.waterEnabled
@@ -213,11 +288,59 @@ export function regenerateBaseMaps(
 		}
 
 		// Stage 7: relocate spawn if vault injection placed a collision tile on it
-		let safeSpawnIdx = spawnIdx;
-		if (blockedMask[spawn.y]?.[spawn.x]) {
-			safeSpawnIdx =
-				findNearestWalkable(ground, wall, blockedMask, spawn.x, spawn.y, width, height) ??
-				spawnIdx;
+		let safeSpawnIdx = findNearestWalkable(
+			ground,
+			wall,
+			blockedMask,
+			spawn.x,
+			spawn.y,
+			width,
+			height,
+		);
+		if (safeSpawnIdx === undefined) {
+			// Last-resort deterministic repair for degenerate floors.
+			const repairX = spawn.x >= 0 && spawn.x < width ? spawn.x : Math.floor(width / 2);
+			const repairY = spawn.y >= 0 && spawn.y < height ? spawn.y : Math.floor(height / 2);
+			ground[repairY][repairX] = TILE_TYPE.FLOOR;
+			wall[repairY][repairX] = TILE_TYPE.EMPTY;
+			blockedMask[repairY][repairX] = false;
+			waterMask[repairY][repairX] = false;
+			safeSpawnIdx = repairY * width + repairX;
+		}
+		const safeSpawnX = safeSpawnIdx % width;
+		const safeSpawnY = Math.floor(safeSpawnIdx / width);
+		if (!isCellWalkable(ground, wall, blockedMask, safeSpawnX, safeSpawnY)) {
+			ground[safeSpawnY][safeSpawnX] = TILE_TYPE.FLOOR;
+			wall[safeSpawnY][safeSpawnX] = TILE_TYPE.EMPTY;
+			blockedMask[safeSpawnY][safeSpawnX] = false;
+			waterMask[safeSpawnY][safeSpawnX] = false;
+		}
+
+		// Final sanity pass: enforce a single reachable walkable component from spawn.
+		const reachability = computeReachability(
+			ground,
+			wall,
+			blockedMask,
+			safeSpawnIdx,
+			width,
+			height,
+		);
+		for (let y = 0; y < height; y++) {
+			for (let x = 0; x < width; x++) {
+				if (!isCellWalkable(ground, wall, blockedMask, x, y)) continue;
+				const idx = y * width + x;
+				if (!reachability.reachable.has(idx)) blockedMask[y][x] = true;
+			}
+		}
+
+		const walkableCount = countWalkableCells(ground, wall, blockedMask, width, height);
+		if (walkableCount === 0) {
+			const fallbackX = safeSpawnIdx % width;
+			const fallbackY = Math.floor(safeSpawnIdx / width);
+			ground[fallbackY][fallbackX] = TILE_TYPE.FLOOR;
+			wall[fallbackY][fallbackX] = TILE_TYPE.EMPTY;
+			blockedMask[fallbackY][fallbackX] = false;
+			waterMask[fallbackY][fallbackX] = false;
 		}
 
 		// Exit: farthest walkable cell from spawn (last floor has no exit)
@@ -226,6 +349,7 @@ export function regenerateBaseMaps(
 				? -1
 				: findExitIdx(ground, wall, blockedMask, safeSpawnIdx, width, height);
 
+		const rooms = analyzeRooms(rawMap, config, createRng(seed + i + 1000));
 		// Tag start / exit rooms for downstream encounter use
 		tagSpawnAndExitRooms(rooms, safeSpawnIdx, exitIdx);
 

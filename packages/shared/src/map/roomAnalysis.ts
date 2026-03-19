@@ -18,7 +18,7 @@ import type { Rng } from "../rng";
 import type { AnalyzedRoom, FloorConfig, RawMap, RoomTag } from "./types";
 
 const CHAMBER_THRESHOLD = 30;
-const CORRIDOR_THRESHOLD = 8;
+const CORRIDOR_THRESHOLD = 16;
 const CONNECT_SAMPLE_DIRECTIONS = [
 	[1, 0],
 	[-1, 0],
@@ -34,24 +34,48 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 	const { ground, wall } = rawMap;
 	const height = ground.length;
 	const width = ground[0]?.length ?? 0;
+	const totalCells = width * height;
 
-	// --- 1. Assign each floor cell a region id via flood fill ---
-	const regionMap: Int32Array = new Int32Array(width * height).fill(-1);
+	// --- 1. Compute open-cell degree and split the open graph by corridor-vs-room morphology ---
+	const openMask = new Uint8Array(totalCells);
+	const degrees = new Uint8Array(totalCells);
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			const idx = y * width + x;
+			if (!isOpen(ground, wall, x, y)) continue;
+			openMask[idx] = 1;
+			let degree = 0;
+			for (const [dx, dy] of CONNECT_SAMPLE_DIRECTIONS) {
+				const nx = x + dx;
+				const ny = y + dy;
+				if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+				if (isOpen(ground, wall, nx, ny)) degree++;
+			}
+			degrees[idx] = degree;
+		}
+	}
+
+	const regionMap: Int32Array = new Int32Array(totalCells).fill(-1);
 	let nextId = 0;
 	const regionCells: number[][] = [];
+	const regionIsCorridor: boolean[] = [];
 
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
 			const idx = y * width + x;
 			if (regionMap[idx] !== -1) continue;
-			if (!isOpen(ground, wall, x, y)) continue;
+			if (openMask[idx] !== 1) continue;
 
+			const isCorridorRegion = degrees[idx] <= 2;
 			const id = nextId++;
 			regionCells.push([]);
+			regionIsCorridor.push(isCorridorRegion);
 			const stack: number[] = [idx];
 			while (stack.length > 0) {
 				const cur = stack.pop()!;
 				if (regionMap[cur] !== -1) continue;
+				if (openMask[cur] !== 1) continue;
+				if (degrees[cur] <= 2 !== isCorridorRegion) continue;
 				regionMap[cur] = id;
 				regionCells[id].push(cur);
 				const cx = cur % width;
@@ -62,7 +86,8 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 					if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
 					const nIdx = ny * width + nx;
 					if (regionMap[nIdx] !== -1) continue;
-					if (!isOpen(ground, wall, nx, ny)) continue;
+					if (openMask[nIdx] !== 1) continue;
+					if (degrees[nIdx] <= 2 !== isCorridorRegion) continue;
 					stack.push(nIdx);
 				}
 			}
@@ -89,14 +114,16 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 	const connectionSet: Set<string>[] = rooms.map(() => new Set<string>());
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
-			if (!isOpen(ground, wall, x, y)) continue;
-			const aId = regionMap[y * width + x];
+			const idx = y * width + x;
+			if (openMask[idx] !== 1) continue;
+			const aId = regionMap[idx];
 			for (const [dx, dy] of CONNECT_SAMPLE_DIRECTIONS) {
 				const nx = x + dx;
 				const ny = y + dy;
 				if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
-				if (!isOpen(ground, wall, nx, ny)) continue;
-				const bId = regionMap[ny * width + nx];
+				const nIdx = ny * width + nx;
+				if (openMask[nIdx] !== 1) continue;
+				const bId = regionMap[nIdx];
 				if (bId !== aId) {
 					connectionSet[aId].add(String(bId));
 					connectionSet[bId].add(String(aId));
@@ -114,6 +141,11 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 	// --- 4. Classify ---
 	const specialFreq = Math.max(0, Math.min(1, config.specialRoomFrequency));
 	for (const room of rooms) {
+		const isCorridor = regionIsCorridor[room.id] ?? false;
+		if (isCorridor && room.area <= CORRIDOR_THRESHOLD) {
+			room.tag = "corridor";
+			continue;
+		}
 		if (room.area >= CHAMBER_THRESHOLD) {
 			room.tag = "chamber";
 		} else if (room.connections.length <= 1) {
@@ -123,8 +155,6 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 			} else {
 				room.tag = "alcove";
 			}
-		} else if (room.area < CORRIDOR_THRESHOLD) {
-			room.tag = "corridor";
 		} else {
 			room.tag = "generic";
 		}

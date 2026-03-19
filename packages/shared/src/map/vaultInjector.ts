@@ -39,6 +39,7 @@ export function injectVaults(
 	const candidates = vaultDefs
 		.filter((v) => eligibleVaultIds.has(v.id))
 		.filter((v) => (v.minDepth ?? 1) <= depth)
+		.filter((v) => validateVaultDef(v))
 		.sort((a, b) => a.id.localeCompare(b.id, "en"));
 
 	if (candidates.length === 0) return placements;
@@ -60,34 +61,50 @@ export function injectVaults(
 		const bbox = boundingBox(room.cells, width);
 		if (!bbox) continue;
 
-		// Check that the vault fits; try to center it in the room
+		// Check that the vault fits in the room bbox before trying anchors.
 		if (pick.width > bbox.w || pick.height > bbox.h) continue;
-
-		const originX = bbox.x + Math.floor((bbox.w - pick.width) / 2);
-		const originY = bbox.y + Math.floor((bbox.h - pick.height) / 2);
-
-		// Validate that all vault cells land on valid (non-void) tiles
-		let fits = true;
-		for (let vy = 0; vy < pick.height && fits; vy++) {
-			const row = pick.layout[vy];
-			if (!row) {
-				fits = false;
+		const roomCellSet = new Set(room.cells);
+		const anchors = buildPlacementCandidates(bbox, pick.width, pick.height);
+		let originX = -1;
+		let originY = -1;
+		for (const [candidateX, candidateY] of anchors) {
+			let fits = true;
+			for (let vy = 0; vy < pick.height && fits; vy++) {
+				const row = pick.layout[vy];
+				if (!row) {
+					fits = false;
+					break;
+				}
+				for (let vx = 0; vx < pick.width && fits; vx++) {
+					const mx = candidateX + vx;
+					const my = candidateY + vy;
+					const flatIdx = my * width + mx;
+					const ch = row[vx];
+					if (ch === undefined || !pick.legend[ch]) {
+						fits = false;
+						break;
+					}
+					if (mx < 0 || mx >= width || my < 0 || my >= ground.length) {
+						fits = false;
+						break;
+					}
+					if (ground[my][mx] === TILE_TYPE.VOID) {
+						fits = false;
+						break;
+					}
+					if (!roomCellSet.has(flatIdx)) {
+						fits = false;
+						break;
+					}
+				}
+			}
+			if (fits) {
+				originX = candidateX;
+				originY = candidateY;
 				break;
 			}
-			for (let vx = 0; vx < pick.width && fits; vx++) {
-				const mx = originX + vx;
-				const my = originY + vy;
-				if (mx < 0 || mx >= width || my < 0 || my >= ground.length) {
-					fits = false;
-					break;
-				}
-				if (ground[my][mx] === TILE_TYPE.VOID) {
-					fits = false;
-					break;
-				}
-			}
 		}
-		if (!fits) continue;
+		if (originX < 0 || originY < 0) continue;
 
 		// Stamp the vault: mutates ground and wall in place
 		const markerCells: Record<string, number[]> = {};
@@ -103,12 +120,7 @@ export function injectVaults(
 				const ch = row[vx];
 				if (ch === undefined) continue;
 				const entry = pick.legend[ch];
-				if (!entry) {
-					console.warn(
-						`[vaultInjector] unknown legend char "${ch}" in vault "${pick.id}" — skipping cell`,
-					);
-					continue;
-				}
+				if (!entry) continue;
 				const mx = originX + vx;
 				const my = originY + vy;
 				const flatIdx = my * width + mx;
@@ -154,6 +166,38 @@ interface BBox {
 	y: number;
 	w: number;
 	h: number;
+}
+
+function validateVaultDef(vault: VaultDef): boolean {
+	if (vault.layout.length !== vault.height) return false;
+	for (const row of vault.layout) {
+		if (row.length !== vault.width) return false;
+		for (const ch of row) {
+			if (!vault.legend[ch]) return false;
+		}
+	}
+	return true;
+}
+
+function buildPlacementCandidates(
+	bbox: BBox,
+	vaultWidth: number,
+	vaultHeight: number,
+): [number, number][] {
+	const maxX = bbox.x + bbox.w - vaultWidth;
+	const maxY = bbox.y + bbox.h - vaultHeight;
+	if (maxX < bbox.x || maxY < bbox.y) return [];
+
+	const centerX = bbox.x + Math.floor((bbox.w - vaultWidth) / 2);
+	const centerY = bbox.y + Math.floor((bbox.h - vaultHeight) / 2);
+	const out: [number, number][] = [[centerX, centerY]];
+	for (let y = bbox.y; y <= maxY; y++) {
+		for (let x = bbox.x; x <= maxX; x++) {
+			if (x === centerX && y === centerY) continue;
+			out.push([x, y]);
+		}
+	}
+	return out;
 }
 
 function boundingBox(cells: number[], width: number): BBox | null {

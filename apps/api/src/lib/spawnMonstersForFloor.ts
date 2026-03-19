@@ -10,6 +10,8 @@ import {
 } from "@app/shared";
 import { vaults, type EncounterDefinition, type MonsterDefinition } from "@app/content";
 
+const MIN_RANDOM_SPAWN_DISTANCE = 4;
+
 function monsterInitFromDef(def: MonsterDefinition): MonsterInit {
 	return {
 		monsterId: def.id,
@@ -94,20 +96,15 @@ export function spawnMonstersForFloor(
 			if (!def) continue;
 
 			for (let n = 0; n < chosenEntry.count; n++) {
-				const startOffset = Math.floor(rng() * floorSize);
-				let spawnIdx: number | undefined;
-				for (let j = 0; j < floorSize; j++) {
-					const idx = (startOffset + j) % floorSize;
-					if (idx === floor.state.spawnIdx) continue;
-					if (floor.state.exitIdx !== null && idx === floor.state.exitIdx) continue;
-					if (
-						walkMask[idx] === 1 &&
-						!getActorAtIdx(current.floors[floorIndex].state, idx)
-					) {
-						spawnIdx = idx;
-						break;
-					}
-				}
+				const spawnIdx =
+					findRandomSpawnIdx(
+						current,
+						floorIndex,
+						floorSize,
+						walkMask,
+						rng,
+						MIN_RANDOM_SPAWN_DISTANCE,
+					) ?? findRandomSpawnIdx(current, floorIndex, floorSize, walkMask, rng, 0);
 				if (spawnIdx === undefined) break;
 				current = spawnMonster(current, floorIndex, monsterInitFromDef(def), spawnIdx);
 			}
@@ -129,24 +126,27 @@ export function spawnMonstersForFloor(
 				if (!encounterDef) continue;
 
 				for (const markerIdx of markerIndices) {
-					const spawnIdx = resolveSpawnNear(
-						markerIdx,
-						width,
-						height,
-						walkMask,
-						current.floors[floorIndex].state,
-					);
-					if (spawnIdx === undefined) continue;
-
 					for (const entry of encounterDef.entries) {
 						const def = monstersById[entry.monsterId];
 						if (!def) continue;
-						current = spawnMonster(
-							current,
-							floorIndex,
-							monsterInitFromDef(def),
-							spawnIdx,
-						);
+						for (let count = 0; count < entry.count; count++) {
+							const spawnIdx = resolveSpawnNear(
+								markerIdx,
+								width,
+								height,
+								walkMask,
+								current.floors[floorIndex].state,
+								floor.state.spawnIdx,
+								1,
+							);
+							if (spawnIdx === undefined) break;
+							current = spawnMonster(
+								current,
+								floorIndex,
+								monsterInitFromDef(def),
+								spawnIdx,
+							);
+						}
 					}
 				}
 			}
@@ -166,9 +166,17 @@ function resolveSpawnNear(
 	height: number,
 	walkMask: Uint8Array,
 	floorState: { actorsById: Record<string, { idx: number }> },
+	heroSpawnIdx: number,
+	minDistanceFromHero: number,
 ): number | undefined {
 	const occupied = new Set(Object.values(floorState.actorsById).map((a) => a.idx));
-	if (walkMask[markerIdx] === 1 && !occupied.has(markerIdx)) return markerIdx;
+	if (
+		walkMask[markerIdx] === 1 &&
+		!occupied.has(markerIdx) &&
+		manhattanDistance(markerIdx, heroSpawnIdx, width) >= minDistanceFromHero
+	) {
+		return markerIdx;
+	}
 
 	const markerX = markerIdx % width;
 	const markerY = Math.floor(markerIdx / width);
@@ -181,11 +189,48 @@ function resolveSpawnNear(
 				const y = markerY + dy;
 				if (x < 0 || x >= width || y < 0 || y >= height) continue;
 				const idx = y * width + x;
-				if (walkMask[idx] === 1 && !occupied.has(idx)) return idx;
+				if (walkMask[idx] !== 1 || occupied.has(idx)) continue;
+				if (manhattanDistance(idx, heroSpawnIdx, width) < minDistanceFromHero) continue;
+				return idx;
 			}
 		}
 	}
 	return undefined;
+}
+
+function findRandomSpawnIdx(
+	state: GameState,
+	floorIndex: number,
+	floorSize: number,
+	walkMask: Uint8Array,
+	rng: () => number,
+	minDistanceFromHero: number,
+): number | undefined {
+	const floor = state.floors[floorIndex];
+	if (!floor) return undefined;
+	const startOffset = Math.floor(rng() * floorSize);
+	for (let j = 0; j < floorSize; j++) {
+		const idx = (startOffset + j) % floorSize;
+		if (idx === floor.state.spawnIdx) continue;
+		if (floor.state.exitIdx !== null && idx === floor.state.exitIdx) continue;
+		if (walkMask[idx] !== 1) continue;
+		if (getActorAtIdx(floor.state, idx)) continue;
+		if (
+			manhattanDistance(idx, floor.state.spawnIdx, floor.config.width) < minDistanceFromHero
+		) {
+			continue;
+		}
+		return idx;
+	}
+	return undefined;
+}
+
+function manhattanDistance(a: number, b: number, width: number): number {
+	const ax = a % width;
+	const ay = Math.floor(a / width);
+	const bx = b % width;
+	const by = Math.floor(b / width);
+	return Math.abs(ax - bx) + Math.abs(ay - by);
 }
 
 /**

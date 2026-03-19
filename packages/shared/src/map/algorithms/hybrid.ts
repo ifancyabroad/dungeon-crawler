@@ -15,6 +15,15 @@ interface Rect {
 	h: number;
 }
 
+function shuffleInPlace<T>(items: T[], rng: Rng): void {
+	for (let i = items.length - 1; i > 0; i--) {
+		const j = Math.floor(rng() * (i + 1));
+		const tmp = items[i];
+		items[i] = items[j];
+		items[j] = tmp;
+	}
+}
+
 function carveRect(rect: Rect, floor: Set<string>): void {
 	for (let y = rect.y; y < rect.y + rect.h; y++) {
 		for (let x = rect.x; x < rect.x + rect.w; x++) {
@@ -128,8 +137,9 @@ export function generateHybrid(config: FloorConfig, rng: Rng): RawMap {
 	const floorSet = new Set<string>(caveComponent);
 	const corridorSet = new Set<string>();
 
-	// Place rooms at random cave positions
-	const shuffled = caveCells.slice().sort(() => rng() - 0.5);
+	// Place rooms at random cave positions. Use Fisher-Yates so order is fully deterministic.
+	const shuffled = caveCells.slice();
+	shuffleInPlace(shuffled, rng);
 	for (const cell of shuffled) {
 		if (rooms.length >= roomCount) break;
 		const rw = minRoomSide + Math.floor(rng() * 5);
