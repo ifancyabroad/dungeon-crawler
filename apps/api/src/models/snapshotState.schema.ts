@@ -61,6 +61,8 @@ const ActorSchema = new Schema(
 		hitDie: Number,
 		xpReward: Number,
 		aiState: { type: MonsterAIStateSchema, default: undefined },
+		abilityProficiencies: { type: [String], default: [] },
+		challengeRating: { type: Number, default: undefined },
 	},
 	{ _id: false },
 );

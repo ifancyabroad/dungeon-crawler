@@ -15,7 +15,7 @@
  */
 
 import type { DamageType } from "../combat/damageTypes";
-import type { Actor, ActorId, FloorState, GameEvent, GameState } from "../game/types";
+import type { Actor, ActorId, AbilityName, FloorState, GameEvent, GameState } from "../game/types";
 import type { Rng } from "../rng";
 
 // ---------------------------------------------------------------------------
@@ -28,6 +28,15 @@ export interface AreaDamageEffect {
 	radiusTiles: number;
 	scalingStat?: "intelligence" | "strength";
 	damageType: DamageType;
+	/**
+	 * Optional saving throw applied to each target:
+	 * - Success scales the damage packets by successDamageMultiplier (default 0.5).
+	 */
+	savingThrow?: {
+		saveAbility: AbilityName;
+		dcStat: AbilityName;
+		successDamageMultiplier?: number;
+	};
 }
 
 export interface ApplyStatusEffect {

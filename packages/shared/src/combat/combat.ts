@@ -9,6 +9,7 @@ import type { AttackResult, WeaponDice } from "./types";
 import { UNARMED_WEAPON } from "./types";
 import { rollD20, rollDice, abilityModifier, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
+import { getActorProficiencyBonus, isActorProficientInAbility } from "./savingThrows";
 
 /**
  * Resolve a melee attack from attacker against defender.
@@ -28,7 +29,10 @@ export function resolveAttack(
 ): AttackResult {
 	const strMod = abilityModifier(attacker.attributes.strength);
 	const naturalRoll = rollD20(rng);
-	const totalAttackRoll = naturalRoll + strMod;
+	const proficiencyBonusApplied = isActorProficientInAbility(attacker, "strength")
+		? getActorProficiencyBonus(attacker)
+		: 0;
+	const totalAttackRoll = naturalRoll + strMod + proficiencyBonusApplied;
 	const targetAc = defender.armorClass;
 	const critical = naturalRoll === 20;
 	const hit = critical || totalAttackRoll >= targetAc;

@@ -24,6 +24,7 @@
 	],
 	"weaponProficiencies": ["staff", "dagger"],
 	"armorProficiencies": ["cloth"],
+	"abilityProficiencies": ["intelligence", "wisdom"],
 	"resource": "mana",
 	"tileId": 746
 }

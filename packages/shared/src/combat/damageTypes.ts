@@ -1,6 +1,5 @@
 /**
- * D&D 5e damage types.
- * Centralized here so both content + engine can share the same vocabulary.
+ * Damage types shared between content and the engine.
  */
 
 export const DAMAGE_TYPES = [

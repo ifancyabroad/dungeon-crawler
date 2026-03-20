@@ -8,6 +8,7 @@ import type { Actor, FloorState, GameEvent } from "../../game/types";
 import type { Rng } from "../../rng";
 import type { AreaDamageEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
+import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { idxToXY } from "../../game/engine";
 
@@ -31,6 +32,11 @@ export function applyAreaDamage(
 	const statMod =
 		effect.scalingStat !== undefined
 			? abilityModifier(caster.attributes[effect.scalingStat])
+			: 0;
+
+	const savingThrowDc =
+		effect.savingThrow !== undefined
+			? computeSavingThrowDC(caster, effect.savingThrow.dcStat)
 			: 0;
 
 	let actorsById = { ...floorState.actorsById };
@@ -65,7 +71,40 @@ export function applyAreaDamage(
 			});
 		}
 
-		const resolved = resolveDamagePackets(rawPackets, actor);
+		let packetsToResolve = rawPackets;
+		if (effect.savingThrow !== undefined) {
+			const save = resolveSavingThrow({
+				rng,
+				defender: actor,
+				saveAbility: effect.savingThrow.saveAbility,
+				dc: savingThrowDc,
+			});
+
+			if (save.success) {
+				const multiplier = effect.savingThrow.successDamageMultiplier ?? 0.5;
+				packetsToResolve = rawPackets.map((p) => ({
+					...p,
+					// Match the engine's resistance behaviour (floors half damage) to keep HP integers.
+					rawAmount: Math.floor(p.rawAmount * multiplier),
+				}));
+			}
+
+			events.push({
+				type: "saving_throw",
+				casterId: caster.id,
+				defenderId: id,
+				saveAbility: effect.savingThrow.saveAbility,
+				naturalRoll: save.naturalRoll,
+				abilityModifier: save.abilityModifier,
+				proficiencyBonusApplied: save.proficiencyBonusApplied,
+				dc: savingThrowDc,
+				totalRoll: save.totalRoll,
+				success: save.success,
+				auto: save.auto,
+			});
+		}
+
+		const resolved = resolveDamagePackets(packetsToResolve, actor);
 		const effectiveDamage = resolved.totalEffectiveDamage;
 		const newHp = Math.max(0, actor.hp - effectiveDamage);
 		const updatedActor: Actor = { ...actor, hp: newHp, alive: newHp > 0 };

@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { BaseAttributesSchema } from "./common.js";
+import { AbilityNameSchema, BaseAttributesSchema } from "./common.js";
 
 const ResourceSchema = z.enum(["mana", "stamina", "none"]);
 
@@ -27,6 +27,8 @@ export const CharacterClassSchema = z.object({
 	passiveSkillPool: z.array(z.string()),
 	weaponProficiencies: z.array(z.string()),
 	armorProficiencies: z.array(z.string()),
+	/** Ability proficiencies this class is trained in. */
+	abilityProficiencies: z.array(AbilityNameSchema),
 	resource: ResourceSchema,
 	tileId: z.number(),
 });

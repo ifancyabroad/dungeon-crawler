@@ -144,11 +144,16 @@ export {
 	resolveAttack,
 	rollD20,
 	rollDice,
+	proficiencyBonusFromLevel,
+	proficiencyBonusFromChallengeRating,
+	computeSavingThrowDC,
+	resolveSavingThrow,
+	isActorProficientInAbility,
+	getActorProficiencyBonus,
 	UNARMED_WEAPON,
 	type AttackResult,
 	type WeaponDice,
 } from "./combat";
 
 export { DAMAGE_TYPES, type DamageType } from "./combat";
-
 export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";

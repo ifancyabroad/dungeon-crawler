@@ -53,6 +53,10 @@ export const classes: readonly CharacterClassDefinition[] = [
     "armorProficiencies": [
       "cloth"
     ],
+    "abilityProficiencies": [
+      "intelligence",
+      "wisdom"
+    ],
     "resource": "mana",
     "tileId": 746
   },
@@ -94,6 +98,10 @@ export const classes: readonly CharacterClassDefinition[] = [
     ],
     "armorProficiencies": [
       "light"
+    ],
+    "abilityProficiencies": [
+      "dexterity",
+      "intelligence"
     ],
     "resource": "stamina",
     "tileId": 740
@@ -142,6 +150,10 @@ export const classes: readonly CharacterClassDefinition[] = [
       "heavy",
       "shield"
     ],
+    "abilityProficiencies": [
+      "strength",
+      "constitution"
+    ],
     "resource": "stamina",
     "tileId": 742
   }
@@ -169,6 +181,10 @@ export const monsters: readonly MonsterDefinition[] = [
     "tileId": 677,
     "xpReward": 30,
     "aiStrategy": "melee",
+    "challengeRating": 1,
+    "abilityProficiencies": [
+      "dexterity"
+    ],
     "damageResistances": [],
     "damageImmunities": [],
     "bloodColor": "#cc0000"
@@ -472,8 +488,12 @@ export const skills: readonly SkillDefinition[] = [
         "type": "area_damage",
         "dice": "2d6",
         "radiusTiles": 1,
-        "scalingStat": "intelligence",
-        "damageType": "fire"
+        "damageType": "fire",
+        "savingThrow": {
+          "saveAbility": "dexterity",
+          "dcStat": "intelligence",
+          "successDamageMultiplier": 0.5
+        }
       }
     ]
   },
@@ -502,7 +522,6 @@ export const skills: readonly SkillDefinition[] = [
         "type": "area_damage",
         "dice": "3d6",
         "radiusTiles": 0,
-        "scalingStat": "intelligence",
         "damageType": "lightning"
       }
     ]

@@ -11,8 +11,12 @@
 			"type": "area_damage",
 			"dice": "2d6",
 			"radiusTiles": 1,
-			"scalingStat": "intelligence",
-			"damageType": "fire"
+			"damageType": "fire",
+			"savingThrow": {
+				"saveAbility": "dexterity",
+				"dcStat": "intelligence",
+				"successDamageMultiplier": 0.5
+			}
 		}
 	]
 }

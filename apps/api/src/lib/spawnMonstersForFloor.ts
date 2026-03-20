@@ -23,6 +23,8 @@ function monsterInitFromDef(def: MonsterDefinition): MonsterInit {
 		damageResistances: def.damageResistances,
 		damageImmunities: def.damageImmunities,
 		xpReward: def.xpReward,
+		challengeRating: def.challengeRating,
+		abilityProficiencies: def.abilityProficiencies,
 		aiStrategy: def.aiStrategy,
 	};
 }

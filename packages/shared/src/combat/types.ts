@@ -28,7 +28,7 @@ export interface WeaponDice {
 	sides: number;
 	/** Number of dice to roll (default 1). */
 	count?: number;
-	/** D&D 5e damage type this weapon deals. */
+	/** Damage type this weapon deals. */
 	damageType: DamageType;
 }
 

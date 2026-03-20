@@ -17,5 +17,7 @@
 	"tileId": 677,
 	"xpReward": 30,
 	"aiStrategy": "melee",
+	"challengeRating": 1,
+	"abilityProficiencies": ["dexterity"],
 	"bloodColor": "#cc0000"
 }

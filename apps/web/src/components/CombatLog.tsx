@@ -75,6 +75,23 @@ function formatEvent(event: GameEvent): string {
 		return "";
 	}
 
+	if (event.type === "saving_throw") {
+		const defender =
+			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
+		const autoPrefix =
+			event.auto === "auto_success"
+				? "[AUTO20] "
+				: event.auto === "auto_fail"
+					? "[AUTO1] "
+					: "";
+
+		const outcome = event.success ? "succeeded" : "failed";
+		const dcLabel = `(${event.totalRoll} vs DC ${event.dc})`;
+		return event.defenderId === "hero"
+			? `${autoPrefix}Your ${capitalize(event.saveAbility)} save ${outcome} ${dcLabel}.`
+			: `${autoPrefix}${defender}'s ${capitalize(event.saveAbility)} save ${outcome} ${dcLabel}.`;
+	}
+
 	return "";
 }
 
@@ -101,6 +118,7 @@ function eventColorClass(event: GameEvent): string {
 	if (event.type === "area_hit") return "text-primary";
 	if (event.type === "skill_used") return "text-primary";
 	if (event.type === "status_applied") return "text-secondary";
+	if (event.type === "saving_throw") return event.success ? "text-primary" : "text-text-muted";
 	return "text-text";
 }
 

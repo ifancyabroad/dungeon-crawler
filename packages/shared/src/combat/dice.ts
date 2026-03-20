@@ -15,7 +15,7 @@ export function rollD20(rng: Rng): number {
 	return rollDice(rng, 20);
 }
 
-/** D&D 5e ability modifier: floor((score - 10) / 2). */
+/** Ability modifier: floor((score - 10) / 2). */
 export function abilityModifier(score: number): number {
 	return Math.floor((score - 10) / 2);
 }
@@ -37,7 +37,7 @@ export function parseDice(expr: string): { count: number; sides: number } {
 
 /**
  * Roll a dice expression string (e.g. "2d6"). Returns the raw total before any modifier.
- * `critMultiplier` doubles the number of dice rolled (D&D 5e critical hit rule).
+ * `critMultiplier` doubles the number of dice rolled (critical-hit style rule).
  */
 export function rollDiceExpr(rng: Rng, expr: string, critMultiplier = 1): number {
 	const { count, sides } = parseDice(expr);

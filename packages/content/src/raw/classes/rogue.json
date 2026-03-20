@@ -24,6 +24,7 @@
 	],
 	"weaponProficiencies": ["dagger", "shortbow", "short-sword"],
 	"armorProficiencies": ["light"],
+	"abilityProficiencies": ["dexterity", "intelligence"],
 	"resource": "stamina",
 	"tileId": 740
 }

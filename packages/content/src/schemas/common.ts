@@ -8,3 +8,12 @@ export const BaseAttributesSchema = z.object({
 	wisdom: z.number(),
 	charisma: z.number(),
 });
+
+export const AbilityNameSchema = z.enum([
+	"strength",
+	"dexterity",
+	"constitution",
+	"intelligence",
+	"wisdom",
+	"charisma",
+]);

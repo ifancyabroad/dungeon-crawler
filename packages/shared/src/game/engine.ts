@@ -184,6 +184,7 @@ export const DEFAULT_HERO_INIT: HeroInit = {
 	level: 1,
 	xp: 0,
 	hitDie: 10,
+	abilityProficiencies: ["strength", "constitution"],
 	skills: [],
 };
 
@@ -224,6 +225,7 @@ function buildInitialFloorState(
 		statusEffects: [],
 		passiveDamageBonuses: [],
 		statusImmunities: [],
+		abilityProficiencies: heroInit.abilityProficiencies,
 		def: { type: "hero", classId: heroInit.classId },
 		level: heroInit.level,
 		xp: heroInit.xp,
@@ -356,6 +358,8 @@ export function spawnMonster(
 		statusEffects: [],
 		passiveDamageBonuses: [],
 		statusImmunities: [],
+		abilityProficiencies: init.abilityProficiencies,
+		challengeRating: init.challengeRating,
 		def: { type: "monster", monsterId: init.monsterId },
 		level: 0,
 		xp: 0,

@@ -28,6 +28,15 @@ export const ActorAttributesSchema = z.object({
 	charisma: z.number(),
 });
 
+const AbilityNameSchema = z.enum([
+	"strength",
+	"dexterity",
+	"constitution",
+	"intelligence",
+	"wisdom",
+	"charisma",
+]);
+
 export const ActorSkillStateSchema = z.object({
 	level: z.number().optional(),
 	cooldownRemaining: z.number(),
@@ -70,6 +79,8 @@ export const ActorSchema = z.object({
 	statusEffects: z.array(ActiveEffectSchema).default([]),
 	passiveDamageBonuses: z.array(PassiveDamageBonusSchema).default([]),
 	statusImmunities: z.array(z.string()).default([]),
+	abilityProficiencies: z.array(AbilityNameSchema).default([]),
+	challengeRating: z.number().optional(),
 	def: ActorDefSchema,
 	level: z.number(),
 	xp: z.number(),

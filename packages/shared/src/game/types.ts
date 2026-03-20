@@ -27,6 +27,9 @@ export interface ActorAttributes {
 	charisma: number;
 }
 
+/** Standard ability names for mapping saves. */
+export type AbilityName = keyof ActorAttributes;
+
 /** Per-skill state: optional level and cooldown. */
 export interface ActorSkillState {
 	level?: number;
@@ -72,6 +75,8 @@ export interface HeroInit {
 	level: number;
 	xp: number;
 	hitDie: number;
+	/** Ability names this hero is proficient in (added to relevant d20 rolls). */
+	abilityProficiencies: AbilityName[];
 	/** Skill ids to initialise on the hero (each gets cooldownRemaining: 0). */
 	skills?: string[];
 }
@@ -87,6 +92,10 @@ export interface MonsterInit {
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
 	xpReward: number;
+	/** Challenge rating used for monster proficiency scaling. */
+	challengeRating: number;
+	/** Ability names this monster is proficient in (added to relevant d20 rolls). */
+	abilityProficiencies: AbilityName[];
 	aiStrategy: MonsterAIState["strategy"];
 }
 
@@ -115,6 +124,10 @@ export interface Actor {
 	 * applyStatus silently skips effects in this list.
 	 */
 	statusImmunities: string[];
+	/** Ability names this actor is proficient in (added to relevant d20 rolls). */
+	abilityProficiencies: AbilityName[];
+	/** Challenge Rating (monsters only). Used for monster proficiency bonus scaling. */
+	challengeRating?: number;
 	def: ActorDef;
 	level: number;
 	xp: number;
@@ -153,6 +166,19 @@ export type GameEvent =
 			targetActorId?: string;
 	  }
 	| { type: "status_applied"; actorId: ActorId; statusId: string; durationTurns: number }
+	| {
+			type: "saving_throw";
+			casterId: ActorId;
+			defenderId: ActorId;
+			saveAbility: AbilityName;
+			naturalRoll: number;
+			abilityModifier: number;
+			proficiencyBonusApplied: number;
+			dc: number;
+			totalRoll: number;
+			success: boolean;
+			auto: "auto_success" | "auto_fail" | "none";
+	  }
 	/** Damage from area-of-effect skills — no to-hit roll, always hits. */
 	| {
 			type: "area_hit";

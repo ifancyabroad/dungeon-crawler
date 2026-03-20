@@ -20,6 +20,7 @@
 import { z } from "zod";
 
 import { DAMAGE_TYPES } from "@app/shared";
+import { AbilityNameSchema } from "./common.js";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
 const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);
@@ -28,7 +29,15 @@ const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...Damag
 // Active skill effect descriptors
 // ---------------------------------------------------------------------------
 
-/** Deals damage to all actors within radiusTiles of a target tile. */
+const SavingThrowConfigSchema = z.object({
+	/** Defender saving throw ability (e.g. Dexterity). */
+	saveAbility: AbilityNameSchema,
+	/** Caster ability used to compute the save DC modifier. */
+	dcStat: AbilityNameSchema,
+	/** Damage multiplier applied on a successful save (0.5 = half damage). */
+	successDamageMultiplier: z.number().min(0).max(1).default(0.5),
+});
+
 const AreaDamageEffectSchema = z.object({
 	type: z.literal("area_damage"),
 	/** Dice expression e.g. "2d6". Rolled once per target hit. */
@@ -38,6 +47,8 @@ const AreaDamageEffectSchema = z.object({
 	/** Attribute whose modifier is added to each damage roll. */
 	scalingStat: z.enum(["intelligence", "strength"]).optional(),
 	damageType: DamageTypeSchema,
+	/** Optional saving throw applied per target (e.g. half damage on success). */
+	savingThrow: SavingThrowConfigSchema.optional(),
 });
 
 /** Applies a named status effect to the caster for a number of turns. */
