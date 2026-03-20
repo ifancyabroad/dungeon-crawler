@@ -28,7 +28,7 @@ export const ActorAttributesSchema = z.object({
 	charisma: z.number(),
 });
 
-const AbilityNameSchema = z.enum([
+export const AbilityNameSchema = z.enum([
 	"strength",
 	"dexterity",
 	"constitution",

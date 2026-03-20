@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { AbilityNameSchema, BaseAttributesSchema } from "./common.js";
+import { AbilityNameSchema, ActorAttributesSchema as BaseAttributesSchema } from "@app/shared";
 
 const ResourceSchema = z.enum(["mana", "stamina", "none"]);
 

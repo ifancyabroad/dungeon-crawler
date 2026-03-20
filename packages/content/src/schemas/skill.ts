@@ -19,8 +19,7 @@
 
 import { z } from "zod";
 
-import { DAMAGE_TYPES } from "@app/shared";
-import { AbilityNameSchema } from "./common.js";
+import { AbilityNameSchema, DAMAGE_TYPES } from "@app/shared";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
 const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);
@@ -45,7 +44,7 @@ const AreaDamageEffectSchema = z.object({
 	/** Manhattan / Chebyshev radius of the blast (0 = single tile). */
 	radiusTiles: z.number().int().min(0),
 	/** Attribute whose modifier is added to each damage roll. */
-	scalingStat: z.enum(["intelligence", "strength"]).optional(),
+	scalingStat: AbilityNameSchema.optional(),
 	damageType: DamageTypeSchema,
 	/** Optional saving throw applied per target (e.g. half damage on success). */
 	savingThrow: SavingThrowConfigSchema.optional(),
@@ -88,14 +87,7 @@ export type ActiveSkillEffectDescriptor = z.infer<typeof ActiveSkillEffectDescri
 /** Permanently increases one of the hero's core attributes. */
 const ModifyAttributeEffectSchema = z.object({
 	type: z.literal("modify_attribute"),
-	attribute: z.enum([
-		"strength",
-		"dexterity",
-		"constitution",
-		"intelligence",
-		"wisdom",
-		"charisma",
-	]),
+	attribute: AbilityNameSchema,
 	amount: z.number().int(),
 });
 

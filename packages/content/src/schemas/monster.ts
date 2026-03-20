@@ -3,9 +3,11 @@
  */
 
 import { z } from "zod";
-import { AbilityNameSchema, BaseAttributesSchema } from "./common.js";
-
-import { DAMAGE_TYPES } from "@app/shared";
+import {
+	AbilityNameSchema,
+	ActorAttributesSchema as BaseAttributesSchema,
+	DAMAGE_TYPES,
+} from "@app/shared";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
 const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);

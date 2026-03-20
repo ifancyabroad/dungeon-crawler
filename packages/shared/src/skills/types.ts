@@ -26,7 +26,7 @@ export interface AreaDamageEffect {
 	type: "area_damage";
 	dice: string;
 	radiusTiles: number;
-	scalingStat?: "intelligence" | "strength";
+	scalingStat?: AbilityName;
 	damageType: DamageType;
 	/**
 	 * Optional saving throw applied to each target:
@@ -64,7 +64,7 @@ export type ActiveSkillEffectDescriptor = AreaDamageEffect | ApplyStatusEffect |
 
 export interface ModifyAttributeEffect {
 	type: "modify_attribute";
-	attribute: "strength" | "dexterity" | "constitution" | "intelligence" | "wisdom" | "charisma";
+	attribute: AbilityName;
 	amount: number;
 }
 
