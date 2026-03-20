@@ -10,7 +10,7 @@
 		"wisdom": 14,
 		"charisma": 10
 	},
-	"startingHp": 8,
+	"startingHp": 800,
 	"hitDie": 6,
 	"startingEquipment": ["staff-basic", "robe-cloth"],
 	"startingSkills": ["fireball"],

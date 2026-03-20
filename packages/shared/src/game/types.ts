@@ -188,6 +188,19 @@ export type GameEvent =
 			damagePackets: DamagePacket[];
 			skillId: string;
 	  }
+	/**
+	 * A skill attack roll that missed — emitted by single_target_damage when
+	 * attackRoll is configured and the roll does not meet the target's AC.
+	 */
+	| {
+			type: "skill_miss";
+			attackerId: ActorId;
+			defenderId: ActorId;
+			skillId: string;
+			naturalRoll: number;
+			totalRoll: number;
+			targetAc: number;
+	  }
 	| { type: "skill_granted"; actorId: ActorId; skillId: string };
 
 export interface FloorState {

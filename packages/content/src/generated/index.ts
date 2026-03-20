@@ -27,7 +27,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 14,
       "charisma": 10
     },
-    "startingHp": 8,
+    "startingHp": 800,
     "hitDie": 6,
     "startingEquipment": [
       "staff-basic",
@@ -513,15 +513,14 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "lightning_bolt",
     "name": "Lightning Bolt",
-    "description": "Call down a bolt of lightning that strikes a target tile with devastating force.",
+    "description": "Hurl a bolt of lightning that arcs in a line from you to the target tile, striking every enemy in its path.",
     "cooldown": 15,
     "targetType": "tile",
     "range": 6,
     "effects": [
       {
-        "type": "area_damage",
+        "type": "line_damage",
         "dice": "3d6",
-        "radiusTiles": 0,
         "damageType": "lightning"
       }
     ]

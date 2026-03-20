@@ -72,10 +72,56 @@ const ChargeAttackEffectSchema = z.object({
 	bonusDamageType: DamageTypeSchema,
 });
 
+const AttackRollConfigSchema = z.object({
+	/** Ability score whose modifier is added to the attack roll. */
+	modifierStat: AbilityNameSchema,
+	/** When true, the caster's proficiency bonus is added to the attack roll. */
+	useProficiency: z.boolean(),
+});
+
+/** Shoots a line from the caster toward a target tile; stops at the first wall. */
+const LineDamageEffectSchema = z.object({
+	type: z.literal("line_damage"),
+	/** Dice expression e.g. "3d6". Rolled once per target hit. */
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	scalingStat: AbilityNameSchema.optional(),
+	savingThrow: SavingThrowConfigSchema.optional(),
+});
+
+/** Sprays a cone from the caster; all actors in the arc are hit. */
+const ConeDamageEffectSchema = z.object({
+	type: z.literal("cone_damage"),
+	/** Dice expression e.g. "4d6". Rolled once per target hit. */
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	/** Length of the cone in tiles. */
+	rangeTiles: z.number().int().min(1),
+	/** Total arc of the cone in degrees (default 90). */
+	angleDegrees: z.number().min(1).max(360).default(90),
+	scalingStat: AbilityNameSchema.optional(),
+	savingThrow: SavingThrowConfigSchema.optional(),
+});
+
+/** Targets a single actor; supports an optional attack roll and/or saving throw. */
+const SingleTargetDamageEffectSchema = z.object({
+	type: z.literal("single_target_damage"),
+	/** Dice expression e.g. "1d10". */
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	scalingStat: AbilityNameSchema.optional(),
+	savingThrow: SavingThrowConfigSchema.optional(),
+	/** When present, an attack roll is made vs the target's AC before dealing damage. */
+	attackRoll: AttackRollConfigSchema.optional(),
+});
+
 export const ActiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AreaDamageEffectSchema,
 	ApplyStatusEffectSchema,
 	ChargeAttackEffectSchema,
+	LineDamageEffectSchema,
+	ConeDamageEffectSchema,
+	SingleTargetDamageEffectSchema,
 ]);
 
 export type ActiveSkillEffectDescriptor = z.infer<typeof ActiveSkillEffectDescriptorSchema>;

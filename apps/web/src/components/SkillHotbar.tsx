@@ -6,9 +6,17 @@
 
 import { skillsById } from "@app/content";
 import type { ActiveSkillDefinition } from "@app/content";
-import { getHero, idxToXY, type Actor, type UseSkillAction } from "@app/shared";
+import {
+	getHero,
+	idxToXY,
+	computeVisibility,
+	VISION_RADIUS,
+	type Actor,
+	type UseSkillAction,
+} from "@app/shared";
 import { useGameStore } from "../features/game/gameStore";
 import { useTargetingStore } from "../features/targeting/targetingStore";
+import { useMapStore } from "../features/map/mapStore";
 
 // ---------------------------------------------------------------------------
 // Valid-target computation helpers
@@ -71,6 +79,7 @@ export function SkillHotbar() {
 	const state = useGameStore((s) => s.state);
 	const sendAction = useGameStore((s) => s.sendAction);
 	const enterTargeting = useTargetingStore((s) => s.enterTargeting);
+	const opacityMask = useMapStore((s) => s.opacityMask);
 
 	if (!state) return null;
 
@@ -98,15 +107,36 @@ export function SkillHotbar() {
 		const fw = floor.config.width;
 		const fh = floor.config.height;
 
+		// Compute which tiles the hero can currently see so targeting is
+		// restricted to line-of-sight. Falls back to no restriction when the
+		// opacity mask hasn't been set yet (e.g. on first load).
+		const { x: hx, y: hy } = idxToXY(hero.idx, fw);
+		const visibilityMask = opacityMask
+			? computeVisibility(hx, hy, fw, fh, opacityMask, VISION_RADIUS)
+			: null;
+
 		if (activeDef.targetType === "tile") {
-			const validTileIndices = tilesInRange(hero.idx, fw, fh, range);
+			const allTiles = tilesInRange(hero.idx, fw, fh, range);
+			const validTileIndices = allTiles.filter((idx) => {
+				// Must be within the hero's current line of sight.
+				if (visibilityMask && visibilityMask[idx] !== 1) return false;
+				// Wall tiles are never valid targets — the beam stops before them.
+				if (opacityMask && opacityMask[idx] === 1) return false;
+				return true;
+			});
 			enterTargeting(activeDef, validTileIndices, []);
 			return;
 		}
 
 		if (activeDef.targetType === "actor") {
 			void fh;
-			const validActorIds = actorsInChargeRange(hero, floor.state.actorsById, fw, range);
+			const allActorIds = actorsInChargeRange(hero, floor.state.actorsById, fw, range);
+			const validActorIds = visibilityMask
+				? allActorIds.filter((id) => {
+						const actor = floor.state.actorsById[id];
+						return actor && visibilityMask[actor.idx] === 1;
+					})
+				: allActorIds;
 			enterTargeting(activeDef, [], validActorIds);
 		}
 	}

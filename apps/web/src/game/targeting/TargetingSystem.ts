@@ -15,7 +15,7 @@
  */
 
 import Phaser from "phaser";
-import { idxToXY } from "@app/shared";
+import { idxToXY, getTilesInLine, getTilesInCone } from "@app/shared";
 import { useTargetingStore } from "../../features/targeting/targetingStore";
 import type { TargetingStore } from "../../features/targeting/targetingStore";
 import { useGameStore } from "../../features/game/gameStore";
@@ -29,6 +29,8 @@ export class TargetingSystem {
 	private scene: Phaser.Scene;
 	public mapWidth: number;
 	public mapHeight: number;
+	/** Opacity mask for the current floor — used by line_damage to stop at walls. */
+	private opacityMask: Uint8Array | null = null;
 
 	constructor(scene: Phaser.Scene, mapWidth: number, mapHeight: number) {
 		this.scene = scene;
@@ -58,6 +60,12 @@ export class TargetingSystem {
 		this.graphics?.destroy();
 		this.graphics = null;
 		this.hoveredIdx = null;
+		this.opacityMask = null;
+	}
+
+	/** Provide the precomputed opacity mask for the current floor. */
+	setOpacityMask(mask: Uint8Array): void {
+		this.opacityMask = mask;
 	}
 
 	/** Full cleanup — call from MainScene shutdown/destroy. */
@@ -139,9 +147,52 @@ export class TargetingSystem {
 		this.hoveredIdx = tileY * this.mapWidth + tileX;
 
 		if (targeting.skillDef.targetType === "tile") {
-			const radiusTiles: number =
-				(targeting.skillDef.effects[0] as { type: string; radiusTiles?: number })
-					?.radiusTiles ?? 1;
+			targeting.setAoePreview(
+				this.computeAoePreview(targeting.skillDef.effects[0], tileX, tileY),
+			);
+		}
+
+		this.render(useTargetingStore.getState());
+	}
+
+	/**
+	 * Compute the AoE tile preview for the currently hovered tile based on the
+	 * first effect of the skill being targeted. Returns an array of flat tile indices.
+	 */
+	private computeAoePreview(
+		effect: { type: string } & Record<string, unknown>,
+		tileX: number,
+		tileY: number,
+	): number[] {
+		const hoveredIdx = tileY * this.mapWidth + tileX;
+
+		if (effect.type === "line_damage") {
+			const heroIdx = this.getHeroIdx();
+			if (heroIdx === null) return [];
+			return getTilesInLine(
+				heroIdx,
+				hoveredIdx,
+				this.mapWidth,
+				this.mapHeight,
+				this.opacityMask ?? undefined,
+			);
+		}
+
+		if (effect.type === "cone_damage") {
+			const heroIdx = this.getHeroIdx();
+			if (heroIdx === null) return [];
+			return getTilesInCone(
+				heroIdx,
+				hoveredIdx,
+				this.mapWidth,
+				this.mapHeight,
+				(effect.rangeTiles as number) ?? 3,
+				(effect.angleDegrees as number) ?? 90,
+			);
+		}
+
+		if (effect.type === "area_damage") {
+			const radiusTiles = (effect.radiusTiles as number) ?? 0;
 			const aoe: number[] = [];
 			for (let dy = -radiusTiles; dy <= radiusTiles; dy++) {
 				for (let dx = -radiusTiles; dx <= radiusTiles; dx++) {
@@ -152,10 +203,23 @@ export class TargetingSystem {
 					}
 				}
 			}
-			targeting.setAoePreview(aoe);
+			return aoe;
 		}
 
-		this.render(useTargetingStore.getState());
+		// single_target_damage and other tile-targeted effects with no inherent AoE
+		// highlight only the hovered tile itself.
+		if (tileX >= 0 && tileX < this.mapWidth && tileY >= 0 && tileY < this.mapHeight) {
+			return [hoveredIdx];
+		}
+		return [];
+	}
+
+	/** Returns the hero's current flat tile index, or null if state is unavailable. */
+	private getHeroIdx(): number | null {
+		const { state } = useGameStore.getState();
+		if (!state) return null;
+		const hero = state.floors[state.heroFloorIndex]?.state.actorsById[state.heroId];
+		return hero?.idx ?? null;
 	}
 
 	// -------------------------------------------------------------------------

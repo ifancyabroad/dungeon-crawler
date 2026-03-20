@@ -56,7 +56,7 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the class's `activeSkillPool` (or `startingSkills`) in `packages/content/src/raw/classes/<class>.json`.
 5. If the skill has a visual effect, add a handler in `apps/web/src/game/fx/skills/<name>.ts` and register it in `SKILL_ANIM_REGISTRY` in `apps/web/src/game/fx/skills/index.ts`.
-6. If the skill requires targeting (tile or actor), the hotbar dispatches `enterTargeting(...)` — `TargetingSystem` handles the overlay automatically.
+6. If the skill requires targeting (`targetType: "tile"` or `"actor"`), the hotbar dispatches `enterTargeting(...)`. Valid targets are automatically restricted to the hero's current line of sight, and `TargetingSystem` renders the correct AoE preview shape based on the effect type — no extra client work is needed for standard effect types. If the skill animation needs to know where the effect actually lands (e.g. a beam that stops at a wall), see `lightningBoltHandler` in `apps/web/src/game/fx/skills/index.ts` as a reference.
 
 ### Passive skill
 

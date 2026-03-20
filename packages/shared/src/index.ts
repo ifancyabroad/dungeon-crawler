@@ -131,6 +131,8 @@ export {
 
 export {
 	applyPassiveSkill,
+	getTilesInLine,
+	getTilesInCone,
 	hasStatusEffect,
 	resolveSkill,
 	type ActiveSkillDefinition,

@@ -22,6 +22,17 @@ import type { Rng } from "../rng";
 // Active skill effect descriptors (plain TypeScript — no Zod)
 // ---------------------------------------------------------------------------
 
+/**
+ * Saving throw configuration shared across all damage effect types.
+ * Success scales the damage packets by successDamageMultiplier (default 0.5).
+ */
+export interface SavingThrowConfig {
+	saveAbility: AbilityName;
+	dcStat: AbilityName;
+	/** Damage multiplier on a successful save (default 0.5). */
+	successDamageMultiplier?: number;
+}
+
 export interface AreaDamageEffect {
 	type: "area_damage";
 	dice: string;
@@ -32,11 +43,7 @@ export interface AreaDamageEffect {
 	 * Optional saving throw applied to each target:
 	 * - Success scales the damage packets by successDamageMultiplier (default 0.5).
 	 */
-	savingThrow?: {
-		saveAbility: AbilityName;
-		dcStat: AbilityName;
-		successDamageMultiplier?: number;
-	};
+	savingThrow?: SavingThrowConfig;
 }
 
 export interface ApplyStatusEffect {
@@ -56,7 +63,66 @@ export interface ChargeAttackEffect {
 	bonusDamageType: DamageType;
 }
 
-export type ActiveSkillEffectDescriptor = AreaDamageEffect | ApplyStatusEffect | ChargeAttackEffect;
+/**
+ * Configuration for an attack roll made by a skill effect.
+ * Roll: D20 + modifierStat modifier (+ proficiency bonus when useProficiency is true) vs target AC.
+ */
+export interface AttackRollConfig {
+	/** Ability score whose modifier is added to the attack roll (e.g. "intelligence" for spell attacks). */
+	modifierStat: AbilityName;
+	/** When true, the caster's proficiency bonus is also added to the attack roll. */
+	useProficiency: boolean;
+}
+
+/**
+ * Shoots a line from the caster toward a target tile.
+ * All actors on tiles along that line (up to the first wall) are damaged.
+ */
+export interface LineDamageEffect {
+	type: "line_damage";
+	dice: string;
+	damageType: DamageType;
+	scalingStat?: AbilityName;
+	savingThrow?: SavingThrowConfig;
+}
+
+/**
+ * Sprays a cone from the caster toward a target tile direction.
+ * All actors within the cone arc (no wall stopping) are damaged.
+ */
+export interface ConeDamageEffect {
+	type: "cone_damage";
+	dice: string;
+	damageType: DamageType;
+	/** Length of the cone in tiles. */
+	rangeTiles: number;
+	/** Total arc of the cone in degrees (default 90). */
+	angleDegrees?: number;
+	scalingStat?: AbilityName;
+	savingThrow?: SavingThrowConfig;
+}
+
+/**
+ * Targets a single actor.
+ * Supports an optional attack roll (vs AC) and/or saving throw.
+ * When attackRoll is present, a miss produces no damage.
+ */
+export interface SingleTargetDamageEffect {
+	type: "single_target_damage";
+	dice: string;
+	damageType: DamageType;
+	scalingStat?: AbilityName;
+	savingThrow?: SavingThrowConfig;
+	attackRoll?: AttackRollConfig;
+}
+
+export type ActiveSkillEffectDescriptor =
+	| AreaDamageEffect
+	| ApplyStatusEffect
+	| ChargeAttackEffect
+	| LineDamageEffect
+	| ConeDamageEffect
+	| SingleTargetDamageEffect;
 
 // ---------------------------------------------------------------------------
 // Passive skill effect descriptors (plain TypeScript — no Zod)
@@ -153,6 +219,12 @@ export interface SkillResolutionInput {
 	targetTileIdx?: number;
 	/** Id of the targeted actor (for "actor" targetType skills). */
 	targetActorId?: string;
+	/**
+	 * Precomputed opacity mask for the current floor (1 = opaque/wall).
+	 * Required by line_damage to stop the beam at walls.
+	 * Optional — effects that do not need wall checks work fine without it.
+	 */
+	opacityMask?: Uint8Array;
 }
 
 export interface SkillResolutionOutput {

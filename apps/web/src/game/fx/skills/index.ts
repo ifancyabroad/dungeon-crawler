@@ -10,8 +10,9 @@ import { playCharge } from "./charge";
 import { playWarCry } from "./warCry";
 import { playLightningBolt } from "./lightningBolt";
 import { playSmokeBomb } from "./smokeBomb";
-import { idxToXY } from "@app/shared";
+import { idxToXY, getTilesInLine } from "@app/shared";
 import { TILE_WIDTH, TILE_HEIGHT } from "../../tiles/tilesetRegistry";
+import { useMapStore } from "../../../features/map/mapStore";
 
 const fireballHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 	if (ctx.event.targetTileIdx === undefined) return DEFAULT_ANIM_RESULT;
@@ -40,7 +41,24 @@ const warCryHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
 
 const lightningBoltHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 	if (ctx.event.targetTileIdx === undefined) return DEFAULT_ANIM_RESULT;
-	playLightningBolt(scene, ctx.heroSprite, ctx.event.targetTileIdx, mapWidth, ctx.onImpact);
+
+	// The beam stops before the first wall — compute the actual tile the bolt
+	// should visually terminate at so the animation matches the server result.
+	const { opacityMask, mapConfigOverride } = useMapStore.getState();
+	const mapHeight = mapConfigOverride?.height;
+	let visualTargetIdx = ctx.event.targetTileIdx;
+	if (opacityMask && mapHeight !== undefined) {
+		const line = getTilesInLine(
+			ctx.heroIdxAfter,
+			ctx.event.targetTileIdx,
+			mapWidth,
+			mapHeight,
+			opacityMask,
+		);
+		if (line.length > 0) visualTargetIdx = line[line.length - 1];
+	}
+
+	playLightningBolt(scene, ctx.heroSprite, visualTargetIdx, mapWidth, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 

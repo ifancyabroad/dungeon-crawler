@@ -1,5 +1,6 @@
 export { resolveSkill } from "./resolveSkill";
 export { applyPassiveSkill } from "./applyPassiveEffect";
+export { getTilesInLine, getTilesInCone } from "./geometry";
 export {
 	hasStatusEffect,
 	tickStatusEffects,

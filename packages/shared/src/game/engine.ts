@@ -551,6 +551,7 @@ function processEnemyTurns(
 					rng,
 					targetTileIdx: result.targetTileIdx,
 					targetActorId: result.targetActorId,
+					opacityMask,
 				});
 				if (!("error" in resolution)) {
 					const monsterAfterSkill = resolution.floorState.actorsById[mid];
@@ -962,6 +963,7 @@ export function applyAction(
 				rng,
 				targetTileIdx: action.targetTileIdx,
 				targetActorId: action.targetActorId,
+				opacityMask: context.getOpacityMask(fi),
 			});
 
 			if ("error" in resolution) return { ok: false, reason: resolution.error };

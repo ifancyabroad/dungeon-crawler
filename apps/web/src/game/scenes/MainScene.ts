@@ -224,6 +224,8 @@ export default class MainScene extends Phaser.Scene {
 		this.createWallLayer(wallData);
 
 		this.opacityMask = computeOpacityMask(wall, config.width, config.height);
+		this.targetingSystem?.setOpacityMask(this.opacityMask);
+		useMapStore.getState().setOpacityMask(this.opacityMask);
 
 		// Place exit sprite and register it for fog-of-war treatment
 		const stateForExit = useGameStore.getState().state;

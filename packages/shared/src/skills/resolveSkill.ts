@@ -15,6 +15,9 @@ import type {
 import { applyAreaDamage } from "./effects/areaDamage";
 import { applyStatusEffect } from "./effects/applyStatus";
 import { applyChargeAttack } from "./effects/chargeAttack";
+import { applyLineDamage } from "./effects/lineDamage";
+import { applyConeDamage } from "./effects/coneDamage";
+import { applySingleTargetDamage } from "./effects/singleTargetDamage";
 
 export function resolveSkill(
 	input: SkillResolutionInput,
@@ -29,6 +32,7 @@ export function resolveSkill(
 		rng,
 		targetTileIdx,
 		targetActorId,
+		opacityMask,
 	} = input;
 
 	// Validate targeting
@@ -92,6 +96,57 @@ export function resolveSkill(
 				if ("error" in result) return result;
 				floorState = result.floorState;
 				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "line_damage": {
+				if (targetTileIdx === undefined) return { error: "skill_missing_tile_target" };
+				const result = applyLineDamage(
+					effect,
+					currentCaster,
+					targetTileIdx,
+					floorState,
+					width,
+					height,
+					rng,
+					skillDef.id,
+					opacityMask,
+				);
+				floorState = result.floorState;
+				events.push(...result.events);
+				break;
+			}
+
+			case "cone_damage": {
+				if (targetTileIdx === undefined) return { error: "skill_missing_tile_target" };
+				const result = applyConeDamage(
+					effect,
+					currentCaster,
+					targetTileIdx,
+					floorState,
+					width,
+					height,
+					rng,
+					skillDef.id,
+				);
+				floorState = result.floorState;
+				events.push(...result.events);
+				break;
+			}
+
+			case "single_target_damage": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applySingleTargetDamage(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					rng,
+					skillDef.id,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
 				events.push(...result.events);
 				break;
 			}
