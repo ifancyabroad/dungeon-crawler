@@ -1,0 +1,15 @@
+{
+	"skillType": "active",
+	"id": "berserk",
+	"name": "Berserk",
+	"description": "Enter a furious rage, dealing more damage with every strike. The frenzy makes you reckless — you take more hits too.",
+	"cooldown": 25,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "berserk",
+			"durationTurns": 8
+		}
+	]
+}

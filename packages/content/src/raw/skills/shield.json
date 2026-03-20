@@ -1,0 +1,14 @@
+{
+	"skillType": "active",
+	"id": "shield",
+	"name": "Shield",
+	"description": "Conjure a magical barrier around yourself, absorbing incoming damage before it reaches you.",
+	"cooldown": 25,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_shield",
+			"amount": 20
+		}
+	]
+}

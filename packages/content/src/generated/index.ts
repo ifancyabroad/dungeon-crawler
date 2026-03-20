@@ -34,10 +34,13 @@ export const classes: readonly CharacterClassDefinition[] = [
       "robe-cloth"
     ],
     "startingSkills": [
-      "fireball"
+      "magic_arrow"
     ],
     "activeSkillPool": [
-      "lightning_bolt"
+      "fireball",
+      "lightning_bolt",
+      "shield",
+      "cone_of_cold"
     ],
     "passiveSkillPool": [
       "arcane_mind",
@@ -72,7 +75,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 10,
       "charisma": 14
     },
-    "startingHp": 10,
+    "startingHp": 100,
     "hitDie": 8,
     "startingEquipment": [
       "dagger-basic",
@@ -82,7 +85,10 @@ export const classes: readonly CharacterClassDefinition[] = [
       "stealth"
     ],
     "activeSkillPool": [
-      "smoke_bomb"
+      "smoke_bomb",
+      "sneak_attack",
+      "shadow_step",
+      "poison_blade"
     ],
     "passiveSkillPool": [
       "quick_reflexes",
@@ -129,7 +135,10 @@ export const classes: readonly CharacterClassDefinition[] = [
       "charge"
     ],
     "activeSkillPool": [
-      "war_cry"
+      "war_cry",
+      "mighty_leap",
+      "cleave",
+      "berserk"
     ],
     "passiveSkillPool": [
       "warriors_might",
@@ -362,7 +371,7 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["arcane_mind","arcane_wisdom","battle_hardened","bludgeoning_mastery","charge","evasion","fire_affinity","fire_immunity","fireball","iron_skin","lightning_bolt","mage_armor","poison_immunity","predators_instinct","quick_reflexes","shadow_strike","smoke_bomb","stealth","toughness","war_cry","warriors_might"] as const;
+export const skillIds = ["arcane_mind","arcane_wisdom","battle_hardened","berserk","bludgeoning_mastery","charge","cleave","cone_of_cold","evasion","fire_affinity","fire_immunity","fireball","iron_skin","lightning_bolt","mage_armor","magic_arrow","mighty_leap","poison_blade","poison_immunity","predators_instinct","quick_reflexes","shadow_step","shadow_strike","shield","smoke_bomb","sneak_attack","stealth","toughness","war_cry","warriors_might"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
@@ -405,6 +414,21 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "berserk",
+    "name": "Berserk",
+    "description": "Enter a furious rage, dealing more damage with every strike. The frenzy makes you reckless — you take more hits too.",
+    "cooldown": 25,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "berserk",
+        "durationTurns": 8
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "bludgeoning_mastery",
     "name": "Crushing Blows",
@@ -433,6 +457,49 @@ export const skills: readonly SkillDefinition[] = [
         "maxRangeTiles": 4,
         "bonusDice": "1d8",
         "bonusDamageType": "bludgeoning"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "cleave",
+    "name": "Cleave",
+    "description": "Swing your weapon in a wide arc, striking the three tiles directly in front of you.",
+    "cooldown": 5,
+    "targetType": "tile",
+    "range": 1,
+    "effects": [
+      {
+        "type": "cone_damage",
+        "dice": "1d8",
+        "damageType": "slashing",
+        "rangeTiles": 1,
+        "angleDegrees": 135,
+        "scalingStat": "strength"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "cone_of_cold",
+    "name": "Cone of Cold",
+    "description": "Exhale a blast of freezing air in a cone, chilling all enemies caught within.",
+    "cooldown": 15,
+    "targetType": "tile",
+    "range": 3,
+    "effects": [
+      {
+        "type": "cone_damage",
+        "dice": "2d6",
+        "damageType": "cold",
+        "rangeTiles": 3,
+        "angleDegrees": 90,
+        "scalingStat": "intelligence",
+        "savingThrow": {
+          "saveAbility": "constitution",
+          "dcStat": "intelligence",
+          "successDamageMultiplier": 0.5
+        }
       }
     ]
   },
@@ -538,6 +605,74 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "magic_arrow",
+    "name": "Magic Arrow",
+    "description": "Launch a concentrated bolt of arcane energy at a single target.",
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 6,
+    "effects": [
+      {
+        "type": "single_target_damage",
+        "dice": "1d6",
+        "damageType": "force",
+        "scalingStat": "intelligence",
+        "attackRoll": {
+          "modifierStat": "intelligence",
+          "useProficiency": true
+        }
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "mighty_leap",
+    "name": "Mighty Leap",
+    "description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
+    "cooldown": 12,
+    "targetType": "tile",
+    "range": 4,
+    "effects": [
+      {
+        "type": "leap_attack",
+        "maxRangeTiles": 4,
+        "landingRadiusTiles": 1,
+        "dice": "2d6",
+        "damageType": "bludgeoning",
+        "scalingStat": "strength"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "poison_blade",
+    "name": "Poison Blade",
+    "description": "A swift slash that coats the wound with venom, dealing damage over time.",
+    "cooldown": 10,
+    "targetType": "actor",
+    "range": 1,
+    "effects": [
+      {
+        "type": "single_target_damage",
+        "dice": "1d6",
+        "damageType": "piercing",
+        "scalingStat": "dexterity",
+        "attackRoll": {
+          "modifierStat": "dexterity",
+          "useProficiency": true
+        }
+      },
+      {
+        "type": "apply_status",
+        "statusId": "poisoned",
+        "durationTurns": 5,
+        "value": 3,
+        "target": "target"
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "poison_immunity",
     "name": "Poison Immunity",
@@ -581,6 +716,21 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "shadow_step",
+    "name": "Shadow Step",
+    "description": "Melt into the darkness and re-emerge at a distant location, leaving no trace of your passing.",
+    "cooldown": 15,
+    "targetType": "tile",
+    "range": 5,
+    "maintainsStealth": true,
+    "effects": [
+      {
+        "type": "shadow_step"
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "shadow_strike",
     "name": "Shadow Strike",
@@ -592,6 +742,20 @@ export const skills: readonly SkillDefinition[] = [
         "damageType": "piercing",
         "appliesTo": "melee",
         "onCritOnly": false
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "shield",
+    "name": "Shield",
+    "description": "Conjure a magical barrier around yourself, absorbing incoming damage before it reaches you.",
+    "cooldown": 25,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_shield",
+        "amount": 20
       }
     ]
   },
@@ -614,6 +778,23 @@ export const skills: readonly SkillDefinition[] = [
         "type": "apply_status",
         "statusId": "stealth",
         "durationTurns": 8
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "sneak_attack",
+    "name": "Sneak Attack",
+    "description": "Strike a vital spot from the shadows. Requires stealth — the blow is devastating but breaks your concealment.",
+    "cooldown": 2,
+    "targetType": "actor",
+    "range": 1,
+    "maintainsStealth": true,
+    "effects": [
+      {
+        "type": "sneak_attack",
+        "dice": "3d6",
+        "damageType": "piercing"
       }
     ]
   },

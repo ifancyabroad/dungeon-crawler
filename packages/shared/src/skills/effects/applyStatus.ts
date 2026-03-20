@@ -1,6 +1,6 @@
 /**
- * Apply status effect: pushes a named ActiveEffect onto the caster's statusEffects array.
- * If the same statusId is already active its duration is replaced (refresh, not stack).
+ * Apply status effect: pushes a named ActiveEffect onto the caster's activeEffects array.
+ * If the same effectId is already active its duration is replaced (refresh, not stack).
  */
 
 import type { Actor, GameEvent } from "../../game/types";
@@ -10,10 +10,14 @@ export function applyStatusEffect(
 	effect: ApplyStatusEffect,
 	caster: Actor,
 ): { caster: Actor; events: GameEvent[] } {
-	const filtered = caster.statusEffects.filter((e) => e.id !== effect.statusId);
+	const filtered = caster.activeEffects.filter((e) => e.id !== effect.statusId);
+	const newEffect =
+		effect.value !== undefined
+			? { id: effect.statusId, remainingTurns: effect.durationTurns, value: effect.value }
+			: { id: effect.statusId, remainingTurns: effect.durationTurns };
 	const updatedCaster: Actor = {
 		...caster,
-		statusEffects: [...filtered, { id: effect.statusId, remainingTurns: effect.durationTurns }],
+		activeEffects: [...filtered, newEffect],
 	};
 
 	const events: GameEvent[] = [

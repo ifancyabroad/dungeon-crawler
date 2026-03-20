@@ -23,10 +23,11 @@ import { createInitialRngState, createRngFromState, type Rng } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { resolveAttack } from "../combat/combat";
+import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
 import { runMonsterAI, type MonsterAIState } from "./monsterAI";
-import { resolveSkill, hasStatusEffect, tickStatusEffects, applyPassiveSkill } from "../skills";
+import { resolveSkill, hasActiveEffect, tickActiveEffects, applyPassiveSkill } from "../skills";
 import type { ActiveSkillDefinition, SkillDefinition } from "../skills";
 
 /**
@@ -222,7 +223,8 @@ function buildInitialFloorState(
 		damageResistances: [],
 		damageImmunities: [],
 		skills: initialSkills,
-		statusEffects: [],
+		activeEffects: [],
+		numericBuffs: {},
 		passiveDamageBonuses: [],
 		statusImmunities: [],
 		savingThrowProficiencies: heroInit.savingThrowProficiencies,
@@ -355,7 +357,8 @@ export function spawnMonster(
 		damageResistances: [...init.damageResistances],
 		damageImmunities: [...init.damageImmunities],
 		skills: {},
-		statusEffects: [],
+		activeEffects: [],
+		numericBuffs: {},
 		passiveDamageBonuses: [],
 		statusImmunities: [],
 		savingThrowProficiencies: init.savingThrowProficiencies,
@@ -468,7 +471,7 @@ function processEnemyTurns(
 
 	let currentHero = hero;
 	// If the hero is stealthed, monsters cannot see them regardless of LoS.
-	const heroIsStealthed = hasStatusEffect(currentHero, "stealth");
+	const heroIsStealthed = hasActiveEffect(currentHero, "stealth");
 
 	for (const mid of monsterIds) {
 		if (!currentHero.alive) break;
@@ -513,8 +516,12 @@ function processEnemyTurns(
 			});
 
 			if (attackResult.hit) {
-				const newHp = Math.max(0, currentHero.hp - attackResult.damage);
-				currentHero = { ...currentHero, hp: newHp, alive: newHp > 0 };
+				const { updatedActor: damagedHero, events: damageEvents } = applyDamageToActor(
+					currentHero,
+					attackResult.damage,
+				);
+				currentHero = damagedHero;
+				events.push(...damageEvents);
 				actorsById = {
 					...actorsById,
 					[heroId]: currentHero,
@@ -652,11 +659,11 @@ function breakStealth(
 	heroId: ActorId,
 	floorState: FloorState,
 ): { hero: Actor; floorState: FloorState } {
-	if (!hasStatusEffect(hero, "stealth")) return { hero, floorState };
+	if (!hasActiveEffect(hero, "stealth")) return { hero, floorState };
 
 	const updatedHero: Actor = {
 		...hero,
-		statusEffects: hero.statusEffects.filter((e) => e.id !== "stealth"),
+		activeEffects: hero.activeEffects.filter((e) => e.id !== "stealth"),
 	};
 
 	let actorsById: Record<string, Actor> = {
@@ -819,8 +826,9 @@ export function applyAction(
 				}
 			}
 
-			newState = tickStatusEffects(newState);
-			newState = tickSkillCooldowns(newState);
+			const { state: tickedMoveState, events: tickMoveEvents } = tickActiveEffects(newState);
+			newState = tickSkillCooldowns(tickedMoveState);
+			events.push(...tickMoveEvents);
 
 			return { ok: true, state: newState, events };
 		}
@@ -865,8 +873,12 @@ export function applyAction(
 			let updatedDefender: Actor | undefined;
 			let attackPendingInteraction: PendingInteraction = null;
 			if (attackResult.hit) {
-				const newHp = Math.max(0, defender.hp - attackResult.damage);
-				updatedDefender = { ...defender, hp: newHp, alive: newHp > 0 };
+				const { updatedActor, events: damageEvents } = applyDamageToActor(
+					defender,
+					attackResult.damage,
+				);
+				updatedDefender = updatedActor;
+				events.push(...damageEvents);
 				if (!updatedDefender.alive) {
 					events.push({ type: "death", actorId: defender.id });
 					const {
@@ -917,8 +929,10 @@ export function applyAction(
 			};
 			// Only tick status/cooldowns when game is not pausing
 			if (!attackPendingInteraction) {
-				attackNewState = tickStatusEffects(attackNewState);
-				attackNewState = tickSkillCooldowns(attackNewState);
+				const { state: tickedAttackState, events: tickAttackEvents } =
+					tickActiveEffects(attackNewState);
+				events.push(...tickAttackEvents);
+				attackNewState = tickSkillCooldowns(tickedAttackState);
 			}
 
 			return { ok: true, state: attackNewState, events };
@@ -1042,8 +1056,10 @@ export function applyAction(
 
 			// Only tick status/cooldowns when game is not pausing
 			if (!skillPendingInteraction) {
-				newState = tickStatusEffects(newState);
-				newState = tickSkillCooldowns(newState);
+				const { state: tickedSkillState, events: tickSkillEvents } =
+					tickActiveEffects(newState);
+				skillXpEvents.push(...tickSkillEvents);
+				newState = tickSkillCooldowns(tickedSkillState);
 			}
 
 			return {

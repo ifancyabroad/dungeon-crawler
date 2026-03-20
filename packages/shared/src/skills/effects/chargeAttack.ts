@@ -11,6 +11,7 @@ import { resolveAttack } from "../../combat/combat";
 import { UNARMED_WEAPON } from "../../combat/types";
 import { rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY, xyToIdx, getAdjacentIndices } from "../../game/engine";
 
 /**
@@ -110,8 +111,9 @@ export function applyChargeAttack(
 
 	let updatedTarget: Actor = target;
 	if (attackResult.hit) {
-		const newHp = Math.max(0, target.hp - damage);
-		updatedTarget = { ...target, hp: newHp, alive: newHp > 0 };
+		const { updatedActor, events: damageEvents } = applyDamageToActor(target, damage);
+		updatedTarget = updatedActor;
+		events.push(...damageEvents);
 		if (!updatedTarget.alive) {
 			events.push({ type: "death", actorId: targetActorId });
 		}

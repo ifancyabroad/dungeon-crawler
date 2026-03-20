@@ -1,0 +1,19 @@
+{
+	"skillType": "active",
+	"id": "mighty_leap",
+	"name": "Mighty Leap",
+	"description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
+	"cooldown": 12,
+	"targetType": "tile",
+	"range": 4,
+	"effects": [
+		{
+			"type": "leap_attack",
+			"maxRangeTiles": 4,
+			"landingRadiusTiles": 1,
+			"dice": "2d6",
+			"damageType": "bludgeoning",
+			"scalingStat": "strength"
+		}
+	]
+}

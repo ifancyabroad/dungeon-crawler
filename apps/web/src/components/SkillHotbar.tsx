@@ -71,6 +71,27 @@ function actorsInChargeRange(
 	return result;
 }
 
+/**
+ * Enemy actor ids within Chebyshev distance maxRange of the hero.
+ * Used for general actor-targeted skills (magic_arrow, sneak_attack, etc.).
+ */
+function actorsInRange(
+	hero: Actor,
+	actors: Record<string, Actor>,
+	width: number,
+	maxRange: number,
+): string[] {
+	const { x: hx, y: hy } = idxToXY(hero.idx, width);
+	const result: string[] = [];
+	for (const [id, actor] of Object.entries(actors)) {
+		if (id === "hero" || !actor.alive || actor.def.type !== "monster") continue;
+		const { x: ax, y: ay } = idxToXY(actor.idx, width);
+		const dist = Math.max(Math.abs(ax - hx), Math.abs(ay - hy));
+		if (dist > 0 && dist <= maxRange) result.push(id);
+	}
+	return result;
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -117,11 +138,18 @@ export function SkillHotbar() {
 
 		if (activeDef.targetType === "tile") {
 			const allTiles = tilesInRange(hero.idx, fw, fh, range);
+			const isLeapSkill = activeDef.effects.some((e) => e.type === "leap_attack");
 			const validTileIndices = allTiles.filter((idx) => {
-				// Must be within the hero's current line of sight.
 				if (visibilityMask && visibilityMask[idx] !== 1) return false;
-				// Wall tiles are never valid targets — the beam stops before them.
+				// Wall tiles are never valid targets.
 				if (opacityMask && opacityMask[idx] === 1) return false;
+				// Leap requires an unoccupied landing tile.
+				if (isLeapSkill) {
+					const occupied = Object.values(floor.state.actorsById).some(
+						(a) => a.alive && a.idx === idx,
+					);
+					if (occupied) return false;
+				}
 				return true;
 			});
 			enterTargeting(activeDef, validTileIndices, []);
@@ -130,7 +158,12 @@ export function SkillHotbar() {
 
 		if (activeDef.targetType === "actor") {
 			void fh;
-			const allActorIds = actorsInChargeRange(hero, floor.state.actorsById, fw, range);
+			// charge uses a strict cardinal-line check; all other actor-targeted
+			// skills allow any enemy within Chebyshev range.
+			const hasCharge = activeDef.effects.some((e) => e.type === "charge_attack");
+			const allActorIds = hasCharge
+				? actorsInChargeRange(hero, floor.state.actorsById, fw, range)
+				: actorsInRange(hero, floor.state.actorsById, fw, range);
 			const validActorIds = visibilityMask
 				? allActorIds.filter((id) => {
 						const actor = floor.state.actorsById[id];

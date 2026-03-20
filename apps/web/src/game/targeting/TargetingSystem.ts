@@ -147,9 +147,16 @@ export class TargetingSystem {
 		this.hoveredIdx = tileY * this.mapWidth + tileX;
 
 		if (targeting.skillDef.targetType === "tile") {
-			targeting.setAoePreview(
-				this.computeAoePreview(targeting.skillDef.effects[0], tileX, tileY),
-			);
+			const hoveredIdx = tileY * this.mapWidth + tileX;
+			// Only show an AoE preview when the cursor is over a valid target tile.
+			// This prevents the cone/arc being drawn toward out-of-range tiles.
+			if (targeting.validTileIndices.includes(hoveredIdx)) {
+				targeting.setAoePreview(
+					this.computeAoePreview(targeting.skillDef.effects[0], tileX, tileY),
+				);
+			} else {
+				targeting.setAoePreview([]);
+			}
 		}
 
 		this.render(useTargetingStore.getState());

@@ -1,0 +1,24 @@
+{
+	"skillType": "active",
+	"id": "cone_of_cold",
+	"name": "Cone of Cold",
+	"description": "Exhale a blast of freezing air in a cone, chilling all enemies caught within.",
+	"cooldown": 15,
+	"targetType": "tile",
+	"range": 3,
+	"effects": [
+		{
+			"type": "cone_damage",
+			"dice": "2d6",
+			"damageType": "cold",
+			"rangeTiles": 3,
+			"angleDegrees": 90,
+			"scalingStat": "intelligence",
+			"savingThrow": {
+				"saveAbility": "constitution",
+				"dcStat": "intelligence",
+				"successDamageMultiplier": 0.5
+			}
+		}
+	]
+}

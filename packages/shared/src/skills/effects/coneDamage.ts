@@ -10,6 +10,7 @@ import type { ConeDamageEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { getTilesInCone } from "../geometry";
 
 export function applyConeDamage(
@@ -105,9 +106,10 @@ export function applyConeDamage(
 
 		const resolved = resolveDamagePackets(packetsToResolve, actor);
 		const effectiveDamage = resolved.totalEffectiveDamage;
-		const newHp = Math.max(0, actor.hp - effectiveDamage);
-		const updatedActor: Actor = { ...actor, hp: newHp, alive: newHp > 0 };
+
+		const { updatedActor, events: damageEvents } = applyDamageToActor(actor, effectiveDamage);
 		actorsById = { ...actorsById, [id]: updatedActor };
+		events.push(...damageEvents);
 
 		events.push({
 			type: "area_hit",

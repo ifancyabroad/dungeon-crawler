@@ -14,7 +14,7 @@
 	"hitDie": 10,
 	"startingEquipment": ["sword-basic", "shield-wood", "mail-hauberk"],
 	"startingSkills": ["charge"],
-	"activeSkillPool": ["war_cry"],
+	"activeSkillPool": ["war_cry", "mighty_leap", "cleave", "berserk"],
 	"passiveSkillPool": [
 		"warriors_might",
 		"iron_skin",

@@ -10,11 +10,11 @@
 		"wisdom": 10,
 		"charisma": 14
 	},
-	"startingHp": 10,
+	"startingHp": 100,
 	"hitDie": 8,
 	"startingEquipment": ["dagger-basic", "leather-jacket"],
 	"startingSkills": ["stealth"],
-	"activeSkillPool": ["smoke_bomb"],
+	"activeSkillPool": ["smoke_bomb", "sneak_attack", "shadow_step", "poison_blade"],
 	"passiveSkillPool": [
 		"quick_reflexes",
 		"evasion",

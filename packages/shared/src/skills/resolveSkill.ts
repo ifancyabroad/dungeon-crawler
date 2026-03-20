@@ -14,10 +14,14 @@ import type {
 } from "./types";
 import { applyAreaDamage } from "./effects/areaDamage";
 import { applyStatusEffect } from "./effects/applyStatus";
+import { applyShieldEffect } from "./effects/applyShield";
 import { applyChargeAttack } from "./effects/chargeAttack";
+import { applyLeapAttack } from "./effects/applyLeapAttack";
 import { applyLineDamage } from "./effects/lineDamage";
 import { applyConeDamage } from "./effects/coneDamage";
 import { applySingleTargetDamage } from "./effects/singleTargetDamage";
+import { applySneakAttack } from "./effects/applySneakAttack";
+import { applyShadowStep } from "./effects/applyShadowStep";
 
 export function resolveSkill(
 	input: SkillResolutionInput,
@@ -75,7 +79,31 @@ export function resolveSkill(
 			}
 
 			case "apply_status": {
-				const result = applyStatusEffect(effect, currentCaster);
+				if (effect.target === "target" && targetActorId) {
+					// Apply to the targeted actor (e.g. poison_blade poisons the enemy).
+					const targetActor = floorState.actorsById[targetActorId];
+					if (targetActor && targetActor.alive) {
+						const result = applyStatusEffect(effect, targetActor);
+						floorState = {
+							...floorState,
+							actorsById: {
+								...floorState.actorsById,
+								[targetActorId]: result.caster,
+							},
+						};
+						events.push(...result.events);
+					}
+				} else {
+					// Default: apply to caster.
+					const result = applyStatusEffect(effect, currentCaster);
+					currentCaster = result.caster;
+					events.push(...result.events);
+				}
+				break;
+			}
+
+			case "apply_shield": {
+				const result = applyShieldEffect(effect, currentCaster);
 				currentCaster = result.caster;
 				events.push(...result.events);
 				break;
@@ -151,6 +179,60 @@ export function resolveSkill(
 				break;
 			}
 
+			case "leap_attack": {
+				if (targetTileIdx === undefined) return { error: "skill_missing_tile_target" };
+				const result = applyLeapAttack(
+					effect,
+					currentCaster,
+					targetTileIdx,
+					floorState,
+					width,
+					height,
+					rng,
+					skillDef.id,
+					opacityMask,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "sneak_attack": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applySneakAttack(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					width,
+					rng,
+					skillDef.id,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "shadow_step": {
+				if (targetTileIdx === undefined) return { error: "skill_missing_tile_target" };
+				const result = applyShadowStep(
+					effect,
+					currentCaster,
+					targetTileIdx,
+					floorState,
+					opacityMask,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
 			default: {
 				const _exhaustive: never = effect;
 				void _exhaustive;
@@ -158,7 +240,7 @@ export function resolveSkill(
 		}
 	}
 
-	// Sync caster back into floorState (statusEffects, position etc. may have changed)
+	// Sync caster back into floorState (activeEffects, position etc. may have changed)
 	const finalFloorState = {
 		...floorState,
 		actorsById: {

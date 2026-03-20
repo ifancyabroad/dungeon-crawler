@@ -45,6 +45,8 @@ export const ActorSkillStateSchema = z.object({
 export const ActiveEffectSchema = z.object({
 	id: z.string(),
 	remainingTurns: z.number().int().min(0),
+	/** Optional magnitude for parameterised effects (e.g. damage per turn for DoT). */
+	value: z.number().optional(),
 });
 
 export const PassiveDamageBonusSchema = z.object({
@@ -76,7 +78,8 @@ export const ActorSchema = z.object({
 	damageResistances: z.array(DamageTypeSchema).default([]),
 	damageImmunities: z.array(DamageTypeSchema).default([]),
 	skills: z.record(z.string(), ActorSkillStateSchema),
-	statusEffects: z.array(ActiveEffectSchema).default([]),
+	activeEffects: z.array(ActiveEffectSchema).default([]),
+	numericBuffs: z.record(z.string(), z.number()).default({}),
 	passiveDamageBonuses: z.array(PassiveDamageBonusSchema).default([]),
 	statusImmunities: z.array(z.string()).default([]),
 	savingThrowProficiencies: z.array(AbilityNameSchema).default([]),

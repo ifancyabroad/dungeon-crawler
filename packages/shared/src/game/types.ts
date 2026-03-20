@@ -54,11 +54,17 @@ export interface PassiveDamageBonus {
  * A status effect currently active on an actor.
  * Each effect has a known id (e.g. "stealth") and a remaining turn count.
  * The engine decrements remainingTurns at the end of the actor's owning turn and removes it at 0.
+ *
+ * `value` is an optional numeric parameter used by effects that need a magnitude,
+ * such as damage-over-time (e.g. "poisoned" deals `value` damage per turn).
+ * Future status conditions (burning, frozen, etc.) can use the same field.
  */
 export interface ActiveEffect {
 	/** Identifies the effect so engine systems can query it (e.g. "stealth"). */
 	id: string;
 	remainingTurns: number;
+	/** Optional magnitude for parameterised effects (e.g. damage per turn for DoT). */
+	value?: number;
 }
 
 /** Definition reference: hero (classId from content) or monster. */
@@ -112,8 +118,23 @@ export interface Actor {
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
 	skills: Record<string, ActorSkillState>;
-	/** Active status effects (buffs/debuffs) currently applied to this actor. */
-	statusEffects: ActiveEffect[];
+	/**
+	 * All timed effects currently active on this actor — both buff-type effects
+	 * (berserk, stealth) and condition-type effects (poisoned). The engine uses
+	 * separate registries (statusCombatModifiers, DOT_EFFECT_IDS) to determine
+	 * what each effect id actually does; the data structure is the same for all.
+	 */
+	activeEffects: ActiveEffect[];
+	/**
+	 * Named numeric resources that change independently of turn counting.
+	 * Use this instead of adding ad-hoc optional fields to Actor.
+	 *
+	 * Known keys:
+	 *   "shieldHp" — hit points absorbed by the Shield skill before HP is reduced.
+	 *
+	 * Future examples: mana, devotion, ward stacks.
+	 */
+	numericBuffs: Record<string, number>;
 	/**
 	 * Passive damage bonuses applied permanently from passive skills.
 	 * Consulted during resolveAttack, applyAreaDamage, applyChargeAttack.
@@ -201,7 +222,21 @@ export type GameEvent =
 			totalRoll: number;
 			targetAc: number;
 	  }
-	| { type: "skill_granted"; actorId: ActorId; skillId: string };
+	| { type: "skill_granted"; actorId: ActorId; skillId: string }
+	/** Emitted when incoming damage is absorbed by a shield before hitting HP. */
+	| {
+			type: "shield_absorbed";
+			actorId: ActorId;
+			absorbed: number;
+			shieldHpRemaining: number;
+	  }
+	/** Emitted each turn a damage-over-time status condition deals damage. */
+	| {
+			type: "dot_damage";
+			actorId: ActorId;
+			statusId: string;
+			damage: number;
+	  };
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;

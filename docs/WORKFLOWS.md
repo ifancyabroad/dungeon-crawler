@@ -51,17 +51,18 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 
 ### Active skill
 
-1. Create `packages/content/src/raw/skills/<name>.json` following the shape defined by `ActiveSkillDefinitionSchema` in `packages/content/src/schemas/skill.ts`. Use an existing file (e.g. `fireball.json`, `charge.json`) as a reference.
-2. If a new effect type is needed, add a variant to `ActiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. The effect descriptor schemas are the canonical contract — the JSON files must satisfy them.
+1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing active skill file as a reference.
+2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the effect grants a combat bonus tied to a status, register it in the combat modifier registry in `packages/shared/src/combat/` rather than editing the attack or damage resolution functions directly.
 3. Run `pnpm --filter @app/content generate`.
-4. Add the skill id to the class's `activeSkillPool` (or `startingSkills`) in `packages/content/src/raw/classes/<class>.json`.
-5. If the skill has a visual effect, add a handler in `apps/web/src/game/fx/skills/<name>.ts` and register it in `SKILL_ANIM_REGISTRY` in `apps/web/src/game/fx/skills/index.ts`.
-6. If the skill requires targeting (`targetType: "tile"` or `"actor"`), the hotbar dispatches `enterTargeting(...)`. Valid targets are automatically restricted to the hero's current line of sight, and `TargetingSystem` renders the correct AoE preview shape based on the effect type — no extra client work is needed for standard effect types. If the skill animation needs to know where the effect actually lands (e.g. a beam that stops at a wall), see `lightningBoltHandler` in `apps/web/src/game/fx/skills/index.ts` as a reference.
+4. Add the skill id to the class definition in `packages/content/src/raw/classes/<class>.json`.
+5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry.
+6. If the skill applies a buff with a persistent visual (aura, sprite tint), add it to the buff visual registry in `apps/web/src/game/fx/buffVisuals/`. No scene code needs to change.
+7. If the skill requires targeting, the hotbar and targeting overlay handle it automatically for standard effect types — no extra client work is needed.
 
 ### Passive skill
 
-1. Create `packages/content/src/raw/skills/<name>.json` following the shape defined by `PassiveSkillDefinitionSchema` in `packages/content/src/schemas/skill.ts`. Use an existing passive skill file as a reference.
-2. If a new passive effect type is needed, add a variant to `PassiveSkillEffectDescriptorSchema` in `packages/content/src/schemas/skill.ts`, mirror it in `packages/shared/src/skills/types.ts`, and add a case in `packages/shared/src/skills/applyPassiveEffect.ts`. If the effect needs to be read at combat resolution time (e.g. extra damage dice), add the corresponding field to `Actor` and read it in the relevant combat handler.
+1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing passive skill file as a reference.
+2. If a new passive effect type is needed, add its Zod schema to the shared skill schemas and add a case in `packages/shared/src/skills/applyPassiveEffect.ts`. If the effect is read at combat resolution time (e.g. extra damage dice), add the corresponding field to `Actor` and read it in the relevant combat handler.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the class's `passiveSkillPool` in `packages/content/src/raw/classes/<class>.json`.
 

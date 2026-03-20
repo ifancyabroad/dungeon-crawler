@@ -1,0 +1,21 @@
+{
+	"skillType": "active",
+	"id": "magic_arrow",
+	"name": "Magic Arrow",
+	"description": "Launch a concentrated bolt of arcane energy at a single target.",
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 6,
+	"effects": [
+		{
+			"type": "single_target_damage",
+			"dice": "1d6",
+			"damageType": "force",
+			"scalingStat": "intelligence",
+			"attackRoll": {
+				"modifierStat": "intelligence",
+				"useProficiency": true
+			}
+		}
+	]
+}

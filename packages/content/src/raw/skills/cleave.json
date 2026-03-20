@@ -1,0 +1,19 @@
+{
+	"skillType": "active",
+	"id": "cleave",
+	"name": "Cleave",
+	"description": "Swing your weapon in a wide arc, striking the three tiles directly in front of you.",
+	"cooldown": 5,
+	"targetType": "tile",
+	"range": 1,
+	"effects": [
+		{
+			"type": "cone_damage",
+			"dice": "1d8",
+			"damageType": "slashing",
+			"rangeTiles": 1,
+			"angleDegrees": 135,
+			"scalingStat": "strength"
+		}
+	]
+}

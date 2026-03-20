@@ -13,8 +13,8 @@
 	"startingHp": 800,
 	"hitDie": 6,
 	"startingEquipment": ["staff-basic", "robe-cloth"],
-	"startingSkills": ["fireball"],
-	"activeSkillPool": ["lightning_bolt"],
+	"startingSkills": ["magic_arrow"],
+	"activeSkillPool": ["fireball", "lightning_bolt", "shield", "cone_of_cold"],
 	"passiveSkillPool": [
 		"arcane_mind",
 		"fire_affinity",

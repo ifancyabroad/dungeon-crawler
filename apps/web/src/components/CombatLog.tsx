@@ -65,14 +65,36 @@ function formatEvent(event: GameEvent): string {
 	}
 
 	if (event.type === "skill_used") {
-		return event.actorId === "hero" ? `You use ${capitalize(event.skillId)}!` : "";
+		return event.actorId === "hero" ? `You use ${formatSkillId(event.skillId)}!` : "";
 	}
 
 	if (event.type === "status_applied") {
+		const name = formatSkillId(event.statusId);
 		if (event.actorId === "hero") {
-			return `You enter ${capitalize(event.statusId)} for ${event.durationTurns} turns.`;
+			return event.durationTurns > 0
+				? `You gain ${name} for ${event.durationTurns} turns.`
+				: `You gain ${name}.`;
+		}
+		const actor = capitalize(event.actorId.replace(/_\d+$/, ""));
+		return event.durationTurns > 0
+			? `${actor} is afflicted with ${name} for ${event.durationTurns} turns.`
+			: `${actor} is afflicted with ${name}.`;
+	}
+
+	if (event.type === "shield_absorbed") {
+		if (event.actorId === "hero") {
+			return `Shield absorbs ${event.absorbed} damage. (${event.shieldHpRemaining} remaining)`;
 		}
 		return "";
+	}
+
+	if (event.type === "dot_damage") {
+		const statusName = formatSkillId(event.statusId);
+		if (event.actorId === "hero") {
+			return `${statusName} deals ${event.damage} damage to you.`;
+		}
+		const actor = capitalize(event.actorId.replace(/_\d+$/, ""));
+		return `${actor} takes ${event.damage} ${statusName.toLowerCase()} damage.`;
 	}
 
 	if (event.type === "saving_throw") {
@@ -118,6 +140,8 @@ function eventColorClass(event: GameEvent): string {
 	if (event.type === "area_hit") return "text-primary";
 	if (event.type === "skill_used") return "text-primary";
 	if (event.type === "status_applied") return "text-secondary";
+	if (event.type === "shield_absorbed") return "text-sky-400";
+	if (event.type === "dot_damage") return "text-green-500";
 	if (event.type === "saving_throw") return event.success ? "text-primary" : "text-text-muted";
 	return "text-text";
 }

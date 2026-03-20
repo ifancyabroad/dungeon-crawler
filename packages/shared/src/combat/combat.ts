@@ -9,6 +9,7 @@ import type { AttackResult, WeaponDice } from "./types";
 import { UNARMED_WEAPON } from "./types";
 import { rollD20, rollDice, abilityModifier, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
+import { STATUS_MELEE_ATTACK_BONUSES } from "./statusCombatModifiers";
 
 /**
  * Resolve a melee attack from attacker against defender.
@@ -19,6 +20,8 @@ import { resolveDamagePackets } from "./resolveDamage";
  * - Critical: roll weapon dice twice, then add modifier once.
  * - Passive bonuses: extra damage packets from attacker.passiveDamageBonuses
  *   that apply to "melee" or "any". onCritOnly bonuses only fire on a critical.
+ * - Status bonuses: flat damage packets from STATUS_MELEE_ATTACK_BONUSES for
+ *   each active status on the attacker.
  */
 export function resolveAttack(
 	attacker: Actor,
@@ -61,6 +64,20 @@ export function resolveAttack(
 				rawAmount: bonusRoll,
 				effectiveAmount: 0,
 			});
+		}
+
+		// Status-driven attack bonuses (e.g. berserk). Registry-driven: add new
+		// entries to statusCombatModifiers.ts without touching this function.
+		for (const effect of attacker.activeEffects) {
+			if (effect.remainingTurns <= 0) continue;
+			const bonus = STATUS_MELEE_ATTACK_BONUSES[effect.id];
+			if (bonus) {
+				rawPackets.push({
+					damageType: bonus.damageType,
+					rawAmount: bonus.flatAmount,
+					effectiveAmount: 0,
+				});
+			}
 		}
 
 		const resolved = resolveDamagePackets(rawPackets, defender);

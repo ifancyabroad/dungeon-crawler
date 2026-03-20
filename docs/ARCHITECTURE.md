@@ -176,7 +176,7 @@ When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and 
 
 ### Actor
 
-Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, active status effects, passive damage bonuses applied by passive skills at combat resolution time, and status immunities.
+Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a list of timed active effects (buffs and conditions share the same structure — what an effect does is determined by engine registries, not a separate data type), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
 
 ### Actions
 
@@ -231,6 +231,10 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 **Active skills** are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, dispatching typed effect handlers defined in `packages/shared/src/skills/effects/`. They appear on the hotbar and have cooldowns.
 
+Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
+
+Status effects that grant combat bonuses (attack or defence modifiers) are data-driven via a registry in `packages/shared/src/combat/` rather than hard-coded in the attack or damage resolution functions.
+
 **Passive skills** are granted at level-up and apply permanent buffs to the hero immediately (`applyPassiveSkill`). They never appear on the hotbar; they are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
 
 **Level-up acquisition**: on level-up the engine generates a deterministic offer of up to 3 skills (active or passive, alternating by level per `LEVEL_UP_SCHEDULE`). The player must pick one via `select_skill_choice` before regular actions resume. Rerolling is supported via `reroll_skill_choice`. This sets `pendingInteraction` on `GameState` until resolved.
@@ -261,7 +265,7 @@ The client source under `apps/web/src/` is organised into four layers:
 
 - `components/` — shared design-system components (buttons, modals, inputs, panels, and game HUD elements like the combat log and skill hotbar).
 - `features/` — co-located Zustand stores and TanStack Query hooks, one subdirectory per feature (`game`, `map`, `error`, `targeting`).
-- `game/` — Phaser integration: scenes, tile rendering, visual effect managers, per-skill animation handlers (registry pattern), and the DCSS-style targeting overlay.
+- `game/` — Phaser integration: scenes, tile rendering, visual effect managers, per-skill animation handlers (registry pattern), the DCSS-style targeting overlay, and persistent buff visuals (overlay effects and sprite tints driven by actor state, managed via a registry so adding a new visual requires no changes to the scene).
 - `pages/` — top-level route components.
 
 **React + Tailwind** handles all menus, HUD, and non-world UI.  

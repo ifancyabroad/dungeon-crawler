@@ -5,7 +5,7 @@ import {
 	DEFAULT_MAP_HEIGHT,
 	DEFAULT_MAP_WIDTH,
 	getActorAtIdx,
-	hasStatusEffect,
+	hasActiveEffect,
 	idxToXY,
 	xyToIdx,
 	MAP_GEN_VERSION,
@@ -43,6 +43,8 @@ import { monstersById, vaults } from "@app/content";
 import { DamageNumberManager } from "../fx/DamageNumberManager";
 import { SkillAnimationController } from "../skills/SkillAnimationController";
 import { TargetingSystem } from "../targeting/TargetingSystem";
+import { ActorEffectVisualManager } from "../fx/ActorEffectVisualManager";
+import { ALL_ACTOR_OVERLAY_EFFECTS, resolveActorTint } from "../fx/buffVisuals";
 
 const FOG_TINT = 0x555555;
 
@@ -102,6 +104,8 @@ export default class MainScene extends Phaser.Scene {
 	private skillAnimController: SkillAnimationController | null = null;
 	/** Created once in create(); survives floor transitions (input handlers stay attached). */
 	private targetingSystem: TargetingSystem | null = null;
+	/** Manages persistent buff overlay visuals on the player actor (shield orb, auras, etc.). */
+	private actorEffectVisuals: ActorEffectVisualManager | null = null;
 
 	constructor() {
 		super("Main");
@@ -268,6 +272,11 @@ export default class MainScene extends Phaser.Scene {
 		this.damageNumbers = new DamageNumberManager(this, this.mapWidth);
 		this.skillAnimController = new SkillAnimationController(this, this.mapWidth);
 
+		this.actorEffectVisuals = new ActorEffectVisualManager(this);
+		for (const effect of ALL_ACTOR_OVERLAY_EFFECTS) {
+			this.actorEffectVisuals.register(effect);
+		}
+
 		const currentState = useGameStore.getState().state;
 		if (currentState) {
 			const explored = currentState.floors[currentState.heroFloorIndex]?.state.explored ?? [];
@@ -374,7 +383,7 @@ export default class MainScene extends Phaser.Scene {
 			if (this.player && floor) {
 				const heroActor = floor.state.actorsById[gs.heroId];
 				if (heroActor) {
-					this.player.setAlpha(hasStatusEffect(heroActor, "stealth") ? 0.4 : 1.0);
+					this.player.setAlpha(hasActiveEffect(heroActor, "stealth") ? 0.4 : 1.0);
 				}
 			}
 
@@ -533,10 +542,17 @@ export default class MainScene extends Phaser.Scene {
 			}
 		}
 
-		// Update hero health bar
+		// Update hero health bar and buff visuals.
 		const hero = actorsById[gameState.heroId];
 		if (hero && this.player) {
-			this.healthBars?.update(gameState.heroId, hero.hp, hero.maxHp, this.player);
+			const shieldHp = hero.numericBuffs?.["shieldHp"] ?? 0;
+			this.healthBars?.update(gameState.heroId, hero.hp, hero.maxHp, this.player, shieldHp);
+
+			// Sprite tint — driven by the ACTOR_STATUS_TINTS registry in buffVisuals/actorStatusTints.ts.
+			this.player.setTint(resolveActorTint(hero));
+
+			// Overlay visuals (orbs, auras) — driven by ALL_ACTOR_OVERLAY_EFFECTS registry.
+			this.actorEffectVisuals?.sync(hero, this.player.x, this.player.y);
 		}
 	}
 
@@ -755,6 +771,8 @@ export default class MainScene extends Phaser.Scene {
 		this.healthBars?.destroy();
 		this.healthBars = null;
 		this.skillAnimController = null;
+		this.actorEffectVisuals?.destroy();
+		this.actorEffectVisuals = null;
 		// DeathFxManager and DamageNumberManager have no state to clean up —
 		// all emitters and labels self-destruct via tweens/delayedCall
 		this.deathFx = null;

@@ -207,12 +207,14 @@ function run(): boolean {
 const isWatch = process.argv.includes("--watch");
 if (isWatch) {
 	run();
+	// Only watch raw JSON data directories. Schema changes (TypeScript/Zod code)
+	// live in @app/shared and require a dev server restart — this is standard
+	// practice for code changes in a monorepo, not something the watch loop handles.
 	if (existsSync(RAW_CLASSES_DIR)) watch(RAW_CLASSES_DIR, () => run());
 	if (existsSync(RAW_MONSTERS_DIR)) watch(RAW_MONSTERS_DIR, () => run());
 	if (existsSync(RAW_VAULTS_DIR)) watch(RAW_VAULTS_DIR, () => run());
 	if (existsSync(RAW_ENCOUNTERS_DIR)) watch(RAW_ENCOUNTERS_DIR, () => run());
 	if (existsSync(RAW_SKILLS_DIR)) watch(RAW_SKILLS_DIR, () => run());
-	watch(join(ROOT, "src", "schemas"), () => run());
 } else {
 	if (!run()) process.exit(1);
 }

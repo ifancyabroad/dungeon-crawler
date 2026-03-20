@@ -21,6 +21,7 @@ import {
 	getActorProficiencyBonus,
 } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { applyDamageToActor } from "../../combat/applyDamageToActor";
 
 export function applySingleTargetDamage(
 	effect: SingleTargetDamageEffect,
@@ -156,8 +157,11 @@ export function applySingleTargetDamage(
 		});
 	}
 
-	const newHp = Math.max(0, target.hp - effectiveDamage);
-	const updatedTarget: Actor = { ...target, hp: newHp, alive: newHp > 0 };
+	const { updatedActor: updatedTarget, events: damageEvents } = applyDamageToActor(
+		target,
+		effectiveDamage,
+	);
+	events.push(...damageEvents);
 
 	if (!updatedTarget.alive) {
 		events.push({ type: "death", actorId: targetActorId });
