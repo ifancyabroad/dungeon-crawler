@@ -24,8 +24,8 @@ export const MonsterSchema = z.object({
 	aiStrategy: z.enum(["melee"]),
 	/** Challenge rating used to approximate monster proficiency bonus. */
 	challengeRating: z.number(),
-	/** Ability proficiencies this monster is trained in. */
-	abilityProficiencies: z.array(AbilityNameSchema),
+	/** Saving throw proficiencies this monster is trained in. */
+	savingThrowProficiencies: z.array(AbilityNameSchema),
 	damageResistances: z.array(DamageTypeSchema).default([]),
 	damageImmunities: z.array(DamageTypeSchema).default([]),
 	/** CSS hex colour for blood/death particle effects. */

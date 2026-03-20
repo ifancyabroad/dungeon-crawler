@@ -27,8 +27,8 @@ export const CharacterClassSchema = z.object({
 	passiveSkillPool: z.array(z.string()),
 	weaponProficiencies: z.array(z.string()),
 	armorProficiencies: z.array(z.string()),
-	/** Ability proficiencies this class is trained in. */
-	abilityProficiencies: z.array(AbilityNameSchema),
+	/** Saving throw proficiencies this class is trained in. */
+	savingThrowProficiencies: z.array(AbilityNameSchema),
 	resource: ResourceSchema,
 	tileId: z.number(),
 });

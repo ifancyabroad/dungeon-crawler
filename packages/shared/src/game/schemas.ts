@@ -79,7 +79,7 @@ export const ActorSchema = z.object({
 	statusEffects: z.array(ActiveEffectSchema).default([]),
 	passiveDamageBonuses: z.array(PassiveDamageBonusSchema).default([]),
 	statusImmunities: z.array(z.string()).default([]),
-	abilityProficiencies: z.array(AbilityNameSchema).default([]),
+	savingThrowProficiencies: z.array(AbilityNameSchema).default([]),
 	challengeRating: z.number().optional(),
 	def: ActorDefSchema,
 	level: z.number(),

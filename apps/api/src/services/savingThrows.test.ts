@@ -50,7 +50,7 @@ function makeHeroActor(overrides?: Partial<Actor>): Actor {
 		xp: 0,
 		hitDie: 10,
 		xpReward: 0,
-		abilityProficiencies: ["strength", "constitution"],
+		savingThrowProficiencies: ["strength", "constitution"],
 		...overrides,
 	};
 }
@@ -76,7 +76,7 @@ function makeMonsterActor(overrides?: Partial<Actor>): Actor {
 		xp: 0,
 		hitDie: 0,
 		xpReward: 30,
-		abilityProficiencies: ["dexterity"],
+		savingThrowProficiencies: ["dexterity"],
 		challengeRating: 1,
 		...overrides,
 	};
@@ -152,12 +152,12 @@ describe("resolveSavingThrow", () => {
 		const proficientDefender = makeHeroActor({
 			level: 1,
 			attributes: { ...ATTRS, dexterity: 10 },
-			abilityProficiencies: ["dexterity"],
+			savingThrowProficiencies: ["dexterity"],
 		});
 		const nonProficientDefender = makeHeroActor({
 			level: 1,
 			attributes: { ...ATTRS, dexterity: 10 },
-			abilityProficiencies: [],
+			savingThrowProficiencies: [],
 		});
 
 		// rng value chosen so rollD20 -> naturalRoll 10
@@ -221,7 +221,7 @@ describe("area_damage saving throw scaling", () => {
 			idx: 1,
 			hp: 3,
 			attributes: { ...ATTRS, dexterity: 10 },
-			abilityProficiencies: ["dexterity"],
+			savingThrowProficiencies: ["dexterity"],
 		});
 
 		const floorState = {
@@ -273,7 +273,7 @@ describe("area_damage saving throw scaling", () => {
 			hp: 3,
 			damageResistances: ["fire"],
 			attributes: { ...ATTRS, dexterity: 10 },
-			abilityProficiencies: ["dexterity"],
+			savingThrowProficiencies: ["dexterity"],
 		});
 
 		const floorState = {

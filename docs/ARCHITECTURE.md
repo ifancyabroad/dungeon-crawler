@@ -217,12 +217,11 @@ In other words: a vault layout made of walls on its entire boundary may become i
 
 Turn-based melee. After every player action, all living monsters on the current floor take a turn in deterministic order (sorted by actor ID).
 
-- Attack roll: `d20 + modifier + proficiency bonus` vs. target AC.
+- Attack roll: `d20 + STR modifier` vs. target AC (unarmed/melee currently use STR).
 - Natural 20 = critical hit (double damage dice).
 - Damage: weapon dice + STR modifier (unarmed = 1d4), minimum 0; then reduced by defender resistances/immunities for each damage type (resistance halves; immunity makes it 0).
-- Proficiency bonus: computed from hero level (heroes) or challenge rating (monsters); added on relevant d20 rolls when the actor is proficient.
-- Saving throws: `d20 + modifier + proficiency bonus`, with natural 20 auto-success and natural 1 auto-fail.
-- Spell/skill save DC (save-enabled effects): `DC = 8 + caster proficiency bonus + caster modifier`.
+- Saving throws: `d20 + save ability modifier (+ proficiency bonus if proficient)`, with natural 20 auto-success and natural 1 auto-fail.
+- Spell/skill save DC (save-enabled effects): `DC = 8 + caster proficiency bonus + caster ability modifier`.
 - XP on kill feeds a D&D 5e XP table (max level 20).
 - Level-up: roll hit die + CON modifier HP gain (minimum 1).
 

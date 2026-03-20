@@ -40,8 +40,8 @@ export function proficiencyBonusFromChallengeRating(cr: number): number {
 	return 2;
 }
 
-export function isActorProficientInAbility(actor: Actor, ability: AbilityName): boolean {
-	return actor.abilityProficiencies.includes(ability);
+export function isActorProficientInSavingThrow(actor: Actor, ability: AbilityName): boolean {
+	return actor.savingThrowProficiencies.includes(ability);
 }
 
 export function getActorProficiencyBonus(actor: Actor): number {
@@ -80,7 +80,7 @@ export function resolveSavingThrow(params: {
 	const { rng, defender, saveAbility, dc } = params;
 	const naturalRoll = rollD20(rng);
 	const abilityMod = abilityModifier(defender.attributes[saveAbility]);
-	const proficient = isActorProficientInAbility(defender, saveAbility);
+	const proficient = isActorProficientInSavingThrow(defender, saveAbility);
 	const proficiencyBonusApplied = proficient ? getActorProficiencyBonus(defender) : 0;
 	const totalRoll = naturalRoll + abilityMod + proficiencyBonusApplied;
 

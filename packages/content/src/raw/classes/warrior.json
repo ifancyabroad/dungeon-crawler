@@ -24,7 +24,7 @@
 	],
 	"weaponProficiencies": ["sword", "axe", "mace", "polearm"],
 	"armorProficiencies": ["light", "medium", "heavy", "shield"],
-	"abilityProficiencies": ["strength", "constitution"],
+	"savingThrowProficiencies": ["strength", "constitution"],
 	"resource": "stamina",
 	"tileId": 742
 }

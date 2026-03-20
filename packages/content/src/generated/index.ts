@@ -53,7 +53,7 @@ export const classes: readonly CharacterClassDefinition[] = [
     "armorProficiencies": [
       "cloth"
     ],
-    "abilityProficiencies": [
+    "savingThrowProficiencies": [
       "intelligence",
       "wisdom"
     ],
@@ -99,7 +99,7 @@ export const classes: readonly CharacterClassDefinition[] = [
     "armorProficiencies": [
       "light"
     ],
-    "abilityProficiencies": [
+    "savingThrowProficiencies": [
       "dexterity",
       "intelligence"
     ],
@@ -150,7 +150,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "heavy",
       "shield"
     ],
-    "abilityProficiencies": [
+    "savingThrowProficiencies": [
       "strength",
       "constitution"
     ],
@@ -182,7 +182,7 @@ export const monsters: readonly MonsterDefinition[] = [
     "xpReward": 30,
     "aiStrategy": "melee",
     "challengeRating": 1,
-    "abilityProficiencies": [
+    "savingThrowProficiencies": [
       "dexterity"
     ],
     "damageResistances": [],

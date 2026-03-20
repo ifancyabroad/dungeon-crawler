@@ -62,7 +62,7 @@ export const createGame: RequestHandler = async (req, res) => {
 		level: 1,
 		xp: 0,
 		hitDie: classDef.hitDie,
-		abilityProficiencies: classDef.abilityProficiencies,
+		savingThrowProficiencies: classDef.savingThrowProficiencies,
 		skills: classDef.startingSkills,
 	};
 

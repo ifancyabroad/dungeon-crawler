@@ -18,6 +18,6 @@
 	"xpReward": 30,
 	"aiStrategy": "melee",
 	"challengeRating": 1,
-	"abilityProficiencies": ["dexterity"],
+	"savingThrowProficiencies": ["dexterity"],
 	"bloodColor": "#cc0000"
 }

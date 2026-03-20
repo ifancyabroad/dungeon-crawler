@@ -150,7 +150,7 @@ export {
 	proficiencyBonusFromChallengeRating,
 	computeSavingThrowDC,
 	resolveSavingThrow,
-	isActorProficientInAbility,
+	isActorProficientInSavingThrow,
 	getActorProficiencyBonus,
 	UNARMED_WEAPON,
 	type AttackResult,

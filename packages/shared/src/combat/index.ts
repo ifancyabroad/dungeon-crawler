@@ -5,7 +5,7 @@ export { DAMAGE_TYPES, type DamageType } from "./damageTypes";
 export {
 	computeSavingThrowDC,
 	resolveSavingThrow,
-	isActorProficientInAbility,
+	isActorProficientInSavingThrow,
 	getActorProficiencyBonus,
 	proficiencyBonusFromLevel,
 	proficiencyBonusFromChallengeRating,
