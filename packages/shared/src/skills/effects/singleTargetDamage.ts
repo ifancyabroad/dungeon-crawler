@@ -7,11 +7,11 @@
  *  2. Roll damage dice (doubled on a crit when attackRoll was used).
  *  3. If savingThrow is configured (and no attackRoll miss), apply it.
  *  4. Apply passive "any" bonuses from the caster, then resolve resistances.
- *  5. Emit skill_hit (carrying AttackResult) and optionally death.
+ *  5. Emit skill_hit (with real AttackResult) when an attack roll was made,
+ *     or area_hit (no roll) when the effect always hits.
  */
 
 import type { Actor, FloorState, GameEvent } from "../../game/types";
-import type { AttackResult } from "../../combat/types";
 import type { Rng } from "../../rng";
 import type { SingleTargetDamageEffect } from "../types";
 import { abilityModifier, rollD20, rollDiceExpr } from "../../combat/dice";
@@ -127,23 +127,34 @@ export function applySingleTargetDamage(
 	const resolved = resolveDamagePackets(packetsToResolve, target);
 	const effectiveDamage = resolved.totalEffectiveDamage;
 
-	const attackResult: AttackResult = {
-		hit: true,
-		critical: isCritical,
-		naturalRoll,
-		totalAttackRoll,
-		damage: effectiveDamage,
-		damagePackets: resolved.packets,
-		targetAc: target.armorClass,
-	};
-
-	events.push({
-		type: "skill_hit",
-		attackerId: caster.id,
-		defenderId: targetActorId,
-		skillId,
-		result: attackResult,
-	});
+	if (effect.attackRoll !== undefined) {
+		// A real attack roll was made — emit skill_hit with the full result.
+		events.push({
+			type: "skill_hit",
+			attackerId: caster.id,
+			defenderId: targetActorId,
+			skillId,
+			result: {
+				hit: true,
+				critical: isCritical,
+				naturalRoll,
+				totalAttackRoll,
+				damage: effectiveDamage,
+				damagePackets: resolved.packets,
+				targetAc: target.armorClass,
+			},
+		});
+	} else {
+		// No attack roll — the effect always hits; use area_hit so no spurious roll values are emitted.
+		events.push({
+			type: "area_hit",
+			attackerId: caster.id,
+			defenderId: targetActorId,
+			damage: effectiveDamage,
+			damagePackets: resolved.packets,
+			skillId,
+		});
+	}
 
 	const newHp = Math.max(0, target.hp - effectiveDamage);
 	const updatedTarget: Actor = { ...target, hp: newHp, alive: newHp > 0 };
