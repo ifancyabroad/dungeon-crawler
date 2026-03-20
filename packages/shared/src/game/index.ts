@@ -2,6 +2,7 @@ export type {
 	AbilityName,
 	ActionLogEntry,
 	ActiveEffect,
+	CombatAdjustments,
 	Actor,
 	ActorAttributes,
 	ActorDef,
@@ -65,6 +66,7 @@ export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } 
 export {
 	AbilityNameSchema,
 	ActiveEffectSchema,
+	CombatAdjustmentsSchema,
 	ActorDefSchema,
 	ActorSchema,
 	ActorsByIdSchema,

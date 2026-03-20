@@ -8,6 +8,9 @@ import type { AttackResult, DamagePacket } from "../combat/types";
 import type { DamageType } from "../combat/damageTypes";
 import type { MonsterAIState } from "./monsterAI";
 import type { FloorConfig } from "../map/types";
+import type { CombatAdjustments } from "./schemas";
+
+export type { CombatAdjustments } from "./schemas";
 
 export type TileId = number;
 
@@ -57,7 +60,11 @@ export interface PassiveDamageBonus {
  *
  * `value` is an optional numeric parameter used by effects that need a magnitude,
  * such as damage-over-time (e.g. "poisoned" deals `value` damage per turn).
- * Future status conditions (burning, frozen, etc.) can use the same field.
+ *
+ * `adjustments` carries inline numeric combat adjustments copied from the skill JSON
+ * at application time (data-driven statuses only, e.g. berserk). ID-driven hooks
+ * such as poisoned and stealth leave this undefined — their behaviour is wired
+ * directly in the engine (activeEffects.ts).
  */
 export interface ActiveEffect {
 	/** Identifies the effect so engine systems can query it (e.g. "stealth"). */
@@ -65,6 +72,8 @@ export interface ActiveEffect {
 	remainingTurns: number;
 	/** Optional magnitude for parameterised effects (e.g. damage per turn for DoT). */
 	value?: number;
+	/** Inline numeric combat adjustments consulted at resolution time. Defined in the skill JSON. */
+	adjustments?: CombatAdjustments;
 }
 
 /** Definition reference: hero (classId from content) or monster. */

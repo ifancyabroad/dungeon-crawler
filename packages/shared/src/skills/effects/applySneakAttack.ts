@@ -13,6 +13,7 @@ import { getActorProficiencyBonus } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { hasActiveEffect } from "../activeEffects";
+import { STATUS_HOOKS } from "../statusHooks";
 import { idxToXY } from "../../game/engine";
 
 function chebyshevDistance(ax: number, ay: number, bx: number, by: number): number {
@@ -29,7 +30,7 @@ export function applySneakAttack(
 	skillId: string,
 ): { floorState: FloorState; caster: Actor; events: GameEvent[] } | { error: string } {
 	// Stealth gate: sneak attack requires active stealth.
-	if (!hasActiveEffect(caster, "stealth")) {
+	if (!hasActiveEffect(caster, STATUS_HOOKS.STEALTH)) {
 		return { error: "sneak_attack_requires_stealth" };
 	}
 
@@ -55,7 +56,7 @@ export function applySneakAttack(
 		// Break stealth on attempt regardless.
 		const casterAfterMiss: Actor = {
 			...caster,
-			activeEffects: caster.activeEffects.filter((e) => e.id !== "stealth"),
+			activeEffects: caster.activeEffects.filter((e) => e.id !== STATUS_HOOKS.STEALTH),
 		};
 		events.push({
 			type: "skill_miss",
@@ -110,7 +111,7 @@ export function applySneakAttack(
 	// Always break stealth on a successful sneak attack.
 	const casterAfterAttack: Actor = {
 		...caster,
-		activeEffects: caster.activeEffects.filter((e) => e.id !== "stealth"),
+		activeEffects: caster.activeEffects.filter((e) => e.id !== STATUS_HOOKS.STEALTH),
 	};
 
 	return {

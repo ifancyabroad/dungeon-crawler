@@ -9,7 +9,11 @@
 		{
 			"type": "apply_status",
 			"statusId": "berserk",
-			"durationTurns": 8
+			"durationTurns": 8,
+			"adjustments": {
+				"meleeDamageFlat": { "damageType": "bludgeoning", "amount": 5 },
+				"incomingDamageFlat": 2
+			}
 		}
 	]
 }

@@ -9,7 +9,6 @@ import type { AttackResult, WeaponDice } from "./types";
 import { UNARMED_WEAPON } from "./types";
 import { rollD20, rollDice, abilityModifier, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
-import { STATUS_MELEE_ATTACK_BONUSES } from "./statusCombatModifiers";
 
 /**
  * Resolve a melee attack from attacker against defender.
@@ -20,8 +19,8 @@ import { STATUS_MELEE_ATTACK_BONUSES } from "./statusCombatModifiers";
  * - Critical: roll weapon dice twice, then add modifier once.
  * - Passive bonuses: extra damage packets from attacker.passiveDamageBonuses
  *   that apply to "melee" or "any". onCritOnly bonuses only fire on a critical.
- * - Status bonuses: flat damage packets from STATUS_MELEE_ATTACK_BONUSES for
- *   each active status on the attacker.
+ * - Status adjustments: flat damage packets from `effect.adjustments.meleeDamageFlat`
+ *   on each active effect (data-driven; defined in the skill JSON).
  */
 export function resolveAttack(
 	attacker: Actor,
@@ -66,15 +65,16 @@ export function resolveAttack(
 			});
 		}
 
-		// Status-driven attack bonuses (e.g. berserk). Registry-driven: add new
-		// entries to statusCombatModifiers.ts without touching this function.
+		// Data-driven melee damage adjustments from active effects (e.g. berserk).
+		// Adjustments are defined in the skill JSON and copied onto the ActiveEffect
+		// at application time — no registry lookup needed.
 		for (const effect of attacker.activeEffects) {
 			if (effect.remainingTurns <= 0) continue;
-			const bonus = STATUS_MELEE_ATTACK_BONUSES[effect.id];
-			if (bonus) {
+			const adj = effect.adjustments?.meleeDamageFlat;
+			if (adj) {
 				rawPackets.push({
-					damageType: bonus.damageType,
-					rawAmount: bonus.flatAmount,
+					damageType: adj.damageType,
+					rawAmount: adj.amount,
 					effectiveAmount: 0,
 				});
 			}

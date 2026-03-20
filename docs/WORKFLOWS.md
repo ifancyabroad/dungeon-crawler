@@ -52,7 +52,7 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 ### Active skill
 
 1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing active skill file as a reference.
-2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the effect grants a combat bonus tied to a status, register it in the combat modifier registry in `packages/shared/src/combat/` rather than editing the attack or damage resolution functions directly.
+2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the skill applies a status that only modifies numeric values (e.g. bonus damage, incoming damage adjustment), define those adjustments inline in the skill JSON — no engine code changes are needed. If the status requires engine-wired behaviour (e.g. damage-over-time, on-expiry side effects), add its ID to `packages/shared/src/skills/statusHooks.ts` and implement the hook in `activeEffects.ts`.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the class definition in `packages/content/src/raw/classes/<class>.json`.
 5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry.

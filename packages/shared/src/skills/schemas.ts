@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import { AbilityNameSchema } from "../game/schemas";
+import { AbilityNameSchema, CombatAdjustmentsSchema } from "../game/schemas";
 import { DAMAGE_TYPES } from "../combat/damageTypes";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
@@ -56,6 +56,14 @@ export const ApplyStatusEffectSchema = z.object({
 	 * "self" (default) = caster; "target" = the targeted actor.
 	 */
 	target: z.enum(["self", "target"]).optional(),
+	/**
+	 * Inline numeric combat adjustments for data-driven status effects.
+	 * Copied onto the ActiveEffect at application time and consulted at
+	 * resolution (combat, damage) — no registry lookup needed.
+	 * Omit for ID-driven hooks (poisoned, stealth) whose behaviour is
+	 * wired directly in the engine.
+	 */
+	adjustments: CombatAdjustmentsSchema.optional(),
 });
 
 export const ApplyShieldEffectSchema = z.object({

@@ -176,7 +176,7 @@ When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and 
 
 ### Actor
 
-Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a list of timed active effects (buffs and conditions share the same structure — what an effect does is determined by engine registries, not a separate data type), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
+Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `statusHooks.ts`), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
 
 ### Actions
 
@@ -233,7 +233,7 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
-Status effects that grant combat bonuses (attack or defence modifiers) are data-driven via a registry in `packages/shared/src/combat/` rather than hard-coded in the attack or damage resolution functions.
+Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, incoming damage penalty) inline in the skill JSON; the engine reads those values directly from the active effect at resolution time. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment (e.g. damage-over-time ticking each turn, alerting monsters on expiry); these are registered in `packages/shared/src/skills/statusHooks.ts`.
 
 **Passive skills** are granted at level-up and apply permanent buffs to the hero immediately (`applyPassiveSkill`). They never appear on the hotbar; they are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
 

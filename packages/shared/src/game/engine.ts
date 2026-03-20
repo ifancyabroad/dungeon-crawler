@@ -27,7 +27,13 @@ import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
 import { runMonsterAI, type MonsterAIState } from "./monsterAI";
-import { resolveSkill, hasActiveEffect, tickActiveEffects, applyPassiveSkill } from "../skills";
+import {
+	resolveSkill,
+	hasActiveEffect,
+	tickActiveEffects,
+	applyPassiveSkill,
+	STATUS_HOOKS,
+} from "../skills";
 import type { ActiveSkillDefinition, SkillDefinition } from "../skills";
 
 /**
@@ -471,7 +477,7 @@ function processEnemyTurns(
 
 	let currentHero = hero;
 	// If the hero is stealthed, monsters cannot see them regardless of LoS.
-	const heroIsStealthed = hasActiveEffect(currentHero, "stealth");
+	const heroIsStealthed = hasActiveEffect(currentHero, STATUS_HOOKS.STEALTH);
 
 	for (const mid of monsterIds) {
 		if (!currentHero.alive) break;
@@ -659,7 +665,7 @@ function breakStealth(
 	heroId: ActorId,
 	floorState: FloorState,
 ): { hero: Actor; floorState: FloorState } {
-	if (!hasActiveEffect(hero, "stealth")) return { hero, floorState };
+	if (!hasActiveEffect(hero, STATUS_HOOKS.STEALTH)) return { hero, floorState };
 
 	const updatedHero: Actor = {
 		...hero,

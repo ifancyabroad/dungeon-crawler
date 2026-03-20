@@ -42,11 +42,32 @@ export const ActorSkillStateSchema = z.object({
 	cooldownRemaining: z.number(),
 });
 
+export const CombatAdjustmentsSchema = z.object({
+	/**
+	 * Flat additive adjustment to melee damage output while this effect is active.
+	 * Positive = bonus damage; negative = reduced damage.
+	 */
+	meleeDamageFlat: z.object({ damageType: DamageTypeSchema, amount: z.number() }).optional(),
+	/**
+	 * Flat additive adjustment to all incoming damage while this effect is active.
+	 * Positive = more damage taken (vulnerability); negative = less damage taken (resistance).
+	 */
+	incomingDamageFlat: z.number().optional(),
+});
+export type CombatAdjustments = z.infer<typeof CombatAdjustmentsSchema>;
+
 export const ActiveEffectSchema = z.object({
 	id: z.string(),
 	remainingTurns: z.number().int().min(0),
 	/** Optional magnitude for parameterised effects (e.g. damage per turn for DoT). */
 	value: z.number().optional(),
+	/**
+	 * Inline numeric combat adjustments copied from the skill JSON at application time.
+	 * Consulted at resolution (combat, damage) so no registry lookup is needed.
+	 * Only present on data-driven status effects (e.g. berserk).
+	 * ID-driven hooks (poisoned, stealth) leave this undefined.
+	 */
+	adjustments: CombatAdjustmentsSchema.optional(),
 });
 
 export const PassiveDamageBonusSchema = z.object({

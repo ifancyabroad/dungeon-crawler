@@ -11,10 +11,12 @@ export function applyStatusEffect(
 	caster: Actor,
 ): { caster: Actor; events: GameEvent[] } {
 	const filtered = caster.activeEffects.filter((e) => e.id !== effect.statusId);
-	const newEffect =
-		effect.value !== undefined
-			? { id: effect.statusId, remainingTurns: effect.durationTurns, value: effect.value }
-			: { id: effect.statusId, remainingTurns: effect.durationTurns };
+	const newEffect = {
+		id: effect.statusId,
+		remainingTurns: effect.durationTurns,
+		...(effect.value !== undefined && { value: effect.value }),
+		...(effect.adjustments !== undefined && { adjustments: effect.adjustments }),
+	};
 	const updatedCaster: Actor = {
 		...caster,
 		activeEffects: [...filtered, newEffect],

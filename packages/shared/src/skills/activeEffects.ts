@@ -12,6 +12,7 @@
 
 import type { Actor, GameEvent, GameState } from "../game/types";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
+import { STATUS_HOOKS } from "./statusHooks";
 
 /**
  * Returns true if the actor has an active effect with the given id and at
@@ -26,7 +27,7 @@ export function hasActiveEffect(actor: Actor, id: string): boolean {
  *
  * To add a new DoT condition, add its id here — no other changes needed.
  */
-const DOT_EFFECT_IDS = new Set(["poisoned"]);
+const DOT_EFFECT_IDS: Set<string> = new Set([STATUS_HOOKS.POISONED]);
 
 /**
  * Tick down all active effects on every alive actor (hero + monsters); remove
@@ -49,7 +50,7 @@ export function tickActiveEffects(state: GameState): { state: GameState; events:
 		if (!actor.alive || actor.activeEffects.length === 0) continue;
 
 		const isHero = actorId === heroId;
-		const hadStealth = isHero && hasActiveEffect(actor, "stealth");
+		const hadStealth = isHero && hasActiveEffect(actor, STATUS_HOOKS.STEALTH);
 
 		let tickedActor: Actor = actor;
 
@@ -78,7 +79,8 @@ export function tickActiveEffects(state: GameState): { state: GameState; events:
 
 		// Hero-specific: when stealth expires naturally, alert all monsters.
 		if (isHero) {
-			const stealthExpired = hadStealth && !newActiveEffects.some((e) => e.id === "stealth");
+			const stealthExpired =
+				hadStealth && !newActiveEffects.some((e) => e.id === STATUS_HOOKS.STEALTH);
 			if (stealthExpired) {
 				for (const [id, monsterActor] of Object.entries(actorsById)) {
 					if (

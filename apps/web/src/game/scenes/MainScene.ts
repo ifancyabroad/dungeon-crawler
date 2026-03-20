@@ -6,6 +6,7 @@ import {
 	DEFAULT_MAP_WIDTH,
 	getActorAtIdx,
 	hasActiveEffect,
+	STATUS_HOOKS,
 	idxToXY,
 	xyToIdx,
 	MAP_GEN_VERSION,
@@ -383,7 +384,9 @@ export default class MainScene extends Phaser.Scene {
 			if (this.player && floor) {
 				const heroActor = floor.state.actorsById[gs.heroId];
 				if (heroActor) {
-					this.player.setAlpha(hasActiveEffect(heroActor, "stealth") ? 0.4 : 1.0);
+					this.player.setAlpha(
+						hasActiveEffect(heroActor, STATUS_HOOKS.STEALTH) ? 0.4 : 1.0,
+					);
 				}
 			}
 

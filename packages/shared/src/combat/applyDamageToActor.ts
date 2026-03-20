@@ -5,16 +5,15 @@
  * computing `Math.max(0, hp - damage)` inline. It enforces two mechanics:
  *
  * 1. Shield absorption — incoming damage drains `shieldHp` first.
- * 2. Status-driven incoming damage bonuses (e.g. berserk vulnerability) —
- *    registered in statusCombatModifiers.ts; no code changes needed here for
- *    new status effects.
+ * 2. Status-driven incoming damage adjustments (e.g. berserk vulnerability) —
+ *    read from `effect.adjustments.incomingDamageFlat` on each active effect
+ *    (data-driven; defined in the skill JSON).
  *
  * The function is pure and deterministic. It does NOT emit events; callers are
  * responsible for emitting `shield_absorbed` and adjusting `alive` / `death`.
  */
 
 import type { Actor, GameEvent } from "../game/types";
-import { STATUS_INCOMING_DAMAGE_BONUSES } from "./statusCombatModifiers";
 
 export interface DamageApplicationResult {
 	updatedActor: Actor;
@@ -36,15 +35,15 @@ export interface DamageApplicationResult {
 export function applyDamageToActor(actor: Actor, effectiveDamage: number): DamageApplicationResult {
 	const events: GameEvent[] = [];
 
-	// Status-driven incoming damage bonuses (e.g. berserk vulnerability).
-	// Registry-driven: add new entries in statusCombatModifiers.ts.
-	let statusPenalty = 0;
+	// Data-driven incoming damage adjustments from active effects (e.g. berserk vulnerability).
+	// Adjustments are defined in the skill JSON and copied onto the ActiveEffect at application time.
+	let incomingAdjustment = 0;
 	for (const effect of actor.activeEffects) {
 		if (effect.remainingTurns > 0) {
-			statusPenalty += STATUS_INCOMING_DAMAGE_BONUSES[effect.id] ?? 0;
+			incomingAdjustment += effect.adjustments?.incomingDamageFlat ?? 0;
 		}
 	}
-	const totalDamage = effectiveDamage + statusPenalty;
+	const totalDamage = effectiveDamage + incomingAdjustment;
 
 	// Shield absorbs before HP.
 	const shieldHp = actor.numericBuffs["shieldHp"] ?? 0;

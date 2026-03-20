@@ -2,6 +2,7 @@ export { resolveSkill } from "./resolveSkill";
 export { applyPassiveSkill } from "./applyPassiveEffect";
 export { getTilesInLine, getTilesInCone } from "./geometry";
 export { hasActiveEffect, tickActiveEffects } from "./activeEffects";
+export { STATUS_HOOKS } from "./statusHooks";
 export { type SkillResolutionInput, type SkillResolutionOutput } from "./types";
 export {
 	ActiveSkillDefinitionSchema,
