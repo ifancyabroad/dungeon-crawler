@@ -6,7 +6,7 @@ import { resolveSkill, hasActiveEffect, STATUS_HOOKS } from "../skills";
 import { resolveAttack } from "../combat/combat";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { UNARMED_WEAPON } from "../combat/types";
-import { runMonsterAI, type MonsterAIState, type AIStrategyTag } from "./monsterAI";
+import { runMonsterAI, type MonsterAIState, type CombatStrategyTag } from "./monsterAI";
 import { computeVisibility } from "../map/visibility";
 import { idxToXY } from "./engineUtils";
 
@@ -74,14 +74,31 @@ export function processEnemyTurns(
 		// Build a temporary floor state snapshot so AI sees the current actor positions
 		const currentFloorState: FloorState = { ...floorState, actorsById };
 
-		// FRIGHTENED overrides the monster's strategy to flee; CHARMED is handled
-		// automatically by the faction-aware runMeleeAI — no override needed.
+		// FRIGHTENED overrides the combat strategy to flee.
 		const isFrightened = hasActiveEffect(monster, STATUS_HOOKS.FRIGHTENED);
-		const strategyOverride: AIStrategyTag | undefined = isFrightened ? "frightened" : undefined;
+		const combatStrategyOverride: CombatStrategyTag | undefined = isFrightened
+			? "frightened"
+			: undefined;
+
+		// CHARMED temporarily overrides the idle strategy to follow the hero.
+		// The stale lastKnownEnemyIdx is cleared if it still points at the hero's tile
+		// (it was tracking the hero as a former enemy; the hero is now an ally).
+		const isCharmed = hasActiveEffect(monster, STATUS_HOOKS.CHARMED);
+		const effectiveAIState: MonsterAIState = isCharmed
+			? {
+					...aiState,
+					idleStrategy: "follow",
+					followTargetId: heroId,
+					lastKnownEnemyIdx:
+						aiState.lastKnownEnemyIdx === currentHero.idx
+							? undefined
+							: aiState.lastKnownEnemyIdx,
+				}
+			: aiState;
 
 		const { result, newAIState } = runMonsterAI({
 			monster,
-			aiState,
+			aiState: effectiveAIState,
 			hero: currentHero,
 			heroId,
 			visibleFromMonster,
@@ -91,13 +108,21 @@ export function processEnemyTurns(
 			height,
 			rng,
 			effectiveFactions,
-			strategyOverride,
+			combatStrategyOverride,
 		});
 
-		// Restore the original strategy — overrides must not persist to saved state.
-		const persistedAIState: MonsterAIState = strategyOverride
-			? { ...newAIState, strategy: aiState.strategy }
-			: newAIState;
+		// Restore overridden fields — transient overrides must not persist to saved state.
+		let persistedAIState = newAIState;
+		if (combatStrategyOverride) {
+			persistedAIState = { ...persistedAIState, combatStrategy: aiState.combatStrategy };
+		}
+		if (isCharmed) {
+			persistedAIState = {
+				...persistedAIState,
+				idleStrategy: aiState.idleStrategy,
+				followTargetId: aiState.followTargetId,
+			};
+		}
 
 		if (result.kind === "attack") {
 			// Generalised attack target: ally AI targets hostiles; default targets hero.
@@ -197,7 +222,7 @@ export function processEnemyTurns(
 				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
 			}
 		} else {
-			// idle — just persist updated aiState (e.g. cleared lastKnownHeroIdx)
+			// idle — persist updated aiState (e.g. cleared lastKnownEnemyIdx)
 			actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
 		}
 	}

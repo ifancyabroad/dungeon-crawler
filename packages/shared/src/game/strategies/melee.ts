@@ -1,5 +1,5 @@
 /**
- * Faction-aware melee AI strategy.
+ * Faction-aware melee combat strategy.
  *
  * Uses effectiveFactions to determine who counts as an "enemy" this turn —
  * normally the hero, but a CHARMED monster's enemies are the other hostile
@@ -8,13 +8,13 @@
  *
  * Decision tree:
  * 1. An enemy actor is adjacent → attack it.
- * 2. An enemy actor is in LoS → record lastKnownHeroIdx, BFS one step toward the nearest one.
- * 3. lastKnownHeroIdx is set → BFS toward it; clear on arrival or if path blocked.
- * 4. Otherwise → random adjacent walkable step (roam), or idle if none free.
+ * 2. An enemy actor is in LoS → record lastKnownEnemyIdx, BFS one step toward the nearest one.
+ * 3. lastKnownEnemyIdx is set → BFS toward it; clear on arrival or if path blocked.
+ * 4. Otherwise → { kind: "idle" } to hand off to the idle strategy.
  */
 
 import type { AIContext, AITurnResult, MonsterAIState } from "../monsterAI";
-import { getActorAtIdx, getAdjacentIndices } from "../engine";
+import { getAdjacentIndices } from "../engine";
 import { bfsNextStep } from "../../map/pathfinding";
 
 export function runMeleeAI(ctx: AIContext): AITurnResult {
@@ -27,7 +27,6 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 		floorState,
 		width,
 		height,
-		rng,
 	} = ctx;
 	const newAIState: MonsterAIState = { ...aiState };
 
@@ -62,7 +61,7 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 		const nearest = visibleEnemies.reduce((best, a) =>
 			chebyshev(monster.idx, a.idx) < chebyshev(monster.idx, best.idx) ? a : best,
 		);
-		newAIState.lastKnownHeroIdx = nearest.idx;
+		newAIState.lastKnownEnemyIdx = nearest.idx;
 		const step = bfsNextStep(monster.idx, nearest.idx, walkableMask, floorState, width, height);
 		if (step !== undefined) {
 			return { result: { kind: "move", toIdx: step }, newAIState };
@@ -70,27 +69,19 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 	}
 
 	// 3. Last known enemy position → BFS toward it; clear on arrival or path blocked
-	if (newAIState.lastKnownHeroIdx !== undefined) {
-		const target = newAIState.lastKnownHeroIdx;
+	if (newAIState.lastKnownEnemyIdx !== undefined) {
+		const target = newAIState.lastKnownEnemyIdx;
 		if (monster.idx === target) {
-			newAIState.lastKnownHeroIdx = undefined;
+			newAIState.lastKnownEnemyIdx = undefined;
 		} else {
 			const step = bfsNextStep(monster.idx, target, walkableMask, floorState, width, height);
 			if (step !== undefined) {
 				return { result: { kind: "move", toIdx: step }, newAIState };
 			}
-			newAIState.lastKnownHeroIdx = undefined;
+			newAIState.lastKnownEnemyIdx = undefined;
 		}
 	}
 
-	// 4. Roam: random adjacent walkable tile not occupied by another actor
-	const roamCandidates = adjacent.filter(
-		(idx) => walkableMask[idx] === 1 && !getActorAtIdx(floorState, idx),
-	);
-	if (roamCandidates.length > 0) {
-		const pick = roamCandidates[Math.floor(rng() * roamCandidates.length)];
-		return { result: { kind: "move", toIdx: pick }, newAIState };
-	}
-
+	// 4. Nothing to do — defer to idle strategy
 	return { result: { kind: "idle" }, newAIState };
 }

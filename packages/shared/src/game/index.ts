@@ -79,4 +79,4 @@ export {
 	PersistedDynamicStateSchema,
 	RngStateSchema,
 } from "./schemas";
-export type { AIStrategyTag, MonsterAIState } from "./monsterAI";
+export type { CombatStrategyTag, IdleStrategyTag, MonsterAIState } from "./monsterAI";

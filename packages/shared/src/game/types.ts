@@ -111,7 +111,8 @@ export interface MonsterInit {
 	challengeRating: number;
 	/** Ability names this monster is proficient in for saving throws. */
 	savingThrowProficiencies: AbilityName[];
-	aiStrategy: MonsterAIState["strategy"];
+	combatStrategy: MonsterAIState["combatStrategy"];
+	idleStrategy: MonsterAIState["idleStrategy"];
 }
 
 /** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */

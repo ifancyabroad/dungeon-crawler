@@ -189,7 +189,8 @@ export const monsters: readonly MonsterDefinition[] = [
     "armorClass": 12,
     "tileId": 677,
     "xpReward": 30,
-    "aiStrategy": "melee",
+    "combatStrategy": "melee",
+    "idleStrategy": "roam",
     "challengeRating": 1,
     "savingThrowProficiencies": [
       "dexterity"
@@ -584,16 +585,15 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "dominate",
     "name": "Dominate",
-    "description": "Your will bends reality itself, seizing control of an enemy's mind. All monsters within 4 tiles are charmed for 4 turns, turning on their former allies and fighting for you.",
+    "description": "Your will bends reality itself, seizing control of an enemy's mind. The target is charmed for 4 turns, turning on its former allies and fighting for you.",
     "cooldown": 20,
-    "targetType": "none",
+    "targetType": "actor",
     "effects": [
       {
         "type": "apply_status",
         "statusId": "charmed",
         "durationTurns": 4,
-        "target": "aoe",
-        "aoeRadiusTiles": 4
+        "target": "target"
       }
     ]
   },

@@ -126,8 +126,10 @@ export const ActorDefSchema = z.discriminatedUnion("type", [
 ]);
 
 export const MonsterAIStateSchema = z.object({
-	strategy: z.enum(["melee", "frightened"]),
-	lastKnownHeroIdx: z.number().optional(),
+	combatStrategy: z.enum(["melee", "frightened"]),
+	idleStrategy: z.enum(["stationary", "roam", "follow"]),
+	lastKnownEnemyIdx: z.number().optional(),
+	followTargetId: z.string().optional(),
 });
 
 export const ActorSchema = z.object({

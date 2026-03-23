@@ -25,7 +25,8 @@ function monsterInitFromDef(def: MonsterDefinition): MonsterInit {
 		xpReward: def.xpReward,
 		challengeRating: def.challengeRating,
 		savingThrowProficiencies: def.savingThrowProficiencies,
-		aiStrategy: def.aiStrategy,
+		combatStrategy: def.combatStrategy,
+		idleStrategy: def.idleStrategy,
 	};
 }
 

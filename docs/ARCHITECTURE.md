@@ -233,7 +233,7 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
-Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/skills/statusHooks.ts`. Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (monster vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction to `"player"` so monsters attack their former allies), and `FRIGHTENED` (override AI strategy to flee).
+Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/skills/statusHooks.ts`. Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (monster vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction so monsters attack their former allies and follow the hero when idle), and `FRIGHTENED` (override combat behaviour so the monster flees from visible enemies).
 
 Active skill attacks (`single_target_damage`, `multi_strike`) support an optional `onHitStatus` field. When set, the named status is applied to the target on every successful hit — regardless of whether damage was dealt (e.g. a hit that was fully resisted still triggers the status).
 
@@ -247,19 +247,13 @@ Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed b
 
 ## Monster AI
 
-Each monster has a `MonsterAIState` (strategy tag + optional last-known-hero position) stored on its `Actor`. Every turn `runMonsterAI` selects the active strategy and returns an `AITurnResult` (`attack | move | idle | skill`).
+Each monster carries a small AI state object alongside its actor data. It records two independent strategy tags — one governing **combat behaviour** (what to do when enemies are visible) and one governing **idle behaviour** (what to do otherwise) — plus any transient memory the active strategy needs (e.g. last known enemy position, follow target).
 
-**Strategy registry** (`packages/shared/src/game/monsterAI.ts`): a plain `Record<AIStrategyTag, (ctx: AIContext) => AITurnResult>` map. Adding a new strategy means:
+Every turn the engine runs a **two-phase dispatch**: the combat strategy runs first; if it has nothing to do it hands off to the idle strategy. Both phases are pure functions registered in `packages/shared/src/game/monsterAI.ts`. Adding a new strategy is a matter of adding a function and registering it — no other files need to change.
 
-1. Adding the literal to `AIStrategyTag`.
-2. Creating `packages/shared/src/game/strategies/<name>.ts` implementing `(ctx: AIContext) => AITurnResult`.
-3. Importing and registering it in `monsterAI.ts`.
+**Faction-aware targeting**: before the AI loop the engine builds a transient faction map that incorporates any active status effects (e.g. CHARMED flips a monster's effective faction so it attacks its former allies). Strategies read from this map rather than the stored faction field, so all faction logic is centralised in one place and strategies remain unaware of specific status effects.
 
-No other files need to change.
-
-**Faction-aware targeting**: `processEnemyTurns` computes an `effectiveFactions` map before the AI loop. A CHARMED monster's effective faction is temporarily flipped to `"player"`, so the standard melee strategy naturally targets its former allies. The stored `faction` field is never mutated — the flip is transient and does not corrupt persisted state.
-
-**Strategy overrides**: the `FRIGHTENED` status passes a `strategyOverride: "frightened"` to `runMonsterAI`. The override is not persisted — after the turn the monster's original strategy is restored.
+**Per-turn strategy overrides**: status effects that alter behaviour (e.g. FRIGHTENED, CHARMED) inject temporary overrides into the AI context rather than mutating persisted state. After each turn the engine restores the original values, so status effects cannot corrupt saved AI state.
 
 ---
 

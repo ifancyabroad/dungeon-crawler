@@ -140,7 +140,7 @@ function breakStealth(
 			continue;
 		actorsById = {
 			...actorsById,
-			[id]: { ...actor, aiState: { ...actor.aiState!, lastKnownHeroIdx: hero.idx } },
+			[id]: { ...actor, aiState: { ...actor.aiState!, lastKnownEnemyIdx: hero.idx } },
 		};
 	}
 

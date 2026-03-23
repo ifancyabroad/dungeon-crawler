@@ -16,7 +16,8 @@
 	"damageImmunities": [],
 	"tileId": 677,
 	"xpReward": 30,
-	"aiStrategy": "melee",
+	"combatStrategy": "melee",
+	"idleStrategy": "roam",
 	"challengeRating": 1,
 	"savingThrowProficiencies": ["dexterity"],
 	"bloodColor": "#cc0000"

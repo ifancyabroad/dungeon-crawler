@@ -122,7 +122,7 @@ export function tickActiveEffects(state: GameState): { state: GameState; events:
 						...actorsById,
 						[id]: {
 							...monsterActor,
-							aiState: { ...monsterActor.aiState!, lastKnownHeroIdx: actor.idx },
+							aiState: { ...monsterActor.aiState!, lastKnownEnemyIdx: actor.idx },
 						},
 					};
 				}

@@ -21,7 +21,9 @@ export const MonsterSchema = z.object({
 	armorClass: z.number(),
 	tileId: z.number(),
 	xpReward: z.number(),
-	aiStrategy: z.enum(["melee"]),
+	combatStrategy: z.enum(["melee"]),
+	/** Idle behaviour when the monster has no enemies to fight. Defaults to stationary. */
+	idleStrategy: z.enum(["stationary", "roam", "follow"]).default("stationary"),
 	/** Challenge rating used to approximate monster proficiency bonus. */
 	challengeRating: z.number(),
 	/** Saving throw proficiencies this monster is trained in. */

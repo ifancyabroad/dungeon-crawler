@@ -85,12 +85,24 @@ Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ## Adding a New AI Strategy
 
-1. Add a new literal to `AIStrategyTag` in `packages/shared/src/game/monsterAI.ts` (e.g. `"ranged"`).
-2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a single function `(ctx: AIContext) => AITurnResult`. Import only type references from `monsterAI.ts` (`import type`) to avoid circular dependencies.
-3. Import the function in `monsterAI.ts` and add it to the `AI_STRATEGIES` record. TypeScript will error if the record is missing a tag, keeping the registry exhaustive.
-4. If the strategy should be triggered by a status effect (e.g. a monster is frightened into fleeing), add the status ID to `statusHooks.ts` and wire the `strategyOverride` in `processEnemyTurns` in `engine.ts` — following the existing `FRIGHTENED` pattern.
-5. Update the `MonsterAIStateSchema` in `packages/shared/src/game/schemas.ts` to include the new tag in the `strategy` enum.
+Monster AI has two independent phases — **combat** (what to do when enemies are visible) and **idle** (what to do otherwise). Each phase has its own strategy tag type and registry in `packages/shared/src/game/monsterAI.ts`. Decide which phase your strategy belongs to before starting.
+
+### New combat strategy
+
+1. Add the new tag to the combat strategy tag union in `monsterAI.ts`.
+2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the combat strategy signature. When the monster has nothing to fight, return the idle signal so the idle layer takes over.
+3. Register the function in the combat strategy registry in `monsterAI.ts`. TypeScript will error if any tag is missing, keeping the registry exhaustive.
+4. If a status effect should trigger this strategy, add the status ID to `statusHooks.ts` and wire a per-turn override in `processEnemyTurns` following the existing `FRIGHTENED` pattern.
+5. Add the new tag to the `MonsterAIState` schema in `packages/shared/src/game/schemas.ts`.
 6. Verify: `pnpm typecheck && pnpm lint`.
+
+### New idle strategy
+
+1. Add the new tag to the idle strategy tag union in `monsterAI.ts`.
+2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the idle strategy signature.
+3. Register it in the idle strategy registry in `monsterAI.ts`.
+4. Add the new tag to both the `MonsterAIState` schema (`packages/shared`) and the monster content schema (`packages/content`) so content files can reference it.
+5. Verify: `pnpm typecheck && pnpm lint`.
 
 ---
 

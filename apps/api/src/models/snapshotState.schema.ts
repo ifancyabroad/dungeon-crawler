@@ -36,8 +36,10 @@ const ActorDefSchema = new Schema(
 
 const MonsterAIStateSchema = new Schema(
 	{
-		strategy: { type: String, required: true },
-		lastKnownHeroIdx: Number,
+		combatStrategy: { type: String, required: true },
+		idleStrategy: { type: String, required: true },
+		lastKnownEnemyIdx: Number,
+		followTargetId: String,
 	},
 	{ _id: false },
 );

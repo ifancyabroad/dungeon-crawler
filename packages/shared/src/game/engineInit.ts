@@ -154,7 +154,10 @@ export function spawnMonster(
 ): GameState {
 	const floor = state.floors[floorIndex];
 	if (!floor) return state;
-	const aiState: MonsterAIState = { strategy: init.aiStrategy };
+	const aiState: MonsterAIState = {
+		combatStrategy: init.combatStrategy,
+		idleStrategy: init.idleStrategy,
+	};
 	const actor: Actor = {
 		id: nextMonsterId(init.monsterId),
 		name: init.name,
