@@ -27,12 +27,18 @@ import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { runTransaction } from "../config/db";
 
+interface DebugFlags {
+	godMode: boolean;
+}
+
 interface SessionEntry {
 	state: GameState;
 	walkableByFloor: Uint8Array[];
 	opacityByFloor: Uint8Array[];
 	/** Base layers cached per session: only regenerated on first load, never on subsequent actions. */
 	baseLayers: BaseLayerFloor[];
+	/** Debug-only flags — in-memory only, reset on server restart, never persisted. */
+	debugFlags?: DebugFlags;
 }
 
 /** Thrown when snapshot or action log fails Zod parse (distinct from session/snapshot not found). */
@@ -177,6 +183,43 @@ export function applyAuthoritativeAction(
 
 export function deleteSessionState(gameId: string): void {
 	sessionStore.delete(gameId);
+}
+
+export function getDebugFlags(gameId: string): DebugFlags {
+	return sessionStore.get(gameId)?.debugFlags ?? { godMode: false };
+}
+
+export function setDebugFlags(gameId: string, flags: Partial<DebugFlags>): void {
+	const entry = sessionStore.get(gameId);
+	if (!entry) return;
+	entry.debugFlags = { ...getDebugFlags(gameId), ...flags };
+}
+
+/**
+ * Persist a forced snapshot for a debug state mutation (no action log entry written).
+ * The new snapshot becomes the recovery point; subsequent replays start from here.
+ */
+export async function persistDebugSnapshot(
+	gameId: string,
+	turn: number,
+	persistedState: PersistedDynamicState,
+): Promise<void> {
+	const now = new Date();
+	await runTransaction(async (session) => {
+		// replaceOne + upsert ensures a single snapshot per (gameId, turn).
+		// create would produce a duplicate if a regular action already snapshotted this turn,
+		// and findOne in reconstructState has no sort order so the stale document could win.
+		await GameSnapshot.replaceOne(
+			{ gameId, turn },
+			{ gameId, turn, state: persistedState, createdAt: now },
+			{ upsert: true, session },
+		);
+		await GameSession.updateOne(
+			{ gameId },
+			{ $set: { lastSeenAt: now, latestSnapshotTurn: turn } },
+			{ session },
+		);
+	});
 }
 
 /**

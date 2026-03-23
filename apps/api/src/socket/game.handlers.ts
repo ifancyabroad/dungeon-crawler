@@ -22,6 +22,7 @@ import {
 	applyAuthoritativeAction,
 	getSessionWalkable,
 	getSessionBaseLayers,
+	getDebugFlags,
 	StateCorruptError,
 } from "../services/gameState.service";
 import { withGameLock } from "../services/gameLock";
@@ -160,6 +161,35 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 						cachedWalkMask,
 						cachedBase,
 					);
+				}
+
+				// God mode: if the hero died and god mode is active, revive them at 1 HP.
+				// This patch runs server-side before persistence so it is transparent to the engine.
+				const { godMode } = getDebugFlags(gameId);
+				if (godMode) {
+					const maybeDeadHero = getHero(finalState);
+					if (maybeDeadHero && !maybeDeadHero.alive) {
+						const floorIdx = finalState.heroFloorIndex;
+						const floorState = finalState.floors[floorIdx].state;
+						const revivedHero = { ...maybeDeadHero, hp: 1, alive: true };
+						finalState = {
+							...finalState,
+							floors: finalState.floors.map((f, i) =>
+								i === floorIdx
+									? {
+											...f,
+											state: {
+												...floorState,
+												actorsById: {
+													...floorState.actorsById,
+													[revivedHero.id]: revivedHero,
+												},
+											},
+										}
+									: f,
+							),
+						};
+					}
 				}
 
 				const newTurn = finalState.turn;

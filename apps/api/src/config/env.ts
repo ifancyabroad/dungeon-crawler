@@ -24,4 +24,6 @@ export const env = {
 	PORT: Number(process.env.PORT ?? 4000),
 	MONGO_URI: required("MONGO_URI"),
 	GAME_TOKEN_PEPPER: pepper,
+	/** Optional. When set, enables debug API routes (POST /api/debug/*). Must not be set in production. */
+	DEBUG_SECRET: process.env.DEBUG_SECRET ?? "",
 };

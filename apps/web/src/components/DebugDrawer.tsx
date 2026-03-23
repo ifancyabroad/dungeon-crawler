@@ -1,65 +1,117 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { skillsById } from "@app/content";
 import { Button } from "./Button";
 import { Input } from "./Input";
-import { useCreateGame } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
-import { useMapStore } from "../features/map/mapStore";
 import { useErrorStore } from "../features/error/errorStore";
 import { getApiErrorMessage } from "../lib/errors";
+import {
+	useDebugGodModeStatus,
+	useDebugSetGodMode,
+	useDebugHeal,
+	useDebugGiveSkill,
+	useDebugKillEnemies,
+	useDebugSetXp,
+} from "../features/game/useDebugActions";
 
 type DebugDrawerProps = {
 	open: boolean;
 	onClose: () => void;
 };
 
+const ALL_SKILLS = Object.values(skillsById)
+	.map((s) => ({ id: s.id, name: s.name }))
+	.sort((a, b) => a.name.localeCompare(b.name));
+
 export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
-	const [seedInput, setSeedInput] = useState("");
-	const createGame = useCreateGame();
-	const storeGameId = useGameStore((s) => s.storeGameId);
+	const [godMode, setGodModeLocal] = useState(false);
+	const [selectedSkillId, setSelectedSkillId] = useState(ALL_SKILLS[0]?.id ?? "");
+	const [xpInput, setXpInput] = useState("");
+
 	const setStateFromServer = useGameStore((s) => s.setStateFromServer);
-	const restartMainScene = useMapStore((s) => s.restartMainScene);
+	const gameId = useGameStore((s) => s.gameId);
 	const showError = useErrorStore((s) => s.showError);
 
-	async function handleGenerateMap() {
-		const raw = seedInput.trim();
-		let seed: number | undefined = undefined;
-		if (raw !== "") {
-			const n = parseInt(raw, 10);
-			if (Number.isNaN(n) || n < 1) {
-				showError("Seed must be a positive integer or leave empty for random.");
-				return;
-			}
-			seed = n;
-		}
+	const godModeStatus = useDebugGodModeStatus(open);
+	const setGodMode = useDebugSetGodMode();
+	const heal = useDebugHeal();
+	const giveSkill = useDebugGiveSkill();
+	const killEnemies = useDebugKillEnemies();
+	const setXp = useDebugSetXp();
+
+	// Sync local toggle state whenever the query result arrives (drawer open / refetch).
+	useEffect(() => {
+		if (godModeStatus.data) setGodModeLocal(godModeStatus.data.godMode);
+	}, [godModeStatus.data]);
+
+	const anyPending =
+		setGodMode.isPending ||
+		heal.isPending ||
+		giveSkill.isPending ||
+		killEnemies.isPending ||
+		setXp.isPending;
+
+	if (!open) return null;
+
+	async function handleToggleGodMode() {
+		const next = !godMode;
 		try {
-			const data = await createGame.mutateAsync({
-				classId: "warrior",
-				heroName: "Debug Hero",
-				...(seed !== undefined ? { seed } : {}),
-			});
-			setStateFromServer({
-				gameId: data.gameId,
-				turn: data.state.turn,
-				state: data.state,
-			});
-			storeGameId(data.gameId);
-			restartMainScene();
-			onClose();
+			await setGodMode.mutateAsync(next);
+			setGodModeLocal(next);
 		} catch (e) {
 			showError(getApiErrorMessage(e));
 		}
 	}
 
-	if (!open) return null;
+	async function handleHeal() {
+		try {
+			const { state } = await heal.mutateAsync();
+			if (gameId) setStateFromServer({ gameId, turn: state.turn, state });
+		} catch (e) {
+			showError(getApiErrorMessage(e));
+		}
+	}
+
+	async function handleSetXp() {
+		const n = parseInt(xpInput, 10);
+		if (Number.isNaN(n) || n < 0) {
+			showError("XP must be a non-negative integer.");
+			return;
+		}
+		try {
+			const { state } = await setXp.mutateAsync(n);
+			if (gameId) setStateFromServer({ gameId, turn: state.turn, state });
+		} catch (e) {
+			showError(getApiErrorMessage(e));
+		}
+	}
+
+	async function handleGiveSkill() {
+		if (!selectedSkillId) return;
+		try {
+			const { state } = await giveSkill.mutateAsync(selectedSkillId);
+			if (gameId) setStateFromServer({ gameId, turn: state.turn, state });
+		} catch (e) {
+			showError(getApiErrorMessage(e));
+		}
+	}
+
+	async function handleKillEnemies() {
+		try {
+			const { state } = await killEnemies.mutateAsync();
+			if (gameId) setStateFromServer({ gameId, turn: state.turn, state });
+		} catch (e) {
+			showError(getApiErrorMessage(e));
+		}
+	}
 
 	return (
 		<>
 			<div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} aria-hidden />
 			<aside
 				className={[
-					"fixed top-0 right-0 bottom-0 z-50 w-[260px]",
+					"fixed top-0 right-0 bottom-0 z-50 w-[280px]",
 					"bg-bg-panel border-l-2 border-border overflow-y-auto",
-					"transform transition-transform duration-200",
 				].join(" ")}
 				aria-label="Debug drawer"
 			>
@@ -88,36 +140,129 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 						</Button>
 					</div>
 				</div>
-				<div className="p-4 space-y-4">
-					<div>
-						<Input
-							label="Seed"
-							type="number"
-							min={1}
-							placeholder="Random if empty"
-							value={seedInput}
-							onChange={(e) => setSeedInput(e.target.value)}
-						/>
+
+				<div className="p-4 space-y-6">
+					{/* ── Hero ─────────────────────────────── */}
+					<section className="space-y-3">
+						<h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+							Hero
+						</h3>
+
+						{/* God mode toggle */}
+						<div className="flex items-center justify-between">
+							<span className="text-sm text-text">God Mode</span>
+							<button
+								type="button"
+								role="switch"
+								aria-checked={godMode}
+								disabled={anyPending}
+								onClick={handleToggleGodMode}
+								className={[
+									"relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full",
+									"border-2 border-transparent transition-colors duration-200",
+									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border",
+									"disabled:opacity-50 disabled:cursor-not-allowed",
+									godMode ? "bg-success" : "bg-bg-input",
+								].join(" ")}
+							>
+								<span
+									className={[
+										"pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow",
+										"transform transition-transform duration-200",
+										godMode ? "translate-x-4" : "translate-x-0",
+									].join(" ")}
+								/>
+							</button>
+						</div>
+
 						<Button
-							variant="ghost"
+							variant="secondary"
 							size="sm"
-							onClick={() =>
-								setSeedInput(String(Math.floor(Math.random() * 2147483647)))
-							}
-							className="mt-1.5"
+							onClick={handleHeal}
+							disabled={anyPending}
+							className="w-full"
 						>
-							Randomize seed
+							{heal.isPending ? "Healing…" : "Heal to Full"}
 						</Button>
-					</div>
-					<Button
-						variant="primary"
-						size="md"
-						onClick={handleGenerateMap}
-						disabled={createGame.isPending}
-						className="w-full"
-					>
-						{createGame.isPending ? "Creating…" : "Generate map"}
-					</Button>
+
+						<div className="space-y-1.5">
+							<Input
+								label="Set XP"
+								type="number"
+								min={0}
+								placeholder="e.g. 1000"
+								value={xpInput}
+								onChange={(e) => setXpInput(e.target.value)}
+							/>
+							<Button
+								variant="ghost"
+								size="sm"
+								onClick={handleSetXp}
+								disabled={anyPending}
+								className="w-full"
+							>
+								{setXp.isPending ? "Applying…" : "Apply XP"}
+							</Button>
+						</div>
+					</section>
+
+					{/* ── Skills ───────────────────────────── */}
+					<section className="space-y-3">
+						<h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+							Skills
+						</h3>
+
+						<div className="space-y-1.5">
+							<label
+								className="block text-xs text-text-muted"
+								htmlFor="debug-skill-select"
+							>
+								Skill
+							</label>
+							<select
+								id="debug-skill-select"
+								value={selectedSkillId}
+								onChange={(e) => setSelectedSkillId(e.target.value)}
+								className={[
+									"w-full rounded border border-border bg-bg-input px-2 py-1.5",
+									"text-sm text-text focus:outline-none focus:ring-1 focus:ring-border",
+								].join(" ")}
+							>
+								{ALL_SKILLS.map((s) => (
+									<option key={s.id} value={s.id}>
+										{s.name}
+									</option>
+								))}
+							</select>
+						</div>
+
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={handleGiveSkill}
+							disabled={anyPending || !selectedSkillId}
+							className="w-full"
+						>
+							{giveSkill.isPending ? "Granting…" : "Give Skill"}
+						</Button>
+					</section>
+
+					{/* ── Combat ───────────────────────────── */}
+					<section className="space-y-3">
+						<h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+							Combat
+						</h3>
+
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={handleKillEnemies}
+							disabled={anyPending}
+							className="w-full"
+						>
+							{killEnemies.isPending ? "Killing…" : "Kill All Enemies"}
+						</Button>
+					</section>
 				</div>
 			</aside>
 		</>

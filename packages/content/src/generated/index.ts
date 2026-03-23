@@ -371,7 +371,7 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["arcane_mind","arcane_wisdom","battle_hardened","berserk","bludgeoning_mastery","charge","cleave","cone_of_cold","evasion","fire_affinity","fire_immunity","fireball","iron_skin","lightning_bolt","mage_armor","magic_arrow","mighty_leap","poison_blade","poison_immunity","predators_instinct","quick_reflexes","shadow_step","shadow_strike","shield","smoke_bomb","sneak_attack","stealth","toughness","war_cry","warriors_might"] as const;
+export const skillIds = ["arcane_mind","arcane_wisdom","bane","battle_hardened","berserk","bless","bludgeoning_mastery","charge","cleave","cone_of_cold","cure_wounds","dimensional_swap","dominate","empower_spell","evasion","fire_affinity","fire_immunity","fireball","flurry_of_blows","hex","iron_skin","lightning_bolt","mage_armor","magic_arrow","mighty_leap","poison_blade","poison_immunity","predators_instinct","quick_reflexes","reckless_attack","second_wind","shadow_step","shadow_strike","shield","smoke_bomb","sneak_attack","stealth","terrifying_shout","thunderwave","tough","toughness","vampiric_touch","war_cry","warriors_might"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
@@ -402,6 +402,27 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "bane",
+    "name": "Bane",
+    "description": "A curse saps the confidence of your foe. For 6 turns the target rolls 1d4 less on every attack roll and saving throw — doubt is a wound all its own.",
+    "cooldown": 15,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "baned",
+        "durationTurns": 6,
+        "target": "target",
+        "adjustments": {
+          "attackRollDicePenalty": "1d4",
+          "savingThrowDicePenalty": "1d4"
+        }
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "battle_hardened",
     "name": "Battle Hardened",
@@ -424,7 +445,33 @@ export const skills: readonly SkillDefinition[] = [
       {
         "type": "apply_status",
         "statusId": "berserk",
-        "durationTurns": 8
+        "durationTurns": 8,
+        "adjustments": {
+          "meleeDamageFlat": {
+            "damageType": "bludgeoning",
+            "amount": 5
+          },
+          "incomingDamageFlat": 2
+        }
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "bless",
+    "name": "Bless",
+    "description": "Divine favour bolsters your resolve. For 8 turns you roll an extra 1d4 on every attack roll and saving throw — fortune tips toward the faithful.",
+    "cooldown": 18,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "blessed",
+        "durationTurns": 8,
+        "adjustments": {
+          "attackRollDiceBonus": "1d4",
+          "savingThrowDiceBonus": "1d4"
+        }
       }
     ]
   },
@@ -504,6 +551,74 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "cure_wounds",
+    "name": "Cure Wounds",
+    "description": "Touch a creature to channel healing energy into it. Restores 2d8 hit points plus your Wisdom modifier.",
+    "cooldown": 10,
+    "targetType": "actor",
+    "range": 1,
+    "effects": [
+      {
+        "type": "heal_target",
+        "dice": "2d8",
+        "scalingStat": "wisdom"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "dimensional_swap",
+    "name": "Dimensional Swap",
+    "description": "You fold space between yourself and a target, instantly exchanging your positions. Reposition an enemy into harm's way, or escape a dire situation in the blink of an eye.",
+    "cooldown": 12,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "teleport_swap"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "dominate",
+    "name": "Dominate",
+    "description": "Your will bends reality itself, seizing control of an enemy's mind. All monsters within 4 tiles are charmed for 4 turns, turning on their former allies and fighting for you.",
+    "cooldown": 20,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "charmed",
+        "durationTurns": 4,
+        "target": "aoe",
+        "aoeRadiusTiles": 4
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "empower_spell",
+    "name": "Empower Spell",
+    "description": "You channel raw magical energy into your next area spell. For 3 turns your area-of-effect attacks deal an extra 2 force damage to every target caught in the blast.",
+    "cooldown": 10,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "empowered",
+        "durationTurns": 3,
+        "adjustments": {
+          "areaDamageFlat": {
+            "damageType": "force",
+            "amount": 2
+          }
+        }
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "evasion",
     "name": "Evasion",
@@ -560,6 +675,49 @@ export const skills: readonly SkillDefinition[] = [
           "saveAbility": "dexterity",
           "dcStat": "intelligence",
           "successDamageMultiplier": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "flurry_of_blows",
+    "name": "Flurry of Blows",
+    "description": "Unleash a lightning-fast flurry of strikes. Make three separate attacks against the same target — each a full d20 roll that can hit, miss, or crit independently.",
+    "cooldown": 8,
+    "targetType": "actor",
+    "range": 1,
+    "effects": [
+      {
+        "type": "multi_strike",
+        "strikeCount": 3,
+        "dice": "1d6",
+        "damageType": "bludgeoning"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "hex",
+    "name": "Hex",
+    "description": "A curse of necrotic rot settles into your target. You deal 1d6 necrotic damage and mark them — every successful hit causes them to bleed for 3 turns, losing 1 HP per turn.",
+    "cooldown": 8,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "single_target_damage",
+        "dice": "1d6",
+        "damageType": "necrotic",
+        "scalingStat": "charisma",
+        "attackRoll": {
+          "modifierStat": "charisma",
+          "useProficiency": true
+        },
+        "onHitStatus": {
+          "statusId": "bleeding",
+          "durationTurns": 3,
+          "value": 1
         }
       }
     ]
@@ -717,6 +875,39 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "active",
+    "id": "reckless_attack",
+    "name": "Reckless Attack",
+    "description": "You throw caution to the wind, swinging with reckless abandon. For 6 turns you gain advantage on all attack rolls — but your guard is down and enemies gain advantage against you too.",
+    "cooldown": 6,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "reckless",
+        "durationTurns": 6,
+        "adjustments": {
+          "hasAdvantage": true
+        }
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "second_wind",
+    "name": "Second Wind",
+    "description": "Draw on reserves of stamina to recover. Roll 1d10 and add your Constitution modifier — that is how much HP you regain.",
+    "cooldown": 20,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "heal_self",
+        "dice": "1d10",
+        "scalingStat": "constitution"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "shadow_step",
     "name": "Shadow Step",
     "description": "Melt into the darkness and re-emerge at a distant location, leaving no trace of your passing.",
@@ -815,6 +1006,64 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "terrifying_shout",
+    "name": "Terrifying Shout",
+    "description": "You unleash a bone-chilling war cry that sends nearby enemies fleeing for their lives. Every monster within 3 tiles is frightened for 6 turns, desperately trying to escape your presence.",
+    "cooldown": 14,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "frightened",
+        "durationTurns": 6,
+        "target": "aoe",
+        "aoeRadiusTiles": 3
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "thunderwave",
+    "name": "Thunderwave",
+    "description": "A wave of thunderous force sweeps out from you. Deals 1d8 thunder damage to nearby enemies and hurls your target up to 2 tiles away — walls make for a painful stop.",
+    "cooldown": 12,
+    "targetType": "actor",
+    "range": 1,
+    "effects": [
+      {
+        "type": "area_damage",
+        "dice": "1d8",
+        "radiusTiles": 1,
+        "scalingStat": "strength",
+        "damageType": "thunder",
+        "savingThrow": {
+          "saveAbility": "constitution",
+          "dcStat": "strength",
+          "successDamageMultiplier": 0.5
+        }
+      },
+      {
+        "type": "push_actor",
+        "maxPushTiles": 2,
+        "wallDamageDice": "1d6",
+        "wallDamageType": "bludgeoning"
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "tough",
+    "name": "Tough",
+    "description": "Your body is harder to kill than most. Gain 10 maximum hit points immediately upon taking this feat.",
+    "effects": [
+      {
+        "type": "modify_max_hp",
+        "amount": 10
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "toughness",
     "name": "Toughness",
@@ -824,6 +1073,23 @@ export const skills: readonly SkillDefinition[] = [
         "type": "modify_attribute",
         "attribute": "constitution",
         "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "vampiric_touch",
+    "name": "Vampiric Touch",
+    "description": "Drain the life force from an enemy. Deals 2d6 necrotic damage and independently restores 1d6 hit points to you — whether or not the full damage lands.",
+    "cooldown": 14,
+    "targetType": "actor",
+    "range": 1,
+    "effects": [
+      {
+        "type": "drain_life",
+        "dice": "2d6",
+        "damageType": "necrotic",
+        "healDice": "1d6"
       }
     ]
   },
