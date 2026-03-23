@@ -14,7 +14,7 @@
 import type { Actor, FloorState, GameEvent } from "../../game/types";
 import type { Rng } from "../../rng";
 import type { SingleTargetDamageEffect } from "../types";
-import { abilityModifier, rollD20, rollDiceExpr } from "../../combat/dice";
+import { abilityModifier, rollD20Adjusted, rollDiceExpr } from "../../combat/dice";
 import {
 	computeSavingThrowDC,
 	resolveSavingThrow,
@@ -45,11 +45,38 @@ export function applySingleTargetDamage(
 		const modStat = effect.attackRoll.modifierStat;
 		const mod = abilityModifier(caster.attributes[modStat]);
 		const pb = effect.attackRoll.useProficiency ? getActorProficiencyBonus(caster) : 0;
+		const flatBonus = caster.attackBonusFlat ?? 0;
 
-		naturalRoll = rollD20(rng);
-		totalAttackRoll = naturalRoll + mod + pb;
-		isCritical = naturalRoll === 20;
-		const hit = isCritical || totalAttackRoll >= target.armorClass;
+		// Advantage / disadvantage from active effects on the caster.
+		let netAdvantage = false;
+		let netDisadvantage = false;
+		// Dice bonuses/penalties from active effects on the caster (e.g. bless, bane).
+		let diceBonusTotal = 0;
+		for (const eff of caster.activeEffects) {
+			if (eff.remainingTurns <= 0) continue;
+			if (eff.adjustments?.hasAdvantage) netAdvantage = true;
+			if (eff.adjustments?.hasDisadvantage) netDisadvantage = true;
+			if (eff.adjustments?.attackRollDiceBonus) {
+				diceBonusTotal += rollDiceExpr(rng, eff.adjustments.attackRollDiceBonus);
+			}
+			if (eff.adjustments?.attackRollDicePenalty) {
+				diceBonusTotal -= rollDiceExpr(rng, eff.adjustments.attackRollDicePenalty);
+			}
+		}
+
+		// AC adjustments from defender's active effects.
+		let acAdjustment = 0;
+		for (const eff of target.activeEffects) {
+			if (eff.remainingTurns <= 0) continue;
+			acAdjustment += eff.adjustments?.acBonus ?? 0;
+		}
+		const effectiveAc = target.armorClass + acAdjustment;
+
+		naturalRoll = rollD20Adjusted(rng, netAdvantage, netDisadvantage);
+		totalAttackRoll = naturalRoll + mod + pb + flatBonus + diceBonusTotal;
+		const critThreshold = caster.critThreshold ?? 20;
+		isCritical = naturalRoll >= critThreshold;
+		const hit = isCritical || totalAttackRoll >= effectiveAc;
 
 		if (!hit) {
 			events.push({
@@ -59,7 +86,7 @@ export function applySingleTargetDamage(
 				skillId,
 				naturalRoll,
 				totalRoll: totalAttackRoll,
-				targetAc: target.armorClass,
+				targetAc: effectiveAc,
 			});
 			return { floorState, events };
 		}
@@ -79,16 +106,29 @@ export function applySingleTargetDamage(
 		{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
 	];
 
-	// Apply passive "any" bonuses. Melee-only and area-only bonuses are excluded
-	// since this is a targeted skill attack, not a weapon swing or AoE.
+	// Apply passive "ranged" and "any" bonuses.
+	// "melee" and "area" bonuses are excluded since this is a targeted skill attack.
 	for (const bonus of caster.passiveDamageBonuses) {
-		if (bonus.appliesTo !== "any") continue;
+		if (bonus.appliesTo !== "any" && bonus.appliesTo !== "ranged") continue;
 		if (bonus.onCritOnly && !isCritical) continue;
 		rawPackets.push({
 			damageType: bonus.damageType,
 			rawAmount: rollDiceExpr(rng, bonus.dice, isCritical && bonus.onCritOnly ? 2 : 1),
 			effectiveAmount: 0,
 		});
+	}
+
+	// Data-driven ranged damage adjustments from active effects (e.g. a "focused_shot" buff).
+	for (const eff of caster.activeEffects) {
+		if (eff.remainingTurns <= 0) continue;
+		const adj = eff.adjustments?.rangedDamageFlat;
+		if (adj) {
+			rawPackets.push({
+				damageType: adj.damageType,
+				rawAmount: adj.amount,
+				effectiveAmount: 0,
+			});
+		}
 	}
 
 	// --- Saving throw (optional, only when no attackRoll miss already occurred) ---
@@ -157,11 +197,36 @@ export function applySingleTargetDamage(
 		});
 	}
 
-	const { updatedActor: updatedTarget, events: damageEvents } = applyDamageToActor(
+	const { updatedActor: rawTarget, events: damageEvents } = applyDamageToActor(
 		target,
 		effectiveDamage,
 	);
+	let updatedTarget = rawTarget;
 	events.push(...damageEvents);
+
+	// Apply on-hit status if the attack connected (miss returns early above, so we always hit here).
+	if (effect.onHitStatus) {
+		const filtered = updatedTarget.activeEffects.filter(
+			(e) => e.id !== effect.onHitStatus!.statusId,
+		);
+		updatedTarget = {
+			...updatedTarget,
+			activeEffects: [
+				...filtered,
+				{
+					id: effect.onHitStatus.statusId,
+					remainingTurns: effect.onHitStatus.durationTurns,
+					value: effect.onHitStatus.value,
+				},
+			],
+		};
+		events.push({
+			type: "status_applied",
+			actorId: targetActorId,
+			statusId: effect.onHitStatus.statusId,
+			durationTurns: effect.onHitStatus.durationTurns,
+		});
+	}
 
 	if (!updatedTarget.alive) {
 		events.push({ type: "death", actorId: targetActorId });

@@ -53,6 +53,48 @@ export const CombatAdjustmentsSchema = z.object({
 	 * Positive = more damage taken (vulnerability); negative = less damage taken (resistance).
 	 */
 	incomingDamageFlat: z.number().optional(),
+	/**
+	 * Extra dice rolled and ADDED to attack rolls (e.g. Bless: "1d4").
+	 * Rolled at resolution time using the game RNG.
+	 */
+	attackRollDiceBonus: z.string().optional(),
+	/**
+	 * Extra dice rolled and SUBTRACTED from attack rolls (e.g. Bane: "1d4").
+	 * Rolled at resolution time using the game RNG.
+	 */
+	attackRollDicePenalty: z.string().optional(),
+	/**
+	 * Extra dice rolled and ADDED to saving throw totals (e.g. Bless: "1d4").
+	 */
+	savingThrowDiceBonus: z.string().optional(),
+	/**
+	 * Extra dice rolled and SUBTRACTED from saving throw totals (e.g. Bane: "1d4").
+	 */
+	savingThrowDicePenalty: z.string().optional(),
+	/**
+	 * Flat additive adjustment to the defender's AC while this effect is active.
+	 * Positive = harder to hit (Shield of Faith); negative = easier to hit.
+	 */
+	acBonus: z.number().optional(),
+	/**
+	 * Flat additive adjustment to ranged/single-target skill damage output.
+	 * Mirrors meleeDamageFlat but applies to single_target_damage skill attacks.
+	 */
+	rangedDamageFlat: z.object({ damageType: DamageTypeSchema, amount: z.number() }).optional(),
+	/**
+	 * Flat additive adjustment to area-of-effect skill damage output (fireball, cone, etc.).
+	 * Mirrors meleeDamageFlat but applies to area_damage skill attacks.
+	 */
+	areaDamageFlat: z.object({ damageType: DamageTypeSchema, amount: z.number() }).optional(),
+	/**
+	 * When true the attacker rolls 2d20 and takes the higher result for this attack.
+	 * Any advantage + any disadvantage cancel out (standard 5E rule).
+	 */
+	hasAdvantage: z.boolean().optional(),
+	/**
+	 * When true the attacker rolls 2d20 and takes the lower result for this attack.
+	 */
+	hasDisadvantage: z.boolean().optional(),
 });
 export type CombatAdjustments = z.infer<typeof CombatAdjustmentsSchema>;
 
@@ -73,7 +115,8 @@ export const ActiveEffectSchema = z.object({
 export const PassiveDamageBonusSchema = z.object({
 	dice: z.string(),
 	damageType: DamageTypeSchema,
-	appliesTo: z.enum(["melee", "area", "any"]),
+	/** "melee" = weapon attacks; "area" = AoE skills; "ranged" = single-target skill attacks; "any" = all. */
+	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	onCritOnly: z.boolean(),
 });
 
@@ -83,7 +126,7 @@ export const ActorDefSchema = z.discriminatedUnion("type", [
 ]);
 
 export const MonsterAIStateSchema = z.object({
-	strategy: z.enum(["melee"]),
+	strategy: z.enum(["melee", "frightened"]),
 	lastKnownHeroIdx: z.number().optional(),
 });
 
@@ -105,6 +148,12 @@ export const ActorSchema = z.object({
 	statusImmunities: z.array(z.string()).default([]),
 	savingThrowProficiencies: z.array(AbilityNameSchema).default([]),
 	challengeRating: z.number().optional(),
+	/** Natural roll threshold for a critical hit (default 20; lower = crit on more rolls). */
+	critThreshold: z.number().int().min(1).max(20).optional(),
+	/** Flat bonus added to every attack roll. Set by add_attack_roll_bonus passive. */
+	attackBonusFlat: z.number().optional(),
+	/** Faction tag. "player" = hero side; "hostile" = enemy side. Defaults derived from def.type. */
+	faction: z.enum(["player", "hostile"]).optional(),
 	def: ActorDefSchema,
 	level: z.number(),
 	xp: z.number(),

@@ -1,0 +1,17 @@
+{
+	"skillType": "active",
+	"id": "dominate",
+	"name": "Dominate",
+	"description": "Your will bends reality itself, seizing control of an enemy's mind. All monsters within 4 tiles are charmed for 4 turns, turning on their former allies and fighting for you.",
+	"cooldown": 20,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "charmed",
+			"target": "aoe",
+			"aoeRadiusTiles": 4,
+			"durationTurns": 4
+		}
+	]
+}

@@ -1,6 +1,6 @@
 import type { Rng } from "../rng";
 import type { Actor, AbilityName } from "../game/types";
-import { abilityModifier, rollD20 } from "./dice";
+import { abilityModifier, rollD20, rollDiceExpr } from "./dice";
 
 /**
  * Proficiency bonus by actor level.
@@ -82,7 +82,20 @@ export function resolveSavingThrow(params: {
 	const abilityMod = abilityModifier(defender.attributes[saveAbility]);
 	const proficient = isActorProficientInSavingThrow(defender, saveAbility);
 	const proficiencyBonusApplied = proficient ? getActorProficiencyBonus(defender) : 0;
-	const totalRoll = naturalRoll + abilityMod + proficiencyBonusApplied;
+
+	// Dice bonuses/penalties from active status effects on the saving actor (e.g. bless, bane).
+	let saveDiceBonusTotal = 0;
+	for (const effect of defender.activeEffects) {
+		if (effect.remainingTurns <= 0) continue;
+		if (effect.adjustments?.savingThrowDiceBonus) {
+			saveDiceBonusTotal += rollDiceExpr(rng, effect.adjustments.savingThrowDiceBonus);
+		}
+		if (effect.adjustments?.savingThrowDicePenalty) {
+			saveDiceBonusTotal -= rollDiceExpr(rng, effect.adjustments.savingThrowDicePenalty);
+		}
+	}
+
+	const totalRoll = naturalRoll + abilityMod + proficiencyBonusApplied + saveDiceBonusTotal;
 
 	if (naturalRoll === 20) {
 		return {

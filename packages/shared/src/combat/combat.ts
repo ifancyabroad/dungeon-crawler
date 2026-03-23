@@ -7,7 +7,7 @@ import type { Rng } from "../rng";
 import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
 import { UNARMED_WEAPON } from "./types";
-import { rollD20, rollDice, abilityModifier, rollDiceExpr } from "./dice";
+import { rollD20Adjusted, rollDice, abilityModifier, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
 
 /**
@@ -29,10 +29,45 @@ export function resolveAttack(
 	weapon: WeaponDice = UNARMED_WEAPON,
 ): AttackResult {
 	const strMod = abilityModifier(attacker.attributes.strength);
-	const naturalRoll = rollD20(rng);
-	const totalAttackRoll = naturalRoll + strMod;
-	const targetAc = defender.armorClass;
-	const critical = naturalRoll === 20;
+
+	// Advantage / disadvantage from active status effects (e.g. reckless_attack, frightened).
+	let netAdvantage = false;
+	let netDisadvantage = false;
+	for (const eff of attacker.activeEffects) {
+		if (eff.remainingTurns <= 0) continue;
+		if (eff.adjustments?.hasAdvantage) netAdvantage = true;
+		if (eff.adjustments?.hasDisadvantage) netDisadvantage = true;
+	}
+	const naturalRoll = rollD20Adjusted(rng, netAdvantage, netDisadvantage);
+
+	// Flat attack roll bonus from passive skills (e.g. add_attack_roll_bonus).
+	const flatBonus = attacker.attackBonusFlat ?? 0;
+
+	// Dice bonuses/penalties from active status effects (e.g. bless, bane).
+	let diceBonusTotal = 0;
+	for (const effect of attacker.activeEffects) {
+		if (effect.remainingTurns <= 0) continue;
+		if (effect.adjustments?.attackRollDiceBonus) {
+			diceBonusTotal += rollDiceExpr(rng, effect.adjustments.attackRollDiceBonus);
+		}
+		if (effect.adjustments?.attackRollDicePenalty) {
+			diceBonusTotal -= rollDiceExpr(rng, effect.adjustments.attackRollDicePenalty);
+		}
+	}
+
+	const totalAttackRoll = naturalRoll + strMod + flatBonus + diceBonusTotal;
+
+	// AC adjustments from defender's active effects (e.g. shield of faith, cursed).
+	let acAdjustment = 0;
+	for (const effect of defender.activeEffects) {
+		if (effect.remainingTurns <= 0) continue;
+		acAdjustment += effect.adjustments?.acBonus ?? 0;
+	}
+	const targetAc = defender.armorClass + acAdjustment;
+
+	// Crit threshold from passive skills (e.g. modify_crit_threshold).
+	const critThreshold = attacker.critThreshold ?? 20;
+	const critical = naturalRoll >= critThreshold;
 	const hit = critical || totalAttackRoll >= targetAc;
 
 	let damage = 0;

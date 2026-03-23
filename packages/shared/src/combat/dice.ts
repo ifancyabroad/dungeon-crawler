@@ -36,6 +36,21 @@ export function parseDice(expr: string): { count: number; sides: number } {
 }
 
 /**
+ * Roll a D20 with advantage, disadvantage, or neither (standard D&D 5E rule).
+ * - Both true or both false → single roll (cancel out).
+ * - Advantage only → roll twice, take higher.
+ * - Disadvantage only → roll twice, take lower.
+ * Always consumes exactly 2 RNG calls when adv/dis is active; 1 otherwise,
+ * ensuring deterministic replay regardless of which branch ran.
+ */
+export function rollD20Adjusted(rng: Rng, advantage: boolean, disadvantage: boolean): number {
+	if (advantage === disadvantage) return rollD20(rng);
+	const r1 = rollD20(rng);
+	const r2 = rollD20(rng);
+	return advantage ? Math.max(r1, r2) : Math.min(r1, r2);
+}
+
+/**
  * Roll a dice expression string (e.g. "2d6"). Returns the raw total before any modifier.
  * `critMultiplier` doubles the number of dice rolled (critical-hit style rule).
  */

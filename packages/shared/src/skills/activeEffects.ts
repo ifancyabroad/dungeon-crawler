@@ -27,7 +27,18 @@ export function hasActiveEffect(actor: Actor, id: string): boolean {
  *
  * To add a new DoT condition, add its id here — no other changes needed.
  */
-const DOT_EFFECT_IDS: Set<string> = new Set([STATUS_HOOKS.POISONED]);
+const DOT_EFFECT_IDS: Set<string> = new Set([
+	STATUS_HOOKS.POISONED,
+	STATUS_HOOKS.BURNING,
+	STATUS_HOOKS.BLEEDING,
+]);
+
+/**
+ * Active effect ids that heal each turn via the `value` field.
+ *
+ * To add a new heal-over-time condition, add its id here — no other changes needed.
+ */
+const HEAL_EFFECT_IDS: Set<string> = new Set([STATUS_HOOKS.REGENERATING]);
 
 /**
  * Tick down all active effects on every alive actor (hero + monsters); remove
@@ -65,6 +76,23 @@ export function tickActiveEffects(state: GameState): { state: GameState; events:
 			events.push({ type: "dot_damage", actorId, statusId: effect.id, damage: effect.value });
 			if (!tickedActor.alive) {
 				events.push({ type: "death", actorId });
+			}
+		}
+
+		// Apply heal-over-time effects (e.g. regenerating) before decrementing.
+		for (const effect of tickedActor.activeEffects) {
+			if (!tickedActor.alive) break;
+			if (!HEAL_EFFECT_IDS.has(effect.id) || !effect.value || effect.value <= 0) continue;
+
+			const healAmount = Math.min(effect.value, tickedActor.maxHp - tickedActor.hp);
+			if (healAmount > 0) {
+				tickedActor = { ...tickedActor, hp: tickedActor.hp + healAmount };
+				events.push({
+					type: "healed",
+					actorId,
+					amount: healAmount,
+					skillId: effect.id,
+				});
 			}
 		}
 

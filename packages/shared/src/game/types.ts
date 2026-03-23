@@ -47,8 +47,8 @@ export interface PassiveDamageBonus {
 	/** Dice expression, e.g. "1d6". */
 	dice: string;
 	damageType: DamageType;
-	/** Which attack types this bonus applies to. */
-	appliesTo: "melee" | "area" | "any";
+	/** Which attack types this bonus applies to. "ranged" covers single-target skill attacks. */
+	appliesTo: "melee" | "area" | "ranged" | "any";
 	/** If true, only fires on a critical hit (melee only). */
 	onCritOnly: boolean;
 }
@@ -158,6 +158,22 @@ export interface Actor {
 	savingThrowProficiencies: AbilityName[];
 	/** Challenge Rating (monsters only). Used for monster proficiency bonus scaling. */
 	challengeRating?: number;
+	/**
+	 * Natural roll threshold for a critical hit. Defaults to 20.
+	 * The modify_crit_threshold passive lowers this (e.g. 19 = crit on 19 or 20).
+	 */
+	critThreshold?: number;
+	/**
+	 * Flat bonus added to every attack roll.
+	 * Set by the add_attack_roll_bonus passive; stacks additively across multiple passives.
+	 */
+	attackBonusFlat?: number;
+	/**
+	 * Faction tag: "player" = hero/allied side; "hostile" = enemy side.
+	 * Defaults: hero → "player", monsters → "hostile".
+	 * CHARMED status temporarily flips a hostile's effective faction for AI targeting only.
+	 */
+	faction?: "player" | "hostile";
 	def: ActorDef;
 	level: number;
 	xp: number;
@@ -245,6 +261,30 @@ export type GameEvent =
 			actorId: ActorId;
 			statusId: string;
 			damage: number;
+	  }
+	/** Emitted when an actor recovers HP (heal_self, heal_target, drain_life, regenerating). */
+	| {
+			type: "healed";
+			actorId: ActorId;
+			amount: number;
+			skillId: string;
+	  }
+	/** Emitted when push_actor displaces a target. Used by the client for move animation. */
+	| {
+			type: "actor_pushed";
+			actorId: ActorId;
+			fromIdx: number;
+			toIdx: number;
+			skillId: string;
+	  }
+	/** Emitted when teleport_swap swaps positions of caster and target. */
+	| {
+			type: "teleport_swap";
+			casterId: ActorId;
+			targetId: ActorId;
+			casterNewIdx: number;
+			targetNewIdx: number;
+			skillId: string;
 	  };
 
 export interface FloorState {

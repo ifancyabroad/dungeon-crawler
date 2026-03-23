@@ -53,9 +53,14 @@ export const ApplyStatusEffectSchema = z.object({
 	value: z.number().optional(),
 	/**
 	 * Who receives the status effect.
-	 * "self" (default) = caster; "target" = the targeted actor.
+	 * "self" (default) = caster; "target" = the targeted actor;
+	 * "aoe" = all alive actors within aoeRadiusTiles of the caster (excluding the caster).
 	 */
-	target: z.enum(["self", "target"]).optional(),
+	target: z.enum(["self", "target", "aoe"]).optional(),
+	/**
+	 * Chebyshev radius used when target === "aoe". Required when target is "aoe".
+	 */
+	aoeRadiusTiles: z.number().int().min(0).optional(),
 	/**
 	 * Inline numeric combat adjustments for data-driven status effects.
 	 * Copied onto the ActiveEffect at application time and consulted at
@@ -97,6 +102,13 @@ export const ConeDamageEffectSchema = z.object({
 	savingThrow: SavingThrowConfigSchema.optional(),
 });
 
+const OnHitStatusSchema = z.object({
+	statusId: z.string(),
+	durationTurns: z.number().int().min(1),
+	/** Optional magnitude forwarded to the ActiveEffect (e.g. DoT damage per turn). */
+	value: z.number().optional(),
+});
+
 export const SingleTargetDamageEffectSchema = z.object({
 	type: z.literal("single_target_damage"),
 	dice: z.string(),
@@ -104,6 +116,8 @@ export const SingleTargetDamageEffectSchema = z.object({
 	scalingStat: AbilityNameSchema.optional(),
 	savingThrow: SavingThrowConfigSchema.optional(),
 	attackRoll: AttackRollConfigSchema.optional(),
+	/** If set, applies this status to the target on a successful hit. */
+	onHitStatus: OnHitStatusSchema.optional(),
 });
 
 export const LeapAttackEffectSchema = z.object({
@@ -125,6 +139,57 @@ export const ShadowStepEffectSchema = z.object({
 	type: z.literal("shadow_step"),
 });
 
+export const HealSelfEffectSchema = z.object({
+	type: z.literal("heal_self"),
+	dice: z.string(),
+	/** Optional ability modifier added to the heal roll (e.g. "constitution" for Second Wind). */
+	scalingStat: AbilityNameSchema.optional(),
+});
+
+export const HealTargetEffectSchema = z.object({
+	type: z.literal("heal_target"),
+	dice: z.string(),
+	/** Optional ability modifier added to the heal roll (e.g. "wisdom" for Cure Wounds). */
+	scalingStat: AbilityNameSchema.optional(),
+});
+
+export const PushActorEffectSchema = z.object({
+	type: z.literal("push_actor"),
+	/** Maximum tiles to push the target away from the caster in a straight cardinal direction. */
+	maxPushTiles: z.number().int().min(1),
+	/**
+	 * Optional damage dealt if the target is stopped by a wall or occupied tile.
+	 * Wall collision in the real world hurts.
+	 */
+	wallDamageDice: z.string().optional(),
+	wallDamageType: DamageTypeSchema.optional(),
+});
+
+export const DrainLifeEffectSchema = z.object({
+	type: z.literal("drain_life"),
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	/** Dice rolled independently to determine how much HP the caster recovers. */
+	healDice: z.string(),
+});
+
+export const MultiStrikeEffectSchema = z.object({
+	type: z.literal("multi_strike"),
+	/** How many separate attack rolls to make against the target. */
+	strikeCount: z.number().int().min(2).max(10),
+	/** Damage dice per strike (e.g. "1d6"). */
+	dice: z.string(),
+	damageType: DamageTypeSchema,
+	/** Optional ability modifier added to each strike's damage (defaults to STR modifier). */
+	scalingStat: AbilityNameSchema.optional(),
+	/** If set, applies this status to the target on each successful strike. */
+	onHitStatus: OnHitStatusSchema.optional(),
+});
+
+export const TeleportSwapEffectSchema = z.object({
+	type: z.literal("teleport_swap"),
+});
+
 export const ActiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AreaDamageEffectSchema,
 	ApplyStatusEffectSchema,
@@ -136,6 +201,12 @@ export const ActiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	SingleTargetDamageEffectSchema,
 	SneakAttackEffectSchema,
 	ShadowStepEffectSchema,
+	HealSelfEffectSchema,
+	HealTargetEffectSchema,
+	PushActorEffectSchema,
+	DrainLifeEffectSchema,
+	MultiStrikeEffectSchema,
+	TeleportSwapEffectSchema,
 ]);
 
 export type ActiveSkillEffectDescriptor = z.infer<typeof ActiveSkillEffectDescriptorSchema>;
@@ -151,6 +222,12 @@ export type SingleTargetDamageEffect = z.infer<typeof SingleTargetDamageEffectSc
 export type LeapAttackEffect = z.infer<typeof LeapAttackEffectSchema>;
 export type SneakAttackEffect = z.infer<typeof SneakAttackEffectSchema>;
 export type ShadowStepEffect = z.infer<typeof ShadowStepEffectSchema>;
+export type HealSelfEffect = z.infer<typeof HealSelfEffectSchema>;
+export type HealTargetEffect = z.infer<typeof HealTargetEffectSchema>;
+export type PushActorEffect = z.infer<typeof PushActorEffectSchema>;
+export type DrainLifeEffect = z.infer<typeof DrainLifeEffectSchema>;
+export type MultiStrikeEffect = z.infer<typeof MultiStrikeEffectSchema>;
+export type TeleportSwapEffect = z.infer<typeof TeleportSwapEffectSchema>;
 
 // ---------------------------------------------------------------------------
 // Passive skill effect descriptor schemas
@@ -190,6 +267,35 @@ export const AddStatusImmunityEffectSchema = z.object({
 	statusId: z.string(),
 });
 
+export const ModifyMaxHpEffectSchema = z.object({
+	type: z.literal("modify_max_hp"),
+	/** Flat amount added to both max HP and current HP. */
+	amount: z.number().int().min(1),
+});
+
+export const ModifyHitDieEffectSchema = z.object({
+	type: z.literal("modify_hit_die"),
+	/** New hit die size (e.g. 10 for d10, 12 for d12). Must be larger than the current die. */
+	die: z.number().int().min(4).max(12),
+});
+
+export const AddSavingThrowProficiencyEffectSchema = z.object({
+	type: z.literal("add_saving_throw_proficiency"),
+	ability: AbilityNameSchema,
+});
+
+export const AddAttackRollBonusEffectSchema = z.object({
+	type: z.literal("add_attack_roll_bonus"),
+	/** Flat bonus stacked onto actor.attackBonusFlat. */
+	amount: z.number().int().min(1),
+});
+
+export const ModifyCritThresholdEffectSchema = z.object({
+	type: z.literal("modify_crit_threshold"),
+	/** How many points to lower the crit threshold (1 = crit on 19+, 2 = 18+). */
+	reduction: z.number().int().min(1).max(10),
+});
+
 export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	ModifyAttributeEffectSchema,
 	ModifyArmorClassEffectSchema,
@@ -197,6 +303,11 @@ export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AddDamageImmunityEffectSchema,
 	AddDamageDiceEffectSchema,
 	AddStatusImmunityEffectSchema,
+	ModifyMaxHpEffectSchema,
+	ModifyHitDieEffectSchema,
+	AddSavingThrowProficiencyEffectSchema,
+	AddAttackRollBonusEffectSchema,
+	ModifyCritThresholdEffectSchema,
 ]);
 
 export type PassiveSkillEffectDescriptor = z.infer<typeof PassiveSkillEffectDescriptorSchema>;
@@ -207,6 +318,11 @@ export type AddDamageResistanceEffect = z.infer<typeof AddDamageResistanceEffect
 export type AddDamageImmunityEffect = z.infer<typeof AddDamageImmunityEffectSchema>;
 export type AddDamageDiceEffect = z.infer<typeof AddDamageDiceEffectSchema>;
 export type AddStatusImmunityEffect = z.infer<typeof AddStatusImmunityEffectSchema>;
+export type ModifyMaxHpEffect = z.infer<typeof ModifyMaxHpEffectSchema>;
+export type ModifyHitDieEffect = z.infer<typeof ModifyHitDieEffectSchema>;
+export type AddSavingThrowProficiencyEffect = z.infer<typeof AddSavingThrowProficiencyEffectSchema>;
+export type AddAttackRollBonusEffect = z.infer<typeof AddAttackRollBonusEffectSchema>;
+export type ModifyCritThresholdEffect = z.infer<typeof ModifyCritThresholdEffectSchema>;
 
 // ---------------------------------------------------------------------------
 // Skill definition schemas

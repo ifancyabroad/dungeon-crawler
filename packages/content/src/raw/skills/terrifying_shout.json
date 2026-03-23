@@ -1,0 +1,17 @@
+{
+	"skillType": "active",
+	"id": "terrifying_shout",
+	"name": "Terrifying Shout",
+	"description": "You unleash a bone-chilling war cry that sends nearby enemies fleeing for their lives. Every monster within 3 tiles is frightened for 6 turns, desperately trying to escape your presence.",
+	"cooldown": 14,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "frightened",
+			"target": "aoe",
+			"aoeRadiusTiles": 3,
+			"durationTurns": 6
+		}
+	]
+}

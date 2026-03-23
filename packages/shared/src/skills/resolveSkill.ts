@@ -6,7 +6,7 @@
  * The "caster" may be the hero or any monster — the resolver is actor-agnostic.
  */
 
-import type { GameEvent } from "../game/types";
+import type { Actor, GameEvent } from "../game/types";
 import type {
 	SkillResolutionInput,
 	SkillResolutionOutput,
@@ -22,6 +22,13 @@ import { applyConeDamage } from "./effects/coneDamage";
 import { applySingleTargetDamage } from "./effects/singleTargetDamage";
 import { applySneakAttack } from "./effects/applySneakAttack";
 import { applyShadowStep } from "./effects/applyShadowStep";
+import { applyHealSelf } from "./effects/healSelf";
+import { applyHealTarget } from "./effects/healTarget";
+import { applyPushActor } from "./effects/pushActor";
+import { applyDrainLife } from "./effects/drainLife";
+import { applyMultiStrike } from "./effects/multiStrike";
+import { applyTeleportSwap } from "./effects/teleportSwap";
+import { idxToXY } from "../game/engine";
 
 export function resolveSkill(
 	input: SkillResolutionInput,
@@ -93,6 +100,21 @@ export function resolveSkill(
 						};
 						events.push(...result.events);
 					}
+				} else if (effect.target === "aoe") {
+					// Apply to all alive actors within aoeRadiusTiles of the caster (Chebyshev).
+					const radius = effect.aoeRadiusTiles ?? 1;
+					const { x: cx, y: cy } = idxToXY(currentCaster.idx, width);
+					let newActorsById = { ...floorState.actorsById };
+					for (const [id, actor] of Object.entries(newActorsById) as [string, Actor][]) {
+						if (!actor.alive || id === casterId) continue;
+						const { x: ax, y: ay } = idxToXY(actor.idx, width);
+						const chebDist = Math.max(Math.abs(ax - cx), Math.abs(ay - cy));
+						if (chebDist > radius) continue;
+						const result = applyStatusEffect(effect, actor);
+						newActorsById = { ...newActorsById, [id]: result.caster };
+						events.push(...result.events);
+					}
+					floorState = { ...floorState, actorsById: newActorsById };
 				} else {
 					// Default: apply to caster.
 					const result = applyStatusEffect(effect, currentCaster);
@@ -225,6 +247,96 @@ export function resolveSkill(
 					targetTileIdx,
 					floorState,
 					opacityMask,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "heal_self": {
+				const result = applyHealSelf(effect, currentCaster, rng, skillDef.id);
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "heal_target": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applyHealTarget(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					rng,
+					skillDef.id,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				break;
+			}
+
+			case "push_actor": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applyPushActor(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					width,
+					height,
+					rng,
+					skillDef.id,
+					opacityMask,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				events.push(...result.events);
+				break;
+			}
+
+			case "drain_life": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applyDrainLife(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					rng,
+					skillDef.id,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "multi_strike": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applyMultiStrike(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					rng,
+					skillDef.id,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
+				events.push(...result.events);
+				break;
+			}
+
+			case "teleport_swap": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applyTeleportSwap(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					skillDef.id,
 				);
 				if ("error" in result) return result;
 				floorState = result.floorState;

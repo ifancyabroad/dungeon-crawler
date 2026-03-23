@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "tough",
+	"name": "Tough",
+	"description": "Your body is harder to kill than most. Gain 10 maximum hit points immediately upon taking this feat.",
+	"effects": [
+		{
+			"type": "modify_max_hp",
+			"amount": 10
+		}
+	]
+}

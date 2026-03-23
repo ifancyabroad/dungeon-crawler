@@ -83,6 +83,17 @@ Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ---
 
+## Adding a New AI Strategy
+
+1. Add a new literal to `AIStrategyTag` in `packages/shared/src/game/monsterAI.ts` (e.g. `"ranged"`).
+2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a single function `(ctx: AIContext) => AITurnResult`. Import only type references from `monsterAI.ts` (`import type`) to avoid circular dependencies.
+3. Import the function in `monsterAI.ts` and add it to the `AI_STRATEGIES` record. TypeScript will error if the record is missing a tag, keeping the registry exhaustive.
+4. If the strategy should be triggered by a status effect (e.g. a monster is frightened into fleeing), add the status ID to `statusHooks.ts` and wire the `strategyOverride` in `processEnemyTurns` in `engine.ts` — following the existing `FRIGHTENED` pattern.
+5. Update the `MonsterAIStateSchema` in `packages/shared/src/game/schemas.ts` to include the new tag in the `strategy` enum.
+6. Verify: `pnpm typecheck && pnpm lint`.
+
+---
+
 ## Adding a New UI Feature
 
 1. Check `apps/web/src/components/` for existing components before creating new ones. All UI must use the shared Tailwind token system — see `.cursor/rules/design-system.mdc`.

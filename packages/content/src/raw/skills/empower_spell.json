@@ -1,0 +1,21 @@
+{
+	"skillType": "active",
+	"id": "empower_spell",
+	"name": "Empower Spell",
+	"description": "You channel raw magical energy into your next area spell. For 3 turns your area-of-effect attacks deal an extra 2 force damage to every target caught in the blast.",
+	"cooldown": 10,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "empowered",
+			"durationTurns": 3,
+			"adjustments": {
+				"areaDamageFlat": {
+					"damageType": "force",
+					"amount": 2
+				}
+			}
+		}
+	]
+}

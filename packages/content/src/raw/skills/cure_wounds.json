@@ -1,0 +1,16 @@
+{
+	"skillType": "active",
+	"id": "cure_wounds",
+	"name": "Cure Wounds",
+	"description": "Touch a creature to channel healing energy into it. Restores 2d8 hit points plus your Wisdom modifier.",
+	"cooldown": 10,
+	"targetType": "actor",
+	"range": 1,
+	"effects": [
+		{
+			"type": "heal_target",
+			"dice": "2d8",
+			"scalingStat": "wisdom"
+		}
+	]
+}

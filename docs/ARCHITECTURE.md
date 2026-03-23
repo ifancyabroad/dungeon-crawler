@@ -176,7 +176,7 @@ When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and 
 
 ### Actor
 
-Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `statusHooks.ts`), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
+Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a `faction` tag (`"player"` | `"hostile"`) used for AI targeting, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `statusHooks.ts`), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
 
 ### Actions
 
@@ -215,15 +215,15 @@ In other words: a vault layout made of walls on its entire boundary may become i
 
 ## Combat
 
-Turn-based melee. After every player action, all living monsters on the current floor take a turn in deterministic order (sorted by actor ID).
+Turn-based melee. After every player action, all living monsters on the current floor take a turn in deterministic order (sorted by actor ID). Stunned actors (hero or monster) skip their entire turn.
 
-- Attack roll: `d20 + STR modifier` vs. target AC (unarmed/melee currently use STR).
-- Natural 20 = critical hit (double damage dice).
-- Damage: weapon dice + STR modifier (unarmed = 1d4), minimum 0; then reduced by defender resistances/immunities for each damage type (resistance halves; immunity makes it 0).
-- Saving throws: `d20 + save ability modifier (+ proficiency bonus if proficient)`, with natural 20 auto-success and natural 1 auto-fail.
-- Spell/skill save DC (save-enabled effects): `DC = 8 + caster proficiency bonus + caster ability modifier`.
-- XP on kill feeds a D&D 5e XP table (max level 20).
-- Level-up: roll hit die + CON modifier HP gain (minimum 1).
+- **Attack roll**: `d20 + STR modifier + flat attack bonus (passive) + dice bonus/penalty (status effects)` vs. effective target AC (target's base AC ± AC adjustments from active effects). Advantage (roll 2d20, take higher) and disadvantage (take lower) from active status effects are resolved first; they cancel each other out if both apply.
+- **Critical hit**: natural roll ≥ crit threshold (default 20, can be lowered by passive skills) — double damage dice.
+- **Damage**: weapon dice + STR modifier (unarmed = 1d4), minimum 0; then reduced by defender resistances/immunities for each damage type (resistance halves; immunity makes it 0).
+- **Saving throws**: `d20 + save ability modifier (+ proficiency bonus if proficient) + dice bonus/penalty (status effects)`, with natural 20 auto-success and natural 1 auto-fail.
+- **Spell/skill save DC** (save-enabled effects): `DC = 8 + caster proficiency bonus + caster ability modifier`.
+- **XP on kill** feeds a D&D 5e XP table (max level 20).
+- **Level-up**: roll hit die + CON modifier HP gain (minimum 1).
 
 ### Skills
 
@@ -233,13 +233,33 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
-Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, incoming damage penalty) inline in the skill JSON; the engine reads those values directly from the active effect at resolution time. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment (e.g. damage-over-time ticking each turn, alerting monsters on expiry); these are registered in `packages/shared/src/skills/statusHooks.ts`.
+Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/skills/statusHooks.ts`. Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (monster vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction to `"player"` so monsters attack their former allies), and `FRIGHTENED` (override AI strategy to flee).
+
+Active skill attacks (`single_target_damage`, `multi_strike`) support an optional `onHitStatus` field. When set, the named status is applied to the target on every successful hit — regardless of whether damage was dealt (e.g. a hit that was fully resisted still triggers the status).
 
 **Passive skills** are granted at level-up and apply permanent buffs to the hero immediately (`applyPassiveSkill`). They never appear on the hotbar; they are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
 
 **Level-up acquisition**: on level-up the engine generates a deterministic offer of up to 3 skills (active or passive, alternating by level per `LEVEL_UP_SCHEDULE`). The player must pick one via `select_skill_choice` before regular actions resume. Rerolling is supported via `reroll_skill_choice`. This sets `pendingInteraction` on `GameState` until resolved.
 
 Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed by `rollDiceExpr` in `packages/shared/src/combat/dice.ts`.
+
+---
+
+## Monster AI
+
+Each monster has a `MonsterAIState` (strategy tag + optional last-known-hero position) stored on its `Actor`. Every turn `runMonsterAI` selects the active strategy and returns an `AITurnResult` (`attack | move | idle | skill`).
+
+**Strategy registry** (`packages/shared/src/game/monsterAI.ts`): a plain `Record<AIStrategyTag, (ctx: AIContext) => AITurnResult>` map. Adding a new strategy means:
+
+1. Adding the literal to `AIStrategyTag`.
+2. Creating `packages/shared/src/game/strategies/<name>.ts` implementing `(ctx: AIContext) => AITurnResult`.
+3. Importing and registering it in `monsterAI.ts`.
+
+No other files need to change.
+
+**Faction-aware targeting**: `processEnemyTurns` computes an `effectiveFactions` map before the AI loop. A CHARMED monster's effective faction is temporarily flipped to `"player"`, so the standard melee strategy naturally targets its former allies. The stored `faction` field is never mutated — the flip is transient and does not corrupt persisted state.
+
+**Strategy overrides**: the `FRIGHTENED` status passes a `strategyOverride: "frightened"` to `runMonsterAI`. The override is not persisted — after the turn the monster's original strategy is restored.
 
 ---
 

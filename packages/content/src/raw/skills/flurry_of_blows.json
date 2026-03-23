@@ -1,0 +1,17 @@
+{
+	"skillType": "active",
+	"id": "flurry_of_blows",
+	"name": "Flurry of Blows",
+	"description": "Unleash a lightning-fast flurry of strikes. Make three separate attacks against the same target — each a full d20 roll that can hit, miss, or crit independently.",
+	"cooldown": 8,
+	"targetType": "actor",
+	"range": 1,
+	"effects": [
+		{
+			"type": "multi_strike",
+			"strikeCount": 3,
+			"dice": "1d6",
+			"damageType": "bludgeoning"
+		}
+	]
+}

@@ -26,7 +26,7 @@ import { resolveAttack } from "../combat/combat";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
-import { runMonsterAI, type MonsterAIState } from "./monsterAI";
+import { runMonsterAI, type MonsterAIState, type AIStrategyTag } from "./monsterAI";
 import {
 	resolveSkill,
 	hasActiveEffect,
@@ -234,6 +234,7 @@ function buildInitialFloorState(
 		passiveDamageBonuses: [],
 		statusImmunities: [],
 		savingThrowProficiencies: heroInit.savingThrowProficiencies,
+		faction: "player",
 		def: { type: "hero", classId: heroInit.classId },
 		level: heroInit.level,
 		xp: heroInit.xp,
@@ -369,6 +370,7 @@ export function spawnMonster(
 		statusImmunities: [],
 		savingThrowProficiencies: init.savingThrowProficiencies,
 		challengeRating: init.challengeRating,
+		faction: "hostile",
 		def: { type: "monster", monsterId: init.monsterId },
 		level: 0,
 		xp: 0,
@@ -479,6 +481,15 @@ function processEnemyTurns(
 	// If the hero is stealthed, monsters cannot see them regardless of LoS.
 	const heroIsStealthed = hasActiveEffect(currentHero, STATUS_HOOKS.STEALTH);
 
+	// Pre-compute effective factions for this turn.
+	// CHARMED flips a hostile actor's faction to "player" transiently — the stored faction
+	// is never mutated, ensuring status effects cannot corrupt persisted game state.
+	const effectiveFactions: Record<string, "player" | "hostile"> = {};
+	for (const [id, actor] of Object.entries(actorsById)) {
+		const base = actor.faction ?? (actor.def.type === "hero" ? "player" : "hostile");
+		effectiveFactions[id] = hasActiveEffect(actor, STATUS_HOOKS.CHARMED) ? "player" : base;
+	}
+
 	for (const mid of monsterIds) {
 		if (!currentHero.alive) break;
 		const monster = actorsById[mid];
@@ -486,6 +497,9 @@ function processEnemyTurns(
 		// Monsters without aiState are inert (shouldn't happen in normal play)
 		const aiState = monster.aiState;
 		if (!aiState) continue;
+
+		// Stunned monsters skip their turn entirely.
+		if (hasActiveEffect(monster, STATUS_HOOKS.STUNNED)) continue;
 
 		const { x, y } = idxToXY(monster.idx, width);
 		let visibleFromMonster = computeVisibility(x, y, width, height, opacityMask, VISION_RADIUS);
@@ -499,6 +513,11 @@ function processEnemyTurns(
 		// Build a temporary floor state snapshot so AI sees the current actor positions
 		const currentFloorState: FloorState = { ...floorState, actorsById };
 
+		// FRIGHTENED overrides the monster's strategy to flee; CHARMED is handled
+		// automatically by the faction-aware runMeleeAI — no override needed.
+		const isFrightened = hasActiveEffect(monster, STATUS_HOOKS.FRIGHTENED);
+		const strategyOverride: AIStrategyTag | undefined = isFrightened ? "frightened" : undefined;
+
 		const { result, newAIState } = runMonsterAI({
 			monster,
 			aiState,
@@ -510,39 +529,59 @@ function processEnemyTurns(
 			width,
 			height,
 			rng,
+			effectiveFactions,
+			strategyOverride,
 		});
 
-		if (result.kind === "attack") {
-			const attackResult = resolveAttack(monster, currentHero, rng, UNARMED_WEAPON);
-			events.push({
-				type: "attack",
-				attackerId: mid,
-				defenderId: heroId,
-				result: attackResult,
-			});
+		// Restore the original strategy — overrides must not persist to saved state.
+		const persistedAIState: MonsterAIState = strategyOverride
+			? { ...newAIState, strategy: aiState.strategy }
+			: newAIState;
 
-			if (attackResult.hit) {
-				const { updatedActor: damagedHero, events: damageEvents } = applyDamageToActor(
-					currentHero,
-					attackResult.damage,
-				);
-				currentHero = damagedHero;
-				events.push(...damageEvents);
-				actorsById = {
-					...actorsById,
-					[heroId]: currentHero,
-					[mid]: { ...monster, aiState: newAIState },
-				};
-				if (!currentHero.alive) {
-					events.push({ type: "death", actorId: heroId });
-				}
+		if (result.kind === "attack") {
+			// Generalised attack target: ally AI targets hostiles; default targets hero.
+			const attackTargetId = result.targetActorId ?? heroId;
+			const attackTarget = actorsById[attackTargetId];
+			if (!attackTarget?.alive) {
+				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
 			} else {
-				actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
+				const attackResult = resolveAttack(monster, attackTarget, rng, UNARMED_WEAPON);
+				events.push({
+					type: "attack",
+					attackerId: mid,
+					defenderId: attackTargetId,
+					result: attackResult,
+				});
+
+				if (attackResult.hit) {
+					const { updatedActor: damagedTarget, events: damageEvents } =
+						applyDamageToActor(attackTarget, attackResult.damage);
+					events.push(...damageEvents);
+					if (attackTargetId === heroId) {
+						currentHero = damagedTarget;
+					}
+					actorsById = {
+						...actorsById,
+						[attackTargetId]: damagedTarget,
+						[mid]: { ...monster, aiState: persistedAIState },
+					};
+					if (!damagedTarget.alive) {
+						events.push({ type: "death", actorId: attackTargetId });
+						// TODO: grant XP to the hero for kills made by charmed allies.
+						// processEnemyTurns currently has no access to ApplyActionContext,
+						// which is required by grantXpForKill for level-up offer generation.
+					}
+				} else {
+					actorsById = {
+						...actorsById,
+						[mid]: { ...monster, aiState: persistedAIState },
+					};
+				}
 			}
 		} else if (result.kind === "move") {
 			actorsById = {
 				...actorsById,
-				[mid]: { ...monster, idx: result.toIdx, aiState: newAIState },
+				[mid]: { ...monster, idx: result.toIdx, aiState: persistedAIState },
 			};
 		} else if (result.kind === "skill") {
 			// Monster uses a skill — resolved the same way as hero skills.
@@ -556,7 +595,7 @@ function processEnemyTurns(
 				const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
 				const resolution = resolveSkill({
 					skillDef,
-					caster: { ...monster, aiState: newAIState },
+					caster: { ...monster, aiState: persistedAIState },
 					casterId: mid,
 					floorState: currentFloorSnapshot,
 					width,
@@ -587,15 +626,18 @@ function processEnemyTurns(
 					if (heroAfterSkill) currentHero = heroAfterSkill;
 					if (!currentHero.alive) break;
 				} else {
-					actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
+					actorsById = {
+						...actorsById,
+						[mid]: { ...monster, aiState: persistedAIState },
+					};
 				}
 			} else {
 				// Skill on cooldown or unknown — fall back to idle
-				actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
+				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
 			}
 		} else {
 			// idle — just persist updated aiState (e.g. cleared lastKnownHeroIdx)
-			actorsById = { ...actorsById, [mid]: { ...monster, aiState: newAIState } };
+			actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
 		}
 	}
 
@@ -713,6 +755,9 @@ export function applyAction(
 		case "move": {
 			const hero = getHero(state);
 			if (!hero || !hero.alive) return { ok: false, reason: "move_no_hero" };
+			if (hasActiveEffect(hero, STATUS_HOOKS.STUNNED)) {
+				return { ok: false, reason: "hero_stunned" };
+			}
 			const fi = state.heroFloorIndex;
 			const floor = state.floors[fi];
 			if (!floor) return { ok: false, reason: "move_no_floor" };
@@ -842,6 +887,9 @@ export function applyAction(
 		case "attack": {
 			const hero = getHero(state);
 			if (!hero || !hero.alive) return { ok: false, reason: "attack_no_hero" };
+			if (hasActiveEffect(hero, STATUS_HOOKS.STUNNED)) {
+				return { ok: false, reason: "hero_stunned" };
+			}
 			const fi = state.heroFloorIndex;
 			const floor = state.floors[fi];
 			if (!floor) return { ok: false, reason: "attack_no_floor" };
@@ -947,6 +995,9 @@ export function applyAction(
 		case "use_skill": {
 			const hero = getHero(state);
 			if (!hero || !hero.alive) return { ok: false, reason: "skill_no_hero" };
+			if (hasActiveEffect(hero, STATUS_HOOKS.STUNNED)) {
+				return { ok: false, reason: "hero_stunned" };
+			}
 			const fi = state.heroFloorIndex;
 			const floor = state.floors[fi];
 			if (!floor) return { ok: false, reason: "skill_no_floor" };

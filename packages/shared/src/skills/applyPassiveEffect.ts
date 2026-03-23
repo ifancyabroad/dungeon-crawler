@@ -59,6 +59,35 @@ function applyEffect(actor: Actor, effect: PassiveSkillEffectDescriptor): Actor 
 			return { ...actor, statusImmunities: [...actor.statusImmunities, effect.statusId] };
 		}
 
+		case "modify_max_hp": {
+			return {
+				...actor,
+				maxHp: actor.maxHp + effect.amount,
+				hp: actor.hp + effect.amount,
+			};
+		}
+
+		case "modify_hit_die": {
+			return { ...actor, hitDie: effect.die };
+		}
+
+		case "add_saving_throw_proficiency": {
+			if (actor.savingThrowProficiencies.includes(effect.ability)) return actor;
+			return {
+				...actor,
+				savingThrowProficiencies: [...actor.savingThrowProficiencies, effect.ability],
+			};
+		}
+
+		case "add_attack_roll_bonus": {
+			return { ...actor, attackBonusFlat: (actor.attackBonusFlat ?? 0) + effect.amount };
+		}
+
+		case "modify_crit_threshold": {
+			const current = actor.critThreshold ?? 20;
+			return { ...actor, critThreshold: Math.max(1, current - effect.reduction) };
+		}
+
 		default: {
 			const _exhaustive: never = effect;
 			void _exhaustive;

@@ -1,0 +1,15 @@
+{
+	"skillType": "active",
+	"id": "second_wind",
+	"name": "Second Wind",
+	"description": "Draw on reserves of stamina to recover. Roll 1d10 and add your Constitution modifier — that is how much HP you regain.",
+	"cooldown": 20,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "heal_self",
+			"dice": "1d10",
+			"scalingStat": "constitution"
+		}
+	]
+}
