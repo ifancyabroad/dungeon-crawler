@@ -14,7 +14,7 @@ import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { hasActiveEffect } from "../activeEffects";
 import { STATUS_HOOKS } from "../statusHooks";
-import { idxToXY } from "../../game/engine";
+import { idxToXY } from "../../game/engineUtils";
 
 function chebyshevDistance(ax: number, ay: number, bx: number, by: number): number {
 	return Math.max(Math.abs(ax - bx), Math.abs(ay - by));

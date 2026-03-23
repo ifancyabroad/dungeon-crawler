@@ -11,7 +11,7 @@ import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
-import { idxToXY } from "../../game/engine";
+import { idxToXY } from "../../game/engineUtils";
 
 /** Chebyshev distance (diagonal counts as 1). */
 function chebyshevDistance(ax: number, ay: number, bx: number, by: number): number {

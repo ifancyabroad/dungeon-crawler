@@ -28,7 +28,7 @@ import { applyPushActor } from "./effects/pushActor";
 import { applyDrainLife } from "./effects/drainLife";
 import { applyMultiStrike } from "./effects/multiStrike";
 import { applyTeleportSwap } from "./effects/teleportSwap";
-import { idxToXY } from "../game/engine";
+import { idxToXY } from "../game/engineUtils";
 
 export function resolveSkill(
 	input: SkillResolutionInput,

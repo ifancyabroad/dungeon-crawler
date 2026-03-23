@@ -13,7 +13,7 @@ import type { LeapAttackEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
-import { idxToXY } from "../../game/engine";
+import { idxToXY } from "../../game/engineUtils";
 
 function chebyshevDistance(ax: number, ay: number, bx: number, by: number): number {
 	return Math.max(Math.abs(ax - bx), Math.abs(ay - by));

@@ -12,7 +12,7 @@ import { UNARMED_WEAPON } from "../../combat/types";
 import { rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
-import { idxToXY, xyToIdx, getAdjacentIndices } from "../../game/engine";
+import { idxToXY, xyToIdx, getAdjacentIndices } from "../../game/engineUtils";
 
 /**
  * Returns true if `from` and `to` are aligned on a single cardinal axis

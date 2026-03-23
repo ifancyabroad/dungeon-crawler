@@ -5,8 +5,7 @@
  */
 
 import type { FloorState } from "../game/types";
-import { getActorAtIdx } from "../game/engine";
-import { idxToXY, xyToIdx } from "../game/engine";
+import { getActorAtIdx, idxToXY, xyToIdx } from "../game/engineUtils";
 
 /**
  * BFS from `fromIdx` toward `toIdx`.

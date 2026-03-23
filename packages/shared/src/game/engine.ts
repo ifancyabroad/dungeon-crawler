@@ -12,21 +12,15 @@ import type {
 	FloorState,
 	GameEvent,
 	GameState,
-	HeroInit,
-	MonsterInit,
 	PendingInteraction,
+	PersistedDynamicState,
 } from "./types";
-import type { PersistedDynamicState } from "./types";
-import { MAP_GEN_VERSION } from "./types";
-import { VISION_RADIUS, XP_PER_LEVEL } from "./config";
-import { createInitialRngState, createRngFromState, type Rng } from "../rng";
-import { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
+import { createRngFromState } from "../rng";
+import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { resolveAttack } from "../combat/combat";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
-import { computeUnarmoredAC } from "../combat/dice";
 import { UNARMED_WEAPON } from "../combat/types";
-import { runMonsterAI, type MonsterAIState, type AIStrategyTag } from "./monsterAI";
 import {
 	resolveSkill,
 	hasActiveEffect,
@@ -34,618 +28,44 @@ import {
 	applyPassiveSkill,
 	STATUS_HOOKS,
 } from "../skills";
-import type { ActiveSkillDefinition, SkillDefinition } from "../skills";
-
-/**
- * Configurable schedule for level-up offer types.
- * Keys are level numbers (1-indexed). Missing levels repeat the last seen pattern.
- * Default: first level-up (reaching level 2) is passive, then alternates.
- */
-export const LEVEL_UP_SCHEDULE: Record<number, "active" | "passive"> = {
-	2: "passive",
-	3: "active",
-	4: "passive",
-	5: "active",
-	6: "passive",
-	7: "active",
-	8: "passive",
-	9: "active",
-	10: "passive",
-};
-
-function getOfferTypeForLevel(level: number): "active" | "passive" {
-	if (level in LEVEL_UP_SCHEDULE) return LEVEL_UP_SCHEDULE[level]!;
-	// Beyond schedule: alternate based on parity (even = passive, odd = active)
-	return level % 2 === 0 ? "passive" : "active";
-}
-
-/**
- * Sample up to `count` items from `pool` without replacement using deterministic RNG.
- * Fisher-Yates partial shuffle.
- */
-function sampleWithoutReplacement(pool: string[], count: number, rng: Rng): string[] {
-	const arr = pool.slice();
-	const result: string[] = [];
-	const take = Math.min(count, arr.length);
-	for (let i = 0; i < take; i++) {
-		const j = i + Math.floor(rng() * (arr.length - i));
-		const temp = arr[i]!;
-		arr[i] = arr[j]!;
-		arr[j] = temp;
-		result.push(arr[i]!);
-	}
-	return result;
-}
-
-/** Class skill pools passed via context for deterministic offer generation. */
-export interface ClassSkillPools {
-	activeSkillPool: string[];
-	passiveSkillPool: string[];
-}
-
-/** Empty floor state. Use when defaulting or building from persisted. spawnIdx and exitIdx are set after map generation. */
-export function createEmptyFloorState(): FloorState {
-	return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx: 0, exitIdx: null };
-}
-
-/** Context required for applyAction: walkability + opacity masks per floor, plus content lookups. */
-export interface ApplyActionContext {
-	getWalkableMask(floorIndex: number): Uint8Array;
-	/** 1 = opaque (blocks LoS), 0 = transparent. Required for explored-state updates. */
-	getOpacityMask(floorIndex: number): Uint8Array;
-	/**
-	 * Look up a skill definition by id. Used by the "use_skill" and "select_skill_choice" branches.
-	 * Returns undefined if the skill is not found (invalid id → engine rejects the action).
-	 * In production, this is backed by skillsById from @app/content.
-	 * In tests, pass a map of mock definitions.
-	 */
-	getSkillDef(skillId: string): SkillDefinition | undefined;
-	/**
-	 * Returns the active/passive skill pools for a given class id.
-	 * Used to generate deterministic level-up offers.
-	 * Returns undefined if the class is not found.
-	 */
-	getClassSkillPools(classId: string): ClassSkillPools | undefined;
-}
-
-/** Build context from precomputed walkability and opacity masks (O(1) per apply). */
-export function createActionContext(
-	walkableMasks: Uint8Array[],
-	opacityMasks: Uint8Array[],
-	skillDefs?: Record<string, SkillDefinition>,
-	classSkillPools?: Record<string, ClassSkillPools>,
-): ApplyActionContext {
-	return {
-		getWalkableMask(fi: number): Uint8Array {
-			const mask = walkableMasks[fi];
-			if (mask === undefined) {
-				throw new Error(`createActionContext: missing walkability mask for floor ${fi}`);
-			}
-			return mask;
-		},
-		getOpacityMask(fi: number): Uint8Array {
-			const mask = opacityMasks[fi];
-			if (mask === undefined) {
-				throw new Error(`createActionContext: missing opacity mask for floor ${fi}`);
-			}
-			return mask;
-		},
-		getSkillDef(skillId: string): SkillDefinition | undefined {
-			return skillDefs?.[skillId];
-		},
-		getClassSkillPools(classId: string): ClassSkillPools | undefined {
-			return classSkillPools?.[classId];
-		},
-	};
-}
-
-const DIRECTION_DELTA: Record<"up" | "down" | "left" | "right", { dx: number; dy: number }> = {
-	up: { dx: 0, dy: -1 },
-	down: { dx: 0, dy: 1 },
-	left: { dx: -1, dy: 0 },
-	right: { dx: 1, dy: 0 },
-};
-
-export type ApplyActionResult =
-	| { ok: true; state: GameState; events: GameEvent[] }
-	| { ok: false; reason: string };
-
-/** Convert linear index to x,y. idx = y * width + x. */
-export function idxToXY(idx: number, width: number): { x: number; y: number } {
-	const x = idx % width;
-	const y = Math.floor(idx / width);
-	return { x, y };
-}
-
-/** Convert x,y to linear index. idx = y * width + x. */
-export function xyToIdx(x: number, y: number, width: number): number {
-	return y * width + x;
-}
-
-/** Get the hero actor from state. Hero floor is state.heroFloorIndex; hero id is state.heroId. */
-export function getHero(state: GameState): Actor | undefined {
-	return state.floors[state.heroFloorIndex]?.state.actorsById[state.heroId];
-}
-
-/** Actor "kind" is def.type. Use this instead of a removed .kind field. */
-export function actorKind(a: Actor): "hero" | "monster" {
-	return a.def.type;
-}
-
-const DEFAULT_ATTRIBUTES = {
-	strength: 10,
-	dexterity: 10,
-	constitution: 10,
-	intelligence: 10,
-	wisdom: 10,
-	charisma: 10,
-} as const;
-
-/** Fallback hero init for tests and debug. Matches legacy hardcoded warrior. */
-export const DEFAULT_HERO_INIT: HeroInit = {
-	name: "Hero",
-	classId: "warrior",
-	hp: 100,
-	maxHp: 100,
-	attributes: { ...DEFAULT_ATTRIBUTES },
-	level: 1,
-	xp: 0,
-	hitDie: 10,
-	savingThrowProficiencies: ["strength", "constitution"],
-	skills: [],
-};
-
-/**
- * Build a single floor's initial state from its base layer.
- * Pass heroInit to populate the hero actor and initial visibility on the spawn tile.
- * Pass null for floors the hero doesn't start on (they'll receive monsters lazily).
- */
-function buildInitialFloorState(
-	base: BaseLayerFloor,
-	config: FloorConfig,
-	heroInit: HeroInit | null,
-): FloorState {
-	const { spawnIdx } = base;
-	const exitIdx = base.exitIdx === -1 ? null : base.exitIdx;
-
-	if (!heroInit) {
-		return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx, exitIdx };
-	}
-
-	const initialSkills: Record<string, { cooldownRemaining: number }> = {};
-	for (const skillId of heroInit.skills ?? []) {
-		initialSkills[skillId] = { cooldownRemaining: 0 };
-	}
-
-	const heroActor: Actor = {
-		id: "hero",
-		name: heroInit.name,
-		idx: spawnIdx,
-		alive: true,
-		hp: heroInit.hp,
-		maxHp: heroInit.maxHp,
-		armorClass: heroInit.armorClass ?? computeUnarmoredAC(heroInit.attributes.dexterity),
-		attributes: { ...heroInit.attributes },
-		damageResistances: [],
-		damageImmunities: [],
-		skills: initialSkills,
-		activeEffects: [],
-		numericBuffs: {},
-		passiveDamageBonuses: [],
-		statusImmunities: [],
-		savingThrowProficiencies: heroInit.savingThrowProficiencies,
-		faction: "player",
-		def: { type: "hero", classId: heroInit.classId },
-		level: heroInit.level,
-		xp: heroInit.xp,
-		hitDie: heroInit.hitDie,
-		xpReward: 0,
-	};
-
-	const { x: spawnX, y: spawnY } = idxToXY(spawnIdx, config.width);
-	const opMask = computeOpacityMask(base.wall, config.width, config.height);
-	const visible = computeVisibility(
-		spawnX,
-		spawnY,
-		config.width,
-		config.height,
-		opMask,
-		VISION_RADIUS,
-	);
-	const explored = mergeExplored([], visible, config.width * config.height);
-
-	return {
-		tileOverrides: {},
-		actorsById: { hero: heroActor } as Record<ActorId, Actor>,
-		explored,
-		spawnIdx,
-		exitIdx,
-	};
-}
-
-/**
- * Create initial game state: all floors pre-generated, hero on floor 0.
- * Floors 1–N are empty (no actors); monsters are spawned lazily on first visit by the API.
- */
-export function createInitialState(
-	seed: number,
-	floorConfigs: FloorConfig[],
-	hero: HeroInit,
-): GameState {
-	const rngState = createInitialRngState(seed);
-	const baseLayers = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION);
-
-	const floors = floorConfigs.map((config, i) => ({
-		config,
-		state: buildInitialFloorState(baseLayers[i], config, i === 0 ? hero : null),
-	}));
-
-	return {
-		turn: 0,
-		heroId: "hero",
-		heroFloorIndex: 0,
-		seed,
-		mapGenVersion: MAP_GEN_VERSION,
-		floors,
-		rngState,
-		pendingInteraction: null,
-	};
-}
+import type { ActiveSkillDefinition } from "../skills";
+import { idxToXY, xyToIdx, getHero, getActorAtIdx, DIRECTION_DELTA } from "./engineUtils";
+import type { ApplyActionContext, ApplyActionResult } from "./engineContext";
+import { createActionContext, createEmptyFloorState } from "./engineContext";
+import { processEnemyTurns } from "./engineEnemyTurns";
+import { grantXpForKill, sampleWithoutReplacement } from "./engineLevelUp";
+import { VISION_RADIUS } from "./config";
 
 // ---------------------------------------------------------------------------
-// Actor / tile helpers
+// Re-exports — preserve the public surface so game/index.ts is unchanged
 // ---------------------------------------------------------------------------
 
-/** Find the first living actor at a given tile index on a floor. */
-export function getActorAtIdx(floorState: FloorState, idx: number): Actor | undefined {
-	for (const actor of Object.values(floorState.actorsById)) {
-		if (actor.alive && actor.idx === idx) return actor;
-	}
-	return undefined;
-}
-
-/** Return the 4 cardinal-adjacent tile indices that are in bounds. */
-export function getAdjacentIndices(idx: number, width: number, height: number): number[] {
-	const { x, y } = idxToXY(idx, width);
-	const result: number[] = [];
-	if (x > 0) result.push(xyToIdx(x - 1, y, width));
-	if (x < width - 1) result.push(xyToIdx(x + 1, y, width));
-	if (y > 0) result.push(xyToIdx(x, y - 1, width));
-	if (y < height - 1) result.push(xyToIdx(x, y + 1, width));
-	return result;
-}
-
-/**
- * Find a walkable, unoccupied tile adjacent to `originIdx`.
- * Returns undefined if none available.
- */
-export function findAdjacentWalkable(
-	originIdx: number,
-	width: number,
-	height: number,
-	walkableMask: Uint8Array,
-	floorState: FloorState,
-): number | undefined {
-	const candidates = getAdjacentIndices(originIdx, width, height);
-	for (const idx of candidates) {
-		if (walkableMask[idx] === 1 && !getActorAtIdx(floorState, idx)) return idx;
-	}
-	return undefined;
-}
-
-/** Generate a deterministic actor ID for a monster spawn. */
-let _monsterCounter = 0;
-export function resetMonsterCounter(): void {
-	_monsterCounter = 0;
-}
-function nextMonsterId(monsterId: string): string {
-	return `${monsterId}_${_monsterCounter++}`;
-}
-
-/** Spawn a monster on a floor and return the updated state. */
-export function spawnMonster(
-	state: GameState,
-	floorIndex: number,
-	init: MonsterInit,
-	idx: number,
-): GameState {
-	const floor = state.floors[floorIndex];
-	if (!floor) return state;
-	const aiState: MonsterAIState = { strategy: init.aiStrategy };
-	const actor: Actor = {
-		id: nextMonsterId(init.monsterId),
-		name: init.name,
-		idx,
-		alive: true,
-		hp: init.hp,
-		maxHp: init.maxHp,
-		armorClass: init.armorClass,
-		attributes: { ...init.attributes },
-		damageResistances: [...init.damageResistances],
-		damageImmunities: [...init.damageImmunities],
-		skills: {},
-		activeEffects: [],
-		numericBuffs: {},
-		passiveDamageBonuses: [],
-		statusImmunities: [],
-		savingThrowProficiencies: init.savingThrowProficiencies,
-		challengeRating: init.challengeRating,
-		faction: "hostile",
-		def: { type: "monster", monsterId: init.monsterId },
-		level: 0,
-		xp: 0,
-		hitDie: 0,
-		xpReward: init.xpReward,
-		aiState,
-	};
-	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
-	const newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };
-	const newFloors = state.floors.slice();
-	newFloors[floorIndex] = { ...floor, state: newFloorState };
-	return { ...state, floors: newFloors };
-}
+export {
+	actorKind,
+	findAdjacentWalkable,
+	getActorAtIdx,
+	getAdjacentIndices,
+	getHero,
+	idxToXY,
+	xyToIdx,
+} from "./engineUtils";
+export {
+	createActionContext,
+	createEmptyFloorState,
+	type ApplyActionContext,
+	type ApplyActionResult,
+	type ClassSkillPools,
+} from "./engineContext";
+export {
+	createInitialState,
+	DEFAULT_HERO_INIT,
+	resetMonsterCounter,
+	spawnMonster,
+} from "./engineInit";
+export { LEVEL_UP_SCHEDULE } from "./engineLevelUp";
 
 // ---------------------------------------------------------------------------
-// Enemy turn processing
-// ---------------------------------------------------------------------------
-
-/**
- * Award XP to an actor for a kill, levelling them up if the threshold is crossed.
- * Returns the updated actor, any level_up events, and a pendingInteraction to set
- * on the game state if a level-up occurred and skill offers could be generated.
- */
-function grantXpForKill(
-	actor: Actor,
-	actorId: ActorId,
-	xpReward: number,
-	rng: Rng,
-	context: ApplyActionContext,
-): { actor: Actor; events: GameEvent[]; pendingInteraction: PendingInteraction } {
-	if (xpReward <= 0) return { actor, events: [], pendingInteraction: null };
-	const events: GameEvent[] = [];
-	let newXp = actor.xp + xpReward;
-	let newLevel = actor.level;
-	let newMaxHp = actor.maxHp;
-	let newCurrentHp = actor.hp;
-
-	const nextLevelXp = XP_PER_LEVEL[newLevel + 1] ?? Infinity;
-	let pendingInteraction: PendingInteraction = null;
-
-	if (newXp >= nextLevelXp) {
-		newXp -= nextLevelXp;
-		newLevel += 1;
-		const conMod = Math.floor((actor.attributes.constitution - 10) / 2);
-		const roll = Math.floor(rng() * actor.hitDie) + 1;
-		const hpGained = Math.max(1, roll + conMod);
-		newMaxHp += hpGained;
-		newCurrentHp += hpGained;
-		events.push({ type: "level_up", actorId, newLevel, hpGained });
-
-		// Generate deterministic level-up skill offers
-		const classId = actor.def.type === "hero" ? actor.def.classId : null;
-		const pools = classId ? context.getClassSkillPools(classId) : undefined;
-		if (pools) {
-			const offerType = getOfferTypeForLevel(newLevel);
-			const pool = offerType === "active" ? pools.activeSkillPool : pools.passiveSkillPool;
-			// Filter out skills the hero already owns
-			const ownedSkillIds = new Set(Object.keys(actor.skills));
-			const eligible = pool.filter((id) => !ownedSkillIds.has(id));
-			const offers = sampleWithoutReplacement(eligible, 3, rng);
-			if (offers.length > 0) {
-				pendingInteraction = {
-					type: "skill_choice",
-					offerType,
-					levelReached: newLevel,
-					offers,
-					rerollsUsed: 0,
-				};
-			}
-		}
-	}
-
-	return {
-		actor: { ...actor, xp: newXp, level: newLevel, maxHp: newMaxHp, hp: newCurrentHp },
-		events,
-		pendingInteraction,
-	};
-}
-
-/**
- * After a player action, each living monster on the hero's floor acts.
- * Each monster runs its AI strategy: chase/roam/attack/skill based on LoS.
- * Sorted by actor ID for deterministic order.
- * `getSkillDef` is required to resolve monster skill actions.
- */
-function processEnemyTurns(
-	floorState: FloorState,
-	heroId: ActorId,
-	width: number,
-	height: number,
-	walkableMask: Uint8Array,
-	opacityMask: Uint8Array,
-	rng: Rng,
-	getSkillDef: (skillId: string) => SkillDefinition | undefined,
-): { floorState: FloorState; events: GameEvent[] } {
-	const events: GameEvent[] = [];
-	let actorsById = { ...floorState.actorsById };
-	const hero = actorsById[heroId];
-	if (!hero || !hero.alive) return { floorState, events };
-
-	const monsterIds = Object.keys(actorsById)
-		.filter(
-			(id) => id !== heroId && actorsById[id].alive && actorsById[id].def.type === "monster",
-		)
-		.sort();
-
-	let currentHero = hero;
-	// If the hero is stealthed, monsters cannot see them regardless of LoS.
-	const heroIsStealthed = hasActiveEffect(currentHero, STATUS_HOOKS.STEALTH);
-
-	// Pre-compute effective factions for this turn.
-	// CHARMED flips a hostile actor's faction to "player" transiently — the stored faction
-	// is never mutated, ensuring status effects cannot corrupt persisted game state.
-	const effectiveFactions: Record<string, "player" | "hostile"> = {};
-	for (const [id, actor] of Object.entries(actorsById)) {
-		const base = actor.faction ?? (actor.def.type === "hero" ? "player" : "hostile");
-		effectiveFactions[id] = hasActiveEffect(actor, STATUS_HOOKS.CHARMED) ? "player" : base;
-	}
-
-	for (const mid of monsterIds) {
-		if (!currentHero.alive) break;
-		const monster = actorsById[mid];
-
-		// Monsters without aiState are inert (shouldn't happen in normal play)
-		const aiState = monster.aiState;
-		if (!aiState) continue;
-
-		// Stunned monsters skip their turn entirely.
-		if (hasActiveEffect(monster, STATUS_HOOKS.STUNNED)) continue;
-
-		const { x, y } = idxToXY(monster.idx, width);
-		let visibleFromMonster = computeVisibility(x, y, width, height, opacityMask, VISION_RADIUS);
-
-		// Stealth: mask hero tile so all AI strategies treat the hero as invisible.
-		if (heroIsStealthed) {
-			visibleFromMonster = visibleFromMonster.slice() as Uint8Array;
-			visibleFromMonster[currentHero.idx] = 0;
-		}
-
-		// Build a temporary floor state snapshot so AI sees the current actor positions
-		const currentFloorState: FloorState = { ...floorState, actorsById };
-
-		// FRIGHTENED overrides the monster's strategy to flee; CHARMED is handled
-		// automatically by the faction-aware runMeleeAI — no override needed.
-		const isFrightened = hasActiveEffect(monster, STATUS_HOOKS.FRIGHTENED);
-		const strategyOverride: AIStrategyTag | undefined = isFrightened ? "frightened" : undefined;
-
-		const { result, newAIState } = runMonsterAI({
-			monster,
-			aiState,
-			hero: currentHero,
-			heroId,
-			visibleFromMonster,
-			walkableMask,
-			floorState: currentFloorState,
-			width,
-			height,
-			rng,
-			effectiveFactions,
-			strategyOverride,
-		});
-
-		// Restore the original strategy — overrides must not persist to saved state.
-		const persistedAIState: MonsterAIState = strategyOverride
-			? { ...newAIState, strategy: aiState.strategy }
-			: newAIState;
-
-		if (result.kind === "attack") {
-			// Generalised attack target: ally AI targets hostiles; default targets hero.
-			const attackTargetId = result.targetActorId ?? heroId;
-			const attackTarget = actorsById[attackTargetId];
-			if (!attackTarget?.alive) {
-				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
-			} else {
-				const attackResult = resolveAttack(monster, attackTarget, rng, UNARMED_WEAPON);
-				events.push({
-					type: "attack",
-					attackerId: mid,
-					defenderId: attackTargetId,
-					result: attackResult,
-				});
-
-				if (attackResult.hit) {
-					const { updatedActor: damagedTarget, events: damageEvents } =
-						applyDamageToActor(attackTarget, attackResult.damage);
-					events.push(...damageEvents);
-					if (attackTargetId === heroId) {
-						currentHero = damagedTarget;
-					}
-					actorsById = {
-						...actorsById,
-						[attackTargetId]: damagedTarget,
-						[mid]: { ...monster, aiState: persistedAIState },
-					};
-					if (!damagedTarget.alive) {
-						events.push({ type: "death", actorId: attackTargetId });
-						// TODO: grant XP to the hero for kills made by charmed allies.
-						// processEnemyTurns currently has no access to ApplyActionContext,
-						// which is required by grantXpForKill for level-up offer generation.
-					}
-				} else {
-					actorsById = {
-						...actorsById,
-						[mid]: { ...monster, aiState: persistedAIState },
-					};
-				}
-			}
-		} else if (result.kind === "move") {
-			actorsById = {
-				...actorsById,
-				[mid]: { ...monster, idx: result.toIdx, aiState: persistedAIState },
-			};
-		} else if (result.kind === "skill") {
-			// Monster uses a skill — resolved the same way as hero skills.
-			const rawSkillDef = getSkillDef(result.skillId);
-			const skillDef =
-				rawSkillDef?.skillType === "active"
-					? (rawSkillDef as ActiveSkillDefinition)
-					: undefined;
-			const skillState = monster.skills?.[result.skillId];
-			if (skillDef && skillState && skillState.cooldownRemaining === 0) {
-				const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
-				const resolution = resolveSkill({
-					skillDef,
-					caster: { ...monster, aiState: persistedAIState },
-					casterId: mid,
-					floorState: currentFloorSnapshot,
-					width,
-					height,
-					rng,
-					targetTileIdx: result.targetTileIdx,
-					targetActorId: result.targetActorId,
-					opacityMask,
-				});
-				if (!("error" in resolution)) {
-					const monsterAfterSkill = resolution.floorState.actorsById[mid];
-					if (monsterAfterSkill) {
-						actorsById = {
-							...resolution.floorState.actorsById,
-							[mid]: {
-								...monsterAfterSkill,
-								skills: {
-									...monsterAfterSkill.skills,
-									[result.skillId]: { cooldownRemaining: skillDef.cooldown },
-								},
-							},
-						};
-					} else {
-						actorsById = resolution.floorState.actorsById;
-					}
-					events.push(...resolution.events);
-					const heroAfterSkill = actorsById[heroId];
-					if (heroAfterSkill) currentHero = heroAfterSkill;
-					if (!currentHero.alive) break;
-				} else {
-					actorsById = {
-						...actorsById,
-						[mid]: { ...monster, aiState: persistedAIState },
-					};
-				}
-			} else {
-				// Skill on cooldown or unknown — fall back to idle
-				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
-			}
-		} else {
-			// idle — just persist updated aiState (e.g. cleared lastKnownHeroIdx)
-			actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
-		}
-	}
-
-	return { floorState: { ...floorState, actorsById }, events };
-}
-
-// ---------------------------------------------------------------------------
-// Compute target cell from direction
+// Private turn helpers
 // ---------------------------------------------------------------------------
 
 function computeTargetCell(
@@ -662,12 +82,8 @@ function computeTargetCell(
 	return { nx, ny, newIdx: xyToIdx(nx, ny, width) };
 }
 
-// ---------------------------------------------------------------------------
-// Apply action
-// ---------------------------------------------------------------------------
-
 /**
- * Decrement cooldownRemaining by 1 for every skill on the hero, removing any that reach 0.
+ * Decrement cooldownRemaining by 1 for every skill on the hero.
  * Called at the end of every player turn so cooldowns count down with each action.
  */
 function tickSkillCooldowns(state: GameState): GameState {
@@ -730,6 +146,10 @@ function breakStealth(
 
 	return { hero: updatedHero, floorState: { ...floorState, actorsById } };
 }
+
+// ---------------------------------------------------------------------------
+// Apply action
+// ---------------------------------------------------------------------------
 
 /**
  * Apply one action to state. Context is required (use applyActionWithDerivedContext in dev/test only).
@@ -864,7 +284,7 @@ export function applyAction(
 					};
 
 					const descendFloors = newState.floors.slice();
-					descendFloors[fi] = { ...newState.floors[fi], state: departingFloorState };
+					descendFloors[fi] = { ...newState.floors[fi]!, state: departingFloorState };
 					descendFloors[nextFi] = { ...nextFloor, state: nextFloorState };
 
 					events.push({ type: "descend", fromFloor: fi, toFloor: nextFi });
@@ -1138,7 +558,6 @@ export function applyAction(
 			const skillDef = context.getSkillDef(action.skillId);
 			if (!skillDef) return { ok: false, reason: "skill_unknown" };
 
-			// Find hero on the current floor
 			const fi = state.heroFloorIndex;
 			const floor = state.floors[fi];
 			if (!floor) return { ok: false, reason: "no_floor" };
@@ -1185,7 +604,6 @@ export function applyAction(
 				return { ok: false, reason: "no_pending_choice" };
 			}
 
-			// Find the hero to get classId and owned skills
 			const hero = getHero(state);
 			if (!hero) return { ok: false, reason: "no_hero" };
 			const classId = hero.def.type === "hero" ? hero.def.classId : null;
@@ -1228,6 +646,10 @@ export function applyAction(
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Dev/test helper + persistence
+// ---------------------------------------------------------------------------
 
 /**
  * Dev/test only: build context from state (regenerateBaseMaps + masks per floor) and apply action.

@@ -18,7 +18,7 @@ import type { PushActorEffect } from "../types";
 import { rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
-import { idxToXY, xyToIdx } from "../../game/engine";
+import { idxToXY, xyToIdx } from "../../game/engineUtils";
 
 export function applyPushActor(
 	effect: PushActorEffect,
