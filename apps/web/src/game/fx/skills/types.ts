@@ -13,6 +13,7 @@ export interface SkillAnimResult {
 	/**
 	 * Set when the handler moved the hero sprite. Caller should update its tile
 	 * position tracker (playerTileX / playerTileY) to these values so LoS is correct.
+	 * Only populated for hero-cast movement skills; ignored for monster skills.
 	 */
 	newHeroTilePos?: { x: number; y: number };
 }
@@ -20,11 +21,21 @@ export interface SkillAnimResult {
 /** All data a handler needs to decide what to animate and when to dispatch FX. */
 export interface SkillAnimContext {
 	event: Extract<GameEvent, { type: "skill_used" }>;
-	heroSprite: Phaser.GameObjects.Sprite;
-	/** Hero's tile index in the authoritative state after the action completed. */
-	heroIdxAfter: number;
-	/** Whether the hero's tile position changed as a result of this skill. */
-	heroMoved: boolean;
+	/** The sprite of the actor casting the skill (hero or monster). */
+	casterSprite: Phaser.GameObjects.Sprite;
+	/** The caster's tile index in the authoritative state after the action completed. */
+	casterIdxAfter: number;
+	/** Whether the caster's tile position changed as a result of this skill. */
+	casterMoved: boolean;
+	/**
+	 * World-pixel centre of the target actor at the moment of casting, derived from
+	 * `event.targetActorIdx` (snapshotted before enemy turns move actors).
+	 * Present only when the skill targeted a specific actor.
+	 *
+	 * Handlers MUST use this instead of reading the store — the store reflects
+	 * post-turn positions, so projectiles would fly to the wrong tile otherwise.
+	 */
+	targetWorldPos?: { px: number; py: number };
 	/**
 	 * Call this to trigger deferred FX dispatch (deaths, damage numbers, monster sync).
 	 * Handlers that set `fxDeferred: true` MUST call this at the appropriate moment.

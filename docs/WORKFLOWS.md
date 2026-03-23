@@ -6,7 +6,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New Monster
 
-1. Create `packages/content/src/raw/monsters/<name>.json` following the shape defined by `MonsterSchema` in `packages/content/src/schemas/monster.ts`. Use an existing file (e.g. `goblin.json`) as a reference.
+1. Create `packages/content/src/raw/monsters/<name>.json` following the shape defined by `MonsterSchema` in `packages/content/src/schemas/monster.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Include a `skills` array — use `[]` if the monster has no active skills, or list skill IDs for monsters that should use active skills autonomously.
 2. Add a Zod schema for the new monster if its shape differs from the existing `MonsterDef` schema; otherwise the existing schema covers it.
 3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
 4. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new monster.
@@ -54,8 +54,10 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing active skill file as a reference.
 2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the skill applies a status that only modifies numeric values (e.g. bonus damage, incoming damage adjustment), define those adjustments inline in the skill JSON — no engine code changes are needed. If the status requires engine-wired behaviour (e.g. damage-over-time, on-expiry side effects), add its ID to `packages/shared/src/skills/statusHooks.ts` and implement the hook in `activeEffects.ts`.
 3. Run `pnpm --filter @app/content generate`.
-4. Add the skill id to the class definition in `packages/content/src/raw/classes/<class>.json`.
-5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry.
+4. Add the skill id to the relevant consumer:
+    - **Hero class skill**: add to the class definition in `packages/content/src/raw/classes/<class>.json`.
+    - **Monster skill**: add the skill id to the `skills` array in the monster's JSON definition in `packages/content/src/raw/monsters/<monster>.json`. The engine initialises cooldown state at spawn and ticks the cooldown each turn automatically.
+5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry. Handlers receive a `SkillAnimContext` that is actor-agnostic — the same handler works for hero and monster casters.
 6. If the skill applies a buff with a persistent visual (aura, sprite tint), add it to the buff visual registry in `apps/web/src/game/fx/buffVisuals/`. No scene code needs to change.
 7. If the skill requires targeting, the hotbar and targeting overlay handle it automatically for standard effect types — no extra client work is needed.
 
@@ -85,22 +87,22 @@ Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ## Adding a New AI Strategy
 
-Monster AI has two independent phases — **combat** (what to do when enemies are visible) and **idle** (what to do otherwise). Each phase has its own strategy tag type and registry in `packages/shared/src/game/monsterAI.ts`. Decide which phase your strategy belongs to before starting.
+Monster AI has two independent phases — **combat** (what to do when enemies are visible) and **idle** (what to do otherwise). Each phase has its own strategy tag type and registry in `packages/shared/src/game/strategies/`. Decide which phase your strategy belongs to before starting.
 
 ### New combat strategy
 
-1. Add the new tag to the combat strategy tag union in `monsterAI.ts`.
-2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the combat strategy signature. When the monster has nothing to fight, return the idle signal so the idle layer takes over.
-3. Register the function in the combat strategy registry in `monsterAI.ts`. TypeScript will error if any tag is missing, keeping the registry exhaustive.
+1. Add the new tag to `CombatStrategyTag` in `packages/shared/src/game/strategies/types.ts`.
+2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the `CombatStrategyFn` signature. When the monster has nothing to fight, return `{ kind: "idle" }` so the idle layer takes over. Access `ctx.getSkillDef` if the strategy needs to inspect skill range or target type.
+3. Register the function in the combat strategy registry in `packages/shared/src/game/strategies/index.ts`. TypeScript will error if any tag is missing, keeping the registry exhaustive.
 4. If a status effect should trigger this strategy, add the status ID to `statusHooks.ts` and wire a per-turn override in `processEnemyTurns` following the existing `FRIGHTENED` pattern.
 5. Add the new tag to the `MonsterAIState` schema in `packages/shared/src/game/schemas.ts`.
 6. Verify: `pnpm typecheck && pnpm lint`.
 
 ### New idle strategy
 
-1. Add the new tag to the idle strategy tag union in `monsterAI.ts`.
-2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the idle strategy signature.
-3. Register it in the idle strategy registry in `monsterAI.ts`.
+1. Add the new tag to `IdleStrategyTag` in `packages/shared/src/game/strategies/types.ts`.
+2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the `IdleStrategyFn` signature.
+3. Register it in the idle strategy registry in `packages/shared/src/game/strategies/index.ts`.
 4. Add the new tag to both the `MonsterAIState` schema (`packages/shared`) and the monster content schema (`packages/content`) so content files can reference it.
 5. Verify: `pnpm typecheck && pnpm lint`.
 

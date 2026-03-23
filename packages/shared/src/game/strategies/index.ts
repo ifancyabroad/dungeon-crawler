@@ -24,6 +24,7 @@ import type {
 } from "./types";
 import { runMeleeAI } from "./melee";
 import { runFrightenedAI } from "./frightened";
+import { runRangedAI } from "./ranged";
 import { runStationaryAI } from "./stationary";
 import { runRoamAI } from "./roam";
 import { runFollowAI } from "./follow";
@@ -34,6 +35,7 @@ type IdleStrategyFn = (ctx: AIContext) => AIResult;
 const COMBAT_STRATEGIES: Record<CombatStrategyTag, CombatStrategyFn> = {
 	melee: runMeleeAI,
 	frightened: runFrightenedAI,
+	ranged: runRangedAI,
 };
 
 const IDLE_STRATEGIES: Record<IdleStrategyTag, IdleStrategyFn> = {

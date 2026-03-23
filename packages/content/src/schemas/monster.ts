@@ -21,7 +21,7 @@ export const MonsterSchema = z.object({
 	armorClass: z.number(),
 	tileId: z.number(),
 	xpReward: z.number(),
-	combatStrategy: z.enum(["melee"]),
+	combatStrategy: z.enum(["melee", "ranged"]),
 	/** Idle behaviour when the monster has no enemies to fight. Defaults to stationary. */
 	idleStrategy: z.enum(["stationary", "roam", "follow"]).default("stationary"),
 	/** Challenge rating used to approximate monster proficiency bonus. */
@@ -32,6 +32,8 @@ export const MonsterSchema = z.object({
 	damageImmunities: z.array(DamageTypeSchema).default([]),
 	/** CSS hex colour for blood/death particle effects. */
 	bloodColor: z.string(),
+	/** Skill IDs this monster spawns with. Each skill starts with cooldownRemaining: 0. */
+	skills: z.array(z.string()).default([]),
 });
 
 export type MonsterDefinition = z.infer<typeof MonsterSchema>;

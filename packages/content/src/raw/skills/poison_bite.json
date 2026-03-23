@@ -1,0 +1,25 @@
+{
+	"skillType": "active",
+	"id": "poison_bite",
+	"name": "Poison Bite",
+	"description": "A venomous bite that deals piercing damage and injects poison, dealing damage over time.",
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 1,
+	"effects": [
+		{
+			"type": "single_target_damage",
+			"dice": "1d4",
+			"damageType": "piercing",
+			"attackRoll": {
+				"modifierStat": "dexterity",
+				"useProficiency": true
+			},
+			"onHitStatus": {
+				"statusId": "poisoned",
+				"durationTurns": 3,
+				"value": 1
+			}
+		}
+	]
+}

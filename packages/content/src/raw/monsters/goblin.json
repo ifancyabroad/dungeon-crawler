@@ -20,5 +20,6 @@
 	"idleStrategy": "roam",
 	"challengeRating": 1,
 	"savingThrowProficiencies": ["dexterity"],
-	"bloodColor": "#cc0000"
+	"bloodColor": "#cc0000",
+	"skills": []
 }

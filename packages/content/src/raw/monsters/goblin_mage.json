@@ -1,0 +1,25 @@
+{
+	"id": "goblin_mage",
+	"name": "Goblin Mage",
+	"description": "A cunning goblin that has learned arcane arts, preferring to blast enemies from a distance.",
+	"baseAttributes": {
+		"strength": 6,
+		"dexterity": 12,
+		"constitution": 10,
+		"intelligence": 14,
+		"wisdom": 10,
+		"charisma": 8
+	},
+	"hp": 10,
+	"armorClass": 11,
+	"damageResistances": [],
+	"damageImmunities": [],
+	"tileId": 679,
+	"xpReward": 50,
+	"combatStrategy": "ranged",
+	"idleStrategy": "roam",
+	"challengeRating": 2,
+	"savingThrowProficiencies": ["intelligence"],
+	"bloodColor": "#cc0000",
+	"skills": ["magic_arrow", "fireball"]
+}

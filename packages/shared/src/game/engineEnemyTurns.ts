@@ -109,6 +109,7 @@ export function processEnemyTurns(
 			rng,
 			effectiveFactions,
 			combatStrategyOverride,
+			getSkillDef,
 		});
 
 		// Restore overridden fields — transient overrides must not persist to saved state.

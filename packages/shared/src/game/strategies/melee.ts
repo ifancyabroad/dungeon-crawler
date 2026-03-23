@@ -49,9 +49,22 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 
 	const adjacent = getAdjacentIndices(monster.idx, width, height);
 
-	// 1. Adjacent enemy → attack
+	// 1. Adjacent enemy → use an off-cooldown skill if available, otherwise attack
 	const adjacentEnemy = enemies.find((a) => adjacent.includes(a.idx));
 	if (adjacentEnemy) {
+		const availableSkillId = Object.entries(monster.skills ?? {}).find(
+			([, state]) => state.cooldownRemaining === 0,
+		)?.[0];
+		if (availableSkillId) {
+			return {
+				result: {
+					kind: "skill",
+					skillId: availableSkillId,
+					targetActorId: adjacentEnemy.id,
+				},
+				newAIState,
+			};
+		}
 		return { result: { kind: "attack", targetActorId: adjacentEnemy.id }, newAIState };
 	}
 

@@ -6,9 +6,10 @@
 
 import type { Actor, ActorId, FloorState } from "../types";
 import type { Rng } from "../../rng";
+import type { SkillDefinition } from "../../skills";
 
 /** Combat behaviours: what the monster does when it has enemies to fight. */
-export type CombatStrategyTag = "melee" | "frightened";
+export type CombatStrategyTag = "melee" | "frightened" | "ranged";
 
 /** Idle behaviours: what the monster does when it has nothing to fight. */
 export type IdleStrategyTag = "stationary" | "roam" | "follow";
@@ -48,6 +49,12 @@ export interface AIContext {
 	 * restored to the persisted state after the turn so status effects do not corrupt saved data.
 	 */
 	combatStrategyOverride?: CombatStrategyTag;
+	/**
+	 * Look up a skill definition by ID. Used by strategies that need range or targetType
+	 * information to decide whether to use a skill (e.g. the ranged strategy).
+	 * Optional — strategies that don't need skill metadata can ignore it.
+	 */
+	getSkillDef?: (skillId: string) => SkillDefinition | undefined;
 }
 
 export type AIResult =

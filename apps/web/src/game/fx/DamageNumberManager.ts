@@ -42,6 +42,14 @@ export class DamageNumberManager {
 				} else {
 					this.spawnLabel(`${event.result.damage}`, px, py, COLOR_NORMAL);
 				}
+			} else if (event.type === "skill_miss") {
+				const idx = getActorIdx(event.defenderId);
+				if (idx === undefined) continue;
+
+				const { x, y } = idxToXY(idx, this.mapWidth);
+				const px = x * TILE_WIDTH + TILE_WIDTH / 2;
+				const py = y * TILE_HEIGHT + TILE_HEIGHT / 2 - 8;
+				this.spawnLabel("miss", px, py, COLOR_MISS);
 			} else if (event.type === "area_hit") {
 				const idx = getActorIdx(event.defenderId);
 				if (idx === undefined) continue;

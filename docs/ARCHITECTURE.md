@@ -249,7 +249,9 @@ Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed b
 
 Each monster carries a small AI state object alongside its actor data. It records two independent strategy tags — one governing **combat behaviour** (what to do when enemies are visible) and one governing **idle behaviour** (what to do otherwise) — plus any transient memory the active strategy needs (e.g. last known enemy position, follow target).
 
-Every turn the engine runs a **two-phase dispatch**: the combat strategy runs first; if it has nothing to do it hands off to the idle strategy. Both phases are pure functions registered in `packages/shared/src/game/monsterAI.ts`. Adding a new strategy is a matter of adding a function and registering it — no other files need to change.
+Every turn the engine runs a **two-phase dispatch**: the combat strategy runs first; if it has nothing to do it hands off to the idle strategy. Both phases are pure functions registered in `packages/shared/src/game/strategies/index.ts`. Adding a new strategy is a matter of creating a file under `packages/shared/src/game/strategies/`, adding the tag to the relevant union in `types.ts`, and registering the function — no other engine files need to change.
+
+**Monster skills**: Monsters can use active skills just as the hero can. Each monster definition carries a `skills` array; the engine initialises cooldown state at spawn and ticks all actor cooldowns (not just the hero's) at the end of every player turn. AI strategies receive a `getSkillDef` callback via `AIContext` to inspect range, target type, and other skill metadata when deciding whether to use a skill this turn. Skill resolution goes through the same `resolveSkill` path regardless of whether the caster is the hero or a monster.
 
 **Faction-aware targeting**: before the AI loop the engine builds a transient faction map that incorporates any active status effects (e.g. CHARMED flips a monster's effective faction so it attacks its former allies). Strategies read from this map rather than the stored faction field, so all faction logic is centralised in one place and strategies remain unaware of specific status effects.
 

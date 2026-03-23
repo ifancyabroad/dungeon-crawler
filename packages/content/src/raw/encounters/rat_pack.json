@@ -1,0 +1,8 @@
+{
+	"id": "rat_pack",
+	"minDepth": 1,
+	"entries": [
+		{ "monsterId": "rat", "count": 2, "weight": 3 },
+		{ "monsterId": "rat", "count": 3, "weight": 1 }
+	]
+}

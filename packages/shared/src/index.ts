@@ -128,7 +128,9 @@ export {
 	type PassiveDamageBonus,
 	type PendingInteraction,
 	type PersistedDynamicState,
+	type SkillDamageEvent,
 	type UseSkillAction,
+	isSkillDamageEvent,
 } from "./game";
 
 export {

@@ -21,9 +21,10 @@ export type {
 	PendingInteraction,
 	PersistedDynamicState,
 	RngState,
+	SkillDamageEvent,
 	TileId,
 } from "./types";
-export { MAP_GEN_VERSION } from "./types";
+export { isSkillDamageEvent, MAP_GEN_VERSION } from "./types";
 export {
 	ActionSchema,
 	AttackActionSchema,

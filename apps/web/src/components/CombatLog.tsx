@@ -36,11 +36,25 @@ function formatEvent(event: GameEvent): string {
 		return `${actor} has been slain!`;
 	}
 
+	if (event.type === "skill_miss") {
+		const skillName = formatSkillId(event.skillId);
+		const attacker =
+			event.attackerId === "hero"
+				? "Your"
+				: `${capitalize(event.attackerId.replace(/_\d+$/, ""))}'s`;
+		const defender =
+			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
+		const rollBreakdown =
+			event.attackerId === "hero"
+				? ` (${event.naturalRoll}+${event.totalRoll - event.naturalRoll}=${event.totalRoll} vs AC ${event.targetAc})`
+				: ` (Rolled ${event.naturalRoll})`;
+		return `${attacker} ${skillName} misses ${defender}.${rollBreakdown}`;
+	}
+
 	if (event.type === "skill_hit") {
 		const skillName = formatSkillId(event.skillId);
 		const defender =
 			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
-		if (!event.result.hit) return `${skillName} missed ${defender}.`;
 		const critLabel = event.result.critical ? "[CRIT] " : "";
 		const breakdown =
 			event.result.damagePackets.length > 1
@@ -65,7 +79,9 @@ function formatEvent(event: GameEvent): string {
 	}
 
 	if (event.type === "skill_used") {
-		return event.actorId === "hero" ? `You use ${formatSkillId(event.skillId)}!` : "";
+		if (event.actorId === "hero") return `You use ${formatSkillId(event.skillId)}!`;
+		const caster = capitalize(event.actorId.replace(/_\d+$/, ""));
+		return `${caster} uses ${formatSkillId(event.skillId)}!`;
 	}
 
 	if (event.type === "status_applied") {
@@ -135,6 +151,7 @@ function eventColorClass(event: GameEvent): string {
 	}
 	if (event.type === "attack" && event.result.critical) return "text-primary";
 	if (event.type === "attack" && event.attackerId === "hero") return "text-text-bright";
+	if (event.type === "skill_miss") return "text-text-muted";
 	if (event.type === "skill_hit" && event.result.critical) return "text-primary";
 	if (event.type === "skill_hit") return "text-text-bright";
 	if (event.type === "area_hit") return "text-primary";

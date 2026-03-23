@@ -19,35 +19,23 @@ import { playBerserk } from "./berserk";
 import { playSneakAttack } from "./sneakAttack";
 import { playShadowStep } from "./shadowStep";
 import { playPoisonBlade } from "./poisonBlade";
+import { playPoisonBite } from "./poisonBite";
 import { idxToXY, getTilesInLine } from "@app/shared";
 import { TILE_WIDTH, TILE_HEIGHT } from "../../tiles/tilesetRegistry";
 import { useMapStore } from "../../../features/map/mapStore";
-import { useGameStore } from "../../../features/game/gameStore";
-
-/** Resolve the world-pixel centre of an actor by id, using current game state. */
-function actorWorldPos(actorId: string, mapWidth: number): { px: number; py: number } | undefined {
-	const gs = useGameStore.getState().state;
-	if (!gs) return undefined;
-	const floorState = gs.floors[gs.heroFloorIndex]?.state;
-	if (!floorState) return undefined;
-	const actor = floorState.actorsById[actorId];
-	if (!actor) return undefined;
-	const { x, y } = idxToXY(actor.idx, mapWidth);
-	return { px: x * TILE_WIDTH + TILE_WIDTH / 2, py: y * TILE_HEIGHT + TILE_HEIGHT / 2 };
-}
 
 const fireballHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 	if (ctx.event.targetTileIdx === undefined) return DEFAULT_ANIM_RESULT;
-	playFireball(scene, ctx.heroSprite, ctx.event.targetTileIdx, mapWidth, ctx.onImpact);
+	playFireball(scene, ctx.casterSprite, ctx.event.targetTileIdx, mapWidth, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const chargeHandler: SkillAnimHandlerFn = (ctx, _scene, mapWidth) => {
-	if (!ctx.heroMoved) return DEFAULT_ANIM_RESULT;
-	const { x, y } = idxToXY(ctx.heroIdxAfter, mapWidth);
+	if (!ctx.casterMoved) return DEFAULT_ANIM_RESULT;
+	const { x, y } = idxToXY(ctx.casterIdxAfter, mapWidth);
 	playCharge(
 		_scene,
-		ctx.heroSprite,
+		ctx.casterSprite,
 		x * TILE_WIDTH + TILE_WIDTH / 2,
 		y * TILE_HEIGHT + TILE_HEIGHT / 2,
 		ctx.onImpact,
@@ -55,9 +43,9 @@ const chargeHandler: SkillAnimHandlerFn = (ctx, _scene, mapWidth) => {
 	return { handled: true, fxDeferred: true, newHeroTilePos: { x, y } };
 };
 
-/** Emanates from hero position; calls onImpact immediately so damage numbers show with the burst. */
+/** Emanates from caster position; calls onImpact immediately so damage numbers show with the burst. */
 const warCryHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playWarCry(scene, ctx.heroSprite, ctx.onImpact);
+	playWarCry(scene, ctx.casterSprite, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
@@ -71,7 +59,7 @@ const lightningBoltHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 	let visualTargetIdx = ctx.event.targetTileIdx;
 	if (opacityMask && mapHeight !== undefined) {
 		const line = getTilesInLine(
-			ctx.heroIdxAfter,
+			ctx.casterIdxAfter,
 			ctx.event.targetTileIdx,
 			mapWidth,
 			mapHeight,
@@ -80,77 +68,92 @@ const lightningBoltHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 		if (line.length > 0) visualTargetIdx = line[line.length - 1];
 	}
 
-	playLightningBolt(scene, ctx.heroSprite, visualTargetIdx, mapWidth, ctx.onImpact);
+	playLightningBolt(scene, ctx.casterSprite, visualTargetIdx, mapWidth, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const smokeBombHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playSmokeBomb(scene, ctx.heroSprite, ctx.onImpact);
+	playSmokeBomb(scene, ctx.casterSprite, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
-const magicArrowHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
-	if (!ctx.event.targetActorId) return DEFAULT_ANIM_RESULT;
-	const pos = actorWorldPos(ctx.event.targetActorId, mapWidth);
-	if (!pos) return DEFAULT_ANIM_RESULT;
-	playMagicArrow(scene, ctx.heroSprite, pos.px, pos.py, ctx.onImpact);
+const magicArrowHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playMagicArrow(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
 	return { handled: true, fxDeferred: true };
 };
 
 const shieldHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playShield(scene, ctx.heroSprite, ctx.onImpact);
+	playShield(scene, ctx.casterSprite, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const coneOfColdHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 	if (ctx.event.targetTileIdx === undefined) return DEFAULT_ANIM_RESULT;
-	const { x: hx, y: hy } = idxToXY(ctx.heroIdxAfter, mapWidth);
+	const { x: cx, y: cy } = idxToXY(ctx.casterIdxAfter, mapWidth);
 	const { x: tx, y: ty } = idxToXY(ctx.event.targetTileIdx, mapWidth);
-	const dirAngle = Math.atan2(ty - hy, tx - hx);
-	playConeOfCold(scene, ctx.heroSprite, dirAngle, ctx.onImpact);
+	const dirAngle = Math.atan2(ty - cy, tx - cx);
+	playConeOfCold(scene, ctx.casterSprite, dirAngle, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const mightyLeapHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
-	if (!ctx.heroMoved) return DEFAULT_ANIM_RESULT;
-	const result = playMightyLeap(scene, ctx.heroSprite, ctx.heroIdxAfter, mapWidth, ctx.onImpact);
+	if (!ctx.casterMoved) return DEFAULT_ANIM_RESULT;
+	const result = playMightyLeap(
+		scene,
+		ctx.casterSprite,
+		ctx.casterIdxAfter,
+		mapWidth,
+		ctx.onImpact,
+	);
 	return { handled: true, fxDeferred: true, newHeroTilePos: result.newHeroTilePos };
 };
 
 const cleaveHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playCleave(scene, ctx.heroSprite, ctx.onImpact);
+	playCleave(scene, ctx.casterSprite, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const berserkHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playBerserk(scene, ctx.heroSprite, ctx.onImpact);
+	playBerserk(scene, ctx.casterSprite, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const sneakAttackHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
-	if (!ctx.event.targetActorId) return DEFAULT_ANIM_RESULT;
-	const gs = useGameStore.getState().state;
-	const floorState = gs?.floors[gs?.heroFloorIndex ?? 0]?.state;
-	const targetActor = floorState?.actorsById[ctx.event.targetActorId];
-	if (!targetActor) return DEFAULT_ANIM_RESULT;
-	playSneakAttack(scene, ctx.heroSprite, targetActor.idx, mapWidth, ctx.onImpact);
+	if (ctx.event.targetActorIdx === undefined) return DEFAULT_ANIM_RESULT;
+	playSneakAttack(scene, ctx.casterSprite, ctx.event.targetActorIdx, mapWidth, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
 };
 
 const shadowStepHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
-	if (!ctx.heroMoved) return DEFAULT_ANIM_RESULT;
-	const result = playShadowStep(scene, ctx.heroSprite, ctx.heroIdxAfter, mapWidth, ctx.onImpact);
+	if (!ctx.casterMoved) return DEFAULT_ANIM_RESULT;
+	const result = playShadowStep(
+		scene,
+		ctx.casterSprite,
+		ctx.casterIdxAfter,
+		mapWidth,
+		ctx.onImpact,
+	);
 	return { handled: true, fxDeferred: true, newHeroTilePos: result.newHeroTilePos };
 };
 
 const poisonBladeHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
-	if (!ctx.event.targetActorId) return DEFAULT_ANIM_RESULT;
-	const gs = useGameStore.getState().state;
-	const floorState = gs?.floors[gs?.heroFloorIndex ?? 0]?.state;
-	const targetActor = floorState?.actorsById[ctx.event.targetActorId];
-	if (!targetActor) return DEFAULT_ANIM_RESULT;
-	playPoisonBlade(scene, ctx.heroSprite, targetActor.idx, mapWidth, ctx.onImpact);
+	if (ctx.event.targetActorIdx === undefined) return DEFAULT_ANIM_RESULT;
+	playPoisonBlade(scene, ctx.casterSprite, ctx.event.targetActorIdx, mapWidth, ctx.onImpact);
 	return { handled: true, fxDeferred: true };
+};
+
+const poisonBiteHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playPoisonBite(scene, ctx.targetWorldPos.px, ctx.targetWorldPos.py, ctx.onImpact);
+	// Contact — onImpact is called immediately inside playPoisonBite; no deferral needed.
+	return { handled: true, fxDeferred: false };
 };
 
 /** Map skill ID → animation handler. Add entries here to support new skill animations. */
@@ -169,6 +172,7 @@ export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	sneak_attack: sneakAttackHandler,
 	shadow_step: shadowStepHandler,
 	poison_blade: poisonBladeHandler,
+	poison_bite: poisonBiteHandler,
 };
 
 export { DEFAULT_ANIM_RESULT } from "./types";

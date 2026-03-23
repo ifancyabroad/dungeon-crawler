@@ -9,7 +9,7 @@ import type { SkillDefinition } from "../schemas/skill.js";
 export const characterClassIds = ["mage","rogue","warrior"] as const;
 export type CharacterClassId = (typeof characterClassIds)[number];
 
-export const monsterIds = ["goblin"] as const;
+export const monsterIds = ["goblin","goblin_mage","rat"] as const;
 export type MonsterId = (typeof monsterIds)[number];
 
 export const contentVersion: string = "0.1.0";
@@ -197,7 +197,65 @@ export const monsters: readonly MonsterDefinition[] = [
     ],
     "damageResistances": [],
     "damageImmunities": [],
-    "bloodColor": "#cc0000"
+    "bloodColor": "#cc0000",
+    "skills": []
+  },
+  {
+    "id": "goblin_mage",
+    "name": "Goblin Mage",
+    "description": "A cunning goblin that has learned arcane arts, preferring to blast enemies from a distance.",
+    "baseAttributes": {
+      "strength": 6,
+      "dexterity": 12,
+      "constitution": 10,
+      "intelligence": 14,
+      "wisdom": 10,
+      "charisma": 8
+    },
+    "hp": 10,
+    "armorClass": 11,
+    "tileId": 679,
+    "xpReward": 50,
+    "combatStrategy": "ranged",
+    "idleStrategy": "roam",
+    "challengeRating": 2,
+    "savingThrowProficiencies": [
+      "intelligence"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "bloodColor": "#cc0000",
+    "skills": [
+      "magic_arrow",
+      "fireball"
+    ]
+  },
+  {
+    "id": "rat",
+    "name": "Rat",
+    "description": "A large, diseased rodent with a venomous bite that can infect wounds with poison.",
+    "baseAttributes": {
+      "strength": 4,
+      "dexterity": 14,
+      "constitution": 8,
+      "intelligence": 2,
+      "wisdom": 8,
+      "charisma": 4
+    },
+    "hp": 4,
+    "armorClass": 11,
+    "tileId": 619,
+    "xpReward": 15,
+    "combatStrategy": "melee",
+    "idleStrategy": "roam",
+    "challengeRating": 0,
+    "savingThrowProficiencies": [],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "bloodColor": "#8b0000",
+    "skills": [
+      "poison_bite"
+    ]
   }
 ] as readonly MonsterDefinition[];
 
@@ -347,6 +405,16 @@ export const encounters: readonly EncounterDefinition[] = [
         "monsterId": "goblin",
         "count": 5,
         "weight": 1
+      },
+      {
+        "monsterId": "goblin_mage",
+        "count": 1,
+        "weight": 2
+      },
+      {
+        "monsterId": "goblin_mage",
+        "count": 2,
+        "weight": 1
       }
     ]
   },
@@ -363,6 +431,27 @@ export const encounters: readonly EncounterDefinition[] = [
         "monsterId": "goblin",
         "count": 3,
         "weight": 1
+      },
+      {
+        "monsterId": "goblin_mage",
+        "count": 1,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "rat_pack",
+    "minDepth": 1,
+    "entries": [
+      {
+        "monsterId": "rat",
+        "count": 2,
+        "weight": 3
+      },
+      {
+        "monsterId": "rat",
+        "count": 3,
+        "weight": 1
       }
     ]
   }
@@ -372,7 +461,7 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["arcane_mind","arcane_wisdom","bane","battle_hardened","berserk","bless","bludgeoning_mastery","charge","cleave","cone_of_cold","cure_wounds","dimensional_swap","dominate","empower_spell","evasion","fire_affinity","fire_immunity","fireball","flurry_of_blows","hex","iron_skin","lightning_bolt","mage_armor","magic_arrow","mighty_leap","poison_blade","poison_immunity","predators_instinct","quick_reflexes","reckless_attack","second_wind","shadow_step","shadow_strike","shield","smoke_bomb","sneak_attack","stealth","terrifying_shout","thunderwave","tough","toughness","vampiric_touch","war_cry","warriors_might"] as const;
+export const skillIds = ["arcane_mind","arcane_wisdom","bane","battle_hardened","berserk","bless","bludgeoning_mastery","charge","cleave","cone_of_cold","cure_wounds","dimensional_swap","dominate","empower_spell","evasion","fire_affinity","fire_immunity","fireball","flurry_of_blows","hex","iron_skin","lightning_bolt","mage_armor","magic_arrow","mighty_leap","poison_bite","poison_blade","poison_immunity","predators_instinct","quick_reflexes","reckless_attack","second_wind","shadow_step","shadow_strike","shield","smoke_bomb","sneak_attack","stealth","terrifying_shout","thunderwave","tough","toughness","vampiric_touch","war_cry","warriors_might"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
@@ -799,6 +888,31 @@ export const skills: readonly SkillDefinition[] = [
         "dice": "2d6",
         "damageType": "bludgeoning",
         "scalingStat": "strength"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "poison_bite",
+    "name": "Poison Bite",
+    "description": "A venomous bite that deals piercing damage and injects poison, dealing damage over time.",
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 1,
+    "effects": [
+      {
+        "type": "single_target_damage",
+        "dice": "1d4",
+        "damageType": "piercing",
+        "attackRoll": {
+          "modifierStat": "dexterity",
+          "useProficiency": true
+        },
+        "onHitStatus": {
+          "statusId": "poisoned",
+          "durationTurns": 3,
+          "value": 1
+        }
       }
     ]
   },

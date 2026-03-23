@@ -56,6 +56,11 @@ export function resolveSkill(
 
 	let floorState = initialFloorState;
 	let currentCaster = caster;
+	// Snapshot the target actor's tile index before any effects run so animation
+	// handlers can fly projectiles to the cast-time position, not the post-turn position.
+	const targetActorIdx =
+		targetActorId !== undefined ? initialFloorState.actorsById[targetActorId]?.idx : undefined;
+
 	const events: GameEvent[] = [
 		{
 			type: "skill_used",
@@ -63,6 +68,7 @@ export function resolveSkill(
 			skillId: skillDef.id,
 			targetTileIdx,
 			targetActorId,
+			targetActorIdx,
 		},
 	];
 

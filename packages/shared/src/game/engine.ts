@@ -83,32 +83,31 @@ function computeTargetCell(
 }
 
 /**
- * Decrement cooldownRemaining by 1 for every skill on the hero.
+ * Decrement cooldownRemaining by 1 for every skill on every living actor on the hero's floor.
  * Called at the end of every player turn so cooldowns count down with each action.
  */
 function tickSkillCooldowns(state: GameState): GameState {
 	const fi = state.heroFloorIndex;
 	const floor = state.floors[fi];
 	if (!floor) return state;
-	const hero = floor.state.actorsById[state.heroId];
-	if (!hero) return state;
 
-	const updatedSkills: Record<string, { level?: number; cooldownRemaining: number }> = {};
-	for (const [id, s] of Object.entries(hero.skills)) {
-		updatedSkills[id] = {
-			...s,
-			cooldownRemaining: Math.max(0, s.cooldownRemaining - 1),
-		};
+	let actorsById = floor.state.actorsById;
+	for (const [actorId, actor] of Object.entries(actorsById)) {
+		if (!actor.alive || Object.keys(actor.skills).length === 0) continue;
+		const updatedSkills: Record<string, { level?: number; cooldownRemaining: number }> = {};
+		for (const [id, s] of Object.entries(actor.skills)) {
+			updatedSkills[id] = {
+				...s,
+				cooldownRemaining: Math.max(0, s.cooldownRemaining - 1),
+			};
+		}
+		actorsById = { ...actorsById, [actorId]: { ...actor, skills: updatedSkills } };
 	}
 
-	const updatedHero: Actor = { ...hero, skills: updatedSkills };
 	const newFloors = state.floors.slice();
 	newFloors[fi] = {
 		...floor,
-		state: {
-			...floor.state,
-			actorsById: { ...floor.state.actorsById, [state.heroId]: updatedHero },
-		},
+		state: { ...floor.state, actorsById },
 	};
 	return { ...state, floors: newFloors };
 }

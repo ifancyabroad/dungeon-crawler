@@ -34,6 +34,7 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		encounterTable: [
 			{ encounterId: "goblin_patrol", weight: 3 },
 			{ encounterId: "goblin_guard", weight: 1 },
+			{ encounterId: "rat_pack", weight: 2 },
 		],
 		enemyDensity: 0.3,
 		itemDensity: 0.0,

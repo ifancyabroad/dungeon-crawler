@@ -113,6 +113,8 @@ export interface MonsterInit {
 	savingThrowProficiencies: AbilityName[];
 	combatStrategy: MonsterAIState["combatStrategy"];
 	idleStrategy: MonsterAIState["idleStrategy"];
+	/** Skill IDs this monster spawns with. Each skill starts with cooldownRemaining: 0. */
+	skills: string[];
 }
 
 /** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */
@@ -211,6 +213,12 @@ export type GameEvent =
 			targetTileIdx?: number;
 			/** Actor id the skill was targeted at (actor-targeted skills). */
 			targetActorId?: string;
+			/**
+			 * Tile index of the target actor at the moment of casting, snapshotted before
+			 * enemy turns run. Handlers must use this (not the store) to position animations
+			 * so projectiles fly to where the target was hit, not where they ended up.
+			 */
+			targetActorIdx?: number;
 	  }
 	| { type: "status_applied"; actorId: ActorId; statusId: string; durationTurns: number }
 	| {
@@ -287,6 +295,24 @@ export type GameEvent =
 			targetNewIdx: number;
 			skillId: string;
 	  };
+
+/**
+ * The subset of `GameEvent` that represents direct damage output from a skill cast:
+ * a hit on a single target (`skill_hit`) or an area-of-effect hit (`area_hit`).
+ * Both carry `attackerId`, which is the casting actor.
+ *
+ * Use `isSkillDamageEvent` to narrow `GameEvent` to this type. This lets consumers
+ * identify which events belong to a specific skill cast without hardcoding type names.
+ */
+export type SkillDamageEvent = Extract<GameEvent, { type: "skill_hit" | "area_hit" }>;
+
+/**
+ * Type guard: returns true when `e` is a direct damage output of a skill cast
+ * (`skill_hit` or `area_hit`). The `attackerId` field on the narrowed type is the caster.
+ */
+export function isSkillDamageEvent(e: GameEvent): e is SkillDamageEvent {
+	return e.type === "skill_hit" || e.type === "area_hit";
+}
 
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;

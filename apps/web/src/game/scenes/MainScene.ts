@@ -344,7 +344,11 @@ export default class MainScene extends Phaser.Scene {
 
 			const heroMoved = storeState.hero.idx !== sync.lastSyncedIdx;
 
-			// Check for a hero skill event to drive special animations.
+			// Hero skill animations are handled here, before dispatchFxAndSync, because a
+			// hero skill may defer the entire FX pipeline (e.g. charge: the hero sprite
+			// flies to the target before deaths and damage numbers are shown). Non-hero
+			// skill animations are handled inside dispatchFxAndSync via dispatchNonHero,
+			// where they can defer only their own damage numbers without affecting other FX.
 			const skillUsedEvent = events.find(
 				(e): e is Extract<typeof e, { type: "skill_used" }> =>
 					e.type === "skill_used" && e.actorId === gs.heroId,
@@ -403,7 +407,7 @@ export default class MainScene extends Phaser.Scene {
 
 	/**
 	 * Dispatch events to all FX managers (attack bumps, damage numbers, death particles)
-	 * and then sync the monster sprite map.  Extracted so it can be called either
+	 * and then sync the monster sprite map. Extracted so it can be called either
 	 * immediately (normal turns) or deferred inside a skill animation callback (fireball,
 	 * charge) so that monsters remain visible until the animation resolves.
 	 */
@@ -420,6 +424,15 @@ export default class MainScene extends Phaser.Scene {
 				);
 			};
 
+			const claimedEvents =
+				this.skillAnimController?.dispatchNonHero(
+					events,
+					gs.heroId,
+					(id) => this.monsterSprites.get(id),
+					getActorIdx,
+					(evts) => this.damageNumbers?.handleEvents(evts, getActorIdx),
+				) ?? new Set<GameEvent>();
+
 			this.attackAnimator?.playEvents(
 				events,
 				gs.heroId,
@@ -428,7 +441,11 @@ export default class MainScene extends Phaser.Scene {
 				getActorIdx,
 				getBloodColor,
 			);
-			this.damageNumbers?.handleEvents(events, getActorIdx);
+
+			// Exclude events already claimed by a skill animation to avoid double-counting.
+			const mainPassEvents =
+				claimedEvents.size > 0 ? events.filter((e) => !claimedEvents.has(e)) : events;
+			this.damageNumbers?.handleEvents(mainPassEvents, getActorIdx);
 			this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
 		}
 		this.syncMonsters(gs);

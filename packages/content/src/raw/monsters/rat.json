@@ -1,0 +1,25 @@
+{
+	"id": "rat",
+	"name": "Rat",
+	"description": "A large, diseased rodent with a venomous bite that can infect wounds with poison.",
+	"baseAttributes": {
+		"strength": 4,
+		"dexterity": 14,
+		"constitution": 8,
+		"intelligence": 2,
+		"wisdom": 8,
+		"charisma": 4
+	},
+	"hp": 4,
+	"armorClass": 11,
+	"damageResistances": [],
+	"damageImmunities": [],
+	"tileId": 619,
+	"xpReward": 15,
+	"combatStrategy": "melee",
+	"idleStrategy": "roam",
+	"challengeRating": 0,
+	"savingThrowProficiencies": [],
+	"bloodColor": "#8b0000",
+	"skills": ["poison_bite"]
+}

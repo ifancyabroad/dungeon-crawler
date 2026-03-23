@@ -128,16 +128,15 @@ Features are listed in priority order. Implementation details below are starting
 
 **Goal:** Increase combat variety across floors. Each floor should feel meaningfully different from the last.
 
-**Scope:**
+**Shipped:** Rat (melee, poison bite skill) and Goblin Mage (ranged AI, magic arrow + fireball skills) added to floor 1. A `ranged` combat AI strategy is now available for use in future monster definitions. Monsters can use active skills autonomously — skill definitions, cooldown ticking, and resolution all go through the same engine path as hero skills.
 
-- At minimum one new monster per floor theme (targeting ~4–6 monsters total at launch).
-- Each monster defined in `packages/content/src/raw/monsters/` following the existing `goblin.json` pattern.
-- Floor encounter tables in `floorConfigs.ts` updated to reference new monsters.
+**Remaining scope:**
+
+- Additional monster types for floors 2–4 (targeting ~6–8 total at launch).
 - Boss on floor 4 replaced with a unique monster and encounter.
 
-<!-- TODO: Define the monster roster.
-     - What are the new monster names, stats (HP, AC, XP), and AI strategies?
-     - Should any monsters have a non-melee AI strategy (ranged, flee, group-buff)?
+<!-- TODO: Define the remaining monster roster.
+     - What are the new monster names, stats (HP, AC, XP), and AI strategies for floors 2–4?
      - What should the floor 4 boss look like mechanically? -->
 
 ---

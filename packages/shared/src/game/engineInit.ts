@@ -169,7 +169,7 @@ export function spawnMonster(
 		attributes: { ...init.attributes },
 		damageResistances: [...init.damageResistances],
 		damageImmunities: [...init.damageImmunities],
-		skills: {},
+		skills: Object.fromEntries(init.skills.map((id) => [id, { cooldownRemaining: 0 }])),
 		activeEffects: [],
 		numericBuffs: {},
 		passiveDamageBonuses: [],
