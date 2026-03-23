@@ -3,10 +3,10 @@ import { VISION_RADIUS } from "./config";
 import type { Rng } from "../rng";
 import type { ActiveSkillDefinition, SkillDefinition } from "../skills";
 import { resolveSkill, hasActiveEffect, STATUS_HOOKS } from "../skills";
-import { resolveAttack } from "../combat/combat";
+import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { UNARMED_WEAPON } from "../combat/types";
-import { runMonsterAI, type MonsterAIState, type CombatStrategyTag } from "./monsterAI";
+import { runMonsterAI, type MonsterAIState, type CombatStrategyTag } from "./strategies";
 import { computeVisibility } from "../map/visibility";
 import { idxToXY } from "./engineUtils";
 

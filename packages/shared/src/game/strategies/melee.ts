@@ -13,7 +13,7 @@
  * 4. Otherwise → { kind: "idle" } to hand off to the idle strategy.
  */
 
-import type { AIContext, AITurnResult, MonsterAIState } from "../monsterAI";
+import type { AIContext, AITurnResult, MonsterAIState } from "./types";
 import { getAdjacentIndices } from "../engine";
 import { bfsNextStep } from "../../map/pathfinding";
 

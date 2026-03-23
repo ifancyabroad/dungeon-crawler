@@ -13,7 +13,7 @@ import { createInitialRngState } from "../rng";
 import { regenerateBaseMaps, type BaseLayerFloor } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { computeUnarmoredAC } from "../combat/dice";
-import { type MonsterAIState } from "./monsterAI";
+import { type MonsterAIState } from "./strategies/types";
 import { idxToXY } from "./engineUtils";
 
 const DEFAULT_ATTRIBUTES = {

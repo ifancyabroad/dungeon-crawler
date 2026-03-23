@@ -18,7 +18,7 @@ import type {
 import { createRngFromState } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
-import { resolveAttack } from "../combat/combat";
+import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { UNARMED_WEAPON } from "../combat/types";
 import {

@@ -6,7 +6,7 @@
 import type { Action } from "./actions";
 import type { AttackResult, DamagePacket } from "../combat/types";
 import type { DamageType } from "../combat/damageTypes";
-import type { MonsterAIState } from "./monsterAI";
+import type { MonsterAIState } from "./strategies/types";
 import type { FloorConfig } from "../map/types";
 import type { CombatAdjustments } from "./schemas";
 

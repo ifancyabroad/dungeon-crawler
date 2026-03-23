@@ -6,7 +6,7 @@
  * wander or follow must opt in with an explicit idleStrategy in content.
  */
 
-import type { AIContext, AIResult } from "../monsterAI";
+import type { AIContext, AIResult } from "./types";
 
 export function runStationaryAI(_ctx: AIContext): AIResult {
 	return { kind: "idle" };

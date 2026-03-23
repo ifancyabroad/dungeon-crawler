@@ -12,7 +12,7 @@
  *    Chebyshev distance from the nearest visible enemy.
  */
 
-import type { AIContext, AITurnResult, MonsterAIState } from "../monsterAI";
+import type { AIContext, AITurnResult, MonsterAIState } from "./types";
 import { getActorAtIdx, getAdjacentIndices } from "../engine";
 
 export function runFrightenedAI(ctx: AIContext): AITurnResult {

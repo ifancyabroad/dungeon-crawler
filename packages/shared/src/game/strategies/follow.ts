@@ -10,7 +10,7 @@
  *   - No valid path exists.
  */
 
-import type { AIContext, AIResult } from "../monsterAI";
+import type { AIContext, AIResult } from "./types";
 import { bfsNextStep } from "../../map/pathfinding";
 
 export function runFollowAI(ctx: AIContext): AIResult {

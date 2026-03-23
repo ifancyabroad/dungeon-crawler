@@ -7,7 +7,7 @@
 import type { Actor, FloorState, GameEvent } from "../../game/types";
 import type { Rng } from "../../rng";
 import type { ChargeAttackEffect } from "../types";
-import { resolveAttack } from "../../combat/combat";
+import { resolveAttack } from "../../combat/resolveAttack";
 import { UNARMED_WEAPON } from "../../combat/types";
 import { rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";

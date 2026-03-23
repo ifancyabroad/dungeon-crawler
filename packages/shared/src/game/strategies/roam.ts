@@ -5,7 +5,7 @@
  * Returns idle if all adjacent tiles are blocked.
  */
 
-import type { AIContext, AIResult } from "../monsterAI";
+import type { AIContext, AIResult } from "./types";
 import { getActorAtIdx, getAdjacentIndices } from "../engine";
 
 export function runRoamAI(ctx: AIContext): AIResult {

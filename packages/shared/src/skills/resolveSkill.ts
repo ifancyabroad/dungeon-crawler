@@ -13,15 +13,15 @@ import type {
 	ActiveSkillEffectDescriptor,
 } from "./types";
 import { applyAreaDamage } from "./effects/areaDamage";
-import { applyStatusEffect } from "./effects/applyStatus";
-import { applyShieldEffect } from "./effects/applyShield";
+import { applyStatusEffect } from "./effects/status";
+import { applyShieldEffect } from "./effects/shield";
 import { applyChargeAttack } from "./effects/chargeAttack";
-import { applyLeapAttack } from "./effects/applyLeapAttack";
+import { applyLeapAttack } from "./effects/leapAttack";
 import { applyLineDamage } from "./effects/lineDamage";
 import { applyConeDamage } from "./effects/coneDamage";
 import { applySingleTargetDamage } from "./effects/singleTargetDamage";
-import { applySneakAttack } from "./effects/applySneakAttack";
-import { applyShadowStep } from "./effects/applyShadowStep";
+import { applySneakAttack } from "./effects/sneakAttack";
+import { applyShadowStep } from "./effects/shadowStep";
 import { applyHealSelf } from "./effects/healSelf";
 import { applyHealTarget } from "./effects/healTarget";
 import { applyPushActor } from "./effects/pushActor";
