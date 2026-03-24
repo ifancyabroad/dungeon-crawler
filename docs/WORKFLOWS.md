@@ -9,7 +9,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 1. Create `packages/content/src/raw/npcs/<name>.json` following the shape defined by `NpcSchema` in `packages/content/src/schemas/npc.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Set `faction` (`"hostile"` or `"player"`) and `role` (`"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`). Include an `activeSkills` array — use `[]` if the NPC has no active skills, or list skill IDs for NPCs that should use active skills autonomously. Passive skills go in the `passiveSkills` array; they are applied automatically at spawn.
 2. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
 3. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new NPC via `npcId`.
-4. Update floor encounter tables in `packages/shared/src/map/floorConfigs.ts` to include the new encounter IDs.
+4. Update floor encounter tables in `packages/shared/src/config/map.ts` (`FLOOR_CONFIGS`) to include the new encounter IDs.
 5. Verify: `pnpm typecheck && pnpm lint`.
 
 ---
@@ -51,7 +51,7 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 ### Active skill
 
 1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing active skill file as a reference.
-2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the skill applies a status that only modifies numeric values (e.g. bonus damage, incoming damage adjustment), define those adjustments inline in the skill JSON — no engine code changes are needed. If the status requires engine-wired behaviour (e.g. damage-over-time, on-expiry side effects), add its ID to `packages/shared/src/skills/statusHooks.ts` and implement the hook in `activeEffects.ts`.
+2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the skill applies a status that only modifies numeric values (e.g. bonus damage, incoming damage adjustment), define those adjustments inline in the skill JSON — no engine code changes are needed. If the status requires engine-wired behaviour (e.g. damage-over-time, on-expiry side effects), add its ID to `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`) and implement the hook in `activeEffects.ts`.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the relevant consumer:
     - **Hero class skill**: add to the class definition in `packages/content/src/raw/classes/<class>.json`.
@@ -93,7 +93,7 @@ NPC AI has two independent phases — **combat** (what to do when enemies are vi
 1. Add the new tag to `CombatStrategyTag` in `packages/shared/src/game/strategies/types.ts`.
 2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the `CombatStrategyFn` signature. When the NPC has nothing to fight, return `{ kind: "idle" }` so the idle layer takes over. Access `ctx.getSkillDef` if the strategy needs to inspect skill range or target type.
 3. Register the function in the combat strategy registry in `packages/shared/src/game/strategies/index.ts`. TypeScript will error if any tag is missing, keeping the registry exhaustive.
-4. If a status effect should trigger this strategy, add the status ID to `statusHooks.ts` and wire a per-turn override in `processEnemyTurns` following the existing `FRIGHTENED` pattern.
+4. If a status effect should trigger this strategy, add the status ID to `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`) and wire a per-turn override in `processEnemyTurns` following the existing `FRIGHTENED` pattern.
 5. Add the new tag to the `NpcAIStateSchema` in `packages/shared/src/game/schemas.ts`.
 6. Verify: `pnpm typecheck && pnpm lint`.
 

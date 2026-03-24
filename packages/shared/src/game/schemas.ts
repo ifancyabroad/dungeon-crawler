@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { DAMAGE_TYPES } from "../combat/damageTypes";
+import { DAMAGE_TYPES } from "../config/combat";
 
 const DamageTypeSchema = z.enum(DAMAGE_TYPES);
 

@@ -13,7 +13,7 @@ import { getActorProficiencyBonus } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { hasActiveEffect } from "../activeEffects";
-import { STATUS_HOOKS } from "../statusHooks";
+import { STATUS_HOOKS } from "../../config/skills";
 import { idxToXY } from "../../game/engineUtils";
 
 function chebyshevDistance(ax: number, ay: number, bx: number, by: number): number {

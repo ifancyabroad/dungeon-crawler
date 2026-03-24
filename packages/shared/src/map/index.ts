@@ -1,21 +1,8 @@
 /**
- * Map: deterministic dungeon/map generation.
- * Re-exports public API for this domain.
+ * Map domain: deterministic dungeon generation and map utilities.
+ * Tunables (`TILE_TYPE`, `FLOOR_CONFIGS`, etc.) live in `config/map.ts` and are exported from `@app/shared` via `./config`.
  */
 
-export {
-	DEFAULT_BSP_PARAMS,
-	DEFAULT_CAVE_PARAMS,
-	DEFAULT_DECORATION_WEIGHTS,
-	DEFAULT_FLOOR_CONFIG,
-	DEFAULT_FLOOR_THEME,
-	DEFAULT_MAP_ALGORITHM,
-	DEFAULT_MAP_HEIGHT,
-	DEFAULT_MAP_WIDTH,
-	DEFAULT_SCATTER_CHANCE,
-	DEFAULT_SHAPE_VOID_TARGET,
-	TILE_TYPE,
-} from "./config";
 export type {
 	AlgorithmParams,
 	AnalyzedRoom,
@@ -36,8 +23,7 @@ export type {
 	VaultPlacement,
 	VaultSpawnEntry,
 } from "./types";
-export { FLOOR_THEMES } from "./themes";
-export type { FloorTheme } from "./themes";
+export type { FloorTheme } from "./types";
 export { buildGroundLayer, buildWallLayer } from "./build";
 export { generateMap } from "./generate";
 export { wouldStayConnected } from "./connectivity";
@@ -52,7 +38,6 @@ export {
 	type BaseLayerFloor,
 	type RegenerateOptions,
 } from "./baseLayers";
-export { FLOOR_CONFIGS } from "./floorConfigs";
 export { computeOpacityMask, computeVisibility, mergeExplored } from "./visibility";
 export { bfsNextStep } from "./pathfinding";
 export { analyzeRooms } from "./roomAnalysis";

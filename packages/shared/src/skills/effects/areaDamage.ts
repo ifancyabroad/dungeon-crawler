@@ -12,6 +12,7 @@ import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThr
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY } from "../../game/engineUtils";
+import { SKILLS_CONFIG } from "../../config";
 
 /** Chebyshev distance (diagonal counts as 1). */
 function chebyshevDistance(ax: number, ay: number, bx: number, by: number): number {
@@ -95,7 +96,9 @@ export function applyAreaDamage(
 			});
 
 			if (save.success) {
-				const multiplier = effect.savingThrow.successDamageMultiplier ?? 0.5;
+				const multiplier =
+					effect.savingThrow.successDamageMultiplier ??
+					SKILLS_CONFIG.defaults.saveSuccessDamageMultiplier;
 				packetsToResolve = rawPackets.map((p) => ({
 					...p,
 					// Match the engine's resistance behaviour (floors half damage) to keep HP integers.

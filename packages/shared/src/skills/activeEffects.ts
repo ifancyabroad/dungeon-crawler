@@ -12,7 +12,7 @@
 
 import type { Actor, GameEvent, GameState } from "../game/types";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
-import { STATUS_HOOKS } from "./statusHooks";
+import { STATUS_HOOKS } from "../config/skills";
 
 /**
  * Returns true if the actor has an active effect with the given id and at

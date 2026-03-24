@@ -1,4 +1,4 @@
-import type { DamageType } from "./damageTypes";
+import type { DamageType } from "../config/combat";
 
 /** Combat result types. JSON-serializable for events and replay. */
 
@@ -31,6 +31,3 @@ export interface WeaponDice {
 	/** Damage type this weapon deals. */
 	damageType: DamageType;
 }
-
-/** Default unarmed weapon: 1d4. */
-export const UNARMED_WEAPON: WeaponDice = { sides: 4, count: 1, damageType: "bludgeoning" };

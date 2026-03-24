@@ -5,7 +5,7 @@
 
 import type { Action } from "./actions";
 import type { AttackResult, DamagePacket } from "../combat/types";
-import type { DamageType } from "../combat/damageTypes";
+import type { DamageType } from "../config/combat";
 import type { NpcAIState } from "./strategies/types";
 import type { FloorConfig } from "../map/types";
 import type { CombatAdjustments } from "./schemas";
@@ -341,8 +341,6 @@ export interface Floor {
 export type RngState =
 	| { algo: "xorshift32"; s: number }
 	| { algo: "sfc32"; a: number; b: number; c: number; d: number };
-
-export const MAP_GEN_VERSION = 2;
 
 /**
  * Pending player interaction — when non-null, the game is "paused":

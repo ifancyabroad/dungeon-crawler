@@ -17,7 +17,7 @@
  * collision after injection using the `collision` flag on each decorationOverride entry.
  */
 
-import { TILE_TYPE } from "./config";
+import { TILE_TYPE } from "../config/map";
 import type { Rng } from "../rng";
 import type { AnalyzedRoom, FloorConfig, RawMap, VaultDef, VaultPlacement } from "./types";
 

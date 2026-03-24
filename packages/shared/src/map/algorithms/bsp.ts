@@ -5,7 +5,7 @@
  */
 
 import type { Rng } from "../../rng";
-import { TILE_TYPE } from "../config";
+import { TILE_TYPE } from "../../config/map";
 import type { FloorConfig, RawMap, BspParams } from "../types";
 import { buildShapeMask, closestCell } from "./shared";
 

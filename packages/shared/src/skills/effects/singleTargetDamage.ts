@@ -22,6 +22,7 @@ import {
 } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
+import { SKILLS_CONFIG } from "../../config";
 
 export function applySingleTargetDamage(
 	effect: SingleTargetDamageEffect,
@@ -143,7 +144,9 @@ export function applySingleTargetDamage(
 		});
 
 		if (save.success) {
-			const multiplier = effect.savingThrow.successDamageMultiplier ?? 0.5;
+			const multiplier =
+				effect.savingThrow.successDamageMultiplier ??
+				SKILLS_CONFIG.defaults.saveSuccessDamageMultiplier;
 			packetsToResolve = rawPackets.map((p) => ({
 				...p,
 				rawAmount: Math.floor(p.rawAmount * multiplier),

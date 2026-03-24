@@ -10,7 +10,7 @@
  * corner-peeking when the hero is adjacent to a wall edge.
  */
 
-import { TILE_TYPE } from "./config";
+import { TILE_TYPE } from "../config/map";
 
 /**
  * Build a flat Uint8Array where 1 = opaque (blocks LoS), 0 = transparent.

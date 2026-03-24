@@ -7,14 +7,14 @@ import type {
 	HeroInit,
 	NpcInit,
 } from "./types";
-import { MAP_GEN_VERSION } from "./types";
-import { VISION_RADIUS } from "./config";
+import { VISION_RADIUS } from "../config/game";
 import { createInitialRngState } from "../rng";
 import { regenerateBaseMaps, type BaseLayerFloor } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { computeUnarmoredAC } from "../combat/dice";
 import { type NpcAIState } from "./strategies/types";
 import { idxToXY } from "./engineUtils";
+import { MAP_GEN_VERSION } from "../config/map";
 
 const DEFAULT_ATTRIBUTES = {
 	strength: 10,

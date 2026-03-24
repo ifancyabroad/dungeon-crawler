@@ -176,7 +176,7 @@ When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and 
 
 ### Actor
 
-Every entity on the map (hero and NPCs) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a `faction` tag (`"player"` | `"hostile"`) used for AI targeting, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `statusHooks.ts`), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
+Every entity on the map (hero and NPCs) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a `faction` tag (`"player"` | `"hostile"`) used for AI targeting, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`)), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
 
 ### Actions
 
@@ -190,7 +190,7 @@ Actions represent player intent only — never outcomes. The `Action` discrimina
 
 ## Map Generation
 
-Maps are generated deterministically from `seed + floorIndex`. Generation parameters, biome themes, and algorithm selection for each floor live in `packages/shared/src/map/floorConfigs.ts`.
+Maps are generated deterministically from `seed + floorIndex`. Generation parameters, biome themes, and algorithm selection for each floor live in `packages/shared/src/config/map.ts`.
 
 The pipeline:
 
@@ -233,7 +233,7 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
-Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/skills/statusHooks.ts`. Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (NPC vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction so NPCs attack their former allies and follow the hero when idle), and `FRIGHTENED` (override combat behaviour so the NPC flees from visible enemies).
+Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`). Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (NPC vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction so NPCs attack their former allies and follow the hero when idle), and `FRIGHTENED` (override combat behaviour so the NPC flees from visible enemies).
 
 Active skill attacks (`single_target_damage`, `multi_strike`) support an optional `onHitStatus` field. When set, the named status is applied to the target on every successful hit — regardless of whether damage was dealt (e.g. a hit that was fully resisted still triggers the status).
 

@@ -11,6 +11,7 @@ import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThr
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { getTilesInLine } from "../geometry";
+import { SKILLS_CONFIG } from "../../config";
 
 export function applyLineDamage(
 	effect: LineDamageEffect,
@@ -75,7 +76,9 @@ export function applyLineDamage(
 			});
 
 			if (save.success) {
-				const multiplier = effect.savingThrow.successDamageMultiplier ?? 0.5;
+				const multiplier =
+					effect.savingThrow.successDamageMultiplier ??
+					SKILLS_CONFIG.defaults.saveSuccessDamageMultiplier;
 				packetsToResolve = rawPackets.map((p) => ({
 					...p,
 					rawAmount: Math.floor(p.rawAmount * multiplier),

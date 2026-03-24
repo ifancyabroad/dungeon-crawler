@@ -1,8 +1,9 @@
 /**
- * Map types. Constants and default config live in config.ts.
+ * Map types. Literals live in `packages/shared/src/config/map.ts`.
  */
 
-import type { FloorTheme } from "./themes";
+/** Theme ids — keep in sync with `FLOOR_THEMES` in `config/map.ts`. */
+export type FloorTheme = "green_forest" | "orange_forest" | "yellow_forest" | "dark_forest";
 
 // ---------------------------------------------------------------------------
 // Algorithm parameter bags

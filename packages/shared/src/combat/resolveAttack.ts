@@ -6,7 +6,7 @@
 import type { Rng } from "../rng";
 import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
-import { UNARMED_WEAPON } from "./types";
+import { UNARMED_WEAPON } from "../config/combat";
 import { rollD20Adjusted, rollDice, abilityModifier, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
 

@@ -37,7 +37,7 @@ The game currently ships with **three starter classes**. Class definitions (incl
 
 ### Floors
 
-The dungeon currently has **four floors** with increasing difficulty and different generation styles. Floor progression and generation parameters live in `packages/shared/src/map/floorConfigs.ts`.
+The dungeon currently has **four floors** with increasing difficulty and different generation styles. Floor progression and generation parameters live in `packages/shared/src/config/map.ts` (e.g. `FLOOR_CONFIGS`).
 
 ### Combat
 

@@ -3,7 +3,7 @@
  * Used by both client (to allow/disallow move input) and server (to validate move actions).
  */
 
-import { TILE_TYPE } from "./config";
+import { TILE_TYPE } from "../config/map";
 
 /**
  * Returns true if the cell (x, y) is walkable: in bounds, floor, not wall, not in blockedMask.

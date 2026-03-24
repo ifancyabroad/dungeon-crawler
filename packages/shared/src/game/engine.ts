@@ -20,24 +20,19 @@ import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
-import { UNARMED_WEAPON } from "../combat/types";
-import {
-	resolveSkill,
-	hasActiveEffect,
-	tickActiveEffects,
-	applyPassiveSkill,
-	STATUS_HOOKS,
-} from "../skills";
+import { UNARMED_WEAPON } from "../config/combat";
+import { resolveSkill, hasActiveEffect, tickActiveEffects, applyPassiveSkill } from "../skills";
+import { STATUS_HOOKS } from "../config/skills";
 import type { ActiveSkillDefinition } from "../skills";
 import { idxToXY, xyToIdx, getHero, getActorAtIdx, DIRECTION_DELTA } from "./engineUtils";
 import type { ApplyActionContext, ApplyActionResult } from "./engineContext";
 import { createActionContext, createEmptyFloorState } from "./engineContext";
 import { processEnemyTurns } from "./engineEnemyTurns";
 import { grantXpForKill, sampleWithoutReplacement } from "./engineLevelUp";
-import { VISION_RADIUS } from "./config";
+import { VISION_RADIUS } from "../config/game";
 
 // ---------------------------------------------------------------------------
-// Re-exports — preserve the public surface so game/index.ts is unchanged
+// Re-exports for consumers that import implementation helpers from `engine/`
 // ---------------------------------------------------------------------------
 
 export {

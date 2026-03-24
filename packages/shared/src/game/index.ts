@@ -24,7 +24,7 @@ export type {
 	SkillDamageEvent,
 	TileId,
 } from "./types";
-export { isSkillDamageEvent, MAP_GEN_VERSION } from "./types";
+export { isSkillDamageEvent } from "./types";
 export {
 	ActionSchema,
 	AttackActionSchema,
@@ -62,7 +62,6 @@ export {
 	type ApplyActionResult,
 	type ClassSkillPools,
 } from "./engine";
-export { VISION_RADIUS, XP_PER_LEVEL, BASE_NPCS_PER_FLOOR } from "./config";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
 	AbilityNameSchema,

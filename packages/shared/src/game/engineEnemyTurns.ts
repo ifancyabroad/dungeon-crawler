@@ -1,11 +1,12 @@
 import type { ActorId, FloorState, GameEvent } from "./types";
-import { VISION_RADIUS } from "./config";
+import { VISION_RADIUS } from "../config/game";
 import type { Rng } from "../rng";
 import type { ActiveSkillDefinition, SkillDefinition } from "../skills";
-import { resolveSkill, hasActiveEffect, STATUS_HOOKS } from "../skills";
+import { resolveSkill, hasActiveEffect } from "../skills";
+import { STATUS_HOOKS } from "../config/skills";
 import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
-import { UNARMED_WEAPON } from "../combat/types";
+import { UNARMED_WEAPON } from "../config/combat";
 import { runNpcAI, type NpcAIState, type CombatStrategyTag } from "./strategies";
 import { computeVisibility } from "../map/visibility";
 import { idxToXY } from "./engineUtils";

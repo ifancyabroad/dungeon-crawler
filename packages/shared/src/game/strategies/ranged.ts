@@ -17,9 +17,10 @@
 import type { AIContext, AIResult, AITurnResult, NpcAIState } from "./types";
 import { getAdjacentIndices } from "../engine";
 import { bfsNextStep } from "../../map/pathfinding";
+import { GAME_CONFIG } from "../../config";
 
 /** Preferred stand-off distance in tiles (Chebyshev). */
-const IDEAL_RANGE = 3;
+const IDEAL_RANGE = GAME_CONFIG.ai.ranged.idealRange;
 
 export function runRangedAI(ctx: AIContext): AITurnResult {
 	const {
@@ -95,7 +96,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 				if (skillState.cooldownRemaining !== 0) continue;
 				const def = getSkillDef(skillId);
 				if (!def || def.skillType !== "active") continue;
-				if ((def.range ?? 0) < 2) continue;
+				if ((def.range ?? 0) < GAME_CONFIG.ai.ranged.minRangedSkillRange) continue;
 				if (def.targetType === "none") continue;
 				// Prefer higher range, then actor-targeted over tile-targeted
 				if (

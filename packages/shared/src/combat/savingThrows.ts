@@ -1,6 +1,7 @@
 import type { Rng } from "../rng";
 import type { Actor, AbilityName } from "../game/types";
 import { abilityModifier, rollD20, rollDiceExpr } from "./dice";
+import { COMBAT_CONFIG } from "../config";
 
 /**
  * Proficiency bonus by actor level.
@@ -11,10 +12,9 @@ import { abilityModifier, rollD20, rollDiceExpr } from "./dice";
  * Levels 17-20: +6
  */
 export function proficiencyBonusFromLevel(level: number): number {
-	if (level >= 17) return 6;
-	if (level >= 13) return 5;
-	if (level >= 9) return 4;
-	if (level >= 5) return 3;
+	for (const threshold of COMBAT_CONFIG.proficiency.levelThresholds) {
+		if (level >= threshold.min) return threshold.bonus;
+	}
 	return 2;
 }
 
@@ -30,13 +30,9 @@ export function proficiencyBonusFromLevel(level: number): number {
  * 29-30: +9
  */
 export function proficiencyBonusFromChallengeRating(cr: number): number {
-	if (cr >= 29) return 9;
-	if (cr >= 25) return 8;
-	if (cr >= 21) return 7;
-	if (cr >= 17) return 6;
-	if (cr >= 13) return 5;
-	if (cr >= 9) return 4;
-	if (cr >= 5) return 3;
+	for (const threshold of COMBAT_CONFIG.proficiency.challengeRatingThresholds) {
+		if (cr >= threshold.min) return threshold.bonus;
+	}
 	return 2;
 }
 
@@ -56,7 +52,7 @@ export function getActorProficiencyBonus(actor: Actor): number {
 export function computeSavingThrowDC(caster: Actor, dcStat: AbilityName): number {
 	const pb = getActorProficiencyBonus(caster);
 	const mod = abilityModifier(caster.attributes[dcStat]);
-	return 8 + pb + mod;
+	return COMBAT_CONFIG.rules.saveDcBase + pb + mod;
 }
 
 /**
@@ -97,7 +93,7 @@ export function resolveSavingThrow(params: {
 
 	const totalRoll = naturalRoll + abilityMod + proficiencyBonusApplied + saveDiceBonusTotal;
 
-	if (naturalRoll === 20) {
+	if (naturalRoll === COMBAT_CONFIG.rules.naturalRollAutoSuccess) {
 		return {
 			naturalRoll,
 			abilityModifier: abilityMod,
@@ -107,7 +103,7 @@ export function resolveSavingThrow(params: {
 			auto: "auto_success",
 		};
 	}
-	if (naturalRoll === 1) {
+	if (naturalRoll === COMBAT_CONFIG.rules.naturalRollAutoFail) {
 		return {
 			naturalRoll,
 			abilityModifier: abilityMod,

@@ -1,5 +1,6 @@
 import type { Actor } from "../game/types";
 import type { DamagePacket } from "./types";
+import { COMBAT_CONFIG } from "../config";
 
 /**
  * Resolve a set of damage packets against defender resistances/immunities.
@@ -17,7 +18,8 @@ export function resolveDamagePackets(
 
 		let effectiveAmount = raw;
 		if (immunity.has(p.damageType)) effectiveAmount = 0;
-		else if (resistance.has(p.damageType)) effectiveAmount = Math.floor(raw / 2);
+		else if (resistance.has(p.damageType))
+			effectiveAmount = Math.floor(raw / COMBAT_CONFIG.rules.resistanceDivisor);
 
 		return { ...p, rawAmount: raw, effectiveAmount };
 	});

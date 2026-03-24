@@ -1,15 +1,22 @@
 /**
  * Shared package: deterministic game engine and schemas for API and client.
  * Import from "@app/shared".
- * Structure: api/ (HTTP contract types), map/ (dungeon generation), game/ (engine + snapshot schemas), rng/.
+ * Tunables live in `./config` and are re-exported here; domain barrels (`map/`, `game/`, …) expose behaviour only.
  */
 
 export {
-	buildDecorationLayer,
-	buildGroundLayer,
-	buildWallLayer,
-	buildWaterMask,
-	BLOCKING_DECORATION_TYPES,
+	CONFIG,
+	GAME_CONFIG,
+	MAP_CONFIG,
+	COMBAT_CONFIG,
+	SKILLS_CONFIG,
+	MAP_GEN_VERSION,
+	VISION_RADIUS,
+	XP_PER_LEVEL,
+	BASE_NPCS_PER_FLOOR,
+	STATUS_HOOKS,
+	DAMAGE_TYPES,
+	UNARMED_WEAPON,
 	DEFAULT_BSP_PARAMS,
 	DEFAULT_CAVE_PARAMS,
 	DEFAULT_DECORATION_WEIGHTS,
@@ -21,6 +28,17 @@ export {
 	DEFAULT_SCATTER_CHANCE,
 	DEFAULT_SHAPE_VOID_TARGET,
 	TILE_TYPE,
+	FLOOR_THEMES,
+	FLOOR_CONFIGS,
+} from "./config";
+export type { FloorTheme, DamageType, LevelOfferType } from "./config";
+
+export {
+	buildDecorationLayer,
+	buildGroundLayer,
+	buildWallLayer,
+	buildWaterMask,
+	BLOCKING_DECORATION_TYPES,
 	generateMap,
 	isCellWalkable,
 	wouldStayConnected,
@@ -36,18 +54,15 @@ export {
 	type EncounterEntry,
 	type EncounterTableEntry,
 	type FloorConfig,
-	type FloorTheme,
 	type HybridParams,
 	type MapGenAlgorithm,
 	type RawMap,
 	type RoomTag,
 	type VaultDef,
 	type VaultPlacement,
-	FLOOR_THEMES,
 	computeOpacityMask,
 	computeVisibility,
 	mergeExplored,
-	FLOOR_CONFIGS,
 	findExitIdx,
 	analyzeRooms,
 	injectVaults,
@@ -82,10 +97,6 @@ export {
 	resetNpcCounter,
 	spawnNpc,
 	xyToIdx,
-	MAP_GEN_VERSION,
-	VISION_RADIUS,
-	XP_PER_LEVEL,
-	BASE_NPCS_PER_FLOOR,
 	AbilityNameSchema,
 	ActiveEffectSchema,
 	CombatAdjustmentsSchema,
@@ -139,7 +150,6 @@ export {
 	getTilesInCone,
 	hasActiveEffect,
 	resolveSkill,
-	STATUS_HOOKS,
 	ActiveSkillDefinitionSchema,
 	ActiveSkillEffectDescriptorSchema,
 	PassiveSkillDefinitionSchema,
@@ -165,10 +175,8 @@ export {
 	resolveSavingThrow,
 	isActorProficientInSavingThrow,
 	getActorProficiencyBonus,
-	UNARMED_WEAPON,
 	type AttackResult,
 	type WeaponDice,
 } from "./combat";
 
-export { DAMAGE_TYPES, type DamageType } from "./combat";
 export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";

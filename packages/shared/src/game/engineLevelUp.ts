@@ -1,26 +1,17 @@
 import type { Actor, ActorId, GameEvent, PendingInteraction } from "./types";
-import { XP_PER_LEVEL } from "./config";
 import type { Rng } from "../rng";
 import type { ApplyActionContext } from "./engineContext";
+import { GAME_CONFIG, XP_PER_LEVEL, type LevelOfferType } from "../config";
 
 /**
  * Configurable schedule for level-up offer types.
  * Keys are level numbers (1-indexed). Missing levels repeat the last seen pattern.
  * Default: first level-up (reaching level 2) is passive, then alternates.
  */
-export const LEVEL_UP_SCHEDULE: Record<number, "active" | "passive"> = {
-	2: "passive",
-	3: "active",
-	4: "passive",
-	5: "active",
-	6: "passive",
-	7: "active",
-	8: "passive",
-	9: "active",
-	10: "passive",
-};
+export const LEVEL_UP_SCHEDULE: Readonly<Record<number, LevelOfferType>> =
+	GAME_CONFIG.leveling.schedule;
 
-function getOfferTypeForLevel(level: number): "active" | "passive" {
+function getOfferTypeForLevel(level: number): LevelOfferType {
 	if (level in LEVEL_UP_SCHEDULE) return LEVEL_UP_SCHEDULE[level]!;
 	// Beyond schedule: alternate based on parity (even = passive, odd = active)
 	return level % 2 === 0 ? "passive" : "active";
@@ -71,7 +62,7 @@ export function grantXpForKill(
 		newLevel += 1;
 		const conMod = Math.floor((actor.attributes.constitution - 10) / 2);
 		const roll = Math.floor(rng() * actor.hitDie) + 1;
-		const hpGained = Math.max(1, roll + conMod);
+		const hpGained = Math.max(GAME_CONFIG.leveling.minHpGainPerLevel, roll + conMod);
 		newMaxHp += hpGained;
 		newCurrentHp += hpGained;
 		events.push({ type: "level_up", actorId, newLevel, hpGained });
@@ -85,7 +76,11 @@ export function grantXpForKill(
 			// Filter out skills the hero already owns
 			const ownedSkillIds = new Set(Object.keys(actor.skills));
 			const eligible = pool.filter((id) => !ownedSkillIds.has(id));
-			const offers = sampleWithoutReplacement(eligible, 3, rng);
+			const offers = sampleWithoutReplacement(
+				eligible,
+				GAME_CONFIG.leveling.skillOfferCount,
+				rng,
+			);
 			if (offers.length > 0) {
 				pendingInteraction = {
 					type: "skill_choice",

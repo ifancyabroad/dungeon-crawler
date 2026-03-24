@@ -1,3 +1,5 @@
+import { SKILLS_CONFIG } from "../config";
+
 /**
  * Geometry utilities for skill area calculations.
  * All functions operate on flat tile indices (row-major, idx = y*width + x).
@@ -88,7 +90,7 @@ export function getTilesInCone(
 	width: number,
 	height: number,
 	rangeTiles: number,
-	angleDegrees: number = 90,
+	angleDegrees: number = SKILLS_CONFIG.defaults.coneAngleDegrees,
 ): number[] {
 	const cx = casterIdx % width;
 	const cy = Math.floor(casterIdx / width);

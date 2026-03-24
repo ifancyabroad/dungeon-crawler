@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 import { AbilityNameSchema, CombatAdjustmentsSchema } from "../game/schemas";
-import { DAMAGE_TYPES } from "../combat/damageTypes";
+import { DAMAGE_TYPES } from "../config/combat";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
 const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);

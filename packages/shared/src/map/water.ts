@@ -4,7 +4,7 @@
  */
 
 import { createRng } from "../rng";
-import { TILE_TYPE } from "./config";
+import { TILE_TYPE } from "../config/map";
 import { wouldStayConnected } from "./connectivity";
 
 const WATER_BLOB_SEED_COUNT_MIN = 1;

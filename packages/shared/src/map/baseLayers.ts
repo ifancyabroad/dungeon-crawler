@@ -21,9 +21,8 @@ import { buildWaterMask } from "./water";
 import { isCellWalkable } from "./walkability";
 import { analyzeRooms } from "./roomAnalysis";
 import { injectVaults } from "./vaultInjector";
-import { TILE_TYPE } from "./config";
+import { MAP_GEN_VERSION, TILE_TYPE } from "../config/map";
 import type { FloorConfig, RawMap, VaultDef, AnalyzedRoom, VaultPlacement } from "./types";
-import { MAP_GEN_VERSION } from "../game/types";
 
 export interface BaseLayerFloor {
 	ground: number[][];
@@ -386,5 +385,4 @@ export function regenerateBaseMaps(
 	return result;
 }
 
-// Keep TILE_TYPE re-export for convenience
 export { TILE_TYPE };

@@ -13,7 +13,7 @@
  * Determinism: rooms are sorted by center index before any RNG is consumed.
  */
 
-import { TILE_TYPE } from "./config";
+import { TILE_TYPE } from "../config/map";
 import type { Rng } from "../rng";
 import type { AnalyzedRoom, FloorConfig, RawMap, RoomTag } from "./types";
 
