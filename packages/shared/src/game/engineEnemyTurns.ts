@@ -6,15 +6,15 @@ import { resolveSkill, hasActiveEffect, STATUS_HOOKS } from "../skills";
 import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
 import { UNARMED_WEAPON } from "../combat/types";
-import { runMonsterAI, type MonsterAIState, type CombatStrategyTag } from "./strategies";
+import { runNpcAI, type NpcAIState, type CombatStrategyTag } from "./strategies";
 import { computeVisibility } from "../map/visibility";
 import { idxToXY } from "./engineUtils";
 
 /**
- * After a player action, each living monster on the hero's floor acts.
- * Each monster runs its AI strategy: chase/roam/attack/skill based on LoS.
+ * After a player action, each living NPC on the hero's floor acts.
+ * Each NPC runs its AI strategy: chase/roam/attack/skill based on LoS.
  * Sorted by actor ID for deterministic order.
- * `getSkillDef` is required to resolve monster skill actions.
+ * `getSkillDef` is required to resolve NPC skill actions.
  */
 export function processEnemyTurns(
 	floorState: FloorState,
@@ -31,15 +31,14 @@ export function processEnemyTurns(
 	const hero = actorsById[heroId];
 	if (!hero || !hero.alive) return { floorState, events };
 
-	const monsterIds = Object.keys(actorsById)
+	const npcIds = Object.keys(actorsById)
 		.filter(
-			(id) =>
-				id !== heroId && actorsById[id]!.alive && actorsById[id]!.def.type === "monster",
+			(id) => id !== heroId && actorsById[id]!.alive && actorsById[id]!.def.type === "npc",
 		)
 		.sort();
 
 	let currentHero = hero;
-	// If the hero is stealthed, monsters cannot see them regardless of LoS.
+	// If the hero is stealthed, NPCs cannot see them regardless of LoS.
 	const heroIsStealthed = hasActiveEffect(currentHero, STATUS_HOOKS.STEALTH);
 
 	// Pre-compute effective factions for this turn.
@@ -51,31 +50,31 @@ export function processEnemyTurns(
 		effectiveFactions[id] = hasActiveEffect(actor, STATUS_HOOKS.CHARMED) ? "player" : base;
 	}
 
-	for (const mid of monsterIds) {
+	for (const mid of npcIds) {
 		if (!currentHero.alive) break;
-		const monster = actorsById[mid]!;
+		const npc = actorsById[mid]!;
 
-		// Monsters without aiState are inert (shouldn't happen in normal play)
-		const aiState = monster.aiState;
+		// NPCs without aiState are inert (shouldn't happen in normal play)
+		const aiState = npc.aiState;
 		if (!aiState) continue;
 
-		// Stunned monsters skip their turn entirely.
-		if (hasActiveEffect(monster, STATUS_HOOKS.STUNNED)) continue;
+		// Stunned NPCs skip their turn entirely.
+		if (hasActiveEffect(npc, STATUS_HOOKS.STUNNED)) continue;
 
-		const { x, y } = idxToXY(monster.idx, width);
-		let visibleFromMonster = computeVisibility(x, y, width, height, opacityMask, VISION_RADIUS);
+		const { x, y } = idxToXY(npc.idx, width);
+		let visibleFromNpc = computeVisibility(x, y, width, height, opacityMask, VISION_RADIUS);
 
 		// Stealth: mask hero tile so all AI strategies treat the hero as invisible.
 		if (heroIsStealthed) {
-			visibleFromMonster = visibleFromMonster.slice() as Uint8Array;
-			visibleFromMonster[currentHero.idx] = 0;
+			visibleFromNpc = visibleFromNpc.slice() as Uint8Array;
+			visibleFromNpc[currentHero.idx] = 0;
 		}
 
 		// Build a temporary floor state snapshot so AI sees the current actor positions
 		const currentFloorState: FloorState = { ...floorState, actorsById };
 
 		// FRIGHTENED overrides the combat strategy to flee.
-		const isFrightened = hasActiveEffect(monster, STATUS_HOOKS.FRIGHTENED);
+		const isFrightened = hasActiveEffect(npc, STATUS_HOOKS.FRIGHTENED);
 		const combatStrategyOverride: CombatStrategyTag | undefined = isFrightened
 			? "frightened"
 			: undefined;
@@ -83,8 +82,8 @@ export function processEnemyTurns(
 		// CHARMED temporarily overrides the idle strategy to follow the hero.
 		// The stale lastKnownEnemyIdx is cleared if it still points at the hero's tile
 		// (it was tracking the hero as a former enemy; the hero is now an ally).
-		const isCharmed = hasActiveEffect(monster, STATUS_HOOKS.CHARMED);
-		const effectiveAIState: MonsterAIState = isCharmed
+		const isCharmed = hasActiveEffect(npc, STATUS_HOOKS.CHARMED);
+		const effectiveAIState: NpcAIState = isCharmed
 			? {
 					...aiState,
 					idleStrategy: "follow",
@@ -96,12 +95,12 @@ export function processEnemyTurns(
 				}
 			: aiState;
 
-		const { result, newAIState } = runMonsterAI({
-			monster,
+		const { result, newAIState } = runNpcAI({
+			npc,
 			aiState: effectiveAIState,
 			hero: currentHero,
 			heroId,
-			visibleFromMonster,
+			visibleFromNpc,
 			walkableMask,
 			floorState: currentFloorState,
 			width,
@@ -130,9 +129,9 @@ export function processEnemyTurns(
 			const attackTargetId = result.targetActorId ?? heroId;
 			const attackTarget = actorsById[attackTargetId];
 			if (!attackTarget?.alive) {
-				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
+				actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
 			} else {
-				const attackResult = resolveAttack(monster, attackTarget, rng, UNARMED_WEAPON);
+				const attackResult = resolveAttack(npc, attackTarget, rng, UNARMED_WEAPON);
 				events.push({
 					type: "attack",
 					attackerId: mid,
@@ -150,7 +149,7 @@ export function processEnemyTurns(
 					actorsById = {
 						...actorsById,
 						[attackTargetId]: damagedTarget,
-						[mid]: { ...monster, aiState: persistedAIState },
+						[mid]: { ...npc, aiState: persistedAIState },
 					};
 					if (!damagedTarget.alive) {
 						events.push({ type: "death", actorId: attackTargetId });
@@ -161,28 +160,28 @@ export function processEnemyTurns(
 				} else {
 					actorsById = {
 						...actorsById,
-						[mid]: { ...monster, aiState: persistedAIState },
+						[mid]: { ...npc, aiState: persistedAIState },
 					};
 				}
 			}
 		} else if (result.kind === "move") {
 			actorsById = {
 				...actorsById,
-				[mid]: { ...monster, idx: result.toIdx, aiState: persistedAIState },
+				[mid]: { ...npc, idx: result.toIdx, aiState: persistedAIState },
 			};
 		} else if (result.kind === "skill") {
-			// Monster uses a skill — resolved the same way as hero skills.
+			// NPC uses a skill — resolved the same way as hero skills.
 			const rawSkillDef = getSkillDef(result.skillId);
 			const skillDef =
 				rawSkillDef?.skillType === "active"
 					? (rawSkillDef as ActiveSkillDefinition)
 					: undefined;
-			const skillState = monster.skills?.[result.skillId];
+			const skillState = npc.skills?.[result.skillId];
 			if (skillDef && skillState && skillState.cooldownRemaining === 0) {
 				const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
 				const resolution = resolveSkill({
 					skillDef,
-					caster: { ...monster, aiState: persistedAIState },
+					caster: { ...npc, aiState: persistedAIState },
 					casterId: mid,
 					floorState: currentFloorSnapshot,
 					width,
@@ -193,14 +192,14 @@ export function processEnemyTurns(
 					opacityMask,
 				});
 				if (!("error" in resolution)) {
-					const monsterAfterSkill = resolution.floorState.actorsById[mid];
-					if (monsterAfterSkill) {
+					const npcAfterSkill = resolution.floorState.actorsById[mid];
+					if (npcAfterSkill) {
 						actorsById = {
 							...resolution.floorState.actorsById,
 							[mid]: {
-								...monsterAfterSkill,
+								...npcAfterSkill,
 								skills: {
-									...monsterAfterSkill.skills,
+									...npcAfterSkill.skills,
 									[result.skillId]: { cooldownRemaining: skillDef.cooldown },
 								},
 							},
@@ -215,16 +214,16 @@ export function processEnemyTurns(
 				} else {
 					actorsById = {
 						...actorsById,
-						[mid]: { ...monster, aiState: persistedAIState },
+						[mid]: { ...npc, aiState: persistedAIState },
 					};
 				}
 			} else {
 				// Skill on cooldown or unknown — fall back to idle
-				actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
+				actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
 			}
 		} else {
 			// idle — persist updated aiState (e.g. cleared lastKnownEnemyIdx)
-			actorsById = { ...actorsById, [mid]: { ...monster, aiState: persistedAIState } };
+			actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
 		}
 	}
 

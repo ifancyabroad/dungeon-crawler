@@ -51,7 +51,7 @@ export function playWarCry(
 		},
 	});
 
-	// Trigger impact FX (deaths, damage numbers, monster sync) at the burst moment,
+	// Trigger impact FX (deaths, damage numbers, NPC sync) at the burst moment,
 	// not at the end of the rings — the shockwave hits instantly.
 	scene.time.delayedCall(IMPACT_DELAY_MS, () => onImpact?.());
 

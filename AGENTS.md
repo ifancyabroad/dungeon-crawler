@@ -20,12 +20,12 @@ A server-authoritative, turn-based roguelike dungeon crawler. The server owns ca
 
 Before writing any code, identify which package owns the change.
 
-| Package            | Owns                                                                                         |
-| ------------------ | -------------------------------------------------------------------------------------------- |
-| `packages/shared`  | Game engine, `GameState`, `Action` union, Zod schemas, map generation, combat, RNG           |
-| `packages/content` | JSON definitions for classes, monsters, encounters, vaults — and the generated typed lookups |
-| `apps/api`         | HTTP routes, socket handlers, MongoDB persistence, session cache, business logic wiring      |
-| `apps/web`         | React UI, Phaser rendering, Zustand stores, TanStack Query hooks                             |
+| Package            | Owns                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| `packages/shared`  | Game engine, `GameState`, `Action` union, Zod schemas, map generation, combat, RNG       |
+| `packages/content` | JSON definitions for classes, npcs, encounters, vaults — and the generated typed lookups |
+| `apps/api`         | HTTP routes, socket handlers, MongoDB persistence, session cache, business logic wiring  |
+| `apps/web`         | React UI, Phaser rendering, Zustand stores, TanStack Query hooks                         |
 
 If a change touches multiple packages, outline a short plan before editing.
 
@@ -44,7 +44,7 @@ Each function, module, and file should do one thing. If a function is doing two 
 ### Modularity
 
 - Co-locate related code: a feature's store, hook, and types belong together under `features/<name>/`.
-- New content types (monsters, items, encounters) go in `packages/content/src/raw/` as JSON, not hardcoded in logic files.
+- New content types (npcs, items, encounters) go in `packages/content/src/raw/` as JSON, not hardcoded in logic files.
 - New shared engine behaviour belongs in `packages/shared`, not duplicated in `apps/api` and `apps/web`.
 
 ### Readability
@@ -80,7 +80,7 @@ These rules are always enforced, regardless of the task:
 
 ### Common Workflows
 
-Detailed checklists for adding monsters, items, actions, and UI features are in [docs/WORKFLOWS.md](docs/WORKFLOWS.md).
+Detailed checklists for adding NPCs, items, actions, and UI features are in [docs/WORKFLOWS.md](docs/WORKFLOWS.md).
 
 ---
 

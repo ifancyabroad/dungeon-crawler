@@ -11,7 +11,7 @@ export default class PreloadScene extends Phaser.Scene {
 			"../../assets/tileset/The Roguelike Remastered 1-6-10 Alpha.png",
 			import.meta.url,
 		).href;
-		// Load as spritesheet so we can use frame indices for hero/monsters and for tilemap
+		// Load as spritesheet so we can use frame indices for hero/NPCs and for tilemap
 		this.load.spritesheet(TILESET_KEY, url, {
 			frameWidth: TILE_WIDTH,
 			frameHeight: TILE_HEIGHT,

@@ -53,7 +53,7 @@ function actorsInChargeRange(
 	const result: string[] = [];
 
 	for (const [id, actor] of Object.entries(actors)) {
-		if (id === "hero" || !actor.alive || actor.def.type !== "monster") continue;
+		if (id === "hero" || !actor.alive || actor.def.type !== "npc") continue;
 
 		const { x: ax, y: ay } = idxToXY(actor.idx, width);
 		const dx = ax - hx;
@@ -84,7 +84,7 @@ function actorsInRange(
 	const { x: hx, y: hy } = idxToXY(hero.idx, width);
 	const result: string[] = [];
 	for (const [id, actor] of Object.entries(actors)) {
-		if (id === "hero" || !actor.alive || actor.def.type !== "monster") continue;
+		if (id === "hero" || !actor.alive || actor.def.type !== "npc") continue;
 		const { x: ax, y: ay } = idxToXY(actor.idx, width);
 		const dist = Math.max(Math.abs(ax - hx), Math.abs(ay - hy));
 		if (dist > 0 && dist <= maxRange) result.push(id);

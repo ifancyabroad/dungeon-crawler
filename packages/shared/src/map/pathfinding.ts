@@ -1,5 +1,5 @@
 /**
- * BFS pathfinding for monster AI.
+ * BFS pathfinding for NPC AI.
  * Returns the index of the first step toward the target, or undefined if unreachable.
  * Fully deterministic — no random, no environment reads.
  */
@@ -10,7 +10,7 @@ import { getActorAtIdx, idxToXY, xyToIdx } from "../game/engineUtils";
 /**
  * BFS from `fromIdx` toward `toIdx`.
  * Respects `walkableMask` and actor occupancy, but treats `toIdx` as passable
- * even if occupied (so monsters can path toward the hero).
+ * even if occupied (so NPCs can path toward the hero).
  * Returns the first step index, or undefined if no path exists.
  */
 export function bfsNextStep(

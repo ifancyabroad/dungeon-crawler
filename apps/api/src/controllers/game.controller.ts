@@ -8,16 +8,10 @@ import {
 	gameStateToPersisted,
 	PersistedDynamicStateSchema,
 	regenerateBaseMaps,
-	resetMonsterCounter,
+	resetNpcCounter,
 	type HeroInit,
 } from "@app/shared";
-import {
-	classesById,
-	encountersById,
-	monstersById,
-	vaults,
-	type CharacterClassId,
-} from "@app/content";
+import { classesById, encountersById, npcsById, vaults, type CharacterClassId } from "@app/content";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { Hero } from "../models/hero.model";
@@ -26,7 +20,7 @@ import { COOKIE_NAME, hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
 import { runTransaction } from "../config/db";
 import { getCookie } from "../lib/cookies";
-import { spawnMonstersForFloor } from "../lib/spawnMonstersForFloor";
+import { spawnNpcsForFloor } from "../lib/spawnNpcsForFloor";
 
 const COOKIE_OPTS = {
 	httpOnly: true,
@@ -67,10 +61,10 @@ export const createGame: RequestHandler = async (req, res) => {
 	};
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
-	resetMonsterCounter();
+	resetNpcCounter();
 	let state = createInitialState(seed, FLOOR_CONFIGS, heroInit);
 
-	// Compute base layers once; reused for floor-0 monster spawn and passed to setSessionState
+	// Compute base layers once; reused for floor-0 NPC spawn and passed to setSessionState
 	// to avoid a second regenerateBaseMaps call there.
 	const baseLayers = regenerateBaseMaps(
 		seed,
@@ -78,12 +72,12 @@ export const createGame: RequestHandler = async (req, res) => {
 		state.mapGenVersion,
 		{ vaultDefs: vaults },
 	);
-	// Only spawn monsters on floor 0 at creation; other floors spawn on first visit
+	// Only spawn NPCs on floor 0 at creation; other floors spawn on first visit
 	const walkMask = computeWalkableMaskForFloor(
 		baseLayers[0],
 		state.floors[0].state.tileOverrides,
 	);
-	state = spawnMonstersForFloor(state, 0, walkMask, monstersById, encountersById, baseLayers[0]);
+	state = spawnNpcsForFloor(state, 0, walkMask, npcsById, encountersById, baseLayers[0]);
 
 	const persistedState = gameStateToPersisted(state);
 	PersistedDynamicStateSchema.parse(persistedState);

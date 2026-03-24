@@ -6,7 +6,7 @@
 import type { Action } from "./actions";
 import type { AttackResult, DamagePacket } from "../combat/types";
 import type { DamageType } from "../combat/damageTypes";
-import type { MonsterAIState } from "./strategies/types";
+import type { NpcAIState } from "./strategies/types";
 import type { FloorConfig } from "../map/types";
 import type { CombatAdjustments } from "./schemas";
 
@@ -17,7 +17,7 @@ export type TileId = number;
 /** Per-floor map config. Re-exported from map/types for convenience. */
 export type { FloorConfig } from "../map/types";
 
-/** Opaque id for an actor (hero or monster). Hero uses constant "hero". */
+/** Opaque id for an actor (hero or NPC). Hero uses constant "hero". */
 export type ActorId = string;
 
 /** Full attribute names (no abbreviations). */
@@ -76,8 +76,8 @@ export interface ActiveEffect {
 	adjustments?: CombatAdjustments;
 }
 
-/** Definition reference: hero (classId from content) or monster. */
-export type ActorDef = { type: "hero"; classId: string } | { type: "monster"; monsterId: string };
+/** Definition reference: hero (classId from content) or NPC (npcId from content). */
+export type ActorDef = { type: "hero"; classId: string } | { type: "npc"; npcId: string };
 
 /** Data the caller provides to create the initial hero actor. Keeps the engine content-agnostic. */
 export interface HeroInit {
@@ -96,10 +96,14 @@ export interface HeroInit {
 	skills?: string[];
 }
 
-/** Data the caller provides to spawn a monster actor. Keeps the engine content-agnostic. */
-export interface MonsterInit {
-	monsterId: string;
+/** Data the caller provides to spawn an NPC actor. Keeps the engine content-agnostic. */
+export interface NpcInit {
+	npcId: string;
 	name: string;
+	/** Combat alignment. Assigned directly to Actor.faction — no derivation. */
+	faction: "player" | "hostile";
+	/** Behavioral/spawn category. Stored on the actor for future systems; no combat effect. */
+	role: "grunt" | "boss" | "mercenary" | "vendor";
 	hp: number;
 	maxHp: number;
 	armorClass: number;
@@ -107,17 +111,19 @@ export interface MonsterInit {
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
 	xpReward: number;
-	/** Challenge rating used for monster proficiency scaling. */
+	/** Challenge rating used for NPC proficiency scaling. */
 	challengeRating: number;
-	/** Ability names this monster is proficient in for saving throws. */
+	/** Ability names this NPC is proficient in for saving throws. */
 	savingThrowProficiencies: AbilityName[];
-	combatStrategy: MonsterAIState["combatStrategy"];
-	idleStrategy: MonsterAIState["idleStrategy"];
-	/** Skill IDs this monster spawns with. Each skill starts with cooldownRemaining: 0. */
-	skills: string[];
+	combatStrategy: NpcAIState["combatStrategy"];
+	idleStrategy: NpcAIState["idleStrategy"];
+	/** Active skill IDs this NPC spawns with. Each starts with cooldownRemaining: 0. */
+	activeSkills: string[];
+	/** Passive skill IDs this NPC spawns with. Applied by the caller via applyPassiveEffect before the actor enters the floor. */
+	passiveSkills: string[];
 }
 
-/** Actor: hero or monster. Use def.type for "hero" | "monster". Position is idx only; floor is implied by which floor's actorsById contains it. */
+/** Actor: hero or NPC. Use def.type to distinguish ("hero" | "npc"). Position is idx only; floor is implied by which floor's actorsById contains it. */
 export interface Actor {
 	id: string;
 	name: string;
@@ -159,7 +165,7 @@ export interface Actor {
 	statusImmunities: string[];
 	/** Ability names this actor is proficient in for saving throws. */
 	savingThrowProficiencies: AbilityName[];
-	/** Challenge Rating (monsters only). Used for monster proficiency bonus scaling. */
+	/** Challenge Rating (NPCs only). Used for NPC proficiency bonus scaling. */
 	challengeRating?: number;
 	/**
 	 * Natural roll threshold for a critical hit. Defaults to 20.
@@ -173,7 +179,7 @@ export interface Actor {
 	attackBonusFlat?: number;
 	/**
 	 * Faction tag: "player" = hero/allied side; "hostile" = enemy side.
-	 * Defaults: hero → "player", monsters → "hostile".
+	 * Defaults: hero → "player", hostile NPCs → "hostile".
 	 * CHARMED status temporarily flips a hostile's effective faction for AI targeting only.
 	 */
 	faction?: "player" | "hostile";
@@ -184,7 +190,7 @@ export interface Actor {
 	/** XP awarded to the killer when this actor dies. 0 for the hero. */
 	xpReward: number;
 	/** AI behaviour state. Undefined for the hero actor. */
-	aiState?: MonsterAIState;
+	aiState?: NpcAIState;
 }
 
 /** Events emitted during a turn for combat log and client feedback. */

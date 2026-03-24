@@ -34,7 +34,7 @@ export class AttackAnimator {
 		events: GameEvent[],
 		heroId: string,
 		heroSprite: Phaser.GameObjects.Sprite,
-		monsterSprites: Map<string, Phaser.GameObjects.Sprite>,
+		npcSprites: Map<string, Phaser.GameObjects.Sprite>,
 		getActorIdx: (id: string) => number | undefined,
 		getBloodColor: (actorId: string) => string,
 	): void {
@@ -60,7 +60,7 @@ export class AttackAnimator {
 			const attackerSprite =
 				event.attackerId === heroId
 					? heroSprite
-					: (monsterSprites.get(event.attackerId) ?? null);
+					: (npcSprites.get(event.attackerId) ?? null);
 			const defenderIdx = getActorIdx(event.defenderId);
 
 			if (!attackerSprite || defenderIdx === undefined) {

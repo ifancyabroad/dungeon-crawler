@@ -2,6 +2,8 @@
 	"id": "goblin_mage",
 	"name": "Goblin Mage",
 	"description": "A cunning goblin that has learned arcane arts, preferring to blast enemies from a distance.",
+	"faction": "hostile",
+	"role": "grunt",
 	"baseAttributes": {
 		"strength": 6,
 		"dexterity": 12,
@@ -21,5 +23,7 @@
 	"challengeRating": 2,
 	"savingThrowProficiencies": ["intelligence"],
 	"bloodColor": "#cc0000",
-	"skills": ["magic_arrow", "fireball"]
+	"activeSkills": ["magic_arrow", "fireball"],
+	"passiveSkills": [],
+	"startingEquipment": []
 }

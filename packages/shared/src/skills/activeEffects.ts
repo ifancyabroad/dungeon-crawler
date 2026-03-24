@@ -41,7 +41,7 @@ const DOT_EFFECT_IDS: Set<string> = new Set([
 const HEAL_EFFECT_IDS: Set<string> = new Set([STATUS_HOOKS.REGENERATING]);
 
 /**
- * Tick down all active effects on every alive actor (hero + monsters); remove
+ * Tick down all active effects on every alive actor (hero + NPCs); remove
  * those that have expired. Returns the updated state and any emitted events.
  *
  * DoT effects (e.g. "poisoned") deal `effect.value` damage per turn before the
@@ -105,24 +105,24 @@ export function tickActiveEffects(state: GameState): { state: GameState; events:
 			[actorId]: { ...tickedActor, activeEffects: newActiveEffects },
 		};
 
-		// Hero-specific: when stealth expires naturally, alert all monsters.
+		// Hero-specific: when stealth expires naturally, alert all NPCs.
 		if (isHero) {
 			const stealthExpired =
 				hadStealth && !newActiveEffects.some((e) => e.id === STATUS_HOOKS.STEALTH);
 			if (stealthExpired) {
-				for (const [id, monsterActor] of Object.entries(actorsById)) {
+				for (const [id, npcActor] of Object.entries(actorsById)) {
 					if (
 						id === heroId ||
-						!monsterActor.alive ||
-						monsterActor.def.type !== "monster" ||
-						!monsterActor.aiState
+						!npcActor.alive ||
+						npcActor.def.type !== "npc" ||
+						!npcActor.aiState
 					)
 						continue;
 					actorsById = {
 						...actorsById,
 						[id]: {
-							...monsterActor,
-							aiState: { ...monsterActor.aiState!, lastKnownEnemyIdx: actor.idx },
+							...npcActor,
+							aiState: { ...npcActor.aiState!, lastKnownEnemyIdx: actor.idx },
 						},
 					};
 				}

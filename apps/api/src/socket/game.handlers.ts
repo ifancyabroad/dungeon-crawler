@@ -28,8 +28,8 @@ import {
 import { withGameLock } from "../services/gameLock";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
-import { applyDescendSideEffects } from "../lib/spawnMonstersForFloor";
-import { encountersById, monstersById } from "@app/content";
+import { applyDescendSideEffects } from "../lib/spawnNpcsForFloor";
+import { encountersById, npcsById } from "@app/content";
 
 /** Auth context set on socket after successful join. */
 interface GameSocketData {
@@ -156,7 +156,7 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					finalState = applyDescendSideEffects(
 						finalState,
 						descendEvent.toFloor,
-						monstersById,
+						npcsById,
 						encountersById,
 						cachedWalkMask,
 						cachedBase,

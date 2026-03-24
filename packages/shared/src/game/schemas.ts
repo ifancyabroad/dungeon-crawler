@@ -122,10 +122,10 @@ export const PassiveDamageBonusSchema = z.object({
 
 export const ActorDefSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("hero"), classId: z.string() }),
-	z.object({ type: z.literal("monster"), monsterId: z.string() }),
+	z.object({ type: z.literal("npc"), npcId: z.string() }),
 ]);
 
-export const MonsterAIStateSchema = z.object({
+export const NpcAIStateSchema = z.object({
 	combatStrategy: z.enum(["melee", "frightened", "ranged"]),
 	idleStrategy: z.enum(["stationary", "roam", "follow"]),
 	lastKnownEnemyIdx: z.number().optional(),
@@ -161,7 +161,7 @@ export const ActorSchema = z.object({
 	xp: z.number(),
 	hitDie: z.number(),
 	xpReward: z.number(),
-	aiState: MonsterAIStateSchema.optional(),
+	aiState: NpcAIStateSchema.optional(),
 });
 
 export const ActorsByIdSchema = z.record(z.string(), ActorSchema);

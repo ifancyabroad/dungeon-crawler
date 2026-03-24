@@ -14,7 +14,7 @@ apps/
   web/          React + Phaser client
 packages/
   shared/       Deterministic game engine + Zod schemas (imported as @app/shared)
-  content/      Validated JSON content (classes, monsters, encounters, vaults) + generated typed lookups
+  content/      Validated JSON content (classes, npcs, encounters, vaults) + generated typed lookups
 ```
 
 ### Dependency Rules
@@ -34,7 +34,7 @@ Each package has a strict, non-overlapping responsibility. Put code in the packa
 
 ### `packages/shared`
 
-The deterministic game engine. **All authoritative game rules live here** — movement, combat, map generation, monster AI, levelling, and state transitions. Neither `apps/api` nor `apps/web` may re-implement game logic that belongs in this layer.
+The deterministic game engine. **All authoritative game rules live here** — movement, combat, map generation, NPC AI, levelling, and state transitions. Neither `apps/api` nor `apps/web` may re-implement game logic that belongs in this layer.
 
 - Pure functions only: no I/O, no network, no database, no React, no Phaser.
 - Exports `applyAction(state, action, context)` as the single entry point for turn resolution.
@@ -42,10 +42,10 @@ The deterministic game engine. **All authoritative game rules live here** — mo
 
 ### `packages/content`
 
-Static game data as validated JSON. Defines what exists in the game world (classes, monsters, encounters, vaults, skills) but contains no logic.
+Static game data as validated JSON. Defines what exists in the game world (classes, npcs, encounters, vaults, skills) but contains no logic.
 
 - Each content type lives under `src/raw/<type>/` as a JSON file validated by a Zod schema.
-- A build script generates typed lookup objects (`monstersById`, `encountersById`, `skillsById`, etc.) consumed by `apps/api` and `apps/web`.
+- A build script generates typed lookup objects (`npcsById`, `encountersById`, `skillsById`, etc.) consumed by `apps/api` and `apps/web`.
 - Never hardcode content values in logic files — always source from `@app/content`.
 
 ### `apps/api`
@@ -55,7 +55,7 @@ Infrastructure and wiring layer. It does not contain game logic.
 - Validates all client input with Zod (schemas from `@app/shared`).
 - Calls `applyAction` from `@app/shared` to advance state.
 - Owns persistence (MongoDB), the in-memory session cache, socket auth, and the action/snapshot write pipeline.
-- Applies side effects that require infrastructure context (e.g. spawning monsters on floor descent).
+- Applies side effects that require infrastructure context (e.g. spawning NPCs on floor descent).
 
 ### `apps/web`
 
@@ -176,7 +176,7 @@ When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and 
 
 ### Actor
 
-Every entity on the map (hero and monsters) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a `faction` tag (`"player"` | `"hostile"`) used for AI targeting, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `statusHooks.ts`), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
+Every entity on the map (hero and NPCs) is an `Actor`. Position is stored as a flat tile index (`idx`), not x/y coordinates. Each actor carries its definition ref (`def`), current stats, skill cooldowns, passive damage bonuses applied by passive skills at combat resolution time, status immunities, a `faction` tag (`"player"` | `"hostile"`) used for AI targeting, a list of timed active effects (buffs and conditions share the same structure — data-driven effects carry their numeric adjustments inline on the effect instance; ID-driven effects, such as DoT conditions and stealth, are wired to engine hooks registered in `statusHooks.ts`), and a map of named numeric resources for state that changes independently of turn counting (e.g. shield absorption HP).
 
 ### Actions
 
@@ -215,7 +215,7 @@ In other words: a vault layout made of walls on its entire boundary may become i
 
 ## Combat
 
-Turn-based melee. After every player action, all living monsters on the current floor take a turn in deterministic order (sorted by actor ID). Stunned actors (hero or monster) skip their entire turn.
+Turn-based melee. After every player action, all living NPCs on the current floor take a turn in deterministic order (sorted by actor ID). Stunned actors (hero or NPC) skip their entire turn.
 
 - **Attack roll**: `d20 + STR modifier + flat attack bonus (passive) + dice bonus/penalty (status effects)` vs. effective target AC (target's base AC ± AC adjustments from active effects). Advantage (roll 2d20, take higher) and disadvantage (take lower) from active status effects are resolved first; they cancel each other out if both apply.
 - **Critical hit**: natural roll ≥ crit threshold (default 20, can be lowered by passive skills) — double damage dice.
@@ -233,7 +233,7 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
-Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/skills/statusHooks.ts`. Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (monster vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction so monsters attack their former allies and follow the hero when idle), and `FRIGHTENED` (override combat behaviour so the monster flees from visible enemies).
+Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/skills/statusHooks.ts`. Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (NPC vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction so NPCs attack their former allies and follow the hero when idle), and `FRIGHTENED` (override combat behaviour so the NPC flees from visible enemies).
 
 Active skill attacks (`single_target_damage`, `multi_strike`) support an optional `onHitStatus` field. When set, the named status is applied to the target on every successful hit — regardless of whether damage was dealt (e.g. a hit that was fully resisted still triggers the status).
 
@@ -245,15 +245,15 @@ Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed b
 
 ---
 
-## Monster AI
+## NPC AI
 
-Each monster carries a small AI state object alongside its actor data. It records two independent strategy tags — one governing **combat behaviour** (what to do when enemies are visible) and one governing **idle behaviour** (what to do otherwise) — plus any transient memory the active strategy needs (e.g. last known enemy position, follow target).
+Each NPC carries a small AI state object (`NpcAIState`) alongside its actor data. It records two independent strategy tags — one governing **combat behaviour** (what to do when enemies are visible) and one governing **idle behaviour** (what to do otherwise) — plus any transient memory the active strategy needs (e.g. last known enemy position, follow target).
 
 Every turn the engine runs a **two-phase dispatch**: the combat strategy runs first; if it has nothing to do it hands off to the idle strategy. Both phases are pure functions registered in `packages/shared/src/game/strategies/index.ts`. Adding a new strategy is a matter of creating a file under `packages/shared/src/game/strategies/`, adding the tag to the relevant union in `types.ts`, and registering the function — no other engine files need to change.
 
-**Monster skills**: Monsters can use active skills just as the hero can. Each monster definition carries a `skills` array; the engine initialises cooldown state at spawn and ticks all actor cooldowns (not just the hero's) at the end of every player turn. AI strategies receive a `getSkillDef` callback via `AIContext` to inspect range, target type, and other skill metadata when deciding whether to use a skill this turn. Skill resolution goes through the same `resolveSkill` path regardless of whether the caster is the hero or a monster.
+**NPC skills**: NPCs can use active skills just as the hero can. Each NPC definition carries an `activeSkills` array; the engine initialises cooldown state at spawn and ticks all actor cooldowns (not just the hero's) at the end of every player turn. AI strategies receive a `getSkillDef` callback via `AIContext` to inspect range, target type, and other skill metadata when deciding whether to use a skill this turn. Skill resolution goes through the same `resolveSkill` path regardless of whether the caster is the hero or an NPC.
 
-**Faction-aware targeting**: before the AI loop the engine builds a transient faction map that incorporates any active status effects (e.g. CHARMED flips a monster's effective faction so it attacks its former allies). Strategies read from this map rather than the stored faction field, so all faction logic is centralised in one place and strategies remain unaware of specific status effects.
+**Faction-aware targeting**: before the AI loop the engine builds a transient faction map that incorporates any active status effects (e.g. CHARMED flips an NPC's effective faction so it attacks its former allies). Strategies read from this map rather than the stored faction field, so all faction logic is centralised in one place and strategies remain unaware of specific status effects.
 
 **Per-turn strategy overrides**: status effects that alter behaviour (e.g. FRIGHTENED, CHARMED) inject temporary overrides into the AI context rather than mutating persisted state. After each turn the engine restores the original values, so status effects cannot corrupt saved AI state.
 

@@ -4,14 +4,13 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ---
 
-## Adding a New Monster
+## Adding a New NPC
 
-1. Create `packages/content/src/raw/monsters/<name>.json` following the shape defined by `MonsterSchema` in `packages/content/src/schemas/monster.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Include a `skills` array — use `[]` if the monster has no active skills, or list skill IDs for monsters that should use active skills autonomously.
-2. Add a Zod schema for the new monster if its shape differs from the existing `MonsterDef` schema; otherwise the existing schema covers it.
-3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
-4. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new monster.
-5. Update floor encounter tables in `packages/shared/src/map/floorConfigs.ts` to include the new encounter IDs.
-6. Verify: `pnpm typecheck && pnpm lint`.
+1. Create `packages/content/src/raw/npcs/<name>.json` following the shape defined by `NpcSchema` in `packages/content/src/schemas/npc.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Set `faction` (`"hostile"` or `"player"`) and `role` (`"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`). Include an `activeSkills` array — use `[]` if the NPC has no active skills, or list skill IDs for NPCs that should use active skills autonomously. Passive skills go in the `passiveSkills` array; they are applied automatically at spawn.
+2. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
+3. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new NPC via `npcId`.
+4. Update floor encounter tables in `packages/shared/src/map/floorConfigs.ts` to include the new encounter IDs.
+5. Verify: `pnpm typecheck && pnpm lint`.
 
 ---
 
@@ -35,10 +34,10 @@ Common step-by-step workflows for this repository. For package responsibilities 
 > Items are not yet implemented. This workflow describes the intended pattern based on existing content conventions.
 
 1. Create `packages/content/src/raw/items/<name>.json` with the item definition (name, type, slot, stat modifiers).
-2. Define a Zod schema for `ItemDef` following the existing content schema pattern in `packages/content/src/schemas/` (see `monster.ts` or `skill.ts` as examples).
+2. Define a Zod schema for `ItemDef` following the existing content schema pattern in `packages/content/src/schemas/` (see `npc.ts` or `skill.ts` as examples).
 3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup (`itemsById`).
 4. Add item stat application logic inside `packages/shared` (e.g. a helper that merges equipped item bonuses into an actor's effective stats at combat resolution time).
-5. Add item drop logic to the relevant floor or monster definition.
+5. Add item drop logic to the relevant floor or NPC definition.
 6. Wire up inventory management in the shared engine: add an `equip`/`unequip`/`use` action type if needed (see "Adding a New Action" below).
 7. Connect to the inventory modal stub in `apps/web/src/components/`.
 8. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
@@ -56,8 +55,8 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the relevant consumer:
     - **Hero class skill**: add to the class definition in `packages/content/src/raw/classes/<class>.json`.
-    - **Monster skill**: add the skill id to the `skills` array in the monster's JSON definition in `packages/content/src/raw/monsters/<monster>.json`. The engine initialises cooldown state at spawn and ticks the cooldown each turn automatically.
-5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry. Handlers receive a `SkillAnimContext` that is actor-agnostic — the same handler works for hero and monster casters.
+    - **NPC skill**: add the skill id to the `activeSkills` array in the NPC's JSON definition in `packages/content/src/raw/npcs/<npc>.json`. The engine initialises cooldown state at spawn and ticks the cooldown each turn automatically.
+5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry. Handlers receive a `SkillAnimContext` that is actor-agnostic — the same handler works for hero and NPC casters.
 6. If the skill applies a buff with a persistent visual (aura, sprite tint), add it to the buff visual registry in `apps/web/src/game/fx/buffVisuals/`. No scene code needs to change.
 7. If the skill requires targeting, the hotbar and targeting overlay handle it automatically for standard effect types — no extra client work is needed.
 
@@ -87,15 +86,15 @@ Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ## Adding a New AI Strategy
 
-Monster AI has two independent phases — **combat** (what to do when enemies are visible) and **idle** (what to do otherwise). Each phase has its own strategy tag type and registry in `packages/shared/src/game/strategies/`. Decide which phase your strategy belongs to before starting.
+NPC AI has two independent phases — **combat** (what to do when enemies are visible) and **idle** (what to do otherwise). Each phase has its own strategy tag type and registry in `packages/shared/src/game/strategies/`. Decide which phase your strategy belongs to before starting.
 
 ### New combat strategy
 
 1. Add the new tag to `CombatStrategyTag` in `packages/shared/src/game/strategies/types.ts`.
-2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the `CombatStrategyFn` signature. When the monster has nothing to fight, return `{ kind: "idle" }` so the idle layer takes over. Access `ctx.getSkillDef` if the strategy needs to inspect skill range or target type.
+2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the `CombatStrategyFn` signature. When the NPC has nothing to fight, return `{ kind: "idle" }` so the idle layer takes over. Access `ctx.getSkillDef` if the strategy needs to inspect skill range or target type.
 3. Register the function in the combat strategy registry in `packages/shared/src/game/strategies/index.ts`. TypeScript will error if any tag is missing, keeping the registry exhaustive.
 4. If a status effect should trigger this strategy, add the status ID to `statusHooks.ts` and wire a per-turn override in `processEnemyTurns` following the existing `FRIGHTENED` pattern.
-5. Add the new tag to the `MonsterAIState` schema in `packages/shared/src/game/schemas.ts`.
+5. Add the new tag to the `NpcAIStateSchema` in `packages/shared/src/game/schemas.ts`.
 6. Verify: `pnpm typecheck && pnpm lint`.
 
 ### New idle strategy
@@ -103,7 +102,7 @@ Monster AI has two independent phases — **combat** (what to do when enemies ar
 1. Add the new tag to `IdleStrategyTag` in `packages/shared/src/game/strategies/types.ts`.
 2. Create `packages/shared/src/game/strategies/<name>.ts`. Export a function matching the `IdleStrategyFn` signature.
 3. Register it in the idle strategy registry in `packages/shared/src/game/strategies/index.ts`.
-4. Add the new tag to both the `MonsterAIState` schema (`packages/shared`) and the monster content schema (`packages/content`) so content files can reference it.
+4. Add the new tag to both the `NpcAIStateSchema` (`packages/shared`) and the NPC content schema (`packages/content`) so content files can reference it.
 5. Verify: `pnpm typecheck && pnpm lint`.
 
 ---

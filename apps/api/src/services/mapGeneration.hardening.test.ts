@@ -8,8 +8,8 @@ import {
 	regenerateBaseMaps,
 	type BaseLayerFloor,
 } from "@app/shared";
-import { encountersById, monstersById, vaults } from "@app/content";
-import { spawnMonstersForFloor } from "../lib/spawnMonstersForFloor";
+import { encountersById, npcsById, vaults } from "@app/content";
+import { spawnNpcsForFloor } from "../lib/spawnNpcsForFloor";
 
 function serializeFloors(floors: BaseLayerFloor[]): string {
 	return JSON.stringify(
@@ -102,7 +102,7 @@ describe("map generation hardening", () => {
 		}
 	}, 20000);
 
-	it("never stacks monsters on the same tile when spawning", () => {
+	it("never stacks NPCs on the same tile when spawning", () => {
 		const state = createInitialState(777, [FLOOR_CONFIGS[2]], DEFAULT_HERO_INIT);
 		const [base] = regenerateBaseMaps(
 			state.seed,
@@ -117,14 +117,14 @@ describe("map generation hardening", () => {
 			base,
 			state.floors[0]?.state.tileOverrides ?? {},
 		);
-		const next = spawnMonstersForFloor(state, 0, walkMask, monstersById, encountersById, base);
-		const monsters = Object.values(next.floors[0]?.state.actorsById ?? {}).filter(
-			(actor) => actor.def.type === "monster" && actor.alive,
+		const next = spawnNpcsForFloor(state, 0, walkMask, npcsById, encountersById, base);
+		const npcs = Object.values(next.floors[0]?.state.actorsById ?? {}).filter(
+			(actor) => actor.def.type === "npc" && actor.alive,
 		);
-		const occupied = new Set(monsters.map((m) => m.idx));
-		expect(occupied.size).toBe(monsters.length);
-		for (const monster of monsters) {
-			expect(monster.idx).not.toBe(next.floors[0]?.state.spawnIdx);
+		const occupied = new Set(npcs.map((n) => n.idx));
+		expect(occupied.size).toBe(npcs.length);
+		for (const npc of npcs) {
+			expect(npc.idx).not.toBe(next.floors[0]?.state.spawnIdx);
 		}
 	});
 });

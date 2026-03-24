@@ -1,5 +1,5 @@
 {
 	"id": "goblin_guard",
 	"minDepth": 1,
-	"entries": [{ "monsterId": "goblin", "count": 1, "weight": 1 }]
+	"entries": [{ "npcId": "goblin", "count": 1, "weight": 1 }]
 }

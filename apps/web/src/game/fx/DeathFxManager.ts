@@ -11,7 +11,7 @@ const LIFESPAN_MS = 380;
 const DEPTH = 15;
 
 /**
- * Plays a one-shot blood-burst particle effect at the tile where a monster dies.
+ * Plays a one-shot blood-burst particle effect at the tile where an NPC dies.
  * Particle colour is driven by the dying actor's bloodColor via getBloodColor.
  * Emitters self-destruct after the burst completes — no manual cleanup required.
  */

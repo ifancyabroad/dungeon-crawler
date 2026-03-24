@@ -1,7 +1,7 @@
 /**
  * Frightened combat strategy.
  *
- * Applied via combatStrategyOverride when a monster has the FRIGHTENED status effect.
+ * Applied via combatStrategyOverride when an NPC has the FRIGHTENED status effect.
  * Faction-agnostic: derives enemies from effectiveFactions so it works correctly for
  * any actor regardless of which side they are on.
  *
@@ -12,31 +12,31 @@
  *    Chebyshev distance from the nearest visible enemy.
  */
 
-import type { AIContext, AITurnResult, MonsterAIState } from "./types";
+import type { AIContext, AITurnResult, NpcAIState } from "./types";
 import { getActorAtIdx, getAdjacentIndices } from "../engine";
 
 export function runFrightenedAI(ctx: AIContext): AITurnResult {
 	const {
-		monster,
+		npc,
 		aiState,
 		effectiveFactions,
-		visibleFromMonster,
+		visibleFromNpc,
 		walkableMask,
 		floorState,
 		width,
 		height,
 	} = ctx;
-	const newAIState: MonsterAIState = { ...aiState };
+	const newAIState: NpcAIState = { ...aiState };
 
-	const myFaction = effectiveFactions[monster.id] ?? "hostile";
+	const myFaction = effectiveFactions[npc.id] ?? "hostile";
 	const enemyFaction: "player" | "hostile" = myFaction === "hostile" ? "player" : "hostile";
 
 	const visibleEnemies = Object.values(floorState.actorsById).filter(
 		(a) =>
 			a.alive &&
-			a.id !== monster.id &&
+			a.id !== npc.id &&
 			effectiveFactions[a.id] === enemyFaction &&
-			visibleFromMonster[a.idx] === 1,
+			visibleFromNpc[a.idx] === 1,
 	);
 
 	// 1. No visible enemy → defer to idle strategy
@@ -44,7 +44,7 @@ export function runFrightenedAI(ctx: AIContext): AITurnResult {
 		return { result: { kind: "idle" }, newAIState };
 	}
 
-	const adjacent = getAdjacentIndices(monster.idx, width, height);
+	const adjacent = getAdjacentIndices(npc.idx, width, height);
 	const freeTiles = adjacent.filter(
 		(idx) => walkableMask[idx] === 1 && !getActorAtIdx(floorState, idx),
 	);
@@ -62,7 +62,7 @@ export function runFrightenedAI(ctx: AIContext): AITurnResult {
 		);
 
 	const nearestEnemy = visibleEnemies.reduce((best, a) =>
-		chebyshev(monster.idx, a.idx) < chebyshev(monster.idx, best.idx) ? a : best,
+		chebyshev(npc.idx, a.idx) < chebyshev(npc.idx, best.idx) ? a : best,
 	);
 
 	const enemyCol = nearestEnemy.idx % width;

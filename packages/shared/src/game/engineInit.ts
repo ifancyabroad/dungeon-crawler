@@ -5,7 +5,7 @@ import type {
 	FloorState,
 	GameState,
 	HeroInit,
-	MonsterInit,
+	NpcInit,
 } from "./types";
 import { MAP_GEN_VERSION } from "./types";
 import { VISION_RADIUS } from "./config";
@@ -13,7 +13,7 @@ import { createInitialRngState } from "../rng";
 import { regenerateBaseMaps, type BaseLayerFloor } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { computeUnarmoredAC } from "../combat/dice";
-import { type MonsterAIState } from "./strategies/types";
+import { type NpcAIState } from "./strategies/types";
 import { idxToXY } from "./engineUtils";
 
 const DEFAULT_ATTRIBUTES = {
@@ -42,7 +42,7 @@ export const DEFAULT_HERO_INIT: HeroInit = {
 /**
  * Build a single floor's initial state from its base layer.
  * Pass heroInit to populate the hero actor and initial visibility on the spawn tile.
- * Pass null for floors the hero doesn't start on (they'll receive monsters lazily).
+ * Pass null for floors the hero doesn't start on (they'll receive NPCs lazily).
  */
 function buildInitialFloorState(
 	base: BaseLayerFloor,
@@ -109,7 +109,7 @@ function buildInitialFloorState(
 
 /**
  * Create initial game state: all floors pre-generated, hero on floor 0.
- * Floors 1–N are empty (no actors); monsters are spawned lazily on first visit by the API.
+ * Floors 1–N are empty (no actors); NPCs are spawned lazily on first visit by the API.
  */
 export function createInitialState(
 	seed: number,
@@ -136,30 +136,30 @@ export function createInitialState(
 	};
 }
 
-/** Generate a deterministic actor ID for a monster spawn. */
-let _monsterCounter = 0;
-export function resetMonsterCounter(): void {
-	_monsterCounter = 0;
+/** Generate a deterministic actor ID for an NPC spawn. */
+let _npcCounter = 0;
+export function resetNpcCounter(): void {
+	_npcCounter = 0;
 }
-function nextMonsterId(monsterId: string): string {
-	return `${monsterId}_${_monsterCounter++}`;
+function nextNpcId(npcId: string): string {
+	return `${npcId}_${_npcCounter++}`;
 }
 
-/** Spawn a monster on a floor and return the updated state. */
-export function spawnMonster(
+/** Spawn an NPC on a floor and return the updated state. */
+export function spawnNpc(
 	state: GameState,
 	floorIndex: number,
-	init: MonsterInit,
+	init: NpcInit,
 	idx: number,
 ): GameState {
 	const floor = state.floors[floorIndex];
 	if (!floor) return state;
-	const aiState: MonsterAIState = {
+	const aiState: NpcAIState = {
 		combatStrategy: init.combatStrategy,
 		idleStrategy: init.idleStrategy,
 	};
 	const actor: Actor = {
-		id: nextMonsterId(init.monsterId),
+		id: nextNpcId(init.npcId),
 		name: init.name,
 		idx,
 		alive: true,
@@ -169,15 +169,15 @@ export function spawnMonster(
 		attributes: { ...init.attributes },
 		damageResistances: [...init.damageResistances],
 		damageImmunities: [...init.damageImmunities],
-		skills: Object.fromEntries(init.skills.map((id) => [id, { cooldownRemaining: 0 }])),
+		skills: Object.fromEntries(init.activeSkills.map((id) => [id, { cooldownRemaining: 0 }])),
 		activeEffects: [],
 		numericBuffs: {},
 		passiveDamageBonuses: [],
 		statusImmunities: [],
 		savingThrowProficiencies: init.savingThrowProficiencies,
 		challengeRating: init.challengeRating,
-		faction: "hostile",
-		def: { type: "monster", monsterId: init.monsterId },
+		faction: init.faction,
+		def: { type: "npc", npcId: init.npcId },
 		level: 0,
 		xp: 0,
 		hitDie: 0,

@@ -1,21 +1,25 @@
 import {
+	applyPassiveSkill,
 	computeWalkableMaskForFloor,
 	createRng,
 	getActorAtIdx,
 	regenerateBaseMaps,
-	spawnMonster,
+	spawnNpc,
 	type BaseLayerFloor,
 	type GameState,
-	type MonsterInit,
+	type NpcInit,
 } from "@app/shared";
-import { vaults, type EncounterDefinition, type MonsterDefinition } from "@app/content";
+import { vaults, skillsById, type EncounterDefinition, type NpcDefinition } from "@app/content";
+import type { PassiveSkillDefinition } from "@app/shared";
 
 const MIN_RANDOM_SPAWN_DISTANCE = 4;
 
-function monsterInitFromDef(def: MonsterDefinition): MonsterInit {
+function npcInitFromDef(def: NpcDefinition): NpcInit {
 	return {
-		monsterId: def.id,
+		npcId: def.id,
 		name: def.name,
+		faction: def.faction,
+		role: def.role,
 		hp: def.hp,
 		maxHp: def.hp,
 		armorClass: def.armorClass,
@@ -27,22 +31,64 @@ function monsterInitFromDef(def: MonsterDefinition): MonsterInit {
 		savingThrowProficiencies: def.savingThrowProficiencies,
 		combatStrategy: def.combatStrategy,
 		idleStrategy: def.idleStrategy,
-		skills: def.skills,
+		activeSkills: def.activeSkills,
+		passiveSkills: def.passiveSkills,
 	};
 }
 
 /**
- * Spawn all monsters for a floor in one pass:
+ * Spawn an NPC and immediately apply any passive skills to the resulting actor.
+ * Returns the updated game state.
+ */
+function spawnNpcWithPassives(
+	state: GameState,
+	floorIndex: number,
+	init: NpcInit,
+	idx: number,
+): GameState {
+	const next = spawnNpc(state, floorIndex, init, idx);
+
+	if (init.passiveSkills.length === 0) return next;
+
+	const floor = next.floors[floorIndex];
+	if (!floor) return next;
+
+	// Find the actor that was just spawned — it has the highest counter suffix for this npcId.
+	// More reliably, find it by position since we just placed it at `idx`.
+	const spawnedActor = Object.values(floor.state.actorsById).find(
+		(a) => a.def.type === "npc" && a.def.npcId === init.npcId && a.idx === idx,
+	);
+	if (!spawnedActor) return next;
+
+	let actor = spawnedActor;
+	for (const skillId of init.passiveSkills) {
+		const skillDef = skillsById[skillId];
+		if (skillDef?.skillType === "passive") {
+			actor = applyPassiveSkill(actor, skillDef as PassiveSkillDefinition);
+		}
+	}
+
+	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
+	const newFloors = next.floors.slice();
+	newFloors[floorIndex] = {
+		...floor,
+		state: { ...floor.state, actorsById: newActorsById },
+	};
+	return { ...next, floors: newFloors };
+}
+
+/**
+ * Spawn all NPCs for a floor in one pass:
  *   1. Random encounter groups from the floor's encounterTable (density-scaled).
  *   2. Vault-specific encounters pinned to their marker cells (from vaultPlacements in `base`).
  *
  * RNG seed = state.seed + floorIndex + 1 (offset by 1 to avoid collision with map gen RNG).
  */
-export function spawnMonstersForFloor(
+export function spawnNpcsForFloor(
 	state: GameState,
 	floorIndex: number,
 	walkMask: Uint8Array,
-	monstersById: Record<string, MonsterDefinition>,
+	npcsById: Record<string, NpcDefinition>,
 	encountersById: Record<string, EncounterDefinition>,
 	base?: BaseLayerFloor,
 ): GameState {
@@ -98,7 +144,7 @@ export function spawnMonstersForFloor(
 				}
 			}
 
-			const def = monstersById[chosenEntry.monsterId];
+			const def = npcsById[chosenEntry.npcId];
 			if (!def) continue;
 
 			for (let n = 0; n < chosenEntry.count; n++) {
@@ -112,7 +158,7 @@ export function spawnMonstersForFloor(
 						MIN_RANDOM_SPAWN_DISTANCE,
 					) ?? findRandomSpawnIdx(current, floorIndex, floorSize, walkMask, rng, 0);
 				if (spawnIdx === undefined) break;
-				current = spawnMonster(current, floorIndex, monsterInitFromDef(def), spawnIdx);
+				current = spawnNpcWithPassives(current, floorIndex, npcInitFromDef(def), spawnIdx);
 			}
 		}
 	}
@@ -133,7 +179,7 @@ export function spawnMonstersForFloor(
 
 				for (const markerIdx of markerIndices) {
 					for (const entry of encounterDef.entries) {
-						const def = monstersById[entry.monsterId];
+						const def = npcsById[entry.npcId];
 						if (!def) continue;
 						for (let count = 0; count < entry.count; count++) {
 							const spawnIdx = resolveSpawnNear(
@@ -146,10 +192,10 @@ export function spawnMonstersForFloor(
 								1,
 							);
 							if (spawnIdx === undefined) break;
-							current = spawnMonster(
+							current = spawnNpcWithPassives(
 								current,
 								floorIndex,
-								monsterInitFromDef(def),
+								npcInitFromDef(def),
 								spawnIdx,
 							);
 						}
@@ -240,13 +286,13 @@ function manhattanDistance(a: number, b: number, width: number): number {
 }
 
 /**
- * Spawn monsters on a new floor on first visit (no-op if already populated).
+ * Spawn NPCs on a new floor on first visit (no-op if already populated).
  * Uses cached base layers and walk mask when available to avoid recomputation.
  */
 export function applyDescendSideEffects(
 	state: GameState,
 	toFloor: number,
-	monstersById: Record<string, MonsterDefinition>,
+	npcsById: Record<string, NpcDefinition>,
 	encountersById: Record<string, EncounterDefinition>,
 	walkMask?: Uint8Array,
 	base?: BaseLayerFloor,
@@ -254,8 +300,8 @@ export function applyDescendSideEffects(
 	const floor = state.floors[toFloor];
 	if (!floor) return state;
 
-	const hasMonsters = Object.values(floor.state.actorsById).some((a) => a.def.type === "monster");
-	if (hasMonsters) return state;
+	const hasNpcs = Object.values(floor.state.actorsById).some((a) => a.def.type === "npc");
+	if (hasNpcs) return state;
 
 	if (!walkMask || !base) {
 		const baseLayers = regenerateBaseMaps(
@@ -269,5 +315,5 @@ export function applyDescendSideEffects(
 		walkMask = computeWalkableMaskForFloor(base, floor.state.tileOverrides);
 	}
 
-	return spawnMonstersForFloor(state, toFloor, walkMask, monstersById, encountersById, base);
+	return spawnNpcsForFloor(state, toFloor, walkMask, npcsById, encountersById, base);
 }

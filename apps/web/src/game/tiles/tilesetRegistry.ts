@@ -7,9 +7,9 @@
  * 1. TILE_METADATA — tilemap layer tiles (ground, wall, decoration).
  *    Queried by theme+type to build Phaser tilemaps.
  *
- * 2. ENTITY_TILES — Phaser sprite tiles for world entities (heroes, monsters, exits).
+ * 2. ENTITY_TILES — Phaser sprite tiles for world entities (heroes, NPCs, exits).
  *    These are sprites placed on top of the tilemap, not part of any tile layer.
- *    Heroes and monsters are keyed by content id (theme-independent).
+ *    Heroes and NPCs are keyed by content id (theme-independent).
  *    Exits are keyed by floor theme.
  *
  * Collision is authoritative in @app/shared (blockedMask). TILE_METADATA does not
@@ -19,7 +19,7 @@
  */
 
 import type { FloorTheme } from "@app/shared";
-import { classes, monsters } from "@app/content";
+import { classes, npcs } from "@app/content";
 
 // ---------------------------------------------------------------------------
 // Tilemap constants
@@ -106,13 +106,13 @@ export function getTileIndicesByThemeAndType(theme: FloorTheme, type: string): n
 }
 
 // ---------------------------------------------------------------------------
-// Entity sprite registry (heroes, monsters, exits)
+// Entity sprite registry (heroes, NPCs, exits)
 // ---------------------------------------------------------------------------
 
 /**
  * Sprite tile frame indices for all world entities.
  *
- * - heroes / monsters: keyed by content id (theme-independent; defined in content JSON).
+ * - heroes / NPCs: keyed by content id (theme-independent; defined in content JSON).
  * - exits: keyed by floor theme (the staircase tile varies per theme in future; currently
  *   all themes share tile 533).
  *
@@ -120,7 +120,7 @@ export function getTileIndicesByThemeAndType(theme: FloorTheme, type: string): n
  */
 export const ENTITY_TILES = {
 	heroes: Object.fromEntries(classes.map((c) => [c.id, c.tileId])) as Record<string, number>,
-	monsters: Object.fromEntries(monsters.map((m) => [m.id, m.tileId])) as Record<string, number>,
+	npcs: Object.fromEntries(npcs.map((n) => [n.id, n.tileId])) as Record<string, number>,
 	exits: {
 		green_forest: 533,
 		orange_forest: 533,

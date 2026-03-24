@@ -5,7 +5,7 @@ export const MOVE_DURATION_MS = 80;
 
 /**
  * Manages smooth slide tweens for entity movement.
- * Hero tweens block input via actionInProgress; monster tweens are visual-only.
+ * Hero tweens block input via actionInProgress; NPC tweens are visual-only.
  */
 export class MoveTweenManager {
 	private scene: Phaser.Scene;
@@ -36,9 +36,9 @@ export class MoveTweenManager {
 	}
 
 	/**
-	 * Tween a monster sprite to a new pixel position (visual-only, no input blocking).
+	 * Tween an NPC sprite to a new pixel position (visual-only, no input blocking).
 	 */
-	moveMonster(id: string, sprite: Phaser.GameObjects.Sprite, toX: number, toY: number): void {
+	moveNpc(id: string, sprite: Phaser.GameObjects.Sprite, toX: number, toY: number): void {
 		this.killTween(id);
 		const tween = this.scene.tweens.add({
 			targets: sprite,

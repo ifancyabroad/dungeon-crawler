@@ -26,7 +26,7 @@ export function getHero(state: GameState): Actor | undefined {
 }
 
 /** Actor "kind" is def.type. Use this instead of a removed .kind field. */
-export function actorKind(a: Actor): "hero" | "monster" {
+export function actorKind(a: Actor): "hero" | "npc" {
 	return a.def.type;
 }
 

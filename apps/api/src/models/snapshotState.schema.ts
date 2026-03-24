@@ -29,12 +29,12 @@ const ActorDefSchema = new Schema(
 	{
 		type: { type: String, required: true },
 		classId: String,
-		monsterId: String,
+		npcId: String,
 	},
 	{ _id: false },
 );
 
-const MonsterAIStateSchema = new Schema(
+const NpcAIStateSchema = new Schema(
 	{
 		combatStrategy: { type: String, required: true },
 		idleStrategy: { type: String, required: true },
@@ -62,7 +62,7 @@ const ActorSchema = new Schema(
 		xp: Number,
 		hitDie: Number,
 		xpReward: Number,
-		aiState: { type: MonsterAIStateSchema, default: undefined },
+		aiState: { type: NpcAIStateSchema, default: undefined },
 		savingThrowProficiencies: { type: [String], default: [] },
 		challengeRating: { type: Number, default: undefined },
 	},

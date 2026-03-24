@@ -2,9 +2,9 @@
  * Poison Bite visual effect: a contact bite that injects venom.
  *
  * Unlike hero melee skills, this effect does NOT tween the caster sprite — the
- * monster sprite position is managed by syncMonsters and must not be displaced.
+ * NPC sprite position is managed by syncNpcs and must not be displaced.
  * Instead the animation plays entirely at the target's tile so it is safe to
- * use as a fire-and-forget effect for both hero and monster casters.
+ * use as a fire-and-forget effect for both hero and NPC casters.
  */
 
 import Phaser from "phaser";

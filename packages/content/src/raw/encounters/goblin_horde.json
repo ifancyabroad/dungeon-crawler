@@ -2,9 +2,9 @@
 	"id": "goblin_horde",
 	"minDepth": 2,
 	"entries": [
-		{ "monsterId": "goblin", "count": 4, "weight": 2 },
-		{ "monsterId": "goblin", "count": 5, "weight": 1 },
-		{ "monsterId": "goblin_mage", "count": 1, "weight": 2 },
-		{ "monsterId": "goblin_mage", "count": 2, "weight": 1 }
+		{ "npcId": "goblin", "count": 4, "weight": 2 },
+		{ "npcId": "goblin", "count": 5, "weight": 1 },
+		{ "npcId": "goblin_mage", "count": 1, "weight": 2 },
+		{ "npcId": "goblin_mage", "count": 2, "weight": 1 }
 	]
 }

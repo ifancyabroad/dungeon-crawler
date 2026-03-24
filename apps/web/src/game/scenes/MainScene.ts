@@ -40,7 +40,7 @@ import { AttackAnimator } from "../fx/AttackAnimator";
 import { HealthBarManager } from "../fx/HealthBarManager";
 import { DeathFxManager } from "../fx/DeathFxManager";
 import { BLOOD_TEXTURE_KEY, HERO_BLOOD_COLOR } from "../fx/particles";
-import { monstersById, vaults } from "@app/content";
+import { npcsById, vaults } from "@app/content";
 import { DamageNumberManager } from "../fx/DamageNumberManager";
 import { SkillAnimationController } from "../skills/SkillAnimationController";
 import { TargetingSystem } from "../targeting/TargetingSystem";
@@ -87,8 +87,8 @@ export default class MainScene extends Phaser.Scene {
 	private unsubWaitForState: (() => void) | null = null;
 	/** Unsubscribe from hero position sync; cleaned up in shutdown(). */
 	private unsubHeroSync: (() => void) | null = null;
-	/** Monster sprites keyed by actor ID. */
-	private monsterSprites = new Map<string, Phaser.GameObjects.Sprite>();
+	/** NPC sprites keyed by actor ID. */
+	private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
 	/** Unsubscribe from actor sync. */
 	private unsubActorSync: (() => void) | null = null;
 	/** Set to true once the scene is shut down or destroyed; guards async subscription callbacks. */
@@ -126,7 +126,7 @@ export default class MainScene extends Phaser.Scene {
 			this.unsubHeroSync = null;
 			this.unsubActorSync?.();
 			this.unsubActorSync = null;
-			this.monsterSprites.clear();
+			this.npcSprites.clear();
 			this.targetingSystem?.destroy();
 			this.targetingSystem = null;
 			this.destroyFx();
@@ -282,7 +282,7 @@ export default class MainScene extends Phaser.Scene {
 		if (currentState) {
 			const explored = currentState.floors[currentState.heroFloorIndex]?.state.explored ?? [];
 			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
-			this.syncMonsters(currentState);
+			this.syncNpcs(currentState);
 		}
 
 		const syncState: SyncState = {
@@ -300,7 +300,7 @@ export default class MainScene extends Phaser.Scene {
 	/**
 	 * Per-turn rendering callback fired by the store subscription.
 	 * Owns all turn-driven logic: floor transition detection, hero sync,
-	 * fog of war, FX dispatch, and monster sync.
+	 * fog of war, FX dispatch, and NPC sync.
 	 */
 	private onStoreUpdate(storeState: GameStore, sync: SyncState) {
 		const gs = storeState.state;
@@ -407,9 +407,9 @@ export default class MainScene extends Phaser.Scene {
 
 	/**
 	 * Dispatch events to all FX managers (attack bumps, damage numbers, death particles)
-	 * and then sync the monster sprite map. Extracted so it can be called either
+	 * and then sync the NPC sprite map. Extracted so it can be called either
 	 * immediately (normal turns) or deferred inside a skill animation callback (fireball,
-	 * charge) so that monsters remain visible until the animation resolves.
+	 * charge) so that NPCs remain visible until the animation resolves.
 	 */
 	private dispatchFxAndSync(events: GameEvent[], gs: GameState, floor: FloorState | null): void {
 		if (events.length > 0 && floor) {
@@ -417,9 +417,9 @@ export default class MainScene extends Phaser.Scene {
 			const getActorIdx = (id: string) => actorsById[id]?.idx;
 			const getBloodColor = (id: string): string => {
 				const actor = actorsById[id];
-				if (!actor || actor.def.type !== "monster") return HERO_BLOOD_COLOR;
+				if (!actor || actor.def.type !== "npc") return HERO_BLOOD_COLOR;
 				return (
-					(monstersById as Record<string, { bloodColor: string }>)[actor.def.monsterId]
+					(npcsById as Record<string, { bloodColor: string }>)[actor.def.npcId]
 						?.bloodColor ?? HERO_BLOOD_COLOR
 				);
 			};
@@ -428,7 +428,7 @@ export default class MainScene extends Phaser.Scene {
 				this.skillAnimController?.dispatchNonHero(
 					events,
 					gs.heroId,
-					(id) => this.monsterSprites.get(id),
+					(id) => this.npcSprites.get(id),
 					getActorIdx,
 					(evts) => this.damageNumbers?.handleEvents(evts, getActorIdx),
 				) ?? new Set<GameEvent>();
@@ -437,7 +437,7 @@ export default class MainScene extends Phaser.Scene {
 				events,
 				gs.heroId,
 				this.player,
-				this.monsterSprites,
+				this.npcSprites,
 				getActorIdx,
 				getBloodColor,
 			);
@@ -448,7 +448,7 @@ export default class MainScene extends Phaser.Scene {
 			this.damageNumbers?.handleEvents(mainPassEvents, getActorIdx);
 			this.deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
 		}
-		this.syncMonsters(gs);
+		this.syncNpcs(gs);
 	}
 
 	/**
@@ -480,7 +480,7 @@ export default class MainScene extends Phaser.Scene {
 		});
 	}
 
-	/** Destroy all current map layers, fogged world sprites, player, and monster sprites. */
+	/** Destroy all current map layers, fogged world sprites, player, and NPC sprites. */
 	private cleanupMapObjects(): void {
 		this.tileDisplayState = null;
 		this.tileDisplayBuffer = null;
@@ -497,29 +497,29 @@ export default class MainScene extends Phaser.Scene {
 		if (this.player) {
 			this.player.destroy();
 		}
-		for (const sprite of this.monsterSprites.values()) {
+		for (const sprite of this.npcSprites.values()) {
 			sprite.destroy();
 		}
-		this.monsterSprites.clear();
+		this.npcSprites.clear();
 		this.destroyFx();
 	}
 
-	/** Synchronize monster sprites with the current game state. */
-	private syncMonsters(gameState: GameState) {
+	/** Synchronize NPC sprites with the current game state. */
+	private syncNpcs(gameState: GameState) {
 		const floor = gameState.floors[gameState.heroFloorIndex];
 		if (!floor) return;
 		const actorsById = floor.state.actorsById;
 
-		// Update or create monster sprites
+		// Update or create NPC sprites
 		for (const [id, actor] of Object.entries(actorsById)) {
 			if (id === gameState.heroId) continue;
-			if (actor.def.type !== "monster") continue;
+			if (actor.def.type !== "npc") continue;
 
-			const existing = this.monsterSprites.get(id);
+			const existing = this.npcSprites.get(id);
 			if (!actor.alive) {
 				if (existing) {
 					existing.destroy();
-					this.monsterSprites.delete(id);
+					this.npcSprites.delete(id);
 					this.healthBars?.remove(id);
 				}
 				continue;
@@ -528,13 +528,13 @@ export default class MainScene extends Phaser.Scene {
 			const { x, y } = idxToXY(actor.idx, this.mapWidth);
 			const px = x * TILE_WIDTH + TILE_WIDTH / 2;
 			const py = y * TILE_HEIGHT + TILE_HEIGHT / 2;
-			const tileFrame = ENTITY_TILES.monsters[actor.def.monsterId];
+			const tileFrame = ENTITY_TILES.npcs[actor.def.npcId];
 			if (tileFrame === undefined) continue;
 
 			const isVisible = this.visibleMask?.[actor.idx] === 1;
 
 			if (existing) {
-				this.moveTweens?.moveMonster(id, existing, px, py);
+				this.moveTweens?.moveNpc(id, existing, px, py);
 				existing.setFrame(tileFrame);
 				existing.setVisible(isVisible);
 				if (isVisible) {
@@ -545,7 +545,7 @@ export default class MainScene extends Phaser.Scene {
 				sprite.setOrigin(0.5, 0.5);
 				sprite.setDepth(9);
 				sprite.setVisible(isVisible);
-				this.monsterSprites.set(id, sprite);
+				this.npcSprites.set(id, sprite);
 				if (isVisible) {
 					this.healthBars?.update(id, actor.hp, actor.maxHp, sprite);
 				}
@@ -554,10 +554,10 @@ export default class MainScene extends Phaser.Scene {
 
 		// Remove sprites for actors that were removed from state entirely.
 		// The alive=false case is fully handled in the loop above.
-		for (const [id, sprite] of this.monsterSprites) {
+		for (const [id, sprite] of this.npcSprites) {
 			if (!actorsById[id]) {
 				sprite.destroy();
-				this.monsterSprites.delete(id);
+				this.npcSprites.delete(id);
 				this.healthBars?.remove(id);
 			}
 		}

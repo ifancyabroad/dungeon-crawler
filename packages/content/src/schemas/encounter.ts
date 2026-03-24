@@ -5,7 +5,7 @@
 import { z } from "zod";
 
 export const EncounterEntrySchema = z.object({
-	monsterId: z.string(),
+	npcId: z.string(),
 	count: z.number().int().positive(),
 	weight: z.number().positive(),
 });

@@ -5,7 +5,7 @@ export const BLOOD_TEXTURE_KEY = "__blood_particle__";
 /** Default blood colour used for the hero. */
 export const HERO_BLOOD_COLOR = "#cc0000";
 
-/** Default red blood tints used for the hero and any monster without a bloodColor. */
+/** Default red blood tints used for the hero and any NPC without a bloodColor. */
 export const DEFAULT_BLOOD_TINTS: number[] = [0xcc0000, 0x8b0000, 0x6b0000, 0xff2222];
 
 /**

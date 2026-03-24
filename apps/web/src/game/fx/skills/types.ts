@@ -6,14 +6,14 @@ export interface SkillAnimResult {
 	/** Whether this handler recognised and handled the skill. */
 	handled: boolean;
 	/**
-	 * When true, the caller must NOT dispatch FX (deaths, damage numbers, monster sync)
+	 * When true, the caller must NOT dispatch FX (deaths, damage numbers, NPC sync)
 	 * immediately — the handler's `onImpact` callback will do it at the right moment.
 	 */
 	fxDeferred: boolean;
 	/**
 	 * Set when the handler moved the hero sprite. Caller should update its tile
 	 * position tracker (playerTileX / playerTileY) to these values so LoS is correct.
-	 * Only populated for hero-cast movement skills; ignored for monster skills.
+	 * Only populated for hero-cast movement skills; ignored for NPC skills.
 	 */
 	newHeroTilePos?: { x: number; y: number };
 }
@@ -21,7 +21,7 @@ export interface SkillAnimResult {
 /** All data a handler needs to decide what to animate and when to dispatch FX. */
 export interface SkillAnimContext {
 	event: Extract<GameEvent, { type: "skill_used" }>;
-	/** The sprite of the actor casting the skill (hero or monster). */
+	/** The sprite of the actor casting the skill (hero or NPC). */
 	casterSprite: Phaser.GameObjects.Sprite;
 	/** The caster's tile index in the authoritative state after the action completed. */
 	casterIdxAfter: number;
@@ -37,7 +37,7 @@ export interface SkillAnimContext {
 	 */
 	targetWorldPos?: { px: number; py: number };
 	/**
-	 * Call this to trigger deferred FX dispatch (deaths, damage numbers, monster sync).
+	 * Call this to trigger deferred FX dispatch (deaths, damage numbers, NPC sync).
 	 * Handlers that set `fxDeferred: true` MUST call this at the appropriate moment.
 	 */
 	onImpact: () => void;

@@ -2,8 +2,8 @@
  * Skill resolver: validates prerequisites and dispatches each effect descriptor
  * to the appropriate handler. Returns the updated floor state, caster, and events.
  *
- * Called from the engine's "use_skill" branch (hero) and future monster skill branches.
- * The "caster" may be the hero or any monster — the resolver is actor-agnostic.
+ * Called from the engine's "use_skill" branch (hero) and NPC skill branches.
+ * The "caster" may be the hero or any NPC — the resolver is actor-agnostic.
  */
 
 import type { Actor, GameEvent } from "../game/types";

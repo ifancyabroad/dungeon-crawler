@@ -1,11 +1,11 @@
 /**
- * Monster AI — strategy registry and dispatcher.
+ * NPC AI — strategy registry and dispatcher.
  *
  * Adding a new combat strategy:
  * 1. Add a new literal to CombatStrategyTag in ./types.
  * 2. Create packages/shared/src/game/strategies/<name>.ts implementing
  *    (ctx: AIContext) => AITurnResult.  Return { kind: "roam" } when the
- *    monster has nothing to fight. Return { kind: "idle" } to hand off to the idle layer.
+ *    NPC has nothing to fight. Return { kind: "idle" } to hand off to the idle layer.
  * 3. Import and register it in COMBAT_STRATEGIES below.
  *
  * Adding a new idle strategy:
@@ -45,11 +45,11 @@ const IDLE_STRATEGIES: Record<IdleStrategyTag, IdleStrategyFn> = {
 };
 
 /**
- * Run the monster's AI for one turn.
+ * Run an NPC's AI for one turn.
  * Phase 1 — combat: dispatch by combatStrategyOverride ?? aiState.combatStrategy.
  * Phase 2 — idle:   if combat returns { kind: "idle" }, dispatch by aiState.idleStrategy.
  */
-export function runMonsterAI(ctx: AIContext): AITurnResult {
+export function runNpcAI(ctx: AIContext): AITurnResult {
 	const combatTag = ctx.combatStrategyOverride ?? ctx.aiState.combatStrategy;
 	const { result, newAIState } = COMBAT_STRATEGIES[combatTag](ctx);
 	if (result.kind !== "idle") return { result, newAIState };
@@ -59,7 +59,7 @@ export function runMonsterAI(ctx: AIContext): AITurnResult {
 export type {
 	CombatStrategyTag,
 	IdleStrategyTag,
-	MonsterAIState,
+	NpcAIState,
 	AIContext,
 	AIResult,
 	AITurnResult,

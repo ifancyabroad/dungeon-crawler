@@ -16,7 +16,7 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 | **Run**    | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                                                                         |
 | **Turn**   | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                                                                    |
 | **Floor**  | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles).                                               |
-| **Actor**  | Any entity that occupies a tile and can act — the hero and all monsters. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                         |
+| **Actor**  | Any entity that occupies a tile and can act — the hero and all NPCs. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                             |
 | **Action** | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), `use_skill` (skillId + optional target), `select_skill_choice`, and `reroll_skill_choice`. Actions are the only input the server accepts. |
 | **Event**  | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                                                                          |
 
@@ -54,9 +54,9 @@ On reaching a new level the game pauses and offers the player a choice of up to 
 
 Skill definitions live in `packages/content/src/raw/skills/` and are data-driven.
 
-### Monsters
+### NPCs
 
-The current monster roster is intentionally small while core systems stabilise. Canonical monster definitions live in `packages/content/src/raw/monsters/`, with encounters in `packages/content/src/raw/encounters/`.
+The current NPC roster is intentionally small while core systems stabilise. Canonical NPC definitions live in `packages/content/src/raw/npcs/`, with encounters in `packages/content/src/raw/encounters/`. Each NPC definition includes `faction` (combat alignment: `"hostile"` or `"player"`) and `role` (behavioral category: `"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`).
 
 A boss encounter placeholder is in place on the final floor.
 

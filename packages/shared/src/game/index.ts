@@ -16,7 +16,7 @@ export type {
 	GameSnapshotDoc,
 	GameState,
 	HeroInit,
-	MonsterInit,
+	NpcInit,
 	PassiveDamageBonus,
 	PendingInteraction,
 	PersistedDynamicState,
@@ -55,14 +55,14 @@ export {
 	getHero,
 	idxToXY,
 	LEVEL_UP_SCHEDULE,
-	resetMonsterCounter,
-	spawnMonster,
+	resetNpcCounter,
+	spawnNpc,
 	xyToIdx,
 	type ApplyActionContext,
 	type ApplyActionResult,
 	type ClassSkillPools,
 } from "./engine";
-export { VISION_RADIUS, XP_PER_LEVEL, BASE_MONSTERS_PER_FLOOR } from "./config";
+export { VISION_RADIUS, XP_PER_LEVEL, BASE_NPCS_PER_FLOOR } from "./config";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
 	AbilityNameSchema,
@@ -74,10 +74,10 @@ export {
 	ActorAttributesSchema,
 	ActorSkillStateSchema,
 	FloorStateSchema,
-	MonsterAIStateSchema,
+	NpcAIStateSchema,
 	PassiveDamageBonusSchema,
 	PendingInteractionSchema,
 	PersistedDynamicStateSchema,
 	RngStateSchema,
 } from "./schemas";
-export type { CombatStrategyTag, IdleStrategyTag, MonsterAIState } from "./strategies";
+export type { CombatStrategyTag, IdleStrategyTag, NpcAIState } from "./strategies";

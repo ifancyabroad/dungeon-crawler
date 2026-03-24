@@ -3,8 +3,8 @@
 /** Default hero vision radius in tiles (Euclidean distance). */
 export const VISION_RADIUS = 8;
 
-/** Base number of monsters to spawn per floor. Scales with floor depth. */
-export const BASE_MONSTERS_PER_FLOOR = 5;
+/** Base number of NPCs to spawn per floor. Scales with floor depth. */
+export const BASE_NPCS_PER_FLOOR = 5;
 
 /**
  * XP required to reach each level.

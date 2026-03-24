@@ -115,7 +115,7 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		vaultIds: ["boss_chamber"],
 		specialRoomFrequency: 0.35,
 		bossRules: {
-			monsterId: "goblin",
+			npcId: "goblin",
 			preferredRoomTag: "boss",
 		},
 	},

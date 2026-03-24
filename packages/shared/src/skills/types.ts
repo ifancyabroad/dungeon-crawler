@@ -54,7 +54,7 @@ export type {
 
 export interface SkillResolutionInput {
 	skillDef: ActiveSkillDefinition;
-	/** The actor using the skill (hero or monster). */
+	/** The actor using the skill (hero or NPC). */
 	caster: Actor;
 	casterId: ActorId;
 	floorState: FloorState;

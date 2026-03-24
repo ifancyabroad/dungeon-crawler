@@ -56,10 +56,10 @@ function makeHeroActor(overrides?: Partial<Actor>): Actor {
 	};
 }
 
-function makeMonsterActor(overrides?: Partial<Actor>): Actor {
+function makeNpcActor(overrides?: Partial<Actor>): Actor {
 	return {
-		id: "monster",
-		name: "Monster",
+		id: "npc",
+		name: "Npc",
 		idx: 1,
 		alive: true,
 		hp: 10,
@@ -73,7 +73,7 @@ function makeMonsterActor(overrides?: Partial<Actor>): Actor {
 		numericBuffs: {},
 		passiveDamageBonuses: [],
 		statusImmunities: [],
-		def: { type: "monster", monsterId: "goblin" },
+		def: { type: "npc", npcId: "goblin" },
 		level: 0,
 		xp: 0,
 		hitDie: 0,
@@ -119,7 +119,7 @@ describe("Ability proficiency bonus tables", () => {
 
 describe("resolveSavingThrow", () => {
 	it("natural 20 is auto_success regardless of DC", () => {
-		const defender = makeMonsterActor({
+		const defender = makeNpcActor({
 			attributes: { ...ATTRS, dexterity: 8 },
 		});
 
@@ -135,7 +135,7 @@ describe("resolveSavingThrow", () => {
 	});
 
 	it("natural 1 is auto_fail regardless of DC", () => {
-		const defender = makeMonsterActor({
+		const defender = makeNpcActor({
 			attributes: { ...ATTRS, dexterity: 20 },
 		});
 
@@ -218,7 +218,7 @@ describe("area_damage saving throw scaling", () => {
 			level: 1,
 			attributes: { ...ATTRS, intelligence: 10 },
 		});
-		const defender = makeMonsterActor({
+		const defender = makeNpcActor({
 			id: "defender",
 			idx: 1,
 			hp: 3,
@@ -269,7 +269,7 @@ describe("area_damage saving throw scaling", () => {
 			level: 1,
 			attributes: { ...ATTRS, intelligence: 10 },
 		});
-		const defender = makeMonsterActor({
+		const defender = makeNpcActor({
 			id: "defender",
 			idx: 1,
 			hp: 3,

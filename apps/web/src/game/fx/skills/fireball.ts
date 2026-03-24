@@ -1,7 +1,7 @@
 /**
  * Fireball visual effects: projectile travel + explosion.
  * Blocks player input for the full duration; calls `onImpact` the moment the
- * projectile lands so that death FX and monster sync play with the explosion.
+ * projectile lands so that death FX and NPC sync play with the explosion.
  */
 
 import Phaser from "phaser";

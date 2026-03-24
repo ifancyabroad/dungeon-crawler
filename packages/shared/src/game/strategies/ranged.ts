@@ -1,7 +1,7 @@
 /**
  * Ranged combat strategy.
  *
- * Used by monsters that prefer distance over melee (e.g. goblin mage).
+ * Used by NPCs that prefer distance over melee (e.g. goblin mage).
  *
  * Decision tree:
  * 1. No enemies visible and no last-known position → idle.
@@ -14,7 +14,7 @@
  * 6. Idle (hand off to idle strategy).
  */
 
-import type { AIContext, AIResult, AITurnResult, MonsterAIState } from "./types";
+import type { AIContext, AIResult, AITurnResult, NpcAIState } from "./types";
 import { getAdjacentIndices } from "../engine";
 import { bfsNextStep } from "../../map/pathfinding";
 
@@ -23,23 +23,23 @@ const IDEAL_RANGE = 3;
 
 export function runRangedAI(ctx: AIContext): AITurnResult {
 	const {
-		monster,
+		npc,
 		aiState,
 		effectiveFactions,
-		visibleFromMonster,
+		visibleFromNpc,
 		walkableMask,
 		floorState,
 		width,
 		height,
 		getSkillDef,
 	} = ctx;
-	const newAIState: MonsterAIState = { ...aiState };
+	const newAIState: NpcAIState = { ...aiState };
 
-	const myFaction = effectiveFactions[monster.id] ?? "hostile";
+	const myFaction = effectiveFactions[npc.id] ?? "hostile";
 	const enemyFaction: "player" | "hostile" = myFaction === "hostile" ? "player" : "hostile";
 
 	const enemies = Object.values(floorState.actorsById).filter(
-		(a) => a.alive && a.id !== monster.id && effectiveFactions[a.id] === enemyFaction,
+		(a) => a.alive && a.id !== npc.id && effectiveFactions[a.id] === enemyFaction,
 	);
 
 	if (enemies.length === 0) {
@@ -52,7 +52,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 			Math.abs(Math.floor(aIdx / width) - Math.floor(bIdx / width)),
 		);
 
-	const adjacent = getAdjacentIndices(monster.idx, width, height);
+	const adjacent = getAdjacentIndices(npc.idx, width, height);
 
 	// -----------------------------------------------------------------------
 	// Step 2: Adjacent enemy — try to flee one step, otherwise fall back to attack
@@ -60,7 +60,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 	const adjacentEnemy = enemies.find((a) => adjacent.includes(a.idx));
 	if (adjacentEnemy) {
 		const fleeStep = findFleeStep(
-			monster.idx,
+			npc.idx,
 			adjacentEnemy.idx,
 			walkableMask,
 			floorState,
@@ -77,12 +77,12 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 	// -----------------------------------------------------------------------
 	// Step 3 & 4: Visible enemies
 	// -----------------------------------------------------------------------
-	const visibleEnemies = enemies.filter((a) => visibleFromMonster[a.idx] === 1);
+	const visibleEnemies = enemies.filter((a) => visibleFromNpc[a.idx] === 1);
 
 	if (visibleEnemies.length > 0) {
 		// Pick the nearest visible enemy as primary target
 		const nearest = visibleEnemies.reduce((best, a) =>
-			chebyshev(monster.idx, a.idx) < chebyshev(monster.idx, best.idx) ? a : best,
+			chebyshev(npc.idx, a.idx) < chebyshev(npc.idx, best.idx) ? a : best,
 		);
 		newAIState.lastKnownEnemyIdx = nearest.idx;
 
@@ -91,7 +91,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 		let bestSkill: RangedSkillInfo | undefined;
 
 		if (getSkillDef) {
-			for (const [skillId, skillState] of Object.entries(monster.skills ?? {})) {
+			for (const [skillId, skillState] of Object.entries(npc.skills ?? {})) {
 				if (skillState.cooldownRemaining !== 0) continue;
 				const def = getSkillDef(skillId);
 				if (!def || def.skillType !== "active") continue;
@@ -110,7 +110,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 			}
 		}
 
-		const dist = chebyshev(monster.idx, nearest.idx);
+		const dist = chebyshev(npc.idx, nearest.idx);
 
 		if (bestSkill && dist <= bestSkill.range) {
 			// Enemy is within skill range — fire
@@ -124,14 +124,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 		// Skill on cooldown or enemy out of range — reposition toward ideal distance
 		if (dist > IDEAL_RANGE) {
 			// Too far — move closer
-			const step = bfsNextStep(
-				monster.idx,
-				nearest.idx,
-				walkableMask,
-				floorState,
-				width,
-				height,
-			);
+			const step = bfsNextStep(npc.idx, nearest.idx, walkableMask, floorState, width, height);
 			if (step !== undefined) {
 				return { result: { kind: "move", toIdx: step }, newAIState };
 			}
@@ -145,10 +138,10 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 	// -----------------------------------------------------------------------
 	if (newAIState.lastKnownEnemyIdx !== undefined) {
 		const target = newAIState.lastKnownEnemyIdx;
-		if (monster.idx === target) {
+		if (npc.idx === target) {
 			newAIState.lastKnownEnemyIdx = undefined;
 		} else {
-			const step = bfsNextStep(monster.idx, target, walkableMask, floorState, width, height);
+			const step = bfsNextStep(npc.idx, target, walkableMask, floorState, width, height);
 			if (step !== undefined) {
 				return { result: { kind: "move", toIdx: step }, newAIState };
 			}
@@ -161,7 +154,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 
 /**
  * Find a single BFS step that moves `from` away from `threatIdx`.
- * Returns the step index if one is found, or undefined if the monster is cornered.
+ * Returns the step index if one is found, or undefined if the NPC is cornered.
  */
 function findFleeStep(
 	from: number,

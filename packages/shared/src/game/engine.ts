@@ -56,12 +56,7 @@ export {
 	type ApplyActionResult,
 	type ClassSkillPools,
 } from "./engineContext";
-export {
-	createInitialState,
-	DEFAULT_HERO_INIT,
-	resetMonsterCounter,
-	spawnMonster,
-} from "./engineInit";
+export { createInitialState, DEFAULT_HERO_INIT, resetNpcCounter, spawnNpc } from "./engineInit";
 export { LEVEL_UP_SCHEDULE } from "./engineLevelUp";
 
 // ---------------------------------------------------------------------------
@@ -113,7 +108,7 @@ function tickSkillCooldowns(state: GameState): GameState {
 }
 
 /**
- * If the hero is stealthed, remove the stealth effect and alert all living monsters
+ * If the hero is stealthed, remove the stealth effect and alert all living NPCs
  * to the hero's current position. Called before enemy turns on attack and skill use,
  * so enemies can retaliate immediately after the hero reveals themselves.
  */
@@ -135,8 +130,7 @@ function breakStealth(
 	};
 
 	for (const [id, actor] of Object.entries(actorsById)) {
-		if (id === heroId || !actor.alive || actor.def.type !== "monster" || !actor.aiState)
-			continue;
+		if (id === heroId || !actor.alive || actor.def.type !== "npc" || !actor.aiState) continue;
 		actorsById = {
 			...actorsById,
 			[id]: { ...actor, aiState: { ...actor.aiState!, lastKnownEnemyIdx: hero.idx } },
@@ -482,7 +476,7 @@ export function applyAction(
 			for (const event of resolution.events) {
 				if (event.type === "death") {
 					const dead = newFloorState.actorsById[event.actorId];
-					if (dead?.def.type === "monster") {
+					if (dead?.def.type === "npc") {
 						const {
 							actor: heroWithXp,
 							events: xpEvents,

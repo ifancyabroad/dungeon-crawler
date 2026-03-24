@@ -19,7 +19,7 @@ export function proficiencyBonusFromLevel(level: number): number {
 }
 
 /**
- * Proficiency bonus by monster challenge rating (CR ranges).
+ * Proficiency bonus by NPC challenge rating (CR ranges).
  * 0-4: +2
  * 5-8: +3
  * 9-12: +4
@@ -45,7 +45,7 @@ export function isActorProficientInSavingThrow(actor: Actor, ability: AbilityNam
 }
 
 export function getActorProficiencyBonus(actor: Actor): number {
-	// Monsters use CR; heroes use level.
+	// NPCs use CR; heroes use level.
 	if (actor.challengeRating !== undefined) {
 		return proficiencyBonusFromChallengeRating(actor.challengeRating);
 	}

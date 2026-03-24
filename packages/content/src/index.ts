@@ -1,5 +1,5 @@
 /**
- * Content package: validated JSON content (character classes, monsters, vaults, encounters) with typed lookup.
+ * Content package: validated JSON content (character classes, NPCs, vaults, encounters) with typed lookup.
  * Import from "@app/content".
  */
 
@@ -10,16 +10,16 @@ export {
 	contentVersion,
 	encounters,
 	encountersById,
-	monsterIds,
-	monsters,
-	monstersById,
+	npcIds,
+	npcs,
+	npcsById,
 	skillIds,
 	skills,
 	skillsById,
 	vaults,
 	vaultsById,
 	type CharacterClassId,
-	type MonsterId,
+	type NpcId,
 	type SkillId,
 } from "./generated/index.js";
 export {
@@ -27,7 +27,7 @@ export {
 	CharacterClassesArraySchema,
 	type CharacterClassDefinition,
 } from "./schemas/characterClass.js";
-export { MonsterSchema, MonstersArraySchema, type MonsterDefinition } from "./schemas/monster.js";
+export { NpcSchema, NpcsArraySchema, type NpcDefinition } from "./schemas/npc.js";
 export { VaultDefSchema, VaultsArraySchema, type VaultDefinition } from "./schemas/vault.js";
 export {
 	EncounterDefSchema,

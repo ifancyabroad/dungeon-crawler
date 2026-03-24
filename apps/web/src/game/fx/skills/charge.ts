@@ -2,7 +2,7 @@
  * Charge visual effect: fast hero sprite tween to the landing tile.
  * Intentionally snappier than a normal move tween to convey explosive speed.
  * Calls `onComplete` just before input is unblocked so callers can sync
- * monster deaths and other deferred FX.
+ * NPC deaths and other deferred FX.
  */
 
 import Phaser from "phaser";

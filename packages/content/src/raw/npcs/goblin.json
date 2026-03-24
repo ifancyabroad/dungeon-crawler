@@ -2,6 +2,8 @@
 	"id": "goblin",
 	"name": "Goblin",
 	"description": "A small, cunning creature with quick reflexes but poor strength.",
+	"faction": "hostile",
+	"role": "grunt",
 	"baseAttributes": {
 		"strength": 8,
 		"dexterity": 14,
@@ -21,5 +23,7 @@
 	"challengeRating": 1,
 	"savingThrowProficiencies": ["dexterity"],
 	"bloodColor": "#cc0000",
-	"skills": []
+	"activeSkills": [],
+	"passiveSkills": [],
+	"startingEquipment": []
 }

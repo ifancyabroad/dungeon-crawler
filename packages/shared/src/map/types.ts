@@ -47,9 +47,9 @@ export type AlgorithmParams = BspParams | CaveParams | HybridParams | ArenaParam
 // Encounter / spawn system
 // ---------------------------------------------------------------------------
 
-/** A single group of monsters in an encounter definition. */
+/** A single group of NPCs in an encounter definition. */
 export interface EncounterEntry {
-	monsterId: string;
+	npcId: string;
 	count: number;
 	weight: number;
 }
@@ -75,7 +75,7 @@ export interface EncounterTableEntry {
 
 /** Specifies how a boss is placed on a floor. */
 export interface BossRules {
-	monsterId: string;
+	npcId: string;
 	/** Room tag preference for boss placement. */
 	preferredRoomTag: RoomTag;
 }
