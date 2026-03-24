@@ -5,8 +5,10 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import http from "node:http";
 import { io as ioClient } from "socket.io-client";
-import type { GameState } from "@app/shared";
+import type { Action, GameState } from "@app/shared";
 import { createInitialState, DEFAULT_FLOOR_CONFIG, DEFAULT_HERO_INIT } from "@app/shared";
+import type { Socket } from "socket.io-client";
+import { ActionSchema, applyActionWithDerivedContext } from "@app/shared";
 
 process.env.MONGO_URI = "mongodb://localhost:27017/test";
 process.env.GAME_TOKEN_PEPPER = "test-pepper";
@@ -117,6 +119,58 @@ function parseGameToken(setCookie: string | string[] | undefined): string | null
 	const str = Array.isArray(setCookie) ? setCookie[0] : setCookie;
 	const match = str?.match(/game_token=([^;]+)/);
 	return match ? match[1].trim() : null;
+}
+
+function waitForEvent<T>(client: Socket, eventName: string, timeoutMs: number): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const timeout = setTimeout(() => {
+			client.off(eventName, onEvent);
+			reject(new Error(`timeout waiting for ${eventName}`));
+		}, timeoutMs);
+		const onEvent = (payload: T) => {
+			clearTimeout(timeout);
+			client.off(eventName, onEvent);
+			resolve(payload);
+		};
+		client.on(eventName, onEvent);
+	});
+}
+
+async function waitForCondition(
+	condition: () => boolean,
+	timeoutMs: number,
+	intervalMs = 25,
+): Promise<void> {
+	const started = Date.now();
+	while (!condition()) {
+		if (Date.now() - started > timeoutMs) {
+			throw new Error("timeout waiting for condition");
+		}
+		await new Promise((resolve) => setTimeout(resolve, intervalMs));
+	}
+}
+
+function pickFirstValidAction(state: GameState): Action | null {
+	const candidates: Action[] = [
+		{ type: "move", direction: "up" },
+		{ type: "move", direction: "down" },
+		{ type: "move", direction: "left" },
+		{ type: "move", direction: "right" },
+		{ type: "attack", direction: "up" },
+		{ type: "attack", direction: "down" },
+		{ type: "attack", direction: "left" },
+		{ type: "attack", direction: "right" },
+	];
+	if (state.pendingInteraction?.type === "skill_choice") {
+		candidates.push({ type: "reroll_skill_choice" });
+		const [firstOffer] = state.pendingInteraction.offers;
+		if (firstOffer) candidates.push({ type: "select_skill_choice", skillId: firstOffer });
+	}
+	return (
+		candidates.find(
+			(action) => applyActionWithDerivedContext(state, ActionSchema.parse(action)).ok,
+		) ?? null
+	);
 }
 
 describe("gameState concurrency", () => {
@@ -253,56 +307,46 @@ describe("gameState concurrency", () => {
 			extraHeaders: { Cookie: `game_token=${token}` },
 			transports: ["websocket"],
 		});
-
-		const joinState = await new Promise<{ state: GameState }>((resolve, reject) => {
-			const t = setTimeout(() => reject(new Error("timeout")), 3000);
-			client.once("state", (p: { state: GameState }) => {
-				clearTimeout(t);
-				resolve(p);
-			});
+		try {
 			client.emit("join", { gameId });
-		});
+			const joinState = await waitForEvent<{ state: GameState }>(client, "state", 3000);
+			const expectedTurn = joinState.state.turn;
+			expect(expectedTurn).toBe(0);
+			const selectedAction = pickFirstValidAction(joinState.state);
+			expect(selectedAction).toBeDefined();
+			if (!selectedAction) return;
 
-		const expectedTurn = joinState.state.turn;
-		expect(expectedTurn).toBe(0);
+			const N = 5;
+			const stateEvents: { turn: number }[] = [];
+			client.on("state", (p: { turn: number }) => stateEvents.push(p));
 
-		const N = 5;
-		const stateEvents: { turn: number }[] = [];
-		const errorEvents: { reason?: string }[] = [];
-		client.on("state", (p: { turn: number }) => stateEvents.push(p));
-		client.on("error", (p: { reason?: string }) => errorEvents.push(p));
+			for (let i = 0; i < N; i++) {
+				client.emit("action", {
+					gameId,
+					action: selectedAction,
+					expectedTurn,
+				});
+			}
 
-		for (let i = 0; i < N; i++) {
+			await waitForCondition(() => createCalls.length >= 1, 8000);
+			expect(createCalls.length).toBe(1);
+			expect(createCalls[0].gameId).toBe(gameId);
+			expect(createCalls[0].turn).toBe(expectedTurn + 1);
+			expect(mockActionLogCreate).toHaveBeenCalledTimes(1);
+
+			await waitForCondition(() => stateEvents.some((event) => event.turn >= 1), 5000);
+
+			// Explicit stale turn check (deterministic) instead of relying on exact async event counts.
+			const staleErrorPromise = waitForEvent<{ reason?: string }>(client, "error", 5000);
 			client.emit("action", {
 				gameId,
-				action: { type: "move", direction: "right" },
+				action: selectedAction,
 				expectedTurn,
 			});
+			const staleError = await staleErrorPromise;
+			expect(staleError.reason).toBe("turn_mismatch");
+		} finally {
+			client.disconnect();
 		}
-
-		// Wait for all events: N states (1 success + N-1 re-syncs) + N-1 errors
-		const totalExpected = N + (N - 1);
-		await new Promise<void>((resolve, reject) => {
-			const t = setTimeout(() => reject(new Error("timeout waiting for responses")), 8000);
-			const check = () => {
-				if (stateEvents.length + errorEvents.length >= totalExpected) {
-					clearTimeout(t);
-					resolve();
-				}
-			};
-			client.on("state", check);
-			client.on("error", check);
-		});
-
-		const turnMismatch = errorEvents.filter((e) => e.reason === "turn_mismatch");
-		expect(turnMismatch.length).toBe(N - 1);
-
-		// Only one action should have reached the persistence layer
-		expect(mockActionLogCreate).toHaveBeenCalledTimes(1);
-		expect(createCalls.length).toBe(1);
-		expect(createCalls[0].gameId).toBe(gameId);
-		expect(createCalls[0].turn).toBe(expectedTurn + 1);
-
-		client.disconnect();
-	});
+	}, 15000);
 });

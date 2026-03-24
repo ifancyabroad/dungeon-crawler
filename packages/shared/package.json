@@ -23,9 +23,14 @@
 		"dev": "tsc -w -p tsconfig.build.json",
 		"build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc -p tsconfig.build.json --noEmit",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"test": "vitest run",
+		"test:watch": "vitest"
 	},
 	"dependencies": {
 		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"vitest": "^4.0.18"
 	}
 }

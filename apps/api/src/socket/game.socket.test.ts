@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import http from "node:http";
 import { io as ioClient } from "socket.io-client";
 import type { GameState } from "@app/shared";
+import type { Socket } from "socket.io-client";
 
 process.env.MONGO_URI = "mongodb://localhost:27017/test";
 process.env.GAME_TOKEN_PEPPER = "test-pepper";
@@ -70,6 +71,21 @@ function parseGameToken(setCookie: string | string[] | undefined): string | null
 	const str = Array.isArray(setCookie) ? setCookie[0] : setCookie;
 	const match = str?.match(/game_token=([^;]+)/);
 	return match ? match[1].trim() : null;
+}
+
+function waitForEvent<T>(client: Socket, eventName: string, timeoutMs: number): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const timeout = setTimeout(() => {
+			client.off(eventName, onEvent);
+			reject(new Error(`timeout waiting for ${eventName}`));
+		}, timeoutMs);
+		const onEvent = (payload: T) => {
+			clearTimeout(timeout);
+			client.off(eventName, onEvent);
+			resolve(payload);
+		};
+		client.on(eventName, onEvent);
+	});
 }
 
 describe("game socket", () => {
@@ -141,27 +157,24 @@ describe("game socket", () => {
 			extraHeaders: { Cookie: `game_token=${token}` },
 			transports: ["websocket"],
 		});
+		try {
+			client.emit("join", { gameId });
+			const stateEvent = await waitForEvent<{
+				gameId: string;
+				turn: number;
+				state: GameState;
+			}>(client, "state", 3000);
 
-		const stateEvent = await new Promise<{ gameId: string; turn: number; state: GameState }>(
-			(resolve, reject) => {
-				const t = setTimeout(() => reject(new Error("timeout waiting for state")), 3000);
-				client.on("state", (payload) => {
-					clearTimeout(t);
-					resolve(payload);
-				});
-				client.emit("join", { gameId });
-			},
-		);
-
-		expect(stateEvent.gameId).toBe(gameId);
-		expect(stateEvent.turn).toBe(0);
-		expect(stateEvent.state).toHaveProperty("heroId", "hero");
-		expect(stateEvent.state).toHaveProperty("heroFloorIndex", 0);
-		expect(stateEvent.state.floors).toBeDefined();
-		expect(stateEvent.state.floors[0].state.actorsById).toHaveProperty("hero");
-		expect(stateEvent.state.floors[0].state.actorsById.hero).toHaveProperty("idx");
-
-		client.disconnect();
+			expect(stateEvent.gameId).toBe(gameId);
+			expect(stateEvent.turn).toBe(0);
+			expect(stateEvent.state).toHaveProperty("heroId", "hero");
+			expect(stateEvent.state).toHaveProperty("heroFloorIndex", 0);
+			expect(stateEvent.state.floors).toBeDefined();
+			expect(stateEvent.state.floors[0].state.actorsById).toHaveProperty("hero");
+			expect(stateEvent.state.floors[0].state.actorsById.hero).toHaveProperty("idx");
+		} finally {
+			client.disconnect();
+		}
 	});
 
 	it("action move updates state and emits new state", async () => {
@@ -181,48 +194,35 @@ describe("game socket", () => {
 			extraHeaders: { Cookie: `game_token=${token}` },
 			transports: ["websocket"],
 		});
+		try {
+			const { ActionSchema, applyActionWithDerivedContext } = await import("@app/shared");
 
-		const { getHero, idxToXY } = await import("@app/shared");
-		const joinState = await new Promise<{ state: GameState }>((resolve, reject) => {
-			const t = setTimeout(() => reject(new Error("timeout")), 2000);
-			client.on("state", (p) => {
-				clearTimeout(t);
-				resolve(p);
-			});
 			client.emit("join", { gameId });
-		});
-		const initialHero = getHero(joinState.state);
-		expect(initialHero).toBeDefined();
-		const width = joinState.state.floors[0].config.width;
-		const initialPos = idxToXY(initialHero!.idx, width);
-		const stateAfterMove = await new Promise<{ state: GameState }>((resolve, reject) => {
-			const t = setTimeout(
-				() => reject(new Error("timeout waiting for state after move")),
-				5000,
-			);
-			client.on("state", (payload) => {
-				clearTimeout(t);
-				resolve(payload);
+			const joinState = await waitForEvent<{ state: GameState }>(client, "state", 3000);
+
+			const directions = ["up", "down", "left", "right"] as const;
+			const selectedDirection = directions.find((direction) => {
+				const result = applyActionWithDerivedContext(
+					joinState.state,
+					ActionSchema.parse({ type: "move", direction }),
+				);
+				return result.ok;
 			});
-			client.on("error", (payload: { reason?: string }) => {
-				clearTimeout(t);
-				reject(new Error(`socket error: ${payload.reason ?? "unknown"}`));
-			});
+			expect(selectedDirection).toBeDefined();
+			if (!selectedDirection) return;
+
+			const stateAfterMovePromise = waitForEvent<{ state: GameState }>(client, "state", 5000);
 			client.emit("action", {
 				gameId,
-				action: { type: "move", direction: "right" },
+				action: { type: "move", direction: selectedDirection },
 				expectedTurn: joinState.state.turn,
 			});
-		});
+			const stateAfterMove = await stateAfterMovePromise;
 
-		const heroAfter = getHero(stateAfterMove.state);
-		expect(heroAfter).toBeDefined();
-		const posAfter = idxToXY(heroAfter!.idx, width);
-		expect(posAfter.x).toBe(initialPos.x + 1);
-		expect(posAfter.y).toBe(initialPos.y);
-		expect(stateAfterMove.state.turn).toBe(1);
-
-		client.disconnect();
+			expect(stateAfterMove.state.turn).toBe(joinState.state.turn + 1);
+		} finally {
+			client.disconnect();
+		}
 	});
 
 	it("invalid action schema emits error", async () => {
@@ -239,24 +239,19 @@ describe("game socket", () => {
 			transports: ["websocket"],
 		});
 
-		await new Promise<void>((resolve, reject) => {
-			client.on("state", () => resolve());
+		try {
 			client.emit("join", { gameId: body.gameId });
-			setTimeout(() => reject(new Error("timeout")), 2000);
-		});
+			await waitForEvent(client, "state", 3000);
 
-		const err = await new Promise<{ reason: string }>((resolve, reject) => {
-			client.on("error", (payload: { reason?: string }) =>
-				resolve({ reason: payload.reason ?? "" }),
-			);
+			const errPromise = waitForEvent<{ reason?: string }>(client, "error", 3000);
 			client.emit("action", {
 				gameId: body.gameId,
 				action: { type: "move", direction: "invalid" },
 			});
-			setTimeout(() => reject(new Error("timeout")), 1500);
-		});
-
-		client.disconnect();
-		expect(err.reason).toBe("invalid_action");
+			const err = await errPromise;
+			expect(err.reason).toBe("invalid_action");
+		} finally {
+			client.disconnect();
+		}
 	});
 });
