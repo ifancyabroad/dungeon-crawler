@@ -20,7 +20,7 @@ import { COOKIE_NAME, hashToken } from "../lib/gameToken";
 import { env } from "../config/env";
 import { runTransaction } from "../config/db";
 import { getCookie } from "../lib/cookies";
-import { spawnNpcsForFloor } from "../lib/spawnNpcsForFloor";
+import { spawnNpcsForFloor } from "../services/npcSpawning.service";
 
 const COOKIE_OPTS = {
 	httpOnly: true,

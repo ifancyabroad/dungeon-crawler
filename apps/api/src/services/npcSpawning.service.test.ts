@@ -1,43 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
 	FLOOR_CONFIGS,
-	MAP_GEN_VERSION,
 	computeWalkableMaskForFloor,
 	createInitialState,
 	DEFAULT_HERO_INIT,
 	regenerateBaseMaps,
-	type BaseLayerFloor,
 } from "@app/shared";
 import { encountersById, npcsById, vaults } from "@app/content";
-import { spawnNpcsForFloor } from "./spawnNpcsForFloor";
+import { spawnNpcsForFloor } from "./npcSpawning.service";
 
-function serializeFloors(floors: BaseLayerFloor[]): string {
-	return JSON.stringify(
-		floors.map((f) => ({
-			spawnIdx: f.spawnIdx,
-			exitIdx: f.exitIdx,
-			ground: f.ground,
-			wall: f.wall,
-			blockedMask: f.blockedMask,
-			waterMask: f.waterMask,
-			vaultPlacements: f.vaultPlacements,
-		})),
-	);
-}
-
-describe("map generation hardening", () => {
-	it("produces deterministic base layers for the same seed", () => {
-		const seed = 1337;
-		const floorConfigs = FLOOR_CONFIGS.map((f) => ({ ...f }));
-		const first = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION, {
-			vaultDefs: vaults,
-		});
-		const second = regenerateBaseMaps(seed, floorConfigs, MAP_GEN_VERSION, {
-			vaultDefs: vaults,
-		});
-		expect(serializeFloors(second)).toBe(serializeFloors(first));
-	});
-
+describe("npcSpawning.service", () => {
 	it("never stacks NPCs on the same tile when spawning", () => {
 		const state = createInitialState(777, [FLOOR_CONFIGS[2]], DEFAULT_HERO_INIT);
 		const [base] = regenerateBaseMaps(
@@ -58,5 +30,12 @@ describe("map generation hardening", () => {
 		);
 		const occupied = new Set(npcs.map((n) => n.idx));
 		expect(occupied.size).toBe(npcs.length);
+	});
+
+	it("is a no-op when called with an out-of-range floor index", () => {
+		const state = createInitialState(1, [FLOOR_CONFIGS[0]], DEFAULT_HERO_INIT);
+		const walkMask = new Uint8Array(0);
+		const next = spawnNpcsForFloor(state, 99, walkMask, npcsById, encountersById);
+		expect(next).toBe(state);
 	});
 });

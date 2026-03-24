@@ -28,7 +28,7 @@ import {
 import { withGameLock } from "../services/gameLock";
 import { verifyToken } from "../lib/gameToken";
 import { env } from "../config/env";
-import { applyDescendSideEffects } from "../lib/spawnNpcsForFloor";
+import { applyDescendSideEffects } from "../services/npcSpawning.service";
 import { encountersById, npcsById } from "@app/content";
 
 /** Auth context set on socket after successful join. */
