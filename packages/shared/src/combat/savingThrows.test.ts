@@ -125,18 +125,46 @@ describe("area_damage save scaling", () => {
 		tags: ["damage", "aoe", "spell"],
 		cooldown: 0,
 		targetType: "none",
-		effects: [
-			{
-				type: "area_damage",
-				dice: "2d6",
-				radiusTiles: 1,
-				damageType: "fire",
-				savingThrow: {
-					saveAbility: "dexterity",
-					dcStat: "intelligence",
-					successDamageMultiplier: 0.5,
+		effectsByRank: [
+			[
+				{
+					type: "area_damage",
+					dice: "2d6",
+					radiusTiles: 1,
+					damageType: "fire",
+					savingThrow: {
+						saveAbility: "dexterity",
+						dcStat: "intelligence",
+						successDamageMultiplier: 0.5,
+					},
 				},
-			},
+			],
+			[
+				{
+					type: "area_damage",
+					dice: "2d6",
+					radiusTiles: 1,
+					damageType: "fire",
+					savingThrow: {
+						saveAbility: "dexterity",
+						dcStat: "intelligence",
+						successDamageMultiplier: 0.5,
+					},
+				},
+			],
+			[
+				{
+					type: "area_damage",
+					dice: "2d6",
+					radiusTiles: 1,
+					damageType: "fire",
+					savingThrow: {
+						saveAbility: "dexterity",
+						dcStat: "intelligence",
+						successDamageMultiplier: 0.5,
+					},
+				},
+			],
 		],
 	};
 
@@ -158,6 +186,7 @@ describe("area_damage save scaling", () => {
 		expect(computeSavingThrowDC(caster, "intelligence")).toBe(10);
 		const res = resolveSkill({
 			skillDef,
+			rank: 1,
 			caster,
 			casterId: caster.id,
 			floorState,

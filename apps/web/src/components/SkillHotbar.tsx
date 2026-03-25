@@ -138,7 +138,9 @@ export function SkillHotbar() {
 
 		if (activeDef.targetType === "tile") {
 			const allTiles = tilesInRange(hero.idx, fw, fh, range);
-			const isLeapSkill = activeDef.effects.some((e) => e.type === "leap_attack");
+			const effectsAtRank =
+				activeDef.effectsByRank[skillState.rank - 1] ?? activeDef.effectsByRank[0];
+			const isLeapSkill = effectsAtRank.some((e) => e.type === "leap_attack");
 			const validTileIndices = allTiles.filter((idx) => {
 				if (visibilityMask && visibilityMask[idx] !== 1) return false;
 				// Wall tiles are never valid targets.
@@ -152,7 +154,7 @@ export function SkillHotbar() {
 				}
 				return true;
 			});
-			enterTargeting(activeDef, validTileIndices, []);
+			enterTargeting(activeDef, validTileIndices, [], skillState.rank);
 			return;
 		}
 
@@ -160,7 +162,9 @@ export function SkillHotbar() {
 			void fh;
 			// charge uses a strict cardinal-line check; all other actor-targeted
 			// skills allow any enemy within Chebyshev range.
-			const hasCharge = activeDef.effects.some((e) => e.type === "charge_attack");
+			const effectsAtRank =
+				activeDef.effectsByRank[skillState.rank - 1] ?? activeDef.effectsByRank[0];
+			const hasCharge = effectsAtRank.some((e) => e.type === "charge_attack");
 			const allActorIds = hasCharge
 				? actorsInChargeRange(hero, floor.state.actorsById, fw, range)
 				: actorsInRange(hero, floor.state.actorsById, fw, range);
@@ -170,7 +174,7 @@ export function SkillHotbar() {
 						return actor && visibilityMask[actor.idx] === 1;
 					})
 				: allActorIds;
-			enterTargeting(activeDef, [], validActorIds);
+			enterTargeting(activeDef, [], validActorIds, skillState.rank);
 		}
 	}
 

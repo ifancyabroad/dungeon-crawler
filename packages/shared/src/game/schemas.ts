@@ -38,7 +38,7 @@ export const AbilityNameSchema = z.enum([
 ]);
 
 export const ActorSkillStateSchema = z.object({
-	level: z.number().optional(),
+	rank: z.number().int().min(1),
 	cooldownRemaining: z.number(),
 });
 
@@ -144,6 +144,7 @@ export const PassiveDamageBonusSchema = z.object({
 	/** "melee" = weapon attacks; "area" = AoE skills; "ranged" = single-target skill attacks; "any" = all. */
 	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	onCritOnly: z.boolean(),
+	sourceSkillId: z.string().optional(),
 });
 
 export const ActorDefSchema = z.discriminatedUnion("type", [
@@ -206,12 +207,16 @@ export const FloorStateSchema = z.object({
 	exitIdx: z.number().nullable(),
 });
 
+export const SkillOfferSchema = z.object({
+	skillId: z.string(),
+	rank: z.number().int().min(1).max(3),
+});
+
 export const PendingInteractionSchema = z
 	.object({
 		type: z.literal("skill_choice"),
-		offerType: z.enum(["active", "passive"]),
 		levelReached: z.number(),
-		offers: z.array(z.string()),
+		offers: z.array(SkillOfferSchema),
 		rerollsUsed: z.number(),
 	})
 	.nullable();

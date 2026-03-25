@@ -8,16 +8,42 @@
 	"cooldown": 3,
 	"targetType": "actor",
 	"range": 6,
-	"effects": [
-		{
-			"type": "single_target_damage",
-			"dice": "1d6",
-			"damageType": "force",
-			"scalingStat": "intelligence",
-			"attackRoll": {
-				"modifierStat": "intelligence",
-				"useProficiency": true
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "force",
+				"scalingStat": "intelligence",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "force",
+				"scalingStat": "intelligence",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "force",
+				"scalingStat": "intelligence",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				}
+			}
+		]
 	]
 }

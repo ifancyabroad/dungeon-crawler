@@ -5,10 +5,24 @@
 	"description": "Your body is harder to kill than most. Gain 10 maximum hit points immediately upon taking this feat.",
 	"school": "martial",
 	"tags": ["buff"],
-	"effects": [
-		{
-			"type": "modify_max_hp",
-			"amount": 10
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_max_hp",
+				"amount": 10
+			}
+		],
+		[
+			{
+				"type": "modify_max_hp",
+				"amount": 10
+			}
+		],
+		[
+			{
+				"type": "modify_max_hp",
+				"amount": 10
+			}
+		]
 	]
 }

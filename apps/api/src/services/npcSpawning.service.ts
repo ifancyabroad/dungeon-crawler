@@ -62,10 +62,10 @@ function spawnNpcWithPassives(
 	if (!spawnedActor) return next;
 
 	let actor = spawnedActor;
-	for (const skillId of init.passiveSkills) {
-		const skillDef = skillsById[skillId];
+	for (const skill of init.passiveSkills) {
+		const skillDef = skillsById[skill.id];
 		if (skillDef?.skillType === "passive") {
-			actor = applyPassiveSkill(actor, skillDef as PassiveSkillDefinition);
+			actor = applyPassiveSkill(actor, skillDef as PassiveSkillDefinition, 0, skill.rank);
 		}
 	}
 

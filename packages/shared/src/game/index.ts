@@ -54,7 +54,7 @@ export {
 	getAdjacentIndices,
 	getHero,
 	idxToXY,
-	LEVEL_UP_SCHEDULE,
+	generateSkillOffers,
 	resetNpcCounter,
 	spawnNpc,
 	xyToIdx,

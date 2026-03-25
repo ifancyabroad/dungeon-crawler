@@ -7,10 +7,24 @@
 	"tags": ["utility"],
 	"cooldown": 30,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "reduce_cooldowns",
-			"amount": 4
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "reduce_cooldowns",
+				"amount": 4
+			}
+		],
+		[
+			{
+				"type": "reduce_cooldowns",
+				"amount": 4
+			}
+		],
+		[
+			{
+				"type": "reduce_cooldowns",
+				"amount": 4
+			}
+		]
 	]
 }

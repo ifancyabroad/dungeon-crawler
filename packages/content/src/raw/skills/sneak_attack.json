@@ -9,11 +9,27 @@
 	"targetType": "actor",
 	"range": 1,
 	"maintainsStealth": true,
-	"effects": [
-		{
-			"type": "sneak_attack",
-			"dice": "3d6",
-			"damageType": "piercing"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "sneak_attack",
+				"dice": "3d6",
+				"damageType": "piercing"
+			}
+		],
+		[
+			{
+				"type": "sneak_attack",
+				"dice": "3d6",
+				"damageType": "piercing"
+			}
+		],
+		[
+			{
+				"type": "sneak_attack",
+				"dice": "3d6",
+				"damageType": "piercing"
+			}
+		]
 	]
 }

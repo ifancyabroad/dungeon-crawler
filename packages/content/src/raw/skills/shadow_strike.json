@@ -5,13 +5,33 @@
 	"description": "Your attacks from the darkness pierce deep. Add 1d4 piercing damage to every melee attack.",
 	"school": "shadow",
 	"tags": ["damage", "stealth", "buff"],
-	"effects": [
-		{
-			"type": "add_damage_dice",
-			"dice": "1d4",
-			"damageType": "piercing",
-			"appliesTo": "melee",
-			"onCritOnly": false
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d4",
+				"damageType": "piercing",
+				"appliesTo": "melee",
+				"onCritOnly": false
+			}
+		],
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d4",
+				"damageType": "piercing",
+				"appliesTo": "melee",
+				"onCritOnly": false
+			}
+		],
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d4",
+				"damageType": "piercing",
+				"appliesTo": "melee",
+				"onCritOnly": false
+			}
+		]
 	]
 }

@@ -7,12 +7,30 @@
 	"tags": ["control", "spell"],
 	"cooldown": 20,
 	"targetType": "actor",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "charmed",
-			"target": "target",
-			"durationTurns": 4
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "charmed",
+				"target": "target",
+				"durationTurns": 4
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "charmed",
+				"target": "target",
+				"durationTurns": 4
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "charmed",
+				"target": "target",
+				"durationTurns": 4
+			}
+		]
 	]
 }

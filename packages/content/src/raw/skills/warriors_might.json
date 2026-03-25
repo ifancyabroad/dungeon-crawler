@@ -5,11 +5,27 @@
 	"description": "Years of combat training have strengthened your body. +2 Strength.",
 	"school": "martial",
 	"tags": ["buff"],
-	"effects": [
-		{
-			"type": "modify_attribute",
-			"attribute": "strength",
-			"amount": 2
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "strength",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "strength",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "strength",
+				"amount": 2
+			}
+		]
 	]
 }

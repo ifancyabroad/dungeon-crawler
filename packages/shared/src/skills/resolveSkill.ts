@@ -41,6 +41,7 @@ export function resolveSkill(
 ): SkillResolutionOutput | { error: string } {
 	const {
 		skillDef,
+		rank,
 		caster,
 		casterId,
 		floorState: initialFloorState,
@@ -78,7 +79,7 @@ export function resolveSkill(
 		},
 	];
 
-	for (const effect of skillDef.effects as ActiveSkillEffectDescriptor[]) {
+	for (const effect of skillDef.effectsByRank[rank - 1] as ActiveSkillEffectDescriptor[]) {
 		switch (effect.type) {
 			case "area_damage": {
 				// "none" target type: emanate from caster's own tile (e.g. War Cry)

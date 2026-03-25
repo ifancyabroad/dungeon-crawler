@@ -5,10 +5,24 @@
 	"description": "Years of exposure to toxins have made you completely immune to poison.",
 	"school": "nature",
 	"tags": ["utility"],
-	"effects": [
-		{
-			"type": "add_damage_immunity",
-			"damageType": "poison"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "add_damage_immunity",
+				"damageType": "poison"
+			}
+		],
+		[
+			{
+				"type": "add_damage_immunity",
+				"damageType": "poison"
+			}
+		],
+		[
+			{
+				"type": "add_damage_immunity",
+				"damageType": "poison"
+			}
+		]
 	]
 }

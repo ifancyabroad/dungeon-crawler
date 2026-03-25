@@ -14,6 +14,8 @@ interface TargetingState {
 	active: boolean;
 	/** The active skill being targeted. Null when inactive. Passive skills cannot be targeted. */
 	skillDef: ActiveSkillDefinition | null;
+	/** Hero's current rank for this skill (1–3). Drives effectsByRank index for AoE preview. */
+	skillRank: number;
 	/**
 	 * For "tile" targetType: flat tile indices the player may select (within skill range
 	 * relative to hero position). Computed by the UI on enter.
@@ -37,6 +39,7 @@ interface TargetingActions {
 		skillDef: ActiveSkillDefinition,
 		validTileIndices: number[],
 		validActorIds: string[],
+		skillRank?: number,
 	) => void;
 	/** Exit targeting mode without firing (e.g. Escape key). */
 	exitTargeting: () => void;
@@ -49,6 +52,7 @@ export type TargetingStore = TargetingState & TargetingActions;
 const emptyState: TargetingState = {
 	active: false,
 	skillDef: null,
+	skillRank: 1,
 	validTileIndices: [],
 	validActorIds: [],
 	aoePreviewIndices: [],
@@ -57,8 +61,15 @@ const emptyState: TargetingState = {
 export const useTargetingStore = create<TargetingStore>((set) => ({
 	...emptyState,
 
-	enterTargeting: (skillDef, validTileIndices, validActorIds) =>
-		set({ active: true, skillDef, validTileIndices, validActorIds, aoePreviewIndices: [] }),
+	enterTargeting: (skillDef, validTileIndices, validActorIds, skillRank = 1) =>
+		set({
+			active: true,
+			skillDef,
+			skillRank,
+			validTileIndices,
+			validActorIds,
+			aoePreviewIndices: [],
+		}),
 
 	exitTargeting: () => set(emptyState),
 

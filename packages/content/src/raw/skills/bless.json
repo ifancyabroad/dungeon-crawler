@@ -7,15 +7,39 @@
 	"tags": ["buff", "spell"],
 	"cooldown": 18,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "blessed",
-			"durationTurns": 8,
-			"adjustments": {
-				"attackRollDiceBonus": "1d4",
-				"savingThrowDiceBonus": "1d4"
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "blessed",
+				"durationTurns": 8,
+				"adjustments": {
+					"attackRollDiceBonus": "1d4",
+					"savingThrowDiceBonus": "1d4"
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "blessed",
+				"durationTurns": 8,
+				"adjustments": {
+					"attackRollDiceBonus": "1d4",
+					"savingThrowDiceBonus": "1d4"
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "blessed",
+				"durationTurns": 8,
+				"adjustments": {
+					"attackRollDiceBonus": "1d4",
+					"savingThrowDiceBonus": "1d4"
+				}
+			}
+		]
 	]
 }

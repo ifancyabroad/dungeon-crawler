@@ -5,10 +5,24 @@
 	"description": "Your skin hardens through relentless training. +2 Armour Class.",
 	"school": "martial",
 	"tags": ["buff"],
-	"effects": [
-		{
-			"type": "modify_armor_class",
-			"amount": 2
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_armor_class",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "modify_armor_class",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "modify_armor_class",
+				"amount": 2
+			}
+		]
 	]
 }

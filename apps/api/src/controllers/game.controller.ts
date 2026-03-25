@@ -57,7 +57,7 @@ export const createGame: RequestHandler = async (req, res) => {
 		xp: 0,
 		hitDie: classDef.hitDie,
 		savingThrowProficiencies: classDef.savingThrowProficiencies,
-		skills: classDef.startingSkills,
+		skills: classDef.startingSkills.map((id) => ({ id, rank: 1 })),
 	};
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);

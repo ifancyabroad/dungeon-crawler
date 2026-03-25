@@ -412,6 +412,9 @@ const SkillSchoolSchema = z.enum(SKILL_SCHOOLS as unknown as [SkillSchool, ...Sk
 // Skill definition schemas
 // ---------------------------------------------------------------------------
 
+const ActiveEffectsArraySchema = z.array(ActiveSkillEffectDescriptorSchema).min(1);
+const PassiveEffectsArraySchema = z.array(PassiveSkillEffectDescriptorSchema).min(1);
+
 export const ActiveSkillDefinitionSchema = z.object({
 	skillType: z.literal("active"),
 	id: z.string(),
@@ -423,7 +426,12 @@ export const ActiveSkillDefinitionSchema = z.object({
 	targetType: z.enum(["none", "tile", "actor"]),
 	range: z.number().int().min(1).optional(),
 	maintainsStealth: z.boolean().optional(),
-	effects: z.array(ActiveSkillEffectDescriptorSchema).min(1),
+	/** Full effects for each skill rank (index 0 = rank 1, index 1 = rank 2, index 2 = rank 3). */
+	effectsByRank: z.tuple([
+		ActiveEffectsArraySchema,
+		ActiveEffectsArraySchema,
+		ActiveEffectsArraySchema,
+	]),
 });
 export type ActiveSkillDefinition = z.infer<typeof ActiveSkillDefinitionSchema>;
 
@@ -434,7 +442,12 @@ export const PassiveSkillDefinitionSchema = z.object({
 	description: z.string(),
 	school: SkillSchoolSchema,
 	tags: z.array(SkillTagSchema).min(1),
-	effects: z.array(PassiveSkillEffectDescriptorSchema).min(1),
+	/** Full effects for each skill rank (index 0 = rank 1, index 1 = rank 2, index 2 = rank 3). */
+	effectsByRank: z.tuple([
+		PassiveEffectsArraySchema,
+		PassiveEffectsArraySchema,
+		PassiveEffectsArraySchema,
+	]),
 });
 export type PassiveSkillDefinition = z.infer<typeof PassiveSkillDefinitionSchema>;
 

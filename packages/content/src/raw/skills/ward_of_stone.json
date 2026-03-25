@@ -7,13 +7,33 @@
 	"tags": ["buff"],
 	"cooldown": 18,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "modify_numeric_buff",
-			"key": "shieldHp",
-			"operation": "add",
-			"value": 15,
-			"target": "self"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_numeric_buff",
+				"key": "shieldHp",
+				"operation": "add",
+				"value": 15,
+				"target": "self"
+			}
+		],
+		[
+			{
+				"type": "modify_numeric_buff",
+				"key": "shieldHp",
+				"operation": "add",
+				"value": 15,
+				"target": "self"
+			}
+		],
+		[
+			{
+				"type": "modify_numeric_buff",
+				"key": "shieldHp",
+				"operation": "add",
+				"value": 15,
+				"target": "self"
+			}
+		]
 	]
 }

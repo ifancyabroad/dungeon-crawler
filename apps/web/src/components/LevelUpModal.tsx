@@ -10,9 +10,12 @@
  */
 
 import { skillsById } from "@app/content";
+import { GAME_CONFIG, getHero } from "@app/shared";
 import { useGameStore } from "../features/game/gameStore";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
+
+const RANK_LABELS = ["I", "II", "III"] as const;
 
 export function LevelUpModal() {
 	const state = useGameStore((s) => s.state);
@@ -24,7 +27,21 @@ export function LevelUpModal() {
 	// before showing the modal, so it doesn't interrupt the kill animation.
 	if (!pi || pi.type !== "skill_choice" || actionInProgress) return null;
 
-	const { offerType, levelReached, offers, rerollsUsed } = pi;
+	const { levelReached, offers, rerollsUsed } = pi;
+
+	// Count the hero's current active and passive skills for cap progress display
+	const heroActor = state ? getHero(state) : undefined;
+
+	const heroSkillIds = heroActor ? Object.keys(heroActor.skills) : [];
+	let activeCount = 0;
+	let passiveCount = 0;
+	for (const skillId of heroSkillIds) {
+		const def = skillsById[skillId as keyof typeof skillsById];
+		if (def?.skillType === "active") activeCount++;
+		else if (def?.skillType === "passive") passiveCount++;
+	}
+
+	const { activeSkillCap, passiveSkillCap } = GAME_CONFIG.leveling;
 
 	function handlePick(skillId: string) {
 		sendAction({ type: "select_skill_choice", skillId });
@@ -41,14 +58,19 @@ export function LevelUpModal() {
 				// No-op: the modal cannot be dismissed while a skill choice is pending.
 				// The player must pick a skill or reroll.
 			}}
-			title={`Level ${levelReached} — Choose a ${offerType === "passive" ? "Passive" : "Active"} Skill`}
+			title={`Level ${levelReached} — Choose a Skill`}
 		>
 			<div className="space-y-4">
-				<p className="text-text-muted">
-					{offerType === "passive"
-						? "Select a permanent buff to enhance your hero."
-						: "Select a new active skill to add to your hotbar."}
-				</p>
+				{/* Cap progress */}
+				<div className="flex gap-4 text-sm font-mono">
+					<span className="text-primary">
+						Active {activeCount}/{activeSkillCap}
+					</span>
+					<span className="text-text-muted">·</span>
+					<span className="text-secondary">
+						Passive {passiveCount}/{passiveSkillCap}
+					</span>
+				</div>
 
 				{offers.length === 0 ? (
 					<p className="text-text-muted">
@@ -56,9 +78,12 @@ export function LevelUpModal() {
 					</p>
 				) : (
 					<div className="space-y-2">
-						{offers.map((skillId) => {
+						{offers.map(({ skillId, rank }) => {
 							const def = skillsById[skillId as keyof typeof skillsById];
 							if (!def) return null;
+							const isPassive = def.skillType === "passive";
+							const isUpgrade = (heroActor?.skills[skillId]?.rank ?? 0) > 0;
+							const rankLabel = RANK_LABELS[rank - 1];
 							return (
 								<button
 									key={skillId}
@@ -71,21 +96,37 @@ export function LevelUpModal() {
 								>
 									<div className="flex items-start justify-between gap-2">
 										<div className="min-w-0">
-											<p className="text-text-bright font-mono">{def.name}</p>
+											<div className="flex items-center gap-2">
+												<p className="text-text-bright font-mono">
+													{def.name}
+												</p>
+												{isUpgrade && (
+													<span className="text-xs font-mono text-text-muted border border-border px-1 py-px uppercase tracking-wide">
+														Upgrade
+													</span>
+												)}
+											</div>
 											<p className="text-text-muted leading-snug mt-0.5">
 												{def.description}
 											</p>
 										</div>
-										<span
-											className={[
-												"shrink-0 px-1.5 py-0.5 border uppercase tracking-wide font-mono",
-												def.skillType === "passive"
-													? "border-secondary text-secondary"
-													: "border-primary text-primary",
-											].join(" ")}
-										>
-											{def.skillType === "passive" ? "Passive" : "Active"}
-										</span>
+										<div className="flex flex-col items-end gap-1 shrink-0">
+											<span
+												className={[
+													"px-1.5 py-0.5 border uppercase tracking-wide font-mono text-xs",
+													isPassive
+														? "border-secondary text-secondary"
+														: "border-primary text-primary",
+												].join(" ")}
+											>
+												{isPassive ? "Passive" : "Active"}
+											</span>
+											{rankLabel && (
+												<span className="text-xs font-mono text-text-muted">
+													Rank {rankLabel}
+												</span>
+											)}
+										</div>
 									</div>
 								</button>
 							);

@@ -7,10 +7,24 @@
 	"tags": ["buff", "spell"],
 	"cooldown": 25,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_shield",
-			"amount": 20
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_shield",
+				"amount": 20
+			}
+		],
+		[
+			{
+				"type": "apply_shield",
+				"amount": 20
+			}
+		],
+		[
+			{
+				"type": "apply_shield",
+				"amount": 20
+			}
+		]
 	]
 }

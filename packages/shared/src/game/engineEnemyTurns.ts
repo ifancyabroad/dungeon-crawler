@@ -194,6 +194,7 @@ export function processEnemyTurns(
 					const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
 					const resolution = resolveSkill({
 						skillDef,
+						rank: skillState.rank,
 						caster: { ...npc, aiState: persistedAIState },
 						casterId: mid,
 						floorState: currentFloorSnapshot,
@@ -213,7 +214,10 @@ export function processEnemyTurns(
 									...npcAfterSkill,
 									skills: {
 										...npcAfterSkill.skills,
-										[result.skillId]: { cooldownRemaining: skillDef.cooldown },
+										[result.skillId]: {
+											rank: skillState.rank,
+											cooldownRemaining: skillDef.cooldown,
+										},
 									},
 								},
 							};

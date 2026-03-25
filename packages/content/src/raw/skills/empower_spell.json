@@ -7,17 +7,45 @@
 	"tags": ["buff", "spell"],
 	"cooldown": 10,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "empowered",
-			"durationTurns": 3,
-			"adjustments": {
-				"areaDamageFlat": {
-					"damageType": "force",
-					"amount": 2
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "empowered",
+				"durationTurns": 3,
+				"adjustments": {
+					"areaDamageFlat": {
+						"damageType": "force",
+						"amount": 2
+					}
 				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "empowered",
+				"durationTurns": 3,
+				"adjustments": {
+					"areaDamageFlat": {
+						"damageType": "force",
+						"amount": 2
+					}
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "empowered",
+				"durationTurns": 3,
+				"adjustments": {
+					"areaDamageFlat": {
+						"damageType": "force",
+						"amount": 2
+					}
+				}
+			}
+		]
 	]
 }

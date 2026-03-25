@@ -11,6 +11,11 @@ import {
 } from "../index";
 
 export const SEED = 42;
+
+function tripleEffects<T>(effects: T[]): [T[], T[], T[]] {
+	return [effects, effects, effects];
+}
+
 export const mockPassiveStrSkill: PassiveSkillDefinition = {
 	skillType: "passive",
 	id: "passive_str",
@@ -18,7 +23,7 @@ export const mockPassiveStrSkill: PassiveSkillDefinition = {
 	description: "+2 Str",
 	school: "martial",
 	tags: ["buff"],
-	effects: [{ type: "modify_attribute", attribute: "strength", amount: 2 }],
+	effectsByRank: tripleEffects([{ type: "modify_attribute", attribute: "strength", amount: 2 }]),
 };
 export const mockPassiveAcSkill: PassiveSkillDefinition = {
 	skillType: "passive",
@@ -27,7 +32,7 @@ export const mockPassiveAcSkill: PassiveSkillDefinition = {
 	description: "+1 AC",
 	school: "martial",
 	tags: ["buff"],
-	effects: [{ type: "modify_armor_class", amount: 1 }],
+	effectsByRank: tripleEffects([{ type: "modify_armor_class", amount: 1 }]),
 };
 export const mockPassiveResistance: PassiveSkillDefinition = {
 	skillType: "passive",
@@ -36,7 +41,7 @@ export const mockPassiveResistance: PassiveSkillDefinition = {
 	description: "Fire resistance",
 	school: "arcane",
 	tags: ["utility"],
-	effects: [{ type: "add_damage_resistance", damageType: "fire" }],
+	effectsByRank: tripleEffects([{ type: "add_damage_resistance", damageType: "fire" }]),
 };
 export const mockPassiveDamageDice: PassiveSkillDefinition = {
 	skillType: "passive",
@@ -45,7 +50,7 @@ export const mockPassiveDamageDice: PassiveSkillDefinition = {
 	description: "+1d6 bludgeoning",
 	school: "martial",
 	tags: ["damage", "buff"],
-	effects: [
+	effectsByRank: tripleEffects([
 		{
 			type: "add_damage_dice",
 			dice: "1d6",
@@ -53,7 +58,7 @@ export const mockPassiveDamageDice: PassiveSkillDefinition = {
 			appliesTo: "melee",
 			onCritOnly: false,
 		},
-	],
+	]),
 };
 export const mockSkillDefs: Record<string, PassiveSkillDefinition> = {
 	passive_str: mockPassiveStrSkill,
@@ -82,9 +87,11 @@ export function makePendingSkillChoiceState() {
 		...state,
 		pendingInteraction: {
 			type: "skill_choice",
-			offerType: "passive",
 			levelReached: 2,
-			offers: ["passive_str", "passive_ac"],
+			offers: [
+				{ skillId: "passive_str", rank: 1 },
+				{ skillId: "passive_ac", rank: 1 },
+			],
 			rerollsUsed: 0,
 		},
 	} as GameState;

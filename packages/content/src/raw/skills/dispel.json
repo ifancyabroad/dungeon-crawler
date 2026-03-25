@@ -8,11 +8,27 @@
 	"cooldown": 15,
 	"targetType": "actor",
 	"range": 4,
-	"effects": [
-		{
-			"type": "remove_status",
-			"statusIds": ["blessed", "berserk", "empowered", "stealth"],
-			"target": "target"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "remove_status",
+				"statusIds": ["blessed", "berserk", "empowered", "stealth"],
+				"target": "target"
+			}
+		],
+		[
+			{
+				"type": "remove_status",
+				"statusIds": ["blessed", "berserk", "empowered", "stealth"],
+				"target": "target"
+			}
+		],
+		[
+			{
+				"type": "remove_status",
+				"statusIds": ["blessed", "berserk", "empowered", "stealth"],
+				"target": "target"
+			}
+		]
 	]
 }

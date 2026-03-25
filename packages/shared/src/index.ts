@@ -31,7 +31,7 @@ export {
 	FLOOR_THEMES,
 	FLOOR_CONFIGS,
 } from "./config";
-export type { FloorTheme, DamageType, LevelOfferType } from "./config";
+export type { FloorTheme, DamageType } from "./config";
 
 export {
 	buildDecorationLayer,
@@ -92,7 +92,7 @@ export {
 	getHero,
 	computeWalkableMaskForFloor,
 	idxToXY,
-	LEVEL_UP_SCHEDULE,
+	generateSkillOffers,
 	regenerateBaseMaps,
 	resetNpcCounter,
 	spawnNpc,

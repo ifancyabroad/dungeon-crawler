@@ -6,7 +6,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New NPC
 
-1. Create `packages/content/src/raw/npcs/<name>.json` following the shape defined by `NpcSchema` in `packages/content/src/schemas/npc.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Set `faction` (`"hostile"` or `"player"`) and `role` (`"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`). Include an `activeSkills` array — use `[]` if the NPC has no active skills, or list skill IDs for NPCs that should use active skills autonomously. Passive skills go in the `passiveSkills` array; they are applied automatically at spawn.
+1. Create `packages/content/src/raw/npcs/<name>.json` following the shape defined by `NpcSchema` in `packages/content/src/schemas/npc.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Set `faction` (`"hostile"` or `"player"`) and `role` (`"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`). Set `activeSkills` and `passiveSkills` to arrays of `{ "id": "<skillId>", "rank": 1 }` objects (use `[]` when none). Passives are applied automatically at spawn.
 2. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
 3. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new NPC via `npcId`.
 4. Update floor encounter tables in `packages/shared/src/config/map.ts` (`FLOOR_CONFIGS`) to include the new encounter IDs.
@@ -50,19 +50,19 @@ Skills are either **active** (hotbar, cooldown, `use_skill`) or **passive** (per
 
 ### Active skill
 
-1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing active skill file as a reference.
+1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing active skill file as a reference. Skill definitions use `effectsByRank`: a tuple of three effect arrays (ranks 1–3).
 2. If a new effect type is needed: add its Zod schema to the shared skill schemas (in `packages/shared`), implement a handler under `packages/shared/src/skills/effects/`, and register it in `resolveSkill.ts`. TypeScript types are derived from the schema — no manual interface mirroring is needed. If the skill applies a status that only modifies numeric values (e.g. bonus damage, incoming damage adjustment), define those adjustments inline in the skill JSON — no engine code changes are needed. If the status requires engine-wired behaviour (e.g. damage-over-time, on-expiry side effects), add its ID to `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`) and implement the hook in `activeEffects.ts`.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the relevant consumer:
     - **Hero class skill**: add to the class definition in `packages/content/src/raw/classes/<class>.json`.
-    - **NPC skill**: add the skill id to the `activeSkills` array in the NPC's JSON definition in `packages/content/src/raw/npcs/<npc>.json`. The engine initialises cooldown state at spawn and ticks the cooldown each turn automatically.
+    - **NPC skill**: add `{ "id": "<skillId>", "rank": 1 }` to `activeSkills` in `packages/content/src/raw/npcs/<npc>.json`. The engine initialises rank and cooldown at spawn and ticks cooldowns each turn automatically.
 5. If the skill has a one-shot visual effect, add a handler in `apps/web/src/game/fx/skills/` and register it in the skill animation registry. Handlers receive a `SkillAnimContext` that is actor-agnostic — the same handler works for hero and NPC casters.
 6. If the skill applies a buff with a persistent visual (aura, sprite tint), add it to the buff visual registry in `apps/web/src/game/fx/buffVisuals/`. No scene code needs to change.
 7. If the skill requires targeting, the hotbar and targeting overlay handle it automatically for standard effect types — no extra client work is needed.
 
 ### Passive skill
 
-1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing passive skill file as a reference.
+1. Create `packages/content/src/raw/skills/<name>.json`. Use an existing passive skill file as a reference. Use `effectsByRank` (three tiers, ranks 1–3), same as active skills.
 2. If a new passive effect type is needed, add its Zod schema to the shared skill schemas and add a case in `packages/shared/src/skills/applyPassiveEffect.ts`. If the effect is read at combat resolution time (e.g. extra damage dice), add the corresponding field to `Actor` and read it in the relevant combat handler.
 3. Run `pnpm --filter @app/content generate`.
 4. Add the skill id to the class's `passiveSkillPool` in `packages/content/src/raw/classes/<class>.json`.

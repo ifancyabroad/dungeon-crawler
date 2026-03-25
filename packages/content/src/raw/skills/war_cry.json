@@ -7,13 +7,33 @@
 	"tags": ["damage", "aoe"],
 	"cooldown": 15,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "area_damage",
-			"dice": "1d6",
-			"radiusTiles": 1,
-			"scalingStat": "strength",
-			"damageType": "thunder"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d6",
+				"radiusTiles": 1,
+				"scalingStat": "strength",
+				"damageType": "thunder"
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d6",
+				"radiusTiles": 1,
+				"scalingStat": "strength",
+				"damageType": "thunder"
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d6",
+				"radiusTiles": 1,
+				"scalingStat": "strength",
+				"damageType": "thunder"
+			}
+		]
 	]
 }

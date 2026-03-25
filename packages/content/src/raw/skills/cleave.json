@@ -8,14 +8,36 @@
 	"cooldown": 5,
 	"targetType": "tile",
 	"range": 1,
-	"effects": [
-		{
-			"type": "cone_damage",
-			"dice": "1d8",
-			"damageType": "slashing",
-			"rangeTiles": 1,
-			"angleDegrees": 135,
-			"scalingStat": "strength"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "cone_damage",
+				"dice": "1d8",
+				"damageType": "slashing",
+				"rangeTiles": 1,
+				"angleDegrees": 135,
+				"scalingStat": "strength"
+			}
+		],
+		[
+			{
+				"type": "cone_damage",
+				"dice": "1d8",
+				"damageType": "slashing",
+				"rangeTiles": 1,
+				"angleDegrees": 135,
+				"scalingStat": "strength"
+			}
+		],
+		[
+			{
+				"type": "cone_damage",
+				"dice": "1d8",
+				"damageType": "slashing",
+				"rangeTiles": 1,
+				"angleDegrees": 135,
+				"scalingStat": "strength"
+			}
+		]
 	]
 }

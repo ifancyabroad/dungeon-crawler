@@ -28,7 +28,7 @@ import { idxToXY, xyToIdx, getHero, getActorAtIdx, DIRECTION_DELTA } from "./eng
 import type { ApplyActionContext, ApplyActionResult } from "./engineContext";
 import { createActionContext, createEmptyFloorState } from "./engineContext";
 import { processEnemyTurns } from "./engineEnemyTurns";
-import { grantXpForKill, sampleWithoutReplacement } from "./engineLevelUp";
+import { grantXpForKill, generateSkillOffers } from "./engineLevelUp";
 import { VISION_RADIUS } from "../config/game";
 
 // ---------------------------------------------------------------------------
@@ -52,7 +52,7 @@ export {
 	type ClassSkillPools,
 } from "./engineContext";
 export { createInitialState, DEFAULT_HERO_INIT, resetNpcCounter, spawnNpc } from "./engineInit";
-export { LEVEL_UP_SCHEDULE } from "./engineLevelUp";
+export { generateSkillOffers } from "./engineLevelUp";
 
 // ---------------------------------------------------------------------------
 // Private turn helpers
@@ -84,7 +84,7 @@ function tickSkillCooldowns(state: GameState): GameState {
 	let actorsById = floor.state.actorsById;
 	for (const [actorId, actor] of Object.entries(actorsById)) {
 		if (!actor.alive || Object.keys(actor.skills).length === 0) continue;
-		const updatedSkills: Record<string, { level?: number; cooldownRemaining: number }> = {};
+		const updatedSkills: Record<string, { rank: number; cooldownRemaining: number }> = {};
 		for (const [id, s] of Object.entries(actor.skills)) {
 			updatedSkills[id] = {
 				...s,
@@ -440,6 +440,7 @@ export function applyAction(
 
 			const resolution = resolveSkill({
 				skillDef: skillDef as ActiveSkillDefinition,
+				rank: skillState.rank,
 				caster: heroForSkill,
 				casterId: state.heroId,
 				floorState: floorForSkill,
@@ -545,7 +546,9 @@ export function applyAction(
 			if (pi?.type !== "skill_choice") {
 				return { ok: false, reason: "no_pending_choice" };
 			}
-			if (!pi.offers.includes(action.skillId)) {
+
+			const offer = pi.offers.find((o) => o.skillId === action.skillId);
+			if (!offer) {
 				return { ok: false, reason: "skill_not_in_offers" };
 			}
 
@@ -558,15 +561,21 @@ export function applyAction(
 			const hero = getHero(state);
 			if (!hero) return { ok: false, reason: "no_hero" };
 
-			// Grant the skill to the hero's skill list
+			const previousRank = hero.skills[action.skillId]?.rank ?? 0;
+			const newRank = offer.rank;
+
+			// Grant (new) or upgrade (existing) the skill
 			let heroWithSkill: Actor = {
 				...hero,
-				skills: { ...hero.skills, [action.skillId]: { cooldownRemaining: 0 } },
+				skills: {
+					...hero.skills,
+					[action.skillId]: { rank: newRank, cooldownRemaining: 0 },
+				},
 			};
 
-			// Apply passive effects permanently
+			// Apply passive effects permanently (delta from previous rank)
 			if (skillDef.skillType === "passive") {
-				heroWithSkill = applyPassiveSkill(heroWithSkill, skillDef);
+				heroWithSkill = applyPassiveSkill(heroWithSkill, skillDef, previousRank, newRank);
 			}
 
 			const newFloors = state.floors.slice();
@@ -606,16 +615,9 @@ export function applyAction(
 
 			const { rng, getState: getRngState } = createRngFromState(state.rngState);
 
-			const pool = pi.offerType === "active" ? pools.activeSkillPool : pools.passiveSkillPool;
-			const ownedSkillIds = new Set(Object.keys(hero.skills));
-			// Also exclude the current offers so reroll always shows different options
-			const currentOffers = new Set(pi.offers);
-			const eligible = pool.filter((id) => !ownedSkillIds.has(id) && !currentOffers.has(id));
-
-			// If there are fewer or equal eligible skills than current offers, don't exclude current
-			const finalEligible =
-				eligible.length > 0 ? eligible : pool.filter((id) => !ownedSkillIds.has(id));
-			const newOffers = sampleWithoutReplacement(finalEligible, 3, rng);
+			// Exclude skills already shown in this offer to encourage variety
+			const currentOfferSkillIds = new Set(pi.offers.map((o) => o.skillId));
+			const newOffers = generateSkillOffers(hero, pools, rng, currentOfferSkillIds);
 
 			const rerolledState: GameState = {
 				...state,

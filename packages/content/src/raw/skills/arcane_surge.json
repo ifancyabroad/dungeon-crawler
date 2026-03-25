@@ -7,14 +7,36 @@
 	"tags": ["buff", "spell"],
 	"cooldown": 14,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "arcane_surge",
-			"durationTurns": 5,
-			"adjustments": {
-				"saveDcBonusFlat": 2
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "arcane_surge",
+				"durationTurns": 5,
+				"adjustments": {
+					"saveDcBonusFlat": 2
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "arcane_surge",
+				"durationTurns": 5,
+				"adjustments": {
+					"saveDcBonusFlat": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "arcane_surge",
+				"durationTurns": 5,
+				"adjustments": {
+					"saveDcBonusFlat": 2
+				}
+			}
+		]
 	]
 }

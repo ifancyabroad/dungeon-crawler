@@ -8,11 +8,27 @@
 	"cooldown": 30,
 	"targetType": "none",
 	"maintainsStealth": true,
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "stealth",
-			"durationTurns": 20
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 20
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 20
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 20
+			}
+		]
 	]
 }

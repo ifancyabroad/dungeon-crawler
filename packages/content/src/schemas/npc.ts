@@ -45,10 +45,14 @@ export const NpcSchema = z.object({
 	damageVulnerabilities: z.array(DamageTypeSchema).default([]),
 	/** CSS hex colour for blood/death particle effects. */
 	bloodColor: z.string(),
-	/** Active skill IDs this NPC spawns with. Each starts with cooldownRemaining: 0. */
-	activeSkills: z.array(z.string()).default([]),
-	/** Passive skill IDs this NPC spawns with. Applied via applyPassiveEffect at spawn time. */
-	passiveSkills: z.array(z.string()).default([]),
+	/** Active skills this NPC spawns with. Each entry specifies the skill id and its rank (1–3). */
+	activeSkills: z
+		.array(z.object({ id: z.string(), rank: z.number().int().min(1).max(3) }))
+		.default([]),
+	/** Passive skills this NPC spawns with. Applied via applyPassiveEffect at spawn time. */
+	passiveSkills: z
+		.array(z.object({ id: z.string(), rank: z.number().int().min(1).max(3) }))
+		.default([]),
 	/** Item IDs equipped on spawn. Applied when the item system is implemented. */
 	startingEquipment: z.array(z.string()).default([]),
 });

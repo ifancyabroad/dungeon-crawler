@@ -7,14 +7,36 @@
 	"tags": ["buff", "healing", "spell"],
 	"cooldown": 12,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "prayer_of_mending",
-			"durationTurns": 4,
-			"adjustments": {
-				"healingDoneFlat": 3
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "prayer_of_mending",
+				"durationTurns": 4,
+				"adjustments": {
+					"healingDoneFlat": 3
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "prayer_of_mending",
+				"durationTurns": 4,
+				"adjustments": {
+					"healingDoneFlat": 3
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "prayer_of_mending",
+				"durationTurns": 4,
+				"adjustments": {
+					"healingDoneFlat": 3
+				}
+			}
+		]
 	]
 }

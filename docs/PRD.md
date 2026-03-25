@@ -50,7 +50,7 @@ Skills are split into two types:
 - **Active skills** are used from the hotbar. Each class starts with one active skill; additional skills are acquired through level-up.
 - **Passive skills** are granted at level-up and apply permanent buffs to the hero (stat modifiers, extra damage dice, resistances, immunities, etc.). They are listed in the sidebar.
 
-On reaching a new level the game pauses and offers the player a choice of up to 3 skills. The player may reroll the offer before picking. Regular actions are blocked until a skill is chosen.
+On reaching a new level the game pauses and offers a mixed set of up to 3 skills (actives and passives), including possible upgrades to ranks 2–3 for skills already owned. Per-type caps limit how many distinct actives and passives the hero can learn. The player may reroll the offer before picking. Regular actions are blocked until a skill is chosen.
 
 Skill definitions live in `packages/content/src/raw/skills/` and are data-driven.
 
@@ -114,7 +114,7 @@ Features are listed in priority order. Implementation details below are starting
 
 **Goal:** Differentiate classes beyond starting stats. Each class should have a distinct playstyle driven by unique active and/or passive abilities.
 
-**Shipped:** Starting skill per class, passive skill system, level-up pick-from-3 acquisition, skill pools per class, reroll support, and sidebar passive skill listing.
+**Shipped:** Starting skill per class, passive skill system, level-up mixed pick-from-3 (caps, ranks 1–3, upgrades), skill pools per class, reroll support, and sidebar passive skill listing.
 
 **Remaining scope:**
 

@@ -8,17 +8,45 @@
 	"cooldown": 20,
 	"targetType": "tile",
 	"range": 5,
-	"effects": [
-		{
-			"type": "area_damage",
-			"dice": "2d6",
-			"radiusTiles": 1,
-			"damageType": "fire",
-			"savingThrow": {
-				"saveAbility": "dexterity",
-				"dcStat": "intelligence",
-				"successDamageMultiplier": 0.5
+	"effectsByRank": [
+		[
+			{
+				"type": "area_damage",
+				"dice": "2d6",
+				"radiusTiles": 1,
+				"damageType": "fire",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "2d6",
+				"radiusTiles": 1,
+				"damageType": "fire",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "2d6",
+				"radiusTiles": 1,
+				"damageType": "fire",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
+			}
+		]
 	]
 }

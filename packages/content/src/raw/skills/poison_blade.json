@@ -8,23 +8,63 @@
 	"cooldown": 10,
 	"targetType": "actor",
 	"range": 1,
-	"effects": [
-		{
-			"type": "single_target_damage",
-			"dice": "1d6",
-			"damageType": "piercing",
-			"scalingStat": "dexterity",
-			"attackRoll": {
-				"modifierStat": "dexterity",
-				"useProficiency": true
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "piercing",
+				"scalingStat": "dexterity",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "poisoned",
+				"durationTurns": 5,
+				"value": 3,
+				"target": "target"
 			}
-		},
-		{
-			"type": "apply_status",
-			"statusId": "poisoned",
-			"durationTurns": 5,
-			"value": 3,
-			"target": "target"
-		}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "piercing",
+				"scalingStat": "dexterity",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "poisoned",
+				"durationTurns": 5,
+				"value": 3,
+				"target": "target"
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "piercing",
+				"scalingStat": "dexterity",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "poisoned",
+				"durationTurns": 5,
+				"value": 3,
+				"target": "target"
+			}
+		]
 	]
 }

@@ -7,11 +7,27 @@
 	"tags": ["utility", "spell"],
 	"cooldown": 12,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "remove_status",
-			"statusIds": ["poisoned", "burning", "bleeding"],
-			"target": "self"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "remove_status",
+				"statusIds": ["poisoned", "burning", "bleeding"],
+				"target": "self"
+			}
+		],
+		[
+			{
+				"type": "remove_status",
+				"statusIds": ["poisoned", "burning", "bleeding"],
+				"target": "self"
+			}
+		],
+		[
+			{
+				"type": "remove_status",
+				"statusIds": ["poisoned", "burning", "bleeding"],
+				"target": "self"
+			}
+		]
 	]
 }

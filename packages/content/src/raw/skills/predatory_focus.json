@@ -7,15 +7,39 @@
 	"tags": ["buff"],
 	"cooldown": 12,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "predatory_focus",
-			"durationTurns": 4,
-			"adjustments": {
-				"rangedDamageDiceBonus": "1d6",
-				"critThresholdReduction": 1
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "predatory_focus",
+				"durationTurns": 4,
+				"adjustments": {
+					"rangedDamageDiceBonus": "1d6",
+					"critThresholdReduction": 1
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "predatory_focus",
+				"durationTurns": 4,
+				"adjustments": {
+					"rangedDamageDiceBonus": "1d6",
+					"critThresholdReduction": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "predatory_focus",
+				"durationTurns": 4,
+				"adjustments": {
+					"rangedDamageDiceBonus": "1d6",
+					"critThresholdReduction": 1
+				}
+			}
+		]
 	]
 }

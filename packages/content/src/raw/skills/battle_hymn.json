@@ -7,15 +7,39 @@
 	"tags": ["buff", "aoe"],
 	"cooldown": 15,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "battle_hymn",
-			"durationTurns": 5,
-			"adjustments": {
-				"meleeDamageDiceBonus": "1d4",
-				"areaDamageDiceBonus": "1d4"
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "battle_hymn",
+				"durationTurns": 5,
+				"adjustments": {
+					"meleeDamageDiceBonus": "1d4",
+					"areaDamageDiceBonus": "1d4"
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "battle_hymn",
+				"durationTurns": 5,
+				"adjustments": {
+					"meleeDamageDiceBonus": "1d4",
+					"areaDamageDiceBonus": "1d4"
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "battle_hymn",
+				"durationTurns": 5,
+				"adjustments": {
+					"meleeDamageDiceBonus": "1d4",
+					"areaDamageDiceBonus": "1d4"
+				}
+			}
+		]
 	]
 }

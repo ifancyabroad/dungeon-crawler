@@ -9,9 +9,21 @@
 	"targetType": "tile",
 	"range": 5,
 	"maintainsStealth": true,
-	"effects": [
-		{
-			"type": "shadow_step"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "shadow_step"
+			}
+		],
+		[
+			{
+				"type": "shadow_step"
+			}
+		],
+		[
+			{
+				"type": "shadow_step"
+			}
+		]
 	]
 }

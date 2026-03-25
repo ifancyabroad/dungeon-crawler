@@ -1,10 +1,4 @@
-export {
-	GAME_CONFIG,
-	type LevelOfferType,
-	VISION_RADIUS,
-	XP_PER_LEVEL,
-	BASE_NPCS_PER_FLOOR,
-} from "./game";
+export { GAME_CONFIG, VISION_RADIUS, XP_PER_LEVEL, BASE_NPCS_PER_FLOOR } from "./game";
 export {
 	MAP_CONFIG,
 	MAP_GEN_VERSION,

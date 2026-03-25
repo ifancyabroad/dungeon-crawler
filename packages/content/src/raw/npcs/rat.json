@@ -24,7 +24,7 @@
 	"challengeRating": 0,
 	"savingThrowProficiencies": [],
 	"bloodColor": "#8b0000",
-	"activeSkills": ["poison_bite"],
+	"activeSkills": [{ "id": "poison_bite", "rank": 1 }],
 	"passiveSkills": [],
 	"startingEquipment": []
 }

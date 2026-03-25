@@ -5,16 +5,42 @@
 	"description": "Your predatory senses sharpen. +2 Charisma and +2 Wisdom.",
 	"school": "nature",
 	"tags": ["buff"],
-	"effects": [
-		{
-			"type": "modify_attribute",
-			"attribute": "charisma",
-			"amount": 2
-		},
-		{
-			"type": "modify_attribute",
-			"attribute": "wisdom",
-			"amount": 2
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "charisma",
+				"amount": 2
+			},
+			{
+				"type": "modify_attribute",
+				"attribute": "wisdom",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "charisma",
+				"amount": 2
+			},
+			{
+				"type": "modify_attribute",
+				"attribute": "wisdom",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "charisma",
+				"amount": 2
+			},
+			{
+				"type": "modify_attribute",
+				"attribute": "wisdom",
+				"amount": 2
+			}
+		]
 	]
 }

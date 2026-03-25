@@ -5,10 +5,24 @@
 	"description": "Countless wounds have left you resistant to bludgeoning damage.",
 	"school": "martial",
 	"tags": ["buff"],
-	"effects": [
-		{
-			"type": "add_damage_resistance",
-			"damageType": "bludgeoning"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "add_damage_resistance",
+				"damageType": "bludgeoning"
+			}
+		],
+		[
+			{
+				"type": "add_damage_resistance",
+				"damageType": "bludgeoning"
+			}
+		],
+		[
+			{
+				"type": "add_damage_resistance",
+				"damageType": "bludgeoning"
+			}
+		]
 	]
 }

@@ -229,7 +229,7 @@ Turn-based melee. After every player action, all living NPCs on the current floo
 
 Skills are split into two types, both defined in `packages/content/src/raw/skills/`:
 
-**Active skills** are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, dispatching typed effect handlers defined in `packages/shared/src/skills/effects/`. They appear on the hotbar and have cooldowns.
+**Active skills** are dispatched as `use_skill` actions. The engine resolves them via `resolveSkill` in `packages/shared/src/skills/`, dispatching typed effect handlers defined in `packages/shared/src/skills/effects/`. Resolution uses the caster's per-skill **rank** (1–3) to select the matching tier from the skill definition's `effectsByRank`. They appear on the hotbar and have cooldowns.
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
@@ -237,9 +237,9 @@ Active status effects fall into two categories. **Data-driven** effects define t
 
 Active skill attacks (`single_target_damage`, `multi_strike`) support an optional `onHitStatus` field. When set, the named status is applied to the target on every successful hit — regardless of whether damage was dealt (e.g. a hit that was fully resisted still triggers the status).
 
-**Passive skills** are granted at level-up and apply permanent buffs to the hero immediately (`applyPassiveSkill`). They never appear on the hotbar; they are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
+**Passive skills** are granted at level-up (or applied to NPCs at spawn) and apply permanent buffs (`applyPassiveSkill`). They never appear on the hotbar; hero passives are listed in the sidebar. Passive effects include stat modifiers, AC changes, damage resistances/immunities, extra damage dice on qualifying attacks, and status immunities.
 
-**Level-up acquisition**: on level-up the engine generates a deterministic offer of up to 3 skills (active or passive, alternating by level per `LEVEL_UP_SCHEDULE`). The player must pick one via `select_skill_choice` before regular actions resume. Rerolling is supported via `reroll_skill_choice`. This sets `pendingInteraction` on `GameState` until resolved.
+**Level-up acquisition**: on level-up the engine generates a deterministic mixed offer of up to 3 skills from the class pools (`generateSkillOffers` in `packages/shared/src/game/engineLevelUp.ts`). Offers can be new skills (bounded by per-type caps on how many actives and passives the hero may hold) or upgrades to an owned skill's rank (max 3). When both pools have candidates, the offer includes at least one active and one passive; the third slot is weighted toward the type the hero has fewer of. The player picks one via `select_skill_choice` (`skillId` only; rank is taken from the matching entry in `pendingInteraction.offers`). Rerolling is supported via `reroll_skill_choice`. This sets `pendingInteraction` on `GameState` until resolved.
 
 Dice expressions use a consistent `"NdM"` string format (e.g. `"2d6"`), parsed by `rollDiceExpr` in `packages/shared/src/combat/dice.ts`.
 
@@ -251,7 +251,7 @@ Each NPC carries a small AI state object (`NpcAIState`) alongside its actor data
 
 Every turn the engine runs a **two-phase dispatch**: the combat strategy runs first; if it has nothing to do it hands off to the idle strategy. Both phases are pure functions registered in `packages/shared/src/game/strategies/index.ts`. Adding a new strategy is a matter of creating a file under `packages/shared/src/game/strategies/`, adding the tag to the relevant union in `types.ts`, and registering the function — no other engine files need to change.
 
-**NPC skills**: NPCs can use active skills just as the hero can. Each NPC definition carries an `activeSkills` array; the engine initialises cooldown state at spawn and ticks all actor cooldowns (not just the hero's) at the end of every player turn. AI strategies receive a `getSkillDef` callback via `AIContext` to inspect range, target type, and other skill metadata when deciding whether to use a skill this turn. Skill resolution goes through the same `resolveSkill` path regardless of whether the caster is the hero or an NPC.
+**NPC skills**: NPCs can use active skills just as the hero can. Each NPC definition carries `activeSkills` and `passiveSkills` as arrays of `{ id, rank }` objects; the engine initialises per-skill rank and cooldown state at spawn, applies passives at spawn, and ticks all actor cooldowns (not just the hero's) at the end of every player turn. AI strategies receive a `getSkillDef` callback via `AIContext` to inspect range, target type, and other skill metadata when deciding whether to use a skill this turn. Skill resolution goes through the same `resolveSkill` path regardless of whether the caster is the hero or an NPC.
 
 **Faction-aware targeting**: before the AI loop the engine builds a transient faction map that incorporates any active status effects (e.g. CHARMED flips an NPC's effective faction so it attacks its former allies). Strategies read from this map rather than the stored faction field, so all faction logic is centralised in one place and strategies remain unaware of specific status effects.
 

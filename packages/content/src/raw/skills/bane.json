@@ -8,16 +8,42 @@
 	"cooldown": 15,
 	"targetType": "actor",
 	"range": 4,
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "baned",
-			"target": "target",
-			"durationTurns": 6,
-			"adjustments": {
-				"attackRollDicePenalty": "1d4",
-				"savingThrowDicePenalty": "1d4"
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "baned",
+				"target": "target",
+				"durationTurns": 6,
+				"adjustments": {
+					"attackRollDicePenalty": "1d4",
+					"savingThrowDicePenalty": "1d4"
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "baned",
+				"target": "target",
+				"durationTurns": 6,
+				"adjustments": {
+					"attackRollDicePenalty": "1d4",
+					"savingThrowDicePenalty": "1d4"
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "baned",
+				"target": "target",
+				"durationTurns": 6,
+				"adjustments": {
+					"attackRollDicePenalty": "1d4",
+					"savingThrowDicePenalty": "1d4"
+				}
+			}
+		]
 	]
 }

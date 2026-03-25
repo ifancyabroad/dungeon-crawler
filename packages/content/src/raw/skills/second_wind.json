@@ -7,11 +7,27 @@
 	"tags": ["healing"],
 	"cooldown": 20,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "heal_self",
-			"dice": "1d10",
-			"scalingStat": "constitution"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "heal_self",
+				"dice": "1d10",
+				"scalingStat": "constitution"
+			}
+		],
+		[
+			{
+				"type": "heal_self",
+				"dice": "1d10",
+				"scalingStat": "constitution"
+			}
+		],
+		[
+			{
+				"type": "heal_self",
+				"dice": "1d10",
+				"scalingStat": "constitution"
+			}
+		]
 	]
 }

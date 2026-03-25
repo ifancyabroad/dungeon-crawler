@@ -8,17 +8,45 @@
 	"cooldown": 18,
 	"targetType": "none",
 	"maintainsStealth": true,
-	"effects": [
-		{
-			"type": "area_damage",
-			"dice": "1d4",
-			"radiusTiles": 1,
-			"damageType": "poison"
-		},
-		{
-			"type": "apply_status",
-			"statusId": "stealth",
-			"durationTurns": 8
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d4",
+				"radiusTiles": 1,
+				"damageType": "poison"
+			},
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 8
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d4",
+				"radiusTiles": 1,
+				"damageType": "poison"
+			},
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 8
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d4",
+				"radiusTiles": 1,
+				"damageType": "poison"
+			},
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 8
+			}
+		]
 	]
 }

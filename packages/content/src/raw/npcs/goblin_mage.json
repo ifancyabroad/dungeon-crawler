@@ -24,7 +24,10 @@
 	"challengeRating": 2,
 	"savingThrowProficiencies": ["intelligence"],
 	"bloodColor": "#cc0000",
-	"activeSkills": ["magic_arrow", "fireball"],
+	"activeSkills": [
+		{ "id": "magic_arrow", "rank": 1 },
+		{ "id": "fireball", "rank": 1 }
+	],
 	"passiveSkills": [],
 	"startingEquipment": []
 }

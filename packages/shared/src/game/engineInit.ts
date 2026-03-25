@@ -56,9 +56,9 @@ function buildInitialFloorState(
 		return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx, exitIdx };
 	}
 
-	const initialSkills: Record<string, { cooldownRemaining: number }> = {};
-	for (const skillId of heroInit.skills ?? []) {
-		initialSkills[skillId] = { cooldownRemaining: 0 };
+	const initialSkills: Record<string, { rank: number; cooldownRemaining: number }> = {};
+	for (const skill of heroInit.skills ?? []) {
+		initialSkills[skill.id] = { rank: skill.rank, cooldownRemaining: 0 };
 	}
 
 	const heroActor: Actor = {
@@ -171,7 +171,9 @@ export function spawnNpc(
 		damageResistances: [...init.damageResistances],
 		damageImmunities: [...init.damageImmunities],
 		damageVulnerabilities: [...init.damageVulnerabilities],
-		skills: Object.fromEntries(init.activeSkills.map((id) => [id, { cooldownRemaining: 0 }])),
+		skills: Object.fromEntries(
+			init.activeSkills.map((s) => [s.id, { rank: s.rank, cooldownRemaining: 0 }]),
+		),
 		activeEffects: [],
 		numericBuffs: {},
 		passiveDamageBonuses: [],

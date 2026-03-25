@@ -151,8 +151,12 @@ export class TargetingSystem {
 			// Only show an AoE preview when the cursor is over a valid target tile.
 			// This prevents the cone/arc being drawn toward out-of-range tiles.
 			if (targeting.validTileIndices.includes(hoveredIdx)) {
+				const tier =
+					targeting.skillDef.effectsByRank[targeting.skillRank - 1] ??
+					targeting.skillDef.effectsByRank[0];
+				const firstEffect = tier?.[0];
 				targeting.setAoePreview(
-					this.computeAoePreview(targeting.skillDef.effects[0], tileX, tileY),
+					firstEffect ? this.computeAoePreview(firstEffect, tileX, tileY) : [],
 				);
 			} else {
 				targeting.setAoePreview([]);

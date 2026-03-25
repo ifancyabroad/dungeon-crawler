@@ -33,9 +33,9 @@ export interface ActorAttributes {
 /** Standard ability names for mapping saves. */
 export type AbilityName = keyof ActorAttributes;
 
-/** Per-skill state: optional level and cooldown. */
+/** Per-skill state: rank (1–3) and cooldown remaining. */
 export interface ActorSkillState {
-	level?: number;
+	rank: number;
 	cooldownRemaining: number;
 }
 
@@ -51,6 +51,8 @@ export interface PassiveDamageBonus {
 	appliesTo: "melee" | "area" | "ranged" | "any";
 	/** If true, only fires on a critical hit (melee only). */
 	onCritOnly: boolean;
+	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
+	sourceSkillId?: string;
 }
 
 /**
@@ -92,8 +94,8 @@ export interface HeroInit {
 	hitDie: number;
 	/** Ability names this hero is proficient in for saving throws. */
 	savingThrowProficiencies: AbilityName[];
-	/** Skill ids to initialise on the hero (each gets cooldownRemaining: 0). */
-	skills?: string[];
+	/** Skills to initialise on the hero (each gets cooldownRemaining: 0). */
+	skills?: { id: string; rank: number }[];
 }
 
 /** Data the caller provides to spawn an NPC actor. Keeps the engine content-agnostic. */
@@ -118,10 +120,10 @@ export interface NpcInit {
 	savingThrowProficiencies: AbilityName[];
 	combatStrategy: NpcAIState["combatStrategy"];
 	idleStrategy: NpcAIState["idleStrategy"];
-	/** Active skill IDs this NPC spawns with. Each starts with cooldownRemaining: 0. */
-	activeSkills: string[];
-	/** Passive skill IDs this NPC spawns with. Applied by the caller via applyPassiveEffect before the actor enters the floor. */
-	passiveSkills: string[];
+	/** Active skills this NPC spawns with. Each starts with cooldownRemaining: 0. */
+	activeSkills: { id: string; rank: number }[];
+	/** Passive skills this NPC spawns with. Applied by the caller via applyPassiveEffect before the actor enters the floor. */
+	passiveSkills: { id: string; rank: number }[];
 }
 
 /** Actor: hero or NPC. Use def.type to distinguish ("hero" | "npc"). Position is idx only; floor is implied by which floor's actorsById contains it. */
@@ -357,6 +359,13 @@ export type RngState =
 	| { algo: "xorshift32"; s: number }
 	| { algo: "sfc32"; a: number; b: number; c: number; d: number };
 
+/** A single skill offer presented at level-up (new skill or upgrade to an existing one). */
+export interface SkillOffer {
+	skillId: string;
+	/** The rank that will be granted when this offer is selected. 1 = new skill, 2–3 = upgrade. */
+	rank: number;
+}
+
 /**
  * Pending player interaction — when non-null, the game is "paused":
  * move/attack/use_skill actions are rejected until this is resolved.
@@ -364,12 +373,10 @@ export type RngState =
  */
 export type PendingInteraction = {
 	type: "skill_choice";
-	/** Whether the player is choosing an active or passive skill this level-up. */
-	offerType: "active" | "passive";
 	/** The level just reached. */
 	levelReached: number;
-	/** Up to 3 skill ids the player may pick from. */
-	offers: string[];
+	/** Mixed active and passive offers. Each entry carries the skill id and rank to grant. */
+	offers: SkillOffer[];
 	/** How many times the player has rerolled this offer set. */
 	rerollsUsed: number;
 } | null;

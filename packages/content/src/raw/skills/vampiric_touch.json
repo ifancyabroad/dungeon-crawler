@@ -8,12 +8,30 @@
 	"cooldown": 14,
 	"targetType": "actor",
 	"range": 1,
-	"effects": [
-		{
-			"type": "drain_life",
-			"dice": "2d6",
-			"damageType": "necrotic",
-			"healDice": "1d6"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "drain_life",
+				"dice": "2d6",
+				"damageType": "necrotic",
+				"healDice": "1d6"
+			}
+		],
+		[
+			{
+				"type": "drain_life",
+				"dice": "2d6",
+				"damageType": "necrotic",
+				"healDice": "1d6"
+			}
+		],
+		[
+			{
+				"type": "drain_life",
+				"dice": "2d6",
+				"damageType": "necrotic",
+				"healDice": "1d6"
+			}
+		]
 	]
 }

@@ -8,11 +8,27 @@
 	"cooldown": 15,
 	"targetType": "tile",
 	"range": 6,
-	"effects": [
-		{
-			"type": "line_damage",
-			"dice": "3d6",
-			"damageType": "lightning"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "line_damage",
+				"dice": "3d6",
+				"damageType": "lightning"
+			}
+		],
+		[
+			{
+				"type": "line_damage",
+				"dice": "3d6",
+				"damageType": "lightning"
+			}
+		],
+		[
+			{
+				"type": "line_damage",
+				"dice": "3d6",
+				"damageType": "lightning"
+			}
+		]
 	]
 }

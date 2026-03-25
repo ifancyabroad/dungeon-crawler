@@ -61,6 +61,8 @@ export type {
 
 export interface SkillResolutionInput {
 	skillDef: ActiveSkillDefinition;
+	/** The rank at which the skill is being used (1–3). Selects effectsByRank[rank-1]. */
+	rank: number;
 	/** The actor using the skill (hero or NPC). */
 	caster: Actor;
 	casterId: ActorId;

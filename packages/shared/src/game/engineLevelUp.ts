@@ -1,38 +1,107 @@
-import type { Actor, ActorId, GameEvent, PendingInteraction } from "./types";
+import type { Actor, ActorId, GameEvent, PendingInteraction, SkillOffer } from "./types";
 import type { Rng } from "../rng";
-import type { ApplyActionContext } from "./engineContext";
-import { GAME_CONFIG, XP_PER_LEVEL, type LevelOfferType } from "../config";
+import type { ApplyActionContext, ClassSkillPools } from "./engineContext";
+import { GAME_CONFIG, XP_PER_LEVEL } from "../config";
 
 /**
- * Configurable schedule for level-up offer types.
- * Keys are level numbers (1-indexed). Missing levels repeat the last seen pattern.
- * Default: first level-up (reaching level 2) is passive, then alternates.
+ * Build the list of skill offers a player can choose from at level-up.
+ *
+ * Rules:
+ * - A skill can be offered as "new" (rank 1) only if the hero does not own it yet
+ *   and the per-type cap has not been reached.
+ * - A skill can be offered as an upgrade only if the hero already owns it at a
+ *   rank below the maximum.
+ * - The offer set always contains at least 1 active and 1 passive (if candidates
+ *   are available for each type).
+ * - The third slot is filled by a weighted draw that biases toward whichever type
+ *   the hero has fewer of so far.
  */
-export const LEVEL_UP_SCHEDULE: Readonly<Record<number, LevelOfferType>> =
-	GAME_CONFIG.leveling.schedule;
+export function generateSkillOffers(
+	actor: Actor,
+	pools: ClassSkillPools,
+	rng: Rng,
+	excludeSkillIds: ReadonlySet<string> = new Set(),
+): SkillOffer[] {
+	const { activeSkillCap, passiveSkillCap, maxSkillRank, skillOfferCount } = GAME_CONFIG.leveling;
 
-function getOfferTypeForLevel(level: number): LevelOfferType {
-	if (level in LEVEL_UP_SCHEDULE) return LEVEL_UP_SCHEDULE[level]!;
-	// Beyond schedule: alternate based on parity (even = passive, odd = active)
-	return level % 2 === 0 ? "passive" : "active";
-}
+	// Count how many active / passive skills the hero currently holds (from class pools).
+	const activeCount = pools.activeSkillPool.filter((id) => id in actor.skills).length;
+	const passiveCount = pools.passiveSkillPool.filter((id) => id in actor.skills).length;
 
-/**
- * Sample up to `count` items from `pool` without replacement using deterministic RNG.
- * Fisher-Yates partial shuffle.
- */
-export function sampleWithoutReplacement(pool: string[], count: number, rng: Rng): string[] {
-	const arr = pool.slice();
-	const result: string[] = [];
-	const take = Math.min(count, arr.length);
-	for (let i = 0; i < take; i++) {
-		const j = i + Math.floor(rng() * (arr.length - i));
-		const temp = arr[i]!;
-		arr[i] = arr[j]!;
-		arr[j] = temp;
-		result.push(arr[i]!);
+	function buildCandidates(
+		pool: readonly string[],
+		ownedCount: number,
+		typeCap: number,
+	): SkillOffer[] {
+		const candidates: SkillOffer[] = [];
+		for (const skillId of pool) {
+			if (excludeSkillIds.has(skillId)) continue;
+			const owned = actor.skills[skillId];
+			if (!owned) {
+				if (ownedCount < typeCap) candidates.push({ skillId, rank: 1 });
+			} else if (owned.rank < maxSkillRank) {
+				candidates.push({ skillId, rank: owned.rank + 1 });
+			}
+		}
+		return candidates;
 	}
-	return result;
+
+	const activeCandidates = buildCandidates(pools.activeSkillPool, activeCount, activeSkillCap);
+	const passiveCandidates = buildCandidates(
+		pools.passiveSkillPool,
+		passiveCount,
+		passiveSkillCap,
+	);
+
+	const offers: SkillOffer[] = [];
+	const usedSkillIds = new Set<string>();
+
+	function pickOne(candidates: SkillOffer[]): SkillOffer | undefined {
+		const available = candidates.filter((o) => !usedSkillIds.has(o.skillId));
+		if (available.length === 0) return undefined;
+		const idx = Math.floor(rng() * available.length);
+		return available[idx];
+	}
+
+	// Guarantee at least 1 active and 1 passive
+	const firstActive = pickOne(activeCandidates);
+	if (firstActive) {
+		offers.push(firstActive);
+		usedSkillIds.add(firstActive.skillId);
+	}
+
+	const firstPassive = pickOne(passiveCandidates);
+	if (firstPassive) {
+		offers.push(firstPassive);
+		usedSkillIds.add(firstPassive.skillId);
+	}
+
+	// Fill remaining slots with a type-weighted draw
+	while (offers.length < skillOfferCount) {
+		const remainingActive = activeCandidates.filter((o) => !usedSkillIds.has(o.skillId));
+		const remainingPassive = passiveCandidates.filter((o) => !usedSkillIds.has(o.skillId));
+		if (remainingActive.length === 0 && remainingPassive.length === 0) break;
+
+		// Bias toward the less-represented type (2:1 weight ratio when counts differ)
+		const activeWeight = activeCount <= passiveCount ? 2 : 1;
+		const passiveWeight = passiveCount <= activeCount ? 2 : 1;
+
+		const weightedPool: SkillOffer[] = [
+			...Array.from({ length: activeWeight }, () => remainingActive).flat(),
+			...Array.from({ length: passiveWeight }, () => remainingPassive).flat(),
+		];
+
+		const idx = Math.floor(rng() * weightedPool.length);
+		const pick = weightedPool[idx];
+		if (pick && !usedSkillIds.has(pick.skillId)) {
+			offers.push(pick);
+			usedSkillIds.add(pick.skillId);
+		} else {
+			continue;
+		}
+	}
+
+	return offers;
 }
 
 /**
@@ -67,24 +136,14 @@ export function grantXpForKill(
 		newCurrentHp += hpGained;
 		events.push({ type: "level_up", actorId, newLevel, hpGained });
 
-		// Generate deterministic level-up skill offers
+		// Generate deterministic mixed level-up skill offers
 		const classId = actor.def.type === "hero" ? actor.def.classId : null;
 		const pools = classId ? context.getClassSkillPools(classId) : undefined;
 		if (pools) {
-			const offerType = getOfferTypeForLevel(newLevel);
-			const pool = offerType === "active" ? pools.activeSkillPool : pools.passiveSkillPool;
-			// Filter out skills the hero already owns
-			const ownedSkillIds = new Set(Object.keys(actor.skills));
-			const eligible = pool.filter((id) => !ownedSkillIds.has(id));
-			const offers = sampleWithoutReplacement(
-				eligible,
-				GAME_CONFIG.leveling.skillOfferCount,
-				rng,
-			);
+			const offers = generateSkillOffers(actor, pools, rng);
 			if (offers.length > 0) {
 				pendingInteraction = {
 					type: "skill_choice",
-					offerType,
 					levelReached: newLevel,
 					offers,
 					rerollsUsed: 0,

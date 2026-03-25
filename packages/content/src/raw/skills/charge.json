@@ -8,12 +8,30 @@
 	"cooldown": 10,
 	"targetType": "actor",
 	"range": 4,
-	"effects": [
-		{
-			"type": "charge_attack",
-			"maxRangeTiles": 4,
-			"bonusDice": "1d8",
-			"bonusDamageType": "bludgeoning"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "charge_attack",
+				"maxRangeTiles": 4,
+				"bonusDice": "1d8",
+				"bonusDamageType": "bludgeoning"
+			}
+		],
+		[
+			{
+				"type": "charge_attack",
+				"maxRangeTiles": 4,
+				"bonusDice": "1d8",
+				"bonusDamageType": "bludgeoning"
+			}
+		],
+		[
+			{
+				"type": "charge_attack",
+				"maxRangeTiles": 4,
+				"bonusDice": "1d8",
+				"bonusDamageType": "bludgeoning"
+			}
+		]
 	]
 }

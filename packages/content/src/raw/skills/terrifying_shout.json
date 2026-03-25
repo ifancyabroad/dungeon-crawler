@@ -7,13 +7,33 @@
 	"tags": ["control", "debuff", "aoe"],
 	"cooldown": 14,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "frightened",
-			"target": "aoe",
-			"aoeRadiusTiles": 3,
-			"durationTurns": 6
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "frightened",
+				"target": "aoe",
+				"aoeRadiusTiles": 3,
+				"durationTurns": 6
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "frightened",
+				"target": "aoe",
+				"aoeRadiusTiles": 3,
+				"durationTurns": 6
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "frightened",
+				"target": "aoe",
+				"aoeRadiusTiles": 3,
+				"durationTurns": 6
+			}
+		]
 	]
 }

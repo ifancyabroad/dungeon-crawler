@@ -5,10 +5,24 @@
 	"description": "Years of petrification magic have weakened your frame. You take double damage from bludgeoning attacks.",
 	"school": "arcane",
 	"tags": ["debuff"],
-	"effects": [
-		{
-			"type": "add_damage_vulnerability",
-			"damageType": "bludgeoning"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "add_damage_vulnerability",
+				"damageType": "bludgeoning"
+			}
+		],
+		[
+			{
+				"type": "add_damage_vulnerability",
+				"damageType": "bludgeoning"
+			}
+		],
+		[
+			{
+				"type": "add_damage_vulnerability",
+				"damageType": "bludgeoning"
+			}
+		]
 	]
 }

@@ -8,14 +8,36 @@
 	"cooldown": 12,
 	"targetType": "tile",
 	"range": 4,
-	"effects": [
-		{
-			"type": "leap_attack",
-			"maxRangeTiles": 4,
-			"landingRadiusTiles": 1,
-			"dice": "2d6",
-			"damageType": "bludgeoning",
-			"scalingStat": "strength"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "leap_attack",
+				"maxRangeTiles": 4,
+				"landingRadiusTiles": 1,
+				"dice": "2d6",
+				"damageType": "bludgeoning",
+				"scalingStat": "strength"
+			}
+		],
+		[
+			{
+				"type": "leap_attack",
+				"maxRangeTiles": 4,
+				"landingRadiusTiles": 1,
+				"dice": "2d6",
+				"damageType": "bludgeoning",
+				"scalingStat": "strength"
+			}
+		],
+		[
+			{
+				"type": "leap_attack",
+				"maxRangeTiles": 4,
+				"landingRadiusTiles": 1,
+				"dice": "2d6",
+				"damageType": "bludgeoning",
+				"scalingStat": "strength"
+			}
+		]
 	]
 }

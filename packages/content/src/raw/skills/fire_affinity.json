@@ -5,13 +5,33 @@
 	"description": "Your attunement to fire magic adds a burst of flame to every area spell.",
 	"school": "arcane",
 	"tags": ["damage", "buff"],
-	"effects": [
-		{
-			"type": "add_damage_dice",
-			"dice": "1d4",
-			"damageType": "fire",
-			"appliesTo": "area",
-			"onCritOnly": false
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d4",
+				"damageType": "fire",
+				"appliesTo": "area",
+				"onCritOnly": false
+			}
+		],
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d4",
+				"damageType": "fire",
+				"appliesTo": "area",
+				"onCritOnly": false
+			}
+		],
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d4",
+				"damageType": "fire",
+				"appliesTo": "area",
+				"onCritOnly": false
+			}
+		]
 	]
 }

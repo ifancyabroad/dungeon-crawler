@@ -8,11 +8,27 @@
 	"cooldown": 10,
 	"targetType": "actor",
 	"range": 1,
-	"effects": [
-		{
-			"type": "heal_target",
-			"dice": "2d8",
-			"scalingStat": "wisdom"
-		}
+	"effectsByRank": [
+		[
+			{
+				"type": "heal_target",
+				"dice": "2d8",
+				"scalingStat": "wisdom"
+			}
+		],
+		[
+			{
+				"type": "heal_target",
+				"dice": "2d8",
+				"scalingStat": "wisdom"
+			}
+		],
+		[
+			{
+				"type": "heal_target",
+				"dice": "2d8",
+				"scalingStat": "wisdom"
+			}
+		]
 	]
 }

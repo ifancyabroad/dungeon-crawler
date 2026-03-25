@@ -115,7 +115,7 @@ export const giveSkill: RequestHandler = async (req, res) => {
 
 	const updatedHero = {
 		...hero,
-		skills: { ...hero.skills, [skillId]: { cooldownRemaining: 0 } },
+		skills: { ...hero.skills, [skillId]: { rank: 1, cooldownRemaining: 0 } },
 	};
 	const floorState = state.floors[state.heroFloorIndex].state;
 	const updatedActors = { ...floorState.actorsById, [hero.id]: updatedHero };

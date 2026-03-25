@@ -164,7 +164,8 @@ function pickFirstValidAction(state: GameState): Action | null {
 	if (state.pendingInteraction?.type === "skill_choice") {
 		candidates.push({ type: "reroll_skill_choice" });
 		const [firstOffer] = state.pendingInteraction.offers;
-		if (firstOffer) candidates.push({ type: "select_skill_choice", skillId: firstOffer });
+		if (firstOffer)
+			candidates.push({ type: "select_skill_choice", skillId: firstOffer.skillId });
 	}
 	return (
 		candidates.find(

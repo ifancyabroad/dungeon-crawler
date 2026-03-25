@@ -7,14 +7,36 @@
 	"tags": ["buff"],
 	"cooldown": 6,
 	"targetType": "none",
-	"effects": [
-		{
-			"type": "apply_status",
-			"statusId": "reckless",
-			"durationTurns": 6,
-			"adjustments": {
-				"hasAdvantage": true
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "reckless",
+				"durationTurns": 6,
+				"adjustments": {
+					"hasAdvantage": true
+				}
 			}
-		}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "reckless",
+				"durationTurns": 6,
+				"adjustments": {
+					"hasAdvantage": true
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "reckless",
+				"durationTurns": 6,
+				"adjustments": {
+					"hasAdvantage": true
+				}
+			}
+		]
 	]
 }
