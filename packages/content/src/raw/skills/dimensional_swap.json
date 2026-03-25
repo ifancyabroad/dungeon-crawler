@@ -3,6 +3,8 @@
 	"id": "dimensional_swap",
 	"name": "Dimensional Swap",
 	"description": "You fold space between yourself and a target, instantly exchanging your positions. Reposition an enemy into harm's way, or escape a dire situation in the blink of an eye.",
+	"school": "arcane",
+	"tags": ["mobility", "spell"],
 	"cooldown": 12,
 	"targetType": "actor",
 	"range": 4,

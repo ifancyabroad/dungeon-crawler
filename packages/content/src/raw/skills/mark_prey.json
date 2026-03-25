@@ -3,6 +3,8 @@
 	"id": "mark_prey",
 	"name": "Mark Prey",
 	"description": "Paint your target with an arcane sigil that strips their stealth and prevents them from hiding. The revealed effect lasts 5 turns.",
+	"school": "nature",
+	"tags": ["debuff", "stealth"],
 	"cooldown": 10,
 	"targetType": "actor",
 	"range": 6,

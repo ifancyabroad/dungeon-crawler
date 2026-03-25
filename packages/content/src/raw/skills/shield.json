@@ -3,6 +3,8 @@
 	"id": "shield",
 	"name": "Shield",
 	"description": "Conjure a magical barrier around yourself, absorbing incoming damage before it reaches you.",
+	"school": "arcane",
+	"tags": ["buff", "spell"],
 	"cooldown": 25,
 	"targetType": "none",
 	"effects": [

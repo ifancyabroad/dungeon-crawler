@@ -3,6 +3,8 @@
 	"id": "quick_reflexes",
 	"name": "Quick Reflexes",
 	"description": "Your agility becomes legendary. +2 Dexterity.",
+	"school": "martial",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_attribute",

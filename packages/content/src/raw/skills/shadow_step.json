@@ -3,6 +3,8 @@
 	"id": "shadow_step",
 	"name": "Shadow Step",
 	"description": "Melt into the darkness and re-emerge at a distant location, leaving no trace of your passing.",
+	"school": "shadow",
+	"tags": ["mobility", "stealth"],
 	"cooldown": 15,
 	"targetType": "tile",
 	"range": 5,

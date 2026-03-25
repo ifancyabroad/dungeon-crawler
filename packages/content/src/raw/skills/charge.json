@@ -3,6 +3,8 @@
 	"id": "charge",
 	"name": "Charge",
 	"description": "Sprint toward a distant enemy in a straight line and deliver a devastating blow on arrival.",
+	"school": "martial",
+	"tags": ["damage", "mobility", "weapon_attack"],
 	"cooldown": 10,
 	"targetType": "actor",
 	"range": 4,

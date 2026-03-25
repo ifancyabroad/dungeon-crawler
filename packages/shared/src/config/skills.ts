@@ -1,5 +1,5 @@
 /**
- * Skill-system literals — defaults and status hook ids.
+ * Skill-system literals — defaults, status hook ids, tags, and schools.
  */
 
 export const STATUS_HOOKS = {
@@ -43,6 +43,41 @@ export const STATUS_HOOKS = {
 	 */
 	REVEALED: "revealed",
 } as const;
+
+/**
+ * Functional tags that describe what a skill does and how it interacts with
+ * engine systems. A skill may carry multiple tags.
+ *
+ * Engine-significant:
+ *   "spell"          – magical in nature; blocked by the silenced status.
+ *   "weapon_attack"  – delivered through a weapon strike; interacts with on-hit effects.
+ *   "aoe"            – affects multiple targets.
+ *   "stealth"        – part of the stealth subsystem.
+ *
+ * Descriptive (UI filtering, future synergies):
+ *   "damage" | "healing" | "buff" | "debuff" | "control" | "mobility" | "utility"
+ */
+export const SKILL_TAGS = [
+	"damage",
+	"healing",
+	"buff",
+	"debuff",
+	"control",
+	"mobility",
+	"stealth",
+	"utility",
+	"spell",
+	"weapon_attack",
+	"aoe",
+] as const;
+export type SkillTag = (typeof SKILL_TAGS)[number];
+
+/**
+ * The thematic school of a skill — its source of power.
+ * Used for UI grouping, content flavour, and future resistance/affinity mechanics.
+ */
+export const SKILL_SCHOOLS = ["martial", "arcane", "divine", "shadow", "nature"] as const;
+export type SkillSchool = (typeof SKILL_SCHOOLS)[number];
 
 export const SKILLS_CONFIG = {
 	defaults: {

@@ -10,6 +10,8 @@
 import { z } from "zod";
 import { AbilityNameSchema, CombatAdjustmentsSchema } from "../game/schemas";
 import { DAMAGE_TYPES } from "../config/combat";
+import { SKILL_TAGS, SKILL_SCHOOLS } from "../config/skills";
+export type { SkillTag, SkillSchool } from "../config/skills";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
 const DamageTypeSchema = z.enum(DAMAGE_TYPES as unknown as [DamageType, ...DamageType[]]);
@@ -397,6 +399,16 @@ export type AddHealingBonusFlatEffect = z.infer<typeof AddHealingBonusFlatEffect
 export type AddDotAmplifyFlatEffect = z.infer<typeof AddDotAmplifyFlatEffectSchema>;
 
 // ---------------------------------------------------------------------------
+// Skill classification schemas (raw constants and types live in config/skills)
+// ---------------------------------------------------------------------------
+
+type SkillTag = (typeof SKILL_TAGS)[number];
+const SkillTagSchema = z.enum(SKILL_TAGS as unknown as [SkillTag, ...SkillTag[]]);
+
+type SkillSchool = (typeof SKILL_SCHOOLS)[number];
+const SkillSchoolSchema = z.enum(SKILL_SCHOOLS as unknown as [SkillSchool, ...SkillSchool[]]);
+
+// ---------------------------------------------------------------------------
 // Skill definition schemas
 // ---------------------------------------------------------------------------
 
@@ -405,6 +417,8 @@ export const ActiveSkillDefinitionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
+	school: SkillSchoolSchema,
+	tags: z.array(SkillTagSchema).min(1),
 	cooldown: z.number().int().min(0),
 	targetType: z.enum(["none", "tile", "actor"]),
 	range: z.number().int().min(1).optional(),
@@ -418,6 +432,8 @@ export const PassiveSkillDefinitionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
+	school: SkillSchoolSchema,
+	tags: z.array(SkillTagSchema).min(1),
 	effects: z.array(PassiveSkillEffectDescriptorSchema).min(1),
 });
 export type PassiveSkillDefinition = z.infer<typeof PassiveSkillDefinitionSchema>;

@@ -3,6 +3,8 @@
 	"id": "dispel",
 	"name": "Dispel",
 	"description": "Strip all buffs from a nearby enemy — blessings, shields, and empowerment crumble instantly.",
+	"school": "arcane",
+	"tags": ["debuff", "utility", "spell"],
 	"cooldown": 15,
 	"targetType": "actor",
 	"range": 4,

@@ -3,6 +3,8 @@
 	"id": "stealth",
 	"name": "Stealth",
 	"description": "Melt into the shadows. Enemies lose track of you and cannot detect your presence.",
+	"school": "shadow",
+	"tags": ["stealth", "utility"],
 	"cooldown": 30,
 	"targetType": "none",
 	"maintainsStealth": true,

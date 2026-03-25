@@ -3,6 +3,8 @@
 	"id": "battle_hymn",
 	"name": "Battle Hymn",
 	"description": "A rousing war-chant that sharpens your instincts. For 5 turns every attack and area strike deals an extra 1d4 damage.",
+	"school": "divine",
+	"tags": ["buff", "aoe"],
 	"cooldown": 15,
 	"targetType": "none",
 	"effects": [

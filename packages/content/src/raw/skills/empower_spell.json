@@ -3,6 +3,8 @@
 	"id": "empower_spell",
 	"name": "Empower Spell",
 	"description": "You channel raw magical energy into your next area spell. For 3 turns your area-of-effect attacks deal an extra 2 force damage to every target caught in the blast.",
+	"school": "arcane",
+	"tags": ["buff", "spell"],
 	"cooldown": 10,
 	"targetType": "none",
 	"effects": [

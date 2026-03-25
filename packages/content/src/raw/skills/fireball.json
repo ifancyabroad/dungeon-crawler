@@ -3,6 +3,8 @@
 	"id": "fireball",
 	"name": "Fireball",
 	"description": "Hurl a ball of fire that explodes on impact, scorching all enemies in the blast radius.",
+	"school": "arcane",
+	"tags": ["damage", "aoe", "spell"],
 	"cooldown": 20,
 	"targetType": "tile",
 	"range": 5,

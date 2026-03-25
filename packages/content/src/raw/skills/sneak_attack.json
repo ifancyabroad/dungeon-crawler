@@ -3,6 +3,8 @@
 	"id": "sneak_attack",
 	"name": "Sneak Attack",
 	"description": "Strike a vital spot from the shadows. Requires stealth — the blow is devastating but breaks your concealment.",
+	"school": "shadow",
+	"tags": ["damage", "stealth", "weapon_attack"],
 	"cooldown": 2,
 	"targetType": "actor",
 	"range": 1,

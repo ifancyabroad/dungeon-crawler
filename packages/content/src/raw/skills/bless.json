@@ -3,6 +3,8 @@
 	"id": "bless",
 	"name": "Bless",
 	"description": "Divine favour bolsters your resolve. For 8 turns you roll an extra 1d4 on every attack roll and saving throw — fortune tips toward the faithful.",
+	"school": "divine",
+	"tags": ["buff", "spell"],
 	"cooldown": 18,
 	"targetType": "none",
 	"effects": [

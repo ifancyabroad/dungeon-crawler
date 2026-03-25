@@ -3,6 +3,8 @@
 	"id": "shadow_strike",
 	"name": "Shadow Strike",
 	"description": "Your attacks from the darkness pierce deep. Add 1d4 piercing damage to every melee attack.",
+	"school": "shadow",
+	"tags": ["damage", "stealth", "buff"],
 	"effects": [
 		{
 			"type": "add_damage_dice",

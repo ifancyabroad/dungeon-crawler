@@ -3,6 +3,8 @@
 	"id": "war_cry",
 	"name": "War Cry",
 	"description": "Unleash a thunderous battle cry that rattles all nearby enemies.",
+	"school": "martial",
+	"tags": ["damage", "aoe"],
 	"cooldown": 15,
 	"targetType": "none",
 	"effects": [

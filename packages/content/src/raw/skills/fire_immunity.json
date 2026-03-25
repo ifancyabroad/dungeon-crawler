@@ -3,6 +3,8 @@
 	"id": "fire_immunity",
 	"name": "Fire Immunity",
 	"description": "Your mastery of flame makes you completely immune to fire damage.",
+	"school": "arcane",
+	"tags": ["utility"],
 	"effects": [
 		{
 			"type": "add_damage_immunity",

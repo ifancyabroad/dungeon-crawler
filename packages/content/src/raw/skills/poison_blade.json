@@ -3,6 +3,8 @@
 	"id": "poison_blade",
 	"name": "Poison Blade",
 	"description": "A swift slash that coats the wound with venom, dealing damage over time.",
+	"school": "nature",
+	"tags": ["damage", "debuff", "weapon_attack"],
 	"cooldown": 10,
 	"targetType": "actor",
 	"range": 1,

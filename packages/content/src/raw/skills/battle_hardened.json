@@ -3,6 +3,8 @@
 	"id": "battle_hardened",
 	"name": "Battle Hardened",
 	"description": "Countless wounds have left you resistant to bludgeoning damage.",
+	"school": "martial",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "add_damage_resistance",

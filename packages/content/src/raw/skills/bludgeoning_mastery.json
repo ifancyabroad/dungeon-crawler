@@ -3,6 +3,8 @@
 	"id": "bludgeoning_mastery",
 	"name": "Crushing Blows",
 	"description": "Your strikes land with bone-breaking force. Add 1d6 bludgeoning damage to every melee attack.",
+	"school": "martial",
+	"tags": ["damage", "buff"],
 	"effects": [
 		{
 			"type": "add_damage_dice",

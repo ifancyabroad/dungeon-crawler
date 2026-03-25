@@ -3,6 +3,8 @@
 	"id": "arcane_mind",
 	"name": "Arcane Mind",
 	"description": "Your intellect sharpens through arcane study. +2 Intelligence.",
+	"school": "arcane",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_attribute",

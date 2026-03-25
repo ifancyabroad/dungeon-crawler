@@ -3,6 +3,8 @@
 	"id": "smoke_bomb",
 	"name": "Smoke Bomb",
 	"description": "Hurl a choking smoke bomb that poisons adjacent enemies and vanishes you from sight.",
+	"school": "shadow",
+	"tags": ["damage", "stealth", "aoe"],
 	"cooldown": 18,
 	"targetType": "none",
 	"maintainsStealth": true,

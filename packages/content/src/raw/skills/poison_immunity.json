@@ -3,6 +3,8 @@
 	"id": "poison_immunity",
 	"name": "Poison Immunity",
 	"description": "Years of exposure to toxins have made you completely immune to poison.",
+	"school": "nature",
+	"tags": ["utility"],
 	"effects": [
 		{
 			"type": "add_damage_immunity",

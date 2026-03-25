@@ -3,6 +3,8 @@
 	"id": "blessed_hands",
 	"name": "Blessed Hands",
 	"description": "Your healing touch is guided by a higher power. All healing you perform restores 2 additional HP.",
+	"school": "divine",
+	"tags": ["healing", "buff"],
 	"effects": [
 		{
 			"type": "add_healing_bonus_flat",

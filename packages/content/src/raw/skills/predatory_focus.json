@@ -3,6 +3,8 @@
 	"id": "predatory_focus",
 	"name": "Predatory Focus",
 	"description": "You lock onto a weakness. For 4 turns your targeted skill attacks deal an extra 1d6 damage and your critical hit range expands by 1.",
+	"school": "nature",
+	"tags": ["buff"],
 	"cooldown": 12,
 	"targetType": "none",
 	"effects": [

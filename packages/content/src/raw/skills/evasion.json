@@ -3,6 +3,8 @@
 	"id": "evasion",
 	"name": "Evasion",
 	"description": "You move like water, deflecting blows with fluid grace. +2 Armour Class.",
+	"school": "shadow",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_armor_class",

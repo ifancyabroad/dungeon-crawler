@@ -3,6 +3,8 @@
 	"id": "mage_armor",
 	"name": "Mage Armour",
 	"description": "An invisible arcane barrier surrounds you. +3 Armour Class.",
+	"school": "arcane",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_armor_class",

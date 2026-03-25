@@ -3,6 +3,8 @@
 	"id": "predators_instinct",
 	"name": "Predator's Instinct",
 	"description": "Your predatory senses sharpen. +2 Charisma and +2 Wisdom.",
+	"school": "nature",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_attribute",

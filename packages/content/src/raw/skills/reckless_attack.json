@@ -3,6 +3,8 @@
 	"id": "reckless_attack",
 	"name": "Reckless Attack",
 	"description": "You throw caution to the wind, swinging with reckless abandon. For 6 turns you gain advantage on all attack rolls — but your guard is down and enemies gain advantage against you too.",
+	"school": "martial",
+	"tags": ["buff"],
 	"cooldown": 6,
 	"targetType": "none",
 	"effects": [

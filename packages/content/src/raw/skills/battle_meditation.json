@@ -3,6 +3,8 @@
 	"id": "battle_meditation",
 	"name": "Battle Meditation",
 	"description": "A moment of focused calm resets your tactical options. All of your skills have their cooldowns reduced by 4 turns.",
+	"school": "martial",
+	"tags": ["utility"],
 	"cooldown": 30,
 	"targetType": "none",
 	"effects": [

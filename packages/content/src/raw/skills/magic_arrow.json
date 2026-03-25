@@ -3,6 +3,8 @@
 	"id": "magic_arrow",
 	"name": "Magic Arrow",
 	"description": "Launch a concentrated bolt of arcane energy at a single target.",
+	"school": "arcane",
+	"tags": ["damage", "spell"],
 	"cooldown": 3,
 	"targetType": "actor",
 	"range": 6,

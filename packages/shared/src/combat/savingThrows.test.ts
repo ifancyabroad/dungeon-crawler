@@ -121,6 +121,8 @@ describe("area_damage save scaling", () => {
 		id: "test_area",
 		name: "Test Area",
 		description: "Test",
+		school: "arcane",
+		tags: ["damage", "aoe", "spell"],
 		cooldown: 0,
 		targetType: "none",
 		effects: [

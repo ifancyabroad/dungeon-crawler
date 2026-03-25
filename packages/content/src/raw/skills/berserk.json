@@ -3,6 +3,8 @@
 	"id": "berserk",
 	"name": "Berserk",
 	"description": "Enter a furious rage, dealing more damage with every strike. The frenzy makes you reckless — you take more hits too.",
+	"school": "martial",
+	"tags": ["buff"],
 	"cooldown": 25,
 	"targetType": "none",
 	"effects": [

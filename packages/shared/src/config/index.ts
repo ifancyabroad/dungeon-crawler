@@ -24,5 +24,12 @@ export {
 } from "./map";
 export type { FloorTheme } from "../map/types";
 export { COMBAT_CONFIG, DAMAGE_TYPES, UNARMED_WEAPON, type DamageType } from "./combat";
-export { SKILLS_CONFIG, STATUS_HOOKS } from "./skills";
+export {
+	SKILLS_CONFIG,
+	STATUS_HOOKS,
+	SKILL_TAGS,
+	type SkillTag,
+	SKILL_SCHOOLS,
+	type SkillSchool,
+} from "./skills";
 export { CONFIG } from "./registry";

@@ -3,6 +3,8 @@
 	"id": "cone_of_cold",
 	"name": "Cone of Cold",
 	"description": "Exhale a blast of freezing air in a cone, chilling all enemies caught within.",
+	"school": "arcane",
+	"tags": ["damage", "aoe", "spell"],
 	"cooldown": 15,
 	"targetType": "tile",
 	"range": 3,

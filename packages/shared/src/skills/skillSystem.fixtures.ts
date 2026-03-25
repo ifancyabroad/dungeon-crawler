@@ -16,6 +16,8 @@ export const mockPassiveStrSkill: PassiveSkillDefinition = {
 	id: "passive_str",
 	name: "Might",
 	description: "+2 Str",
+	school: "martial",
+	tags: ["buff"],
 	effects: [{ type: "modify_attribute", attribute: "strength", amount: 2 }],
 };
 export const mockPassiveAcSkill: PassiveSkillDefinition = {
@@ -23,6 +25,8 @@ export const mockPassiveAcSkill: PassiveSkillDefinition = {
 	id: "passive_ac",
 	name: "Iron Skin",
 	description: "+1 AC",
+	school: "martial",
+	tags: ["buff"],
 	effects: [{ type: "modify_armor_class", amount: 1 }],
 };
 export const mockPassiveResistance: PassiveSkillDefinition = {
@@ -30,6 +34,8 @@ export const mockPassiveResistance: PassiveSkillDefinition = {
 	id: "passive_fire_resist",
 	name: "Fire Resist",
 	description: "Fire resistance",
+	school: "arcane",
+	tags: ["utility"],
 	effects: [{ type: "add_damage_resistance", damageType: "fire" }],
 };
 export const mockPassiveDamageDice: PassiveSkillDefinition = {
@@ -37,6 +43,8 @@ export const mockPassiveDamageDice: PassiveSkillDefinition = {
 	id: "passive_damage_dice",
 	name: "Crushing",
 	description: "+1d6 bludgeoning",
+	school: "martial",
+	tags: ["damage", "buff"],
 	effects: [
 		{
 			type: "add_damage_dice",

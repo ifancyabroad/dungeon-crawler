@@ -3,6 +3,8 @@
 	"id": "hex",
 	"name": "Hex",
 	"description": "A curse of necrotic rot settles into your target. You deal 1d6 necrotic damage and mark them — every successful hit causes them to bleed for 3 turns, losing 1 HP per turn.",
+	"school": "shadow",
+	"tags": ["damage", "debuff", "spell"],
 	"cooldown": 8,
 	"targetType": "actor",
 	"range": 4,

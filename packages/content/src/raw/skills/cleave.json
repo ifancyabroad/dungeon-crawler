@@ -3,6 +3,8 @@
 	"id": "cleave",
 	"name": "Cleave",
 	"description": "Swing your weapon in a wide arc, striking the three tiles directly in front of you.",
+	"school": "martial",
+	"tags": ["damage", "aoe", "weapon_attack"],
 	"cooldown": 5,
 	"targetType": "tile",
 	"range": 1,

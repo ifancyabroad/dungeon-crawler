@@ -3,6 +3,8 @@
 	"id": "arcane_wisdom",
 	"name": "Arcane Wisdom",
 	"description": "Deep study expands your magical perception. +2 Wisdom.",
+	"school": "arcane",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_attribute",

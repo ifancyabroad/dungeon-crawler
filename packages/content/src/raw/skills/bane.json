@@ -3,6 +3,8 @@
 	"id": "bane",
 	"name": "Bane",
 	"description": "A curse saps the confidence of your foe. For 6 turns the target rolls 1d4 less on every attack roll and saving throw — doubt is a wound all its own.",
+	"school": "divine",
+	"tags": ["debuff", "spell"],
 	"cooldown": 15,
 	"targetType": "actor",
 	"range": 4,

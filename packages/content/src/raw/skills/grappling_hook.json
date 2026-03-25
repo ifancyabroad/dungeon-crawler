@@ -3,6 +3,8 @@
 	"id": "grappling_hook",
 	"name": "Grappling Hook",
 	"description": "Launch a hook that snags a nearby enemy and drags them toward you. If they slam into you, they take impact damage.",
+	"school": "martial",
+	"tags": ["control", "mobility"],
 	"cooldown": 8,
 	"targetType": "actor",
 	"range": 5,

@@ -3,6 +3,8 @@
 	"id": "toughness",
 	"name": "Toughness",
 	"description": "Your constitution hardens through battle. +2 Constitution.",
+	"school": "martial",
+	"tags": ["buff"],
 	"effects": [
 		{
 			"type": "modify_attribute",

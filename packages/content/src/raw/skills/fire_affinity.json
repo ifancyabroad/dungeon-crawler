@@ -3,6 +3,8 @@
 	"id": "fire_affinity",
 	"name": "Fire Affinity",
 	"description": "Your attunement to fire magic adds a burst of flame to every area spell.",
+	"school": "arcane",
+	"tags": ["damage", "buff"],
 	"effects": [
 		{
 			"type": "add_damage_dice",

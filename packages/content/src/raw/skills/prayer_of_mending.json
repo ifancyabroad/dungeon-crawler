@@ -3,6 +3,8 @@
 	"id": "prayer_of_mending",
 	"name": "Prayer of Mending",
 	"description": "A brief prayer that amplifies your healing touch. For 4 turns all healing you perform restores 3 additional HP.",
+	"school": "divine",
+	"tags": ["buff", "healing", "spell"],
 	"cooldown": 12,
 	"targetType": "none",
 	"effects": [
