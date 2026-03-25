@@ -1,0 +1,18 @@
+{
+	"skillType": "active",
+	"id": "prayer_of_mending",
+	"name": "Prayer of Mending",
+	"description": "A brief prayer that amplifies your healing touch. For 4 turns all healing you perform restores 3 additional HP.",
+	"cooldown": 12,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "prayer_of_mending",
+			"durationTurns": 4,
+			"adjustments": {
+				"healingDoneFlat": 3
+			}
+		}
+	]
+}

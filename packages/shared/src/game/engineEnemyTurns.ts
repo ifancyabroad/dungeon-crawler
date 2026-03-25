@@ -39,8 +39,10 @@ export function processEnemyTurns(
 		.sort();
 
 	let currentHero = hero;
-	// If the hero is stealthed, NPCs cannot see them regardless of LoS.
-	const heroIsStealthed = hasActiveEffect(currentHero, STATUS_HOOKS.STEALTH);
+	// If the hero is stealthed AND not revealed, NPCs cannot see them regardless of LoS.
+	const heroIsStealthed =
+		hasActiveEffect(currentHero, STATUS_HOOKS.STEALTH) &&
+		!hasActiveEffect(currentHero, STATUS_HOOKS.REVEALED);
 
 	// Pre-compute effective factions for this turn.
 	// CHARMED flips a hostile actor's faction to "player" transiently — the stored faction
@@ -59,7 +61,8 @@ export function processEnemyTurns(
 		const aiState = npc.aiState;
 		if (!aiState) continue;
 
-		// Stunned NPCs skip their turn entirely.
+		// Stunned and silenced NPCs skip their turn entirely.
+		// Rooted NPCs can still act but cannot move.
 		if (hasActiveEffect(npc, STATUS_HOOKS.STUNNED)) continue;
 
 		const { x, y } = idxToXY(npc.idx, width);
@@ -166,61 +169,71 @@ export function processEnemyTurns(
 				}
 			}
 		} else if (result.kind === "move") {
-			actorsById = {
-				...actorsById,
-				[mid]: { ...npc, idx: result.toIdx, aiState: persistedAIState },
-			};
-		} else if (result.kind === "skill") {
-			// NPC uses a skill — resolved the same way as hero skills.
-			const rawSkillDef = getSkillDef(result.skillId);
-			const skillDef =
-				rawSkillDef?.skillType === "active"
-					? (rawSkillDef as ActiveSkillDefinition)
-					: undefined;
-			const skillState = npc.skills?.[result.skillId];
-			if (skillDef && skillState && skillState.cooldownRemaining === 0) {
-				const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
-				const resolution = resolveSkill({
-					skillDef,
-					caster: { ...npc, aiState: persistedAIState },
-					casterId: mid,
-					floorState: currentFloorSnapshot,
-					width,
-					height,
-					rng,
-					targetTileIdx: result.targetTileIdx,
-					targetActorId: result.targetActorId,
-					opacityMask,
-				});
-				if (!("error" in resolution)) {
-					const npcAfterSkill = resolution.floorState.actorsById[mid];
-					if (npcAfterSkill) {
-						actorsById = {
-							...resolution.floorState.actorsById,
-							[mid]: {
-								...npcAfterSkill,
-								skills: {
-									...npcAfterSkill.skills,
-									[result.skillId]: { cooldownRemaining: skillDef.cooldown },
-								},
-							},
-						};
-					} else {
-						actorsById = resolution.floorState.actorsById;
-					}
-					events.push(...resolution.events);
-					const heroAfterSkill = actorsById[heroId];
-					if (heroAfterSkill) currentHero = heroAfterSkill;
-					if (!currentHero.alive) break;
-				} else {
-					actorsById = {
-						...actorsById,
-						[mid]: { ...npc, aiState: persistedAIState },
-					};
-				}
-			} else {
-				// Skill on cooldown or unknown — fall back to idle
+			// Rooted NPCs cannot move — treat as idle.
+			if (hasActiveEffect(npc, STATUS_HOOKS.ROOTED)) {
 				actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
+			} else {
+				actorsById = {
+					...actorsById,
+					[mid]: { ...npc, idx: result.toIdx, aiState: persistedAIState },
+				};
+			}
+		} else if (result.kind === "skill") {
+			// NPC uses a skill — silenced NPCs fall back to idle.
+			if (hasActiveEffect(npc, STATUS_HOOKS.SILENCED)) {
+				actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
+			} else {
+				// Resolved the same way as hero skills.
+				const rawSkillDef = getSkillDef(result.skillId);
+				const skillDef =
+					rawSkillDef?.skillType === "active"
+						? (rawSkillDef as ActiveSkillDefinition)
+						: undefined;
+				const skillState = npc.skills?.[result.skillId];
+				if (skillDef && skillState && skillState.cooldownRemaining === 0) {
+					const currentFloorSnapshot: FloorState = { ...floorState, actorsById };
+					const resolution = resolveSkill({
+						skillDef,
+						caster: { ...npc, aiState: persistedAIState },
+						casterId: mid,
+						floorState: currentFloorSnapshot,
+						width,
+						height,
+						rng,
+						targetTileIdx: result.targetTileIdx,
+						targetActorId: result.targetActorId,
+						opacityMask,
+					});
+					if (!("error" in resolution)) {
+						const npcAfterSkill = resolution.floorState.actorsById[mid];
+						if (npcAfterSkill) {
+							actorsById = {
+								...resolution.floorState.actorsById,
+								[mid]: {
+									...npcAfterSkill,
+									skills: {
+										...npcAfterSkill.skills,
+										[result.skillId]: { cooldownRemaining: skillDef.cooldown },
+									},
+								},
+							};
+						} else {
+							actorsById = resolution.floorState.actorsById;
+						}
+						events.push(...resolution.events);
+						const heroAfterSkill = actorsById[heroId];
+						if (heroAfterSkill) currentHero = heroAfterSkill;
+						if (!currentHero.alive) break;
+					} else {
+						actorsById = {
+							...actorsById,
+							[mid]: { ...npc, aiState: persistedAIState },
+						};
+					}
+				} else {
+					// Skill on cooldown or unknown — fall back to idle
+					actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
+				}
 			}
 		} else {
 			// idle — persist updated aiState (e.g. cleared lastKnownEnemyIdx)

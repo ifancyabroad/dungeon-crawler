@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "brittle_bones",
+	"name": "Brittle Bones",
+	"description": "Years of petrification magic have weakened your frame. You take double damage from bludgeoning attacks.",
+	"effects": [
+		{
+			"type": "add_damage_vulnerability",
+			"damageType": "bludgeoning"
+		}
+	]
+}

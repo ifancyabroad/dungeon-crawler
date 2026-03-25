@@ -23,7 +23,15 @@ export function applyHealSelf(
 			: 0;
 
 	const rawHeal = rollDiceExpr(rng, effect.dice);
-	const healAmount = Math.max(0, rawHeal + statMod);
+	let healAmount = Math.max(0, rawHeal + statMod);
+
+	// Flat healing bonus from passive skill + active status adjustments on the caster.
+	healAmount += caster.healingBonusFlat ?? 0;
+	for (const eff of caster.activeEffects) {
+		if (eff.remainingTurns <= 0) continue;
+		healAmount += eff.adjustments?.healingDoneFlat ?? 0;
+	}
+	healAmount = Math.max(0, healAmount);
 	const newHp = Math.min(caster.hp + healAmount, caster.maxHp);
 	const actualHeal = newHp - caster.hp;
 

@@ -26,6 +26,7 @@ function npcInitFromDef(def: NpcDefinition): NpcInit {
 		attributes: { ...def.baseAttributes },
 		damageResistances: def.damageResistances,
 		damageImmunities: def.damageImmunities,
+		damageVulnerabilities: def.damageVulnerabilities,
 		xpReward: def.xpReward,
 		challengeRating: def.challengeRating,
 		savingThrowProficiencies: def.savingThrowProficiencies,

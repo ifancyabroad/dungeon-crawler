@@ -52,7 +52,12 @@ export function getActorProficiencyBonus(actor: Actor): number {
 export function computeSavingThrowDC(caster: Actor, dcStat: AbilityName): number {
 	const pb = getActorProficiencyBonus(caster);
 	const mod = abilityModifier(caster.attributes[dcStat]);
-	return COMBAT_CONFIG.rules.saveDcBase + pb + mod;
+	let flatBonus = 0;
+	for (const eff of caster.activeEffects) {
+		if (eff.remainingTurns <= 0) continue;
+		flatBonus += eff.adjustments?.saveDcBonusFlat ?? 0;
+	}
+	return COMBAT_CONFIG.rules.saveDcBase + pb + mod + flatBonus;
 }
 
 /**

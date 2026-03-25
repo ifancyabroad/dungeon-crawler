@@ -1,0 +1,15 @@
+{
+	"skillType": "active",
+	"id": "cleanse",
+	"name": "Cleanse",
+	"description": "Purge poison, fire, and bleeding from yourself in a single surge of holy energy.",
+	"cooldown": 12,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "remove_status",
+			"statusIds": ["poisoned", "burning", "bleeding"],
+			"target": "self"
+		}
+	]
+}

@@ -199,6 +199,7 @@ export const npcs: readonly NpcDefinition[] = [
     ],
     "damageResistances": [],
     "damageImmunities": [],
+    "damageVulnerabilities": [],
     "bloodColor": "#cc0000",
     "activeSkills": [],
     "passiveSkills": [],
@@ -230,6 +231,9 @@ export const npcs: readonly NpcDefinition[] = [
     ],
     "damageResistances": [],
     "damageImmunities": [],
+    "damageVulnerabilities": [
+      "bludgeoning"
+    ],
     "bloodColor": "#cc0000",
     "activeSkills": [
       "magic_arrow",
@@ -262,6 +266,7 @@ export const npcs: readonly NpcDefinition[] = [
     "savingThrowProficiencies": [],
     "damageResistances": [],
     "damageImmunities": [],
+    "damageVulnerabilities": [],
     "bloodColor": "#8b0000",
     "activeSkills": [
       "poison_bite"
@@ -473,7 +478,7 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["arcane_mind","arcane_wisdom","bane","battle_hardened","berserk","bless","bludgeoning_mastery","charge","cleave","cone_of_cold","cure_wounds","dimensional_swap","dominate","empower_spell","evasion","fire_affinity","fire_immunity","fireball","flurry_of_blows","hex","iron_skin","lightning_bolt","mage_armor","magic_arrow","mighty_leap","poison_bite","poison_blade","poison_immunity","predators_instinct","quick_reflexes","reckless_attack","second_wind","shadow_step","shadow_strike","shield","smoke_bomb","sneak_attack","stealth","terrifying_shout","thunderwave","tough","toughness","vampiric_touch","war_cry","warriors_might"] as const;
+export const skillIds = ["arcane_mind","arcane_surge","arcane_wisdom","bane","battle_hardened","battle_hymn","battle_meditation","berserk","bless","blessed_hands","bludgeoning_mastery","brittle_bones","charge","cleanse","cleave","cone_of_cold","cure_wounds","dimensional_swap","dispel","dominate","empower_spell","entangle","evasion","fire_affinity","fire_immunity","fireball","flurry_of_blows","grappling_hook","hex","iron_skin","lightning_bolt","mage_armor","magic_arrow","mark_prey","mighty_leap","poison_bite","poison_blade","poison_immunity","prayer_of_mending","predators_instinct","predatory_focus","quick_reflexes","reckless_attack","second_wind","shadow_step","shadow_strike","shield","silence","smoke_bomb","sneak_attack","stealth","terrifying_shout","thunderwave","touch_of_rot","tough","toughness","vampiric_touch","war_cry","ward_of_stone","warriors_might"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
@@ -487,6 +492,24 @@ export const skills: readonly SkillDefinition[] = [
         "type": "modify_attribute",
         "attribute": "intelligence",
         "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "arcane_surge",
+    "name": "Arcane Surge",
+    "description": "Channel raw arcane power to heighten your spells. For 5 turns the DC of your saving throws increases by 2.",
+    "cooldown": 14,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "arcane_surge",
+        "durationTurns": 5,
+        "adjustments": {
+          "saveDcBonusFlat": 2
+        }
       }
     ]
   },
@@ -538,6 +561,39 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "active",
+    "id": "battle_hymn",
+    "name": "Battle Hymn",
+    "description": "A rousing war-chant that sharpens your instincts. For 5 turns every attack and area strike deals an extra 1d4 damage.",
+    "cooldown": 15,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "battle_hymn",
+        "durationTurns": 5,
+        "adjustments": {
+          "meleeDamageDiceBonus": "1d4",
+          "areaDamageDiceBonus": "1d4"
+        }
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "battle_meditation",
+    "name": "Battle Meditation",
+    "description": "A moment of focused calm resets your tactical options. All of your skills have their cooldowns reduced by 4 turns.",
+    "cooldown": 30,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "reduce_cooldowns",
+        "amount": 4
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "berserk",
     "name": "Berserk",
     "description": "Enter a furious rage, dealing more damage with every strike. The frenzy makes you reckless — you take more hits too.",
@@ -579,6 +635,18 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "passive",
+    "id": "blessed_hands",
+    "name": "Blessed Hands",
+    "description": "Your healing touch is guided by a higher power. All healing you perform restores 2 additional HP.",
+    "effects": [
+      {
+        "type": "add_healing_bonus_flat",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
     "id": "bludgeoning_mastery",
     "name": "Crushing Blows",
     "description": "Your strikes land with bone-breaking force. Add 1d6 bludgeoning damage to every melee attack.",
@@ -589,6 +657,18 @@ export const skills: readonly SkillDefinition[] = [
         "damageType": "bludgeoning",
         "appliesTo": "melee",
         "onCritOnly": false
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "brittle_bones",
+    "name": "Brittle Bones",
+    "description": "Years of petrification magic have weakened your frame. You take double damage from bludgeoning attacks.",
+    "effects": [
+      {
+        "type": "add_damage_vulnerability",
+        "damageType": "bludgeoning"
       }
     ]
   },
@@ -606,6 +686,25 @@ export const skills: readonly SkillDefinition[] = [
         "maxRangeTiles": 4,
         "bonusDice": "1d8",
         "bonusDamageType": "bludgeoning"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "cleanse",
+    "name": "Cleanse",
+    "description": "Purge poison, fire, and bleeding from yourself in a single surge of holy energy.",
+    "cooldown": 12,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "remove_status",
+        "statusIds": [
+          "poisoned",
+          "burning",
+          "bleeding"
+        ],
+        "target": "self"
       }
     ]
   },
@@ -684,6 +783,27 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "active",
+    "id": "dispel",
+    "name": "Dispel",
+    "description": "Strip all buffs from a nearby enemy — blessings, shields, and empowerment crumble instantly.",
+    "cooldown": 15,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "remove_status",
+        "statusIds": [
+          "blessed",
+          "berserk",
+          "empowered",
+          "stealth"
+        ],
+        "target": "target"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "dominate",
     "name": "Dominate",
     "description": "Your will bends reality itself, seizing control of an enemy's mind. The target is charmed for 4 turns, turning on its former allies and fighting for you.",
@@ -716,6 +836,23 @@ export const skills: readonly SkillDefinition[] = [
             "amount": 2
           }
         }
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "entangle",
+    "name": "Entangle",
+    "description": "Conjure roots that erupt from the ground and pin an enemy in place for 3 turns. They can still fight, but cannot flee.",
+    "cooldown": 10,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "rooted",
+        "durationTurns": 3,
+        "target": "target"
       }
     ]
   },
@@ -794,6 +931,23 @@ export const skills: readonly SkillDefinition[] = [
         "strikeCount": 3,
         "dice": "1d6",
         "damageType": "bludgeoning"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "grappling_hook",
+    "name": "Grappling Hook",
+    "description": "Launch a hook that snags a nearby enemy and drags them toward you. If they slam into you, they take impact damage.",
+    "cooldown": 8,
+    "targetType": "actor",
+    "range": 5,
+    "effects": [
+      {
+        "type": "pull_actor",
+        "maxPullTiles": 4,
+        "wallDamageDice": "1d8",
+        "wallDamageType": "bludgeoning"
       }
     ]
   },
@@ -886,6 +1040,23 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "active",
+    "id": "mark_prey",
+    "name": "Mark Prey",
+    "description": "Paint your target with an arcane sigil that strips their stealth and prevents them from hiding. The revealed effect lasts 5 turns.",
+    "cooldown": 10,
+    "targetType": "actor",
+    "range": 6,
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "revealed",
+        "durationTurns": 5,
+        "target": "target"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "mighty_leap",
     "name": "Mighty Leap",
     "description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
@@ -969,6 +1140,24 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "prayer_of_mending",
+    "name": "Prayer of Mending",
+    "description": "A brief prayer that amplifies your healing touch. For 4 turns all healing you perform restores 3 additional HP.",
+    "cooldown": 12,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "prayer_of_mending",
+        "durationTurns": 4,
+        "adjustments": {
+          "healingDoneFlat": 3
+        }
+      }
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "predators_instinct",
     "name": "Predator's Instinct",
@@ -983,6 +1172,25 @@ export const skills: readonly SkillDefinition[] = [
         "type": "modify_attribute",
         "attribute": "wisdom",
         "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "predatory_focus",
+    "name": "Predatory Focus",
+    "description": "You lock onto a weakness. For 4 turns your targeted skill attacks deal an extra 1d6 damage and your critical hit range expands by 1.",
+    "cooldown": 12,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "predatory_focus",
+        "durationTurns": 4,
+        "adjustments": {
+          "rangedDamageDiceBonus": "1d6",
+          "critThresholdReduction": 1
+        }
       }
     ]
   },
@@ -1073,6 +1281,23 @@ export const skills: readonly SkillDefinition[] = [
       {
         "type": "apply_shield",
         "amount": 20
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "silence",
+    "name": "Silence",
+    "description": "Whisper a word of negation that seals an enemy's ability to cast skills. The target is silenced for 4 turns.",
+    "cooldown": 14,
+    "targetType": "actor",
+    "range": 4,
+    "effects": [
+      {
+        "type": "apply_status",
+        "statusId": "silenced",
+        "durationTurns": 4,
+        "target": "target"
       }
     ]
   },
@@ -1179,6 +1404,18 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "passive",
+    "id": "touch_of_rot",
+    "name": "Touch of Rot",
+    "description": "Your poisons and bleeds fester more savagely — every damage-over-time effect you apply deals 2 additional damage per turn.",
+    "effects": [
+      {
+        "type": "add_dot_amplify_flat",
+        "amount": 2
+      }
+    ]
+  },
+  {
+    "skillType": "passive",
     "id": "tough",
     "name": "Tough",
     "description": "Your body is harder to kill than most. Gain 10 maximum hit points immediately upon taking this feat.",
@@ -1233,6 +1470,23 @@ export const skills: readonly SkillDefinition[] = [
         "radiusTiles": 1,
         "scalingStat": "strength",
         "damageType": "thunder"
+      }
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "ward_of_stone",
+    "name": "Ward of Stone",
+    "description": "Conjure a stone ward that absorbs incoming blows. Stacks on top of any existing magical shield.",
+    "cooldown": 18,
+    "targetType": "none",
+    "effects": [
+      {
+        "type": "modify_numeric_buff",
+        "key": "shieldHp",
+        "operation": "add",
+        "value": 15,
+        "target": "self"
       }
     ]
   },

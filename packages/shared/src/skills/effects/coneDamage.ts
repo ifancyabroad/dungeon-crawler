@@ -73,6 +73,27 @@ export function applyConeDamage(
 			});
 		}
 
+		// Data-driven area damage adjustments from active effects.
+		for (const eff of caster.activeEffects) {
+			if (eff.remainingTurns <= 0) continue;
+			const adj = eff.adjustments?.areaDamageFlat;
+			if (adj) {
+				rawPackets.push({
+					damageType: adj.damageType,
+					rawAmount: adj.amount,
+					effectiveAmount: 0,
+				});
+			}
+			const diceBonusExpr = eff.adjustments?.areaDamageDiceBonus;
+			if (diceBonusExpr) {
+				rawPackets.push({
+					damageType: effect.damageType,
+					rawAmount: rollDiceExpr(rng, diceBonusExpr),
+					effectiveAmount: 0,
+				});
+			}
+		}
+
 		let packetsToResolve = rawPackets;
 		if (effect.savingThrow !== undefined) {
 			const save = resolveSavingThrow({

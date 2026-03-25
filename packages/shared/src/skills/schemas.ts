@@ -190,6 +190,47 @@ export const TeleportSwapEffectSchema = z.object({
 	type: z.literal("teleport_swap"),
 });
 
+export const RemoveStatusEffectSchema = z.object({
+	type: z.literal("remove_status"),
+	/** Status IDs to strip from the target. All listed IDs are removed in a single application. */
+	statusIds: z.array(z.string()).min(1),
+	/**
+	 * Who loses the status effects.
+	 * "self" (default) = caster; "target" = targeted actor; "aoe" = all within aoeRadiusTiles.
+	 */
+	target: z.enum(["self", "target", "aoe"]).optional(),
+	aoeRadiusTiles: z.number().int().min(0).optional(),
+});
+
+export const ReduceCooldownsEffectSchema = z.object({
+	type: z.literal("reduce_cooldowns"),
+	/** Number of turns to subtract from cooldownRemaining (clamped at 0). */
+	amount: z.number().int().min(1),
+	/** If provided, only these skill IDs are affected. Omit to reduce all skills. */
+	skillIds: z.array(z.string()).optional(),
+});
+
+export const ModifyNumericBuffEffectSchema = z.object({
+	type: z.literal("modify_numeric_buff"),
+	/** The numericBuffs key to operate on (e.g. "shieldHp", "wardStacks"). */
+	key: z.string(),
+	operation: z.enum(["set", "add", "clamp_min", "clamp_max"]),
+	value: z.number(),
+	/** "self" (default) = caster; "target" = targeted actor. */
+	target: z.enum(["self", "target"]).optional(),
+});
+
+export const PullActorEffectSchema = z.object({
+	type: z.literal("pull_actor"),
+	/** Maximum tiles to pull the target toward the caster in a straight cardinal direction. */
+	maxPullTiles: z.number().int().min(1),
+	/**
+	 * Optional damage dealt if the target is stopped by a wall or occupied tile.
+	 */
+	wallDamageDice: z.string().optional(),
+	wallDamageType: DamageTypeSchema.optional(),
+});
+
 export const ActiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AreaDamageEffectSchema,
 	ApplyStatusEffectSchema,
@@ -207,6 +248,10 @@ export const ActiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	DrainLifeEffectSchema,
 	MultiStrikeEffectSchema,
 	TeleportSwapEffectSchema,
+	RemoveStatusEffectSchema,
+	ReduceCooldownsEffectSchema,
+	ModifyNumericBuffEffectSchema,
+	PullActorEffectSchema,
 ]);
 
 export type ActiveSkillEffectDescriptor = z.infer<typeof ActiveSkillEffectDescriptorSchema>;
@@ -228,6 +273,10 @@ export type PushActorEffect = z.infer<typeof PushActorEffectSchema>;
 export type DrainLifeEffect = z.infer<typeof DrainLifeEffectSchema>;
 export type MultiStrikeEffect = z.infer<typeof MultiStrikeEffectSchema>;
 export type TeleportSwapEffect = z.infer<typeof TeleportSwapEffectSchema>;
+export type RemoveStatusEffect = z.infer<typeof RemoveStatusEffectSchema>;
+export type ReduceCooldownsEffect = z.infer<typeof ReduceCooldownsEffectSchema>;
+export type ModifyNumericBuffEffect = z.infer<typeof ModifyNumericBuffEffectSchema>;
+export type PullActorEffect = z.infer<typeof PullActorEffectSchema>;
 
 // ---------------------------------------------------------------------------
 // Passive skill effect descriptor schemas
@@ -296,6 +345,23 @@ export const ModifyCritThresholdEffectSchema = z.object({
 	reduction: z.number().int().min(1).max(10),
 });
 
+export const AddDamageVulnerabilityEffectSchema = z.object({
+	type: z.literal("add_damage_vulnerability"),
+	damageType: DamageTypeSchema,
+});
+
+export const AddHealingBonusFlatEffectSchema = z.object({
+	type: z.literal("add_healing_bonus_flat"),
+	/** Flat HP added to every heal performed by the actor. Stacks additively. */
+	amount: z.number().int().min(1),
+});
+
+export const AddDotAmplifyFlatEffectSchema = z.object({
+	type: z.literal("add_dot_amplify_flat"),
+	/** Flat amount added to the per-turn damage of every DoT the actor applies. Stacks additively. */
+	amount: z.number().int().min(1),
+});
+
 export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	ModifyAttributeEffectSchema,
 	ModifyArmorClassEffectSchema,
@@ -308,6 +374,9 @@ export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AddSavingThrowProficiencyEffectSchema,
 	AddAttackRollBonusEffectSchema,
 	ModifyCritThresholdEffectSchema,
+	AddDamageVulnerabilityEffectSchema,
+	AddHealingBonusFlatEffectSchema,
+	AddDotAmplifyFlatEffectSchema,
 ]);
 
 export type PassiveSkillEffectDescriptor = z.infer<typeof PassiveSkillEffectDescriptorSchema>;
@@ -323,6 +392,9 @@ export type ModifyHitDieEffect = z.infer<typeof ModifyHitDieEffectSchema>;
 export type AddSavingThrowProficiencyEffect = z.infer<typeof AddSavingThrowProficiencyEffectSchema>;
 export type AddAttackRollBonusEffect = z.infer<typeof AddAttackRollBonusEffectSchema>;
 export type ModifyCritThresholdEffect = z.infer<typeof ModifyCritThresholdEffectSchema>;
+export type AddDamageVulnerabilityEffect = z.infer<typeof AddDamageVulnerabilityEffectSchema>;
+export type AddHealingBonusFlatEffect = z.infer<typeof AddHealingBonusFlatEffectSchema>;
+export type AddDotAmplifyFlatEffect = z.infer<typeof AddDotAmplifyFlatEffectSchema>;
 
 // ---------------------------------------------------------------------------
 // Skill definition schemas

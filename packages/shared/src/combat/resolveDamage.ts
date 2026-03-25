@@ -12,6 +12,7 @@ export function resolveDamagePackets(
 ): { packets: DamagePacket[]; totalEffectiveDamage: number } {
 	const immunity = new Set(defender.damageImmunities);
 	const resistance = new Set(defender.damageResistances);
+	const vulnerability = new Set(defender.damageVulnerabilities);
 
 	const resolvedPackets = packets.map((p) => {
 		const raw = Math.max(0, p.rawAmount);
@@ -20,6 +21,8 @@ export function resolveDamagePackets(
 		if (immunity.has(p.damageType)) effectiveAmount = 0;
 		else if (resistance.has(p.damageType))
 			effectiveAmount = Math.floor(raw / COMBAT_CONFIG.rules.resistanceDivisor);
+		else if (vulnerability.has(p.damageType))
+			effectiveAmount = Math.floor(raw * COMBAT_CONFIG.rules.resistanceDivisor);
 
 		return { ...p, rawAmount: raw, effectiveAmount };
 	});

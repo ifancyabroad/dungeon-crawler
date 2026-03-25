@@ -12,6 +12,8 @@ import type {
 	SkillResolutionOutput,
 	ActiveSkillEffectDescriptor,
 } from "./types";
+import { hasActiveEffect } from "./activeEffects";
+import { STATUS_HOOKS } from "../config/skills";
 import { applyAreaDamage } from "./effects/areaDamage";
 import { applyStatusEffect } from "./effects/status";
 import { applyShieldEffect } from "./effects/shield";
@@ -28,6 +30,10 @@ import { applyPushActor } from "./effects/pushActor";
 import { applyDrainLife } from "./effects/drainLife";
 import { applyMultiStrike } from "./effects/multiStrike";
 import { applyTeleportSwap } from "./effects/teleportSwap";
+import { applyRemoveStatus } from "./effects/removeStatus";
+import { applyReduceCooldowns } from "./effects/reduceCooldowns";
+import { applyModifyNumericBuff } from "./effects/modifyNumericBuff";
+import { applyPullActor } from "./effects/pullActor";
 import { idxToXY } from "../game/engineUtils";
 
 export function resolveSkill(
@@ -96,7 +102,15 @@ export function resolveSkill(
 					// Apply to the targeted actor (e.g. poison_blade poisons the enemy).
 					const targetActor = floorState.actorsById[targetActorId];
 					if (targetActor && targetActor.alive) {
-						const result = applyStatusEffect(effect, targetActor);
+						// DoT amplify: if caster has dotAmplifyFlat and this status has a value (DoT),
+						// bump the value before applying.
+						const amplifiedEffect =
+							currentCaster.dotAmplifyFlat &&
+							currentCaster.dotAmplifyFlat > 0 &&
+							effect.value !== undefined
+								? { ...effect, value: effect.value + currentCaster.dotAmplifyFlat }
+								: effect;
+						const result = applyStatusEffect(amplifiedEffect, targetActor);
 						floorState = {
 							...floorState,
 							actorsById: {
@@ -116,13 +130,26 @@ export function resolveSkill(
 						const { x: ax, y: ay } = idxToXY(actor.idx, width);
 						const chebDist = Math.max(Math.abs(ax - cx), Math.abs(ay - cy));
 						if (chebDist > radius) continue;
-						const result = applyStatusEffect(effect, actor);
+						const amplifiedEffect =
+							currentCaster.dotAmplifyFlat &&
+							currentCaster.dotAmplifyFlat > 0 &&
+							effect.value !== undefined
+								? { ...effect, value: effect.value + currentCaster.dotAmplifyFlat }
+								: effect;
+						const result = applyStatusEffect(amplifiedEffect, actor);
 						newActorsById = { ...newActorsById, [id]: result.caster };
 						events.push(...result.events);
 					}
 					floorState = { ...floorState, actorsById: newActorsById };
 				} else {
 					// Default: apply to caster.
+					// Revealed actors cannot re-enter stealth until the revealed effect expires.
+					if (
+						effect.statusId === STATUS_HOOKS.STEALTH &&
+						hasActiveEffect(currentCaster, STATUS_HOOKS.REVEALED)
+					) {
+						break;
+					}
 					const result = applyStatusEffect(effect, currentCaster);
 					currentCaster = result.caster;
 					events.push(...result.events);
@@ -347,6 +374,59 @@ export function resolveSkill(
 				if ("error" in result) return result;
 				floorState = result.floorState;
 				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "remove_status": {
+				const result = applyRemoveStatus(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					width,
+				);
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "reduce_cooldowns": {
+				const result = applyReduceCooldowns(effect, currentCaster);
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "modify_numeric_buff": {
+				const result = applyModifyNumericBuff(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+				);
+				floorState = result.floorState;
+				currentCaster = result.caster;
+				events.push(...result.events);
+				break;
+			}
+
+			case "pull_actor": {
+				if (!targetActorId) return { error: "skill_missing_actor_target" };
+				const result = applyPullActor(
+					effect,
+					currentCaster,
+					targetActorId,
+					floorState,
+					width,
+					height,
+					rng,
+					skillDef.id,
+					opacityMask,
+				);
+				if ("error" in result) return result;
+				floorState = result.floorState;
 				events.push(...result.events);
 				break;
 			}

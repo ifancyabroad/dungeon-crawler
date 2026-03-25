@@ -42,6 +42,7 @@ export const NpcSchema = z.object({
 	savingThrowProficiencies: z.array(AbilityNameSchema),
 	damageResistances: z.array(DamageTypeSchema).default([]),
 	damageImmunities: z.array(DamageTypeSchema).default([]),
+	damageVulnerabilities: z.array(DamageTypeSchema).default([]),
 	/** CSS hex colour for blood/death particle effects. */
 	bloodColor: z.string(),
 	/** Active skill IDs this NPC spawns with. Each starts with cooldownRemaining: 0. */

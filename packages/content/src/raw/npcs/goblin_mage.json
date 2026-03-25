@@ -16,6 +16,7 @@
 	"armorClass": 11,
 	"damageResistances": [],
 	"damageImmunities": [],
+	"damageVulnerabilities": ["bludgeoning"],
 	"tileId": 679,
 	"xpReward": 50,
 	"combatStrategy": "ranged",

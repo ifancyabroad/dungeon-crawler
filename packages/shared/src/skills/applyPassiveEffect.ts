@@ -88,6 +88,22 @@ function applyEffect(actor: Actor, effect: PassiveSkillEffectDescriptor): Actor 
 			return { ...actor, critThreshold: Math.max(1, current - effect.reduction) };
 		}
 
+		case "add_damage_vulnerability": {
+			if (actor.damageVulnerabilities.includes(effect.damageType)) return actor;
+			return {
+				...actor,
+				damageVulnerabilities: [...actor.damageVulnerabilities, effect.damageType],
+			};
+		}
+
+		case "add_healing_bonus_flat": {
+			return { ...actor, healingBonusFlat: (actor.healingBonusFlat ?? 0) + effect.amount };
+		}
+
+		case "add_dot_amplify_flat": {
+			return { ...actor, dotAmplifyFlat: (actor.dotAmplifyFlat ?? 0) + effect.amount };
+		}
+
 		default: {
 			const _exhaustive: never = effect;
 			void _exhaustive;

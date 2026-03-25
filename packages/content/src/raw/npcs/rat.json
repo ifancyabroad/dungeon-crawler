@@ -16,6 +16,7 @@
 	"armorClass": 11,
 	"damageResistances": [],
 	"damageImmunities": [],
+	"damageVulnerabilities": [],
 	"tileId": 619,
 	"xpReward": 15,
 	"combatStrategy": "melee",

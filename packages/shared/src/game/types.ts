@@ -110,6 +110,7 @@ export interface NpcInit {
 	attributes: ActorAttributes;
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
+	damageVulnerabilities: DamageType[];
 	xpReward: number;
 	/** Challenge rating used for NPC proficiency scaling. */
 	challengeRating: number;
@@ -135,6 +136,8 @@ export interface Actor {
 	attributes: ActorAttributes;
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
+	/** Damage types this actor takes double damage from. Applied after resistance/immunity checks. */
+	damageVulnerabilities: DamageType[];
 	skills: Record<string, ActorSkillState>;
 	/**
 	 * All timed effects currently active on this actor — both buff-type effects
@@ -177,6 +180,16 @@ export interface Actor {
 	 * Set by the add_attack_roll_bonus passive; stacks additively across multiple passives.
 	 */
 	attackBonusFlat?: number;
+	/**
+	 * Flat bonus added to all healing the actor performs (heal_self, heal_target, drain_life, HoT).
+	 * Set by the add_healing_bonus_flat passive; stacks additively.
+	 */
+	healingBonusFlat?: number;
+	/**
+	 * Flat amount added to the `value` of any DoT (damage-over-time) effect the actor applies.
+	 * Set by the add_dot_amplify_flat passive; stacks additively.
+	 */
+	dotAmplifyFlat?: number;
 	/**
 	 * Faction tag: "player" = hero/allied side; "hostile" = enemy side.
 	 * Defaults: hero → "player", hostile NPCs → "hostile".
@@ -227,6 +240,8 @@ export type GameEvent =
 			targetActorIdx?: number;
 	  }
 	| { type: "status_applied"; actorId: ActorId; statusId: string; durationTurns: number }
+	/** Emitted when a status effect is removed from an actor by a cleanse/dispel effect. */
+	| { type: "status_removed"; actorId: ActorId; statusId: string }
 	| {
 			type: "saving_throw";
 			casterId: ActorId;

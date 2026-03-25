@@ -84,13 +84,18 @@ export function tickActiveEffects(state: GameState): { state: GameState; events:
 			if (!tickedActor.alive) break;
 			if (!HEAL_EFFECT_IDS.has(effect.id) || !effect.value || effect.value <= 0) continue;
 
-			const healAmount = Math.min(effect.value, tickedActor.maxHp - tickedActor.hp);
-			if (healAmount > 0) {
-				tickedActor = { ...tickedActor, hp: tickedActor.hp + healAmount };
+			let healAmount = effect.value;
+			// Apply flat healing bonus from passive skill on the actor being healed.
+			healAmount += tickedActor.healingBonusFlat ?? 0;
+			healAmount = Math.max(0, healAmount);
+
+			const cappedHeal = Math.min(healAmount, tickedActor.maxHp - tickedActor.hp);
+			if (cappedHeal > 0) {
+				tickedActor = { ...tickedActor, hp: tickedActor.hp + cappedHeal };
 				events.push({
 					type: "healed",
 					actorId,
-					amount: healAmount,
+					amount: cappedHeal,
 					skillId: effect.id,
 				});
 			}

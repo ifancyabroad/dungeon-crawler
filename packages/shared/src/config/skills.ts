@@ -26,6 +26,22 @@ export const STATUS_HOOKS = {
 	 * Processed in processEnemyTurns — frightened NPCs flee from the hero.
 	 */
 	FRIGHTENED: "frightened",
+	/**
+	 * Prevents the actor from using active skills for the duration.
+	 * Hero: use_skill is rejected with "hero_silenced". NPC: skill branch is skipped.
+	 */
+	SILENCED: "silenced",
+	/**
+	 * Prevents the actor from moving for the duration (can still attack and use skills).
+	 * Hero: move is rejected with "hero_rooted". NPC: move result is treated as idle.
+	 */
+	ROOTED: "rooted",
+	/**
+	 * Strips the concealment benefit of stealth without removing the stealth effect.
+	 * NPCs can see the hero normally while revealed is active.
+	 * Optionally prevents re-applying stealth until the effect expires.
+	 */
+	REVEALED: "revealed",
 } as const;
 
 export const SKILLS_CONFIG = {

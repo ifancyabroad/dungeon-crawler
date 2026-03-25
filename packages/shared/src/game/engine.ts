@@ -166,6 +166,9 @@ export function applyAction(
 			if (hasActiveEffect(hero, STATUS_HOOKS.STUNNED)) {
 				return { ok: false, reason: "hero_stunned" };
 			}
+			if (hasActiveEffect(hero, STATUS_HOOKS.ROOTED)) {
+				return { ok: false, reason: "hero_rooted" };
+			}
 			const fi = state.heroFloorIndex;
 			const floor = state.floors[fi];
 			if (!floor) return { ok: false, reason: "move_no_floor" };
@@ -405,6 +408,9 @@ export function applyAction(
 			if (!hero || !hero.alive) return { ok: false, reason: "skill_no_hero" };
 			if (hasActiveEffect(hero, STATUS_HOOKS.STUNNED)) {
 				return { ok: false, reason: "hero_stunned" };
+			}
+			if (hasActiveEffect(hero, STATUS_HOOKS.SILENCED)) {
+				return { ok: false, reason: "hero_silenced" };
 			}
 			const fi = state.heroFloorIndex;
 			const floor = state.floors[fi];

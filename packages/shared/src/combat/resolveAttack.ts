@@ -66,7 +66,13 @@ export function resolveAttack(
 	const targetAc = defender.armorClass + acAdjustment;
 
 	// Crit threshold from passive skills (e.g. modify_crit_threshold).
-	const critThreshold = attacker.critThreshold ?? 20;
+	// Active effects can further reduce it temporarily (e.g. critThresholdReduction).
+	let critThreshold = attacker.critThreshold ?? 20;
+	for (const eff of attacker.activeEffects) {
+		if (eff.remainingTurns <= 0) continue;
+		critThreshold -= eff.adjustments?.critThresholdReduction ?? 0;
+	}
+	critThreshold = Math.max(1, critThreshold);
 	const critical = naturalRoll >= critThreshold;
 	const hit = critical || totalAttackRoll >= targetAc;
 
@@ -110,6 +116,14 @@ export function resolveAttack(
 				rawPackets.push({
 					damageType: adj.damageType,
 					rawAmount: adj.amount,
+					effectiveAmount: 0,
+				});
+			}
+			const diceBonusExpr = effect.adjustments?.meleeDamageDiceBonus;
+			if (diceBonusExpr) {
+				rawPackets.push({
+					damageType: weapon.damageType,
+					rawAmount: rollDiceExpr(rng, diceBonusExpr),
 					effectiveAmount: 0,
 				});
 			}

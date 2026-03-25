@@ -84,6 +84,14 @@ export function applyAreaDamage(
 					effectiveAmount: 0,
 				});
 			}
+			const diceBonusExpr = eff.adjustments?.areaDamageDiceBonus;
+			if (diceBonusExpr) {
+				rawPackets.push({
+					damageType: effect.damageType,
+					rawAmount: rollDiceExpr(rng, diceBonusExpr),
+					effectiveAmount: 0,
+				});
+			}
 		}
 
 		let packetsToResolve = rawPackets;

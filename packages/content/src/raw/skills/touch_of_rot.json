@@ -1,0 +1,12 @@
+{
+	"skillType": "passive",
+	"id": "touch_of_rot",
+	"name": "Touch of Rot",
+	"description": "Your poisons and bleeds fester more savagely — every damage-over-time effect you apply deals 2 additional damage per turn.",
+	"effects": [
+		{
+			"type": "add_dot_amplify_flat",
+			"amount": 2
+		}
+	]
+}

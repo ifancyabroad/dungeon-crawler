@@ -75,7 +75,12 @@ export function applySingleTargetDamage(
 
 		naturalRoll = rollD20Adjusted(rng, netAdvantage, netDisadvantage);
 		totalAttackRoll = naturalRoll + mod + pb + flatBonus + diceBonusTotal;
-		const critThreshold = caster.critThreshold ?? 20;
+		let critThreshold = caster.critThreshold ?? 20;
+		for (const eff of caster.activeEffects) {
+			if (eff.remainingTurns <= 0) continue;
+			critThreshold -= eff.adjustments?.critThresholdReduction ?? 0;
+		}
+		critThreshold = Math.max(1, critThreshold);
 		isCritical = naturalRoll >= critThreshold;
 		const hit = isCritical || totalAttackRoll >= effectiveAc;
 
@@ -127,6 +132,14 @@ export function applySingleTargetDamage(
 			rawPackets.push({
 				damageType: adj.damageType,
 				rawAmount: adj.amount,
+				effectiveAmount: 0,
+			});
+		}
+		const diceBonusExpr = eff.adjustments?.rangedDamageDiceBonus;
+		if (diceBonusExpr) {
+			rawPackets.push({
+				damageType: effect.damageType,
+				rawAmount: rollDiceExpr(rng, diceBonusExpr),
 				effectiveAmount: 0,
 			});
 		}

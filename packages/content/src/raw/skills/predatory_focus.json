@@ -1,0 +1,19 @@
+{
+	"skillType": "active",
+	"id": "predatory_focus",
+	"name": "Predatory Focus",
+	"description": "You lock onto a weakness. For 4 turns your targeted skill attacks deal an extra 1d6 damage and your critical hit range expands by 1.",
+	"cooldown": 12,
+	"targetType": "none",
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "predatory_focus",
+			"durationTurns": 4,
+			"adjustments": {
+				"rangedDamageDiceBonus": "1d6",
+				"critThresholdReduction": 1
+			}
+		}
+	]
+}

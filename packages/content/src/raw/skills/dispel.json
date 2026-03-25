@@ -1,0 +1,16 @@
+{
+	"skillType": "active",
+	"id": "dispel",
+	"name": "Dispel",
+	"description": "Strip all buffs from a nearby enemy — blessings, shields, and empowerment crumble instantly.",
+	"cooldown": 15,
+	"targetType": "actor",
+	"range": 4,
+	"effects": [
+		{
+			"type": "remove_status",
+			"statusIds": ["blessed", "berserk", "empowered", "stealth"],
+			"target": "target"
+		}
+	]
+}

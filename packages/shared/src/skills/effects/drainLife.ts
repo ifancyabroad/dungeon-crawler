@@ -57,7 +57,15 @@ export function applyDrainLife(
 
 	// --- Heal phase (independent dice roll) ---
 	const rawHeal = rollDiceExpr(rng, effect.healDice);
-	const healAmount = Math.max(0, rawHeal);
+	let healAmount = Math.max(0, rawHeal);
+
+	// Flat healing bonus from passive skill + active status adjustments on the caster.
+	healAmount += caster.healingBonusFlat ?? 0;
+	for (const eff of caster.activeEffects) {
+		if (eff.remainingTurns <= 0) continue;
+		healAmount += eff.adjustments?.healingDoneFlat ?? 0;
+	}
+	healAmount = Math.max(0, healAmount);
 	const newCasterHp = Math.min(caster.hp + healAmount, caster.maxHp);
 	const actualHeal = newCasterHp - caster.hp;
 	const updatedCaster: Actor = { ...caster, hp: newCasterHp };

@@ -1,0 +1,17 @@
+{
+	"skillType": "active",
+	"id": "entangle",
+	"name": "Entangle",
+	"description": "Conjure roots that erupt from the ground and pin an enemy in place for 3 turns. They can still fight, but cannot flee.",
+	"cooldown": 10,
+	"targetType": "actor",
+	"range": 4,
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "rooted",
+			"durationTurns": 3,
+			"target": "target"
+		}
+	]
+}

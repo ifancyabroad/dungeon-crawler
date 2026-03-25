@@ -95,6 +95,32 @@ export const CombatAdjustmentsSchema = z.object({
 	 * When true the attacker rolls 2d20 and takes the lower result for this attack.
 	 */
 	hasDisadvantage: z.boolean().optional(),
+	/**
+	 * Extra dice rolled and ADDED to melee damage output.
+	 * Mirrors meleeDamageFlat but uses a dice expression instead of a fixed amount.
+	 */
+	meleeDamageDiceBonus: z.string().optional(),
+	/**
+	 * Extra dice rolled and ADDED to single-target skill (ranged) damage output.
+	 */
+	rangedDamageDiceBonus: z.string().optional(),
+	/**
+	 * Extra dice rolled and ADDED to area-of-effect skill damage output.
+	 */
+	areaDamageDiceBonus: z.string().optional(),
+	/**
+	 * Reduces the caster's effective crit threshold for this turn.
+	 * Stacks additively with the permanent modify_crit_threshold passive.
+	 */
+	critThresholdReduction: z.number().int().min(1).max(10).optional(),
+	/**
+	 * Flat bonus added to the saving throw DC the caster imposes.
+	 */
+	saveDcBonusFlat: z.number().int().optional(),
+	/**
+	 * Flat bonus added to all healing the actor performs while this effect is active.
+	 */
+	healingDoneFlat: z.number().int().optional(),
 });
 export type CombatAdjustments = z.infer<typeof CombatAdjustmentsSchema>;
 
@@ -143,6 +169,7 @@ export const ActorSchema = z.object({
 	attributes: ActorAttributesSchema,
 	damageResistances: z.array(DamageTypeSchema).default([]),
 	damageImmunities: z.array(DamageTypeSchema).default([]),
+	damageVulnerabilities: z.array(DamageTypeSchema).default([]),
 	skills: z.record(z.string(), ActorSkillStateSchema),
 	activeEffects: z.array(ActiveEffectSchema).default([]),
 	numericBuffs: z.record(z.string(), z.number()).default({}),
@@ -154,6 +181,10 @@ export const ActorSchema = z.object({
 	critThreshold: z.number().int().min(1).max(20).optional(),
 	/** Flat bonus added to every attack roll. Set by add_attack_roll_bonus passive. */
 	attackBonusFlat: z.number().optional(),
+	/** Flat bonus added to all healing performed. Set by add_healing_bonus_flat passive. */
+	healingBonusFlat: z.number().optional(),
+	/** Flat DoT amplification — added to `value` of every DoT the actor applies. */
+	dotAmplifyFlat: z.number().optional(),
 	/** Faction tag. "player" = hero side; "hostile" = enemy side. Defaults derived from def.type. */
 	faction: z.enum(["player", "hostile"]).optional(),
 	def: ActorDefSchema,

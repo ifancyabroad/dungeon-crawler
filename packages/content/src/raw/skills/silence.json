@@ -1,0 +1,17 @@
+{
+	"skillType": "active",
+	"id": "silence",
+	"name": "Silence",
+	"description": "Whisper a word of negation that seals an enemy's ability to cast skills. The target is silenced for 4 turns.",
+	"cooldown": 14,
+	"targetType": "actor",
+	"range": 4,
+	"effects": [
+		{
+			"type": "apply_status",
+			"statusId": "silenced",
+			"durationTurns": 4,
+			"target": "target"
+		}
+	]
+}
