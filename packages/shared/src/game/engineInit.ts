@@ -12,6 +12,7 @@ import { createInitialRngState } from "../rng";
 import { regenerateBaseMaps, type BaseLayerFloor } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { computeUnarmoredAC } from "../combat/dice";
+import { UNARMED_WEAPON } from "../config/combat";
 import { type NpcAIState } from "./strategies/types";
 import { idxToXY } from "./engineUtils";
 import { MAP_GEN_VERSION } from "../config/map";
@@ -37,6 +38,9 @@ export const DEFAULT_HERO_INIT: HeroInit = {
 	hitDie: 10,
 	savingThrowProficiencies: ["strength", "constitution"],
 	skills: [],
+	equipment: {},
+	weaponProficiencies: [],
+	armorProficiencies: [],
 };
 
 /**
@@ -85,6 +89,14 @@ function buildInitialFloorState(
 		xp: heroInit.xp,
 		hitDie: heroInit.hitDie,
 		xpReward: 0,
+		equipment: heroInit.equipment,
+		weaponProficiencies: heroInit.weaponProficiencies,
+		armorProficiencies: heroInit.armorProficiencies,
+		// Overridden by applyEquipment in the API layer after actor creation.
+		equippedWeaponDice: UNARMED_WEAPON,
+		equippedAttackStat: "strength",
+		equippedWeaponFinesse: false,
+		weaponProficient: false,
 	};
 
 	const { x: spawnX, y: spawnY } = idxToXY(spawnIdx, config.width);
@@ -187,6 +199,15 @@ export function spawnNpc(
 		hitDie: 0,
 		xpReward: init.xpReward,
 		aiState,
+		equipment: init.equipment,
+		weaponProficiencies: init.weaponProficiencies,
+		armorProficiencies: init.armorProficiencies,
+		naturalWeapon: init.naturalWeapon,
+		// Resolved by applyEquipment in the API layer (natural weapon → item weapon priority).
+		equippedWeaponDice: UNARMED_WEAPON,
+		equippedAttackStat: "strength",
+		equippedWeaponFinesse: false,
+		weaponProficient: false,
 	};
 	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
 	const newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };

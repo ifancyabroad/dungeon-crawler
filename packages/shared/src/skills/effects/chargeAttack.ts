@@ -8,8 +8,8 @@ import type { Actor, FloorState, GameEvent } from "../../game/types";
 import type { Rng } from "../../rng";
 import type { ChargeAttackEffect } from "../types";
 import { resolveAttack } from "../../combat/resolveAttack";
-import { UNARMED_WEAPON } from "../../config/combat";
 import { rollDiceExpr } from "../../combat/dice";
+import { computeAttackMod, computeWeaponProficiencyBonus } from "../../game/engineUtils";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY, xyToIdx, getAdjacentIndices } from "../../game/engineUtils";
@@ -71,9 +71,16 @@ export function applyChargeAttack(
 	// Move caster to landing tile
 	const movedCaster: Actor = { ...caster, idx: landing };
 
-	// Resolve base melee attack, then add bonus dice on a hit.
+	// Resolve base melee attack using the caster's equipped weapon, then add bonus dice on a hit.
 	// Bonus dice are doubled on a crit (5e rule), no ability modifier added.
-	const baseResult = resolveAttack(movedCaster, target, rng, UNARMED_WEAPON);
+	const baseResult = resolveAttack(
+		movedCaster,
+		target,
+		rng,
+		movedCaster.equippedWeaponDice,
+		computeAttackMod(movedCaster),
+		computeWeaponProficiencyBonus(movedCaster),
+	);
 	const bonusRawRoll = baseResult.hit
 		? rollDiceExpr(rng, effect.bonusDice, baseResult.critical ? 2 : 1)
 		: 0;

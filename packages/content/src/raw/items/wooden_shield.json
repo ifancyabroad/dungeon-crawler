@@ -1,0 +1,7 @@
+{
+	"type": "shield",
+	"id": "wooden_shield",
+	"name": "Wooden Shield",
+	"description": "A sturdy wooden shield strapped to the off-hand arm. Grants a +2 bonus to Armour Class.",
+	"acBonus": 2
+}

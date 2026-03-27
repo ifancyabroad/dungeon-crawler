@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "shortsword",
+	"name": "Shortsword",
+	"description": "A light, fast sword suited to quick, precise strikes.",
+	"weaponCategory": "sword",
+	"damageDice": "1d6",
+	"damageType": "piercing",
+	"properties": ["finesse", "light"]
+}

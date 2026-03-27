@@ -53,8 +53,26 @@ export const NpcSchema = z.object({
 	passiveSkills: z
 		.array(z.object({ id: z.string(), rank: z.number().int().min(1).max(3) }))
 		.default([]),
-	/** Item IDs equipped on spawn. Applied when the item system is implemented. */
+	/** Item IDs equipped on spawn. Resolved to EquipmentSlots via buildEquipmentSlots at spawn time. */
 	startingEquipment: z.array(z.string()).default([]),
+	/** Weapon categories this NPC is proficient with (adds proficiency bonus to attack rolls). */
+	weaponProficiencies: z.array(z.string()).default([]),
+	/** Armor categories this NPC is proficient with. */
+	armorProficiencies: z.array(z.string()).default([]),
+	/**
+	 * Innate attack used when no weapon is equipped in the main-hand slot.
+	 * Always treated as proficient. Overridden by applyEquipment if startingEquipment
+	 * contains a weapon.
+	 */
+	naturalWeapon: z
+		.object({
+			name: z.string(),
+			/** Dice expression, e.g. "1d4". Consistent with skill JSON format. */
+			damageDice: z.string(),
+			damageType: DamageTypeSchema,
+			attackStat: z.enum(["strength", "dexterity"]).default("strength"),
+		})
+		.optional(),
 });
 
 export type NpcDefinition = z.infer<typeof NpcSchema>;

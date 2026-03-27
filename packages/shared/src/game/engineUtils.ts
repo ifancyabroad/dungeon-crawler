@@ -1,5 +1,10 @@
 import type { Direction } from "./actions";
 import type { Actor, FloorState, GameState } from "./types";
+import { abilityModifier } from "../combat/dice";
+import {
+	proficiencyBonusFromChallengeRating,
+	proficiencyBonusFromLevel,
+} from "../combat/savingThrows";
 
 export const DIRECTION_DELTA: Record<Direction, { dx: number; dy: number }> = {
 	up: { dx: 0, dy: -1 },
@@ -91,6 +96,29 @@ export function getAdjacentIndices8(idx: number, width: number, height: number):
 		}
 	}
 	return result;
+}
+
+/**
+ * Attack modifier for an actor's weapon attack.
+ * Finesse weapons use the best of STR/DEX; others use equippedAttackStat.
+ */
+export function computeAttackMod(actor: Actor): number {
+	const strMod = abilityModifier(actor.attributes.strength);
+	const dexMod = abilityModifier(actor.attributes.dexterity);
+	if (actor.equippedWeaponFinesse) return Math.max(strMod, dexMod);
+	return actor.equippedAttackStat === "dexterity" ? dexMod : strMod;
+}
+
+/**
+ * Proficiency bonus for weapon attacks.
+ * Heroes scale with level; NPCs scale with challenge rating.
+ * Returns 0 if the actor is not proficient with their equipped weapon.
+ */
+export function computeWeaponProficiencyBonus(actor: Actor): number {
+	if (!actor.weaponProficient) return 0;
+	return actor.def.type === "hero"
+		? proficiencyBonusFromLevel(actor.level)
+		: proficiencyBonusFromChallengeRating(actor.challengeRating ?? 0);
 }
 
 /**

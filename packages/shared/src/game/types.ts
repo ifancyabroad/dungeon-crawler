@@ -4,13 +4,15 @@
  */
 
 import type { Action } from "./actions";
-import type { AttackResult, DamagePacket } from "../combat/types";
+import type { AttackResult, DamagePacket, WeaponDice } from "../combat/types";
 import type { DamageType } from "../config/combat";
 import type { NpcAIState } from "./strategies/types";
 import type { FloorConfig } from "../map/types";
 import type { CombatAdjustments } from "./schemas";
+import type { EquipmentSlots, NaturalWeapon } from "../items/types";
 
 export type { CombatAdjustments } from "./schemas";
+export type { EquipmentSlots, NaturalWeapon } from "../items/types";
 
 export type TileId = number;
 
@@ -96,6 +98,10 @@ export interface HeroInit {
 	savingThrowProficiencies: AbilityName[];
 	/** Skills to initialise on the hero (each gets cooldownRemaining: 0). */
 	skills?: { id: string; rank: number }[];
+	/** Starting equipment slot assignments (item IDs). Applied by the API layer after actor creation. */
+	equipment: EquipmentSlots;
+	weaponProficiencies: string[];
+	armorProficiencies: string[];
 }
 
 /** Data the caller provides to spawn an NPC actor. Keeps the engine content-agnostic. */
@@ -124,6 +130,12 @@ export interface NpcInit {
 	activeSkills: { id: string; rank: number }[];
 	/** Passive skills this NPC spawns with. Applied by the caller via applyPassiveEffect before the actor enters the floor. */
 	passiveSkills: { id: string; rank: number }[];
+	/** Starting equipment slot assignments (item IDs). Applied by the API layer after actor creation. */
+	equipment: EquipmentSlots;
+	weaponProficiencies: string[];
+	armorProficiencies: string[];
+	/** Innate attack (bite, claws, etc.) — used when no weapon is equipped. Always proficient. */
+	naturalWeapon?: NaturalWeapon;
 }
 
 /** Actor: hero or NPC. Use def.type to distinguish ("hero" | "npc"). Position is idx only; floor is implied by which floor's actorsById contains it. */
@@ -136,6 +148,23 @@ export interface Actor {
 	maxHp: number;
 	armorClass: number;
 	attributes: ActorAttributes;
+	/** Raw equipment slot data (item IDs). Applied by the API layer; stored for reference (e.g. UI). */
+	equipment: EquipmentSlots;
+	weaponProficiencies: string[];
+	armorProficiencies: string[];
+	/** Innate attack for beasts/monsters. Undefined for heroes and humanoid NPCs. */
+	naturalWeapon?: NaturalWeapon;
+	/**
+	 * Pre-resolved at equipment-application time. Avoids item lookup in the combat hot path.
+	 * Defaults to UNARMED_WEAPON at actor creation; overridden by applyEquipment in the API layer.
+	 */
+	equippedWeaponDice: WeaponDice;
+	/** Which ability drives attack and damage rolls. "strength" for most weapons; "dexterity" for natural attacks with attackStat: "dexterity". */
+	equippedAttackStat: "strength" | "dexterity";
+	/** True if the weapon has the finesse property — attack uses max(STR, DEX) modifier. */
+	equippedWeaponFinesse: boolean;
+	/** True if proficient with equipped weapon — proficiency bonus is added to attack rolls. */
+	weaponProficient: boolean;
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
 	/** Damage types this actor takes double damage from. Applied after resistance/immunity checks. */

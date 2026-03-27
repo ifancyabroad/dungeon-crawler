@@ -6,30 +6,33 @@
 import type { Rng } from "../rng";
 import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
-import { UNARMED_WEAPON } from "../config/combat";
-import { rollD20Adjusted, rollDice, abilityModifier, rollDiceExpr } from "./dice";
+import { rollD20Adjusted, rollDice, rollDiceExpr } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
 
 /**
  * Resolve a melee attack from attacker against defender.
  *
- * - Attack roll: D20 + STR modifier vs defender AC.
+ * - Attack roll: D20 + attackMod + proficiencyBonus vs defender AC.
  * - Natural 20: always hits + critical (double damage dice).
- * - Damage: weapon dice + STR modifier (minimum 0 total).
+ * - Damage: weapon dice + attackMod (minimum 0 total).
  * - Critical: roll weapon dice twice, then add modifier once.
  * - Passive bonuses: extra damage packets from attacker.passiveDamageBonuses
  *   that apply to "melee" or "any". onCritOnly bonuses only fire on a critical.
  * - Status adjustments: flat damage packets from `effect.adjustments.meleeDamageFlat`
  *   on each active effect (data-driven; defined in the skill JSON).
+ *
+ * @param weapon - Weapon dice to roll. Use actor.equippedWeaponDice (or UNARMED_WEAPON if unarmed).
+ * @param attackMod - Ability modifier for attack and damage rolls (STR, or DEX for finesse/natural attacks).
+ * @param proficiencyBonus - Proficiency bonus added to the attack roll. 0 if unproficient.
  */
 export function resolveAttack(
 	attacker: Actor,
 	defender: Actor,
 	rng: Rng,
-	weapon: WeaponDice = UNARMED_WEAPON,
+	weapon: WeaponDice,
+	attackMod: number,
+	proficiencyBonus: number,
 ): AttackResult {
-	const strMod = abilityModifier(attacker.attributes.strength);
-
 	// Advantage / disadvantage from active status effects (e.g. reckless_attack, frightened).
 	let netAdvantage = false;
 	let netDisadvantage = false;
@@ -55,7 +58,7 @@ export function resolveAttack(
 		}
 	}
 
-	const totalAttackRoll = naturalRoll + strMod + flatBonus + diceBonusTotal;
+	const totalAttackRoll = naturalRoll + attackMod + flatBonus + proficiencyBonus + diceBonusTotal;
 
 	// AC adjustments from defender's active effects (e.g. shield of faith, cursed).
 	let acAdjustment = 0;
@@ -84,7 +87,7 @@ export function resolveAttack(
 		for (let i = 0; i < diceCount; i++) {
 			diceTotal += rollDice(rng, weapon.sides);
 		}
-		const rawWeaponAmount = Math.max(0, diceTotal + strMod);
+		const rawWeaponAmount = Math.max(0, diceTotal + attackMod);
 
 		const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
 			{

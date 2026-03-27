@@ -1,0 +1,8 @@
+{
+	"type": "armor",
+	"id": "chain_shirt",
+	"name": "Chain Shirt",
+	"description": "A shirt of interlocked metal rings that balances protection with mobility.",
+	"armorCategory": "medium",
+	"baseAC": 13
+}

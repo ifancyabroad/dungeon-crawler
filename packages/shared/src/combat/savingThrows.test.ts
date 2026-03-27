@@ -25,6 +25,8 @@ const ATTRS = {
 	charisma: 10,
 };
 
+const UNARMED_WEAPON_DICE = { sides: 4, count: 1, damageType: "bludgeoning" as const };
+
 function makeHeroActor(overrides?: Partial<Actor>): Actor {
 	return {
 		id: "hero",
@@ -49,6 +51,13 @@ function makeHeroActor(overrides?: Partial<Actor>): Actor {
 		hitDie: 10,
 		xpReward: 0,
 		savingThrowProficiencies: ["strength", "constitution"],
+		equipment: {},
+		weaponProficiencies: [],
+		armorProficiencies: [],
+		equippedWeaponDice: UNARMED_WEAPON_DICE,
+		equippedAttackStat: "strength",
+		equippedWeaponFinesse: false,
+		weaponProficient: false,
 		...overrides,
 	};
 }
@@ -78,6 +87,13 @@ function makeNpcActor(overrides?: Partial<Actor>): Actor {
 		xpReward: 30,
 		savingThrowProficiencies: ["dexterity"],
 		challengeRating: 1,
+		equipment: {},
+		weaponProficiencies: [],
+		armorProficiencies: [],
+		equippedWeaponDice: UNARMED_WEAPON_DICE,
+		equippedAttackStat: "strength",
+		equippedWeaponFinesse: false,
+		weaponProficient: false,
 		...overrides,
 	};
 }

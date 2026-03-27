@@ -12,7 +12,7 @@
 	},
 	"startingHp": 14,
 	"hitDie": 10,
-	"startingEquipment": ["sword-basic", "shield-wood", "mail-hauberk"],
+	"startingEquipment": ["longsword", "wooden_shield", "chain_mail"],
 	"startingSkills": ["charge"],
 	"activeSkillPool": ["war_cry", "mighty_leap", "cleave", "berserk"],
 	"passiveSkillPool": [

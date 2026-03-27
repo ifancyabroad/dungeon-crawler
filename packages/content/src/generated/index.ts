@@ -5,6 +5,7 @@ import type { NpcDefinition } from "../schemas/npc.js";
 import type { VaultDefinition } from "../schemas/vault.js";
 import type { EncounterDefinition } from "../schemas/encounter.js";
 import type { SkillDefinition } from "../schemas/skill.js";
+import type { ItemDefinition } from "../schemas/item.js";
 
 export const characterClassIds = ["mage","rogue","warrior"] as const;
 export type CharacterClassId = (typeof characterClassIds)[number];
@@ -30,8 +31,8 @@ export const classes: readonly CharacterClassDefinition[] = [
     "startingHp": 800,
     "hitDie": 6,
     "startingEquipment": [
-      "staff-basic",
-      "robe-cloth"
+      "quarterstaff",
+      "cloth_robe"
     ],
     "startingSkills": [
       "magic_arrow"
@@ -78,8 +79,8 @@ export const classes: readonly CharacterClassDefinition[] = [
     "startingHp": 100,
     "hitDie": 8,
     "startingEquipment": [
-      "dagger-basic",
-      "leather-jacket"
+      "dagger",
+      "leather_armor"
     ],
     "startingSkills": [
       "stealth"
@@ -100,7 +101,7 @@ export const classes: readonly CharacterClassDefinition[] = [
     "weaponProficiencies": [
       "dagger",
       "shortbow",
-      "short-sword"
+      "sword"
     ],
     "armorProficiencies": [
       "light"
@@ -127,9 +128,9 @@ export const classes: readonly CharacterClassDefinition[] = [
     "startingHp": 14,
     "hitDie": 10,
     "startingEquipment": [
-      "sword-basic",
-      "shield-wood",
-      "mail-hauberk"
+      "longsword",
+      "wooden_shield",
+      "chain_mail"
     ],
     "startingSkills": [
       "charge"
@@ -203,7 +204,13 @@ export const npcs: readonly NpcDefinition[] = [
     "bloodColor": "#cc0000",
     "activeSkills": [],
     "passiveSkills": [],
-    "startingEquipment": []
+    "startingEquipment": [
+      "dagger"
+    ],
+    "weaponProficiencies": [
+      "dagger"
+    ],
+    "armorProficiencies": []
   },
   {
     "id": "goblin_mage",
@@ -246,7 +253,9 @@ export const npcs: readonly NpcDefinition[] = [
       }
     ],
     "passiveSkills": [],
-    "startingEquipment": []
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": []
   },
   {
     "id": "rat",
@@ -281,7 +290,15 @@ export const npcs: readonly NpcDefinition[] = [
       }
     ],
     "passiveSkills": [],
-    "startingEquipment": []
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Bite",
+      "damageDice": "1d4",
+      "damageType": "piercing",
+      "attackStat": "dexterity"
+    }
   }
 ] as readonly NpcDefinition[];
 
@@ -3051,3 +3068,199 @@ export const skills: readonly SkillDefinition[] = [
 const _skillsById: Record<string, SkillDefinition> = {};
 for (const s of skills) { _skillsById[s.id] = s; }
 export const skillsById: Record<string, SkillDefinition> = _skillsById;
+
+export const itemIds = ["amulet_of_vitality","chain_mail","chain_shirt","cloth_robe","dagger","greataxe","handaxe","leather_armor","longsword","mace","plate_armor","quarterstaff","ring_of_protection","shortbow","shortsword","studded_leather","wooden_shield"] as const;
+export type ItemId = (typeof itemIds)[number];
+
+export const items: readonly ItemDefinition[] = [
+  {
+    "type": "accessory",
+    "id": "amulet_of_vitality",
+    "name": "Amulet of Vitality",
+    "description": "An amulet pulsing with life energy, granting the wearer increased resilience.",
+    "slot": "amulet",
+    "effects": [
+      {
+        "type": "modify_max_hp",
+        "amount": 5
+      }
+    ]
+  },
+  {
+    "type": "armor",
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "description": "A full suit of interlocked metal rings providing excellent protection. Requires significant strength to wear effectively.",
+    "armorCategory": "heavy",
+    "baseAC": 16,
+    "strengthRequirement": 13,
+    "stealthDisadvantage": true
+  },
+  {
+    "type": "armor",
+    "id": "chain_shirt",
+    "name": "Chain Shirt",
+    "description": "A shirt of interlocked metal rings that balances protection with mobility.",
+    "armorCategory": "medium",
+    "baseAC": 13
+  },
+  {
+    "type": "armor",
+    "id": "cloth_robe",
+    "name": "Cloth Robe",
+    "description": "A simple cloth garment that provides minimal protection but allows full dexterity.",
+    "armorCategory": "cloth",
+    "baseAC": 10
+  },
+  {
+    "type": "weapon",
+    "id": "dagger",
+    "name": "Dagger",
+    "description": "A small, easily concealed blade favoured by rogues and assassins.",
+    "weaponCategory": "dagger",
+    "damageDice": "1d4",
+    "damageType": "piercing",
+    "properties": [
+      "finesse",
+      "light",
+      "thrown"
+    ]
+  },
+  {
+    "type": "weapon",
+    "id": "greataxe",
+    "name": "Greataxe",
+    "description": "A massive two-handed axe that deals devastating cleaving damage.",
+    "weaponCategory": "axe",
+    "damageDice": "1d12",
+    "damageType": "slashing",
+    "properties": [
+      "two_handed"
+    ]
+  },
+  {
+    "type": "weapon",
+    "id": "handaxe",
+    "name": "Handaxe",
+    "description": "A light axe small enough to throw or wield in the off-hand.",
+    "weaponCategory": "axe",
+    "damageDice": "1d6",
+    "damageType": "slashing",
+    "properties": [
+      "light",
+      "thrown"
+    ]
+  },
+  {
+    "type": "armor",
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "description": "Cured animal hide shaped into a flexible, lightweight suit of armor.",
+    "armorCategory": "light",
+    "baseAC": 11
+  },
+  {
+    "type": "weapon",
+    "id": "longsword",
+    "name": "Longsword",
+    "description": "A versatile sword that can be wielded one-handed or two-handed for greater damage.",
+    "weaponCategory": "sword",
+    "damageDice": "1d8",
+    "damageType": "slashing",
+    "properties": [
+      "versatile"
+    ],
+    "versatileDice": "1d10"
+  },
+  {
+    "type": "weapon",
+    "id": "mace",
+    "name": "Mace",
+    "description": "A bludgeoning weapon effective against armoured foes.",
+    "weaponCategory": "mace",
+    "damageDice": "1d6",
+    "damageType": "bludgeoning",
+    "properties": []
+  },
+  {
+    "type": "armor",
+    "id": "plate_armor",
+    "name": "Plate Armor",
+    "description": "The pinnacle of mundane armour craftsmanship — fitted metal plates covering the entire body.",
+    "armorCategory": "heavy",
+    "baseAC": 18,
+    "strengthRequirement": 15,
+    "stealthDisadvantage": true
+  },
+  {
+    "type": "weapon",
+    "id": "quarterstaff",
+    "name": "Quarterstaff",
+    "description": "A simple wooden staff that can be wielded one-handed or two-handed.",
+    "weaponCategory": "staff",
+    "damageDice": "1d6",
+    "damageType": "bludgeoning",
+    "properties": [
+      "versatile"
+    ],
+    "versatileDice": "1d8"
+  },
+  {
+    "type": "accessory",
+    "id": "ring_of_protection",
+    "name": "Ring of Protection",
+    "description": "A magically imbued ring that subtly deflects incoming blows.",
+    "slot": "ring",
+    "effects": [
+      {
+        "type": "modify_armor_class",
+        "amount": 1
+      }
+    ]
+  },
+  {
+    "type": "weapon",
+    "id": "shortbow",
+    "name": "Shortbow",
+    "description": "A compact ranged weapon effective at medium distances.",
+    "weaponCategory": "shortbow",
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "properties": [
+      "ranged",
+      "two_handed"
+    ]
+  },
+  {
+    "type": "weapon",
+    "id": "shortsword",
+    "name": "Shortsword",
+    "description": "A light, fast sword suited to quick, precise strikes.",
+    "weaponCategory": "sword",
+    "damageDice": "1d6",
+    "damageType": "piercing",
+    "properties": [
+      "finesse",
+      "light"
+    ]
+  },
+  {
+    "type": "armor",
+    "id": "studded_leather",
+    "name": "Studded Leather",
+    "description": "Leather reinforced with metal studs for improved protection without sacrificing agility.",
+    "armorCategory": "light",
+    "baseAC": 12
+  },
+  {
+    "type": "shield",
+    "id": "wooden_shield",
+    "name": "Wooden Shield",
+    "description": "A sturdy wooden shield strapped to the off-hand arm. Grants a +2 bonus to Armour Class.",
+    "acBonus": 2
+  }
+] as readonly ItemDefinition[];
+
+const _itemsById: Record<string, ItemDefinition> = {};
+for (const i of items) { _itemsById[i.id] = i; }
+export const itemsById: Record<string, ItemDefinition> = _itemsById;

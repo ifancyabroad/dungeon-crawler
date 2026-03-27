@@ -24,7 +24,14 @@ describe("resolveAttack", () => {
 		const { hero, defender } = makeAttackerAndDefender();
 		const attacker = { ...hero, critThreshold: 1 };
 		const alwaysLowRng = () => 0;
-		const result = resolveAttack(attacker, defender, alwaysLowRng);
+		const result = resolveAttack(
+			attacker,
+			defender,
+			alwaysLowRng,
+			attacker.equippedWeaponDice,
+			0,
+			0,
+		);
 		expect(result.critical).toBe(true);
 		expect(result.hit).toBe(true);
 		expect(result.damage).toBeGreaterThanOrEqual(0);
@@ -44,7 +51,14 @@ describe("resolveAttack", () => {
 				},
 			],
 		};
-		const result = resolveAttack(hero, boostedDefender, () => 0.5);
+		const result = resolveAttack(
+			hero,
+			boostedDefender,
+			() => 0.5,
+			hero.equippedWeaponDice,
+			0,
+			0,
+		);
 		expect(result.targetAc).toBe(defender.armorClass + 3);
 	});
 });

@@ -184,3 +184,17 @@ export {
 } from "./combat";
 
 export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "./api";
+
+export {
+	applyEquipment,
+	buildEquipmentSlots,
+	type ItemDef,
+	type WeaponItemDef,
+	type ArmorItemDef,
+	type ShieldItemDef,
+	type AccessoryItemDef,
+	type NaturalWeapon,
+	type EquipmentSlots,
+	type WeaponCategory,
+	type ArmorCategory,
+} from "./items";

@@ -159,6 +159,28 @@ export const NpcAIStateSchema = z.object({
 	followTargetId: z.string().optional(),
 });
 
+const EquipmentSlotsSchema = z
+	.object({
+		mainHand: z.string().optional(),
+		offHand: z.string().optional(),
+		armor: z.string().optional(),
+		ring: z.string().optional(),
+	})
+	.default({});
+
+const WeaponDiceSchema = z.object({
+	sides: z.number(),
+	count: z.number().optional(),
+	damageType: DamageTypeSchema,
+});
+
+const NaturalWeaponSchema = z.object({
+	name: z.string(),
+	damageDice: z.string(),
+	damageType: DamageTypeSchema,
+	attackStat: z.enum(["strength", "dexterity"]),
+});
+
 export const ActorSchema = z.object({
 	id: z.string(),
 	name: z.string(),
@@ -194,6 +216,14 @@ export const ActorSchema = z.object({
 	hitDie: z.number(),
 	xpReward: z.number(),
 	aiState: NpcAIStateSchema.optional(),
+	equipment: EquipmentSlotsSchema,
+	weaponProficiencies: z.array(z.string()).default([]),
+	armorProficiencies: z.array(z.string()).default([]),
+	naturalWeapon: NaturalWeaponSchema.optional(),
+	equippedWeaponDice: WeaponDiceSchema,
+	equippedAttackStat: z.enum(["strength", "dexterity"]),
+	equippedWeaponFinesse: z.boolean(),
+	weaponProficient: z.boolean(),
 });
 
 export const ActorsByIdSchema = z.record(z.string(), ActorSchema);

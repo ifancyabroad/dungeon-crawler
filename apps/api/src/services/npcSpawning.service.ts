@@ -1,5 +1,7 @@
 import {
+	applyEquipment,
 	applyPassiveSkill,
+	buildEquipmentSlots,
 	computeWalkableMaskForFloor,
 	createRng,
 	getActorAtIdx,
@@ -9,7 +11,13 @@ import {
 	type GameState,
 	type NpcInit,
 } from "@app/shared";
-import { vaults, skillsById, type EncounterDefinition, type NpcDefinition } from "@app/content";
+import {
+	itemsById,
+	vaults,
+	skillsById,
+	type EncounterDefinition,
+	type NpcDefinition,
+} from "@app/content";
 import type { PassiveSkillDefinition } from "@app/shared";
 
 const MIN_RANDOM_SPAWN_DISTANCE = 4;
@@ -41,6 +49,10 @@ function npcInitFromDef(def: NpcDefinition): NpcInit {
 		idleStrategy: def.idleStrategy,
 		activeSkills: def.activeSkills,
 		passiveSkills: def.passiveSkills,
+		equipment: buildEquipmentSlots(def.startingEquipment, itemsById),
+		weaponProficiencies: def.weaponProficiencies,
+		armorProficiencies: def.armorProficiencies,
+		naturalWeapon: def.naturalWeapon,
 	};
 }
 
@@ -56,13 +68,10 @@ function spawnNpcWithPassives(
 ): GameState {
 	const next = spawnNpc(state, floorIndex, init, idx);
 
-	if (init.passiveSkills.length === 0) return next;
-
 	const floor = next.floors[floorIndex];
 	if (!floor) return next;
 
-	// Find the actor that was just spawned — it has the highest counter suffix for this npcId.
-	// More reliably, find it by position since we just placed it at `idx`.
+	// Find the actor that was just spawned — locate by position since we just placed it at `idx`.
 	const spawnedActor = Object.values(floor.state.actorsById).find(
 		(a) => a.def.type === "npc" && a.def.npcId === init.npcId && a.idx === idx,
 	);
@@ -75,6 +84,10 @@ function spawnNpcWithPassives(
 			actor = applyPassiveSkill(actor, skillDef as PassiveSkillDefinition, 0, skill.rank);
 		}
 	}
+
+	// Apply equipment after passive skills — weapon dice, AC, and proficiency are
+	// resolved here so combat functions never need to do item lookups at runtime.
+	actor = applyEquipment(actor, itemsById);
 
 	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
 	const newFloors = next.floors.slice();

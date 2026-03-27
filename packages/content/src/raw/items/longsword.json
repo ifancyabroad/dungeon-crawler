@@ -1,0 +1,11 @@
+{
+	"type": "weapon",
+	"id": "longsword",
+	"name": "Longsword",
+	"description": "A versatile sword that can be wielded one-handed or two-handed for greater damage.",
+	"weaponCategory": "sword",
+	"damageDice": "1d8",
+	"damageType": "slashing",
+	"properties": ["versatile"],
+	"versatileDice": "1d10"
+}

@@ -6,10 +6,9 @@ import { resolveSkill, hasActiveEffect } from "../skills";
 import { STATUS_HOOKS } from "../config/skills";
 import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
-import { UNARMED_WEAPON } from "../config/combat";
 import { runNpcAI, type NpcAIState, type CombatStrategyTag } from "./strategies";
 import { computeVisibility } from "../map/visibility";
-import { idxToXY } from "./engineUtils";
+import { idxToXY, computeAttackMod, computeWeaponProficiencyBonus } from "./engineUtils";
 
 /**
  * After a player action, each living NPC on the hero's floor acts.
@@ -135,7 +134,14 @@ export function processEnemyTurns(
 			if (!attackTarget?.alive) {
 				actorsById = { ...actorsById, [mid]: { ...npc, aiState: persistedAIState } };
 			} else {
-				const attackResult = resolveAttack(npc, attackTarget, rng, UNARMED_WEAPON);
+				const attackResult = resolveAttack(
+					npc,
+					attackTarget,
+					rng,
+					npc.equippedWeaponDice,
+					computeAttackMod(npc),
+					computeWeaponProficiencyBonus(npc),
+				);
 				events.push({
 					type: "attack",
 					attackerId: mid,

@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "greataxe",
+	"name": "Greataxe",
+	"description": "A massive two-handed axe that deals devastating cleaving damage.",
+	"weaponCategory": "axe",
+	"damageDice": "1d12",
+	"damageType": "slashing",
+	"properties": ["two_handed"]
+}

@@ -3,7 +3,14 @@
 		"allow": [
 			"Bash(find /c/xampp/htdocs/dungeon-crawler-v2/packages/shared/src -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))",
 			"WebSearch",
-			"Bash(npx tsc:*)"
+			"Bash(npx tsc:*)",
+			"Bash(grep -r startingEquipment /c/xampp/htdocs/dungeon-crawler-v2/apps/web/src --include=*.ts --include=*.tsx)",
+			"Bash(xargs grep:*)",
+			"Bash(xargs cat:*)",
+			"Bash(pnpm run:*)",
+			"Bash(pnpm --filter @app/shared tsc --noEmit)",
+			"Bash(pnpm --filter @app/content tsc --noEmit)",
+			"Bash(pnpm test:*)"
 		]
 	}
 }

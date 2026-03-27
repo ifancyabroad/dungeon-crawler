@@ -10,6 +10,9 @@ export {
 	contentVersion,
 	encounters,
 	encountersById,
+	itemIds,
+	items,
+	itemsById,
 	npcIds,
 	npcs,
 	npcsById,
@@ -19,6 +22,7 @@ export {
 	vaults,
 	vaultsById,
 	type CharacterClassId,
+	type ItemId,
 	type NpcId,
 	type SkillId,
 } from "./generated/index.js";
@@ -47,3 +51,12 @@ export {
 	type PassiveSkillEffectDescriptor,
 	type SkillDefinition,
 } from "./schemas/skill.js";
+export {
+	ItemSchema,
+	ItemsArraySchema,
+	WeaponItemSchema,
+	ArmorItemSchema,
+	ShieldItemSchema,
+	AccessoryItemSchema,
+	type ItemDefinition,
+} from "./schemas/item.js";

@@ -20,7 +20,7 @@ import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
 import { resolveAttack } from "../combat/resolveAttack";
 import { applyDamageToActor } from "../combat/applyDamageToActor";
-import { UNARMED_WEAPON } from "../config/combat";
+
 import { resolveSkill, hasActiveEffect, tickActiveEffects, applyPassiveSkill } from "../skills";
 import { STATUS_HOOKS } from "../config/skills";
 import type { ActiveSkillDefinition } from "../skills";
@@ -31,6 +31,8 @@ import {
 	getActorAtIdx,
 	DIRECTION_DELTA,
 	isSqueezeBlocked,
+	computeAttackMod,
+	computeWeaponProficiencyBonus,
 } from "./engineUtils";
 import type { ApplyActionContext, ApplyActionResult } from "./engineContext";
 import { createActionContext, createEmptyFloorState } from "./engineContext";
@@ -351,7 +353,14 @@ export function applyAction(
 			const activeFloorState = floorAfterBreak;
 
 			// Hero attacks enemy
-			const attackResult = resolveAttack(activeHero, defender, rng, UNARMED_WEAPON);
+			const attackResult = resolveAttack(
+				activeHero,
+				defender,
+				rng,
+				activeHero.equippedWeaponDice,
+				computeAttackMod(activeHero),
+				computeWeaponProficiencyBonus(activeHero),
+			);
 			events.push({
 				type: "attack",
 				attackerId: state.heroId,

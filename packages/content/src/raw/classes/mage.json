@@ -12,7 +12,7 @@
 	},
 	"startingHp": 800,
 	"hitDie": 6,
-	"startingEquipment": ["staff-basic", "robe-cloth"],
+	"startingEquipment": ["quarterstaff", "cloth_robe"],
 	"startingSkills": ["magic_arrow"],
 	"activeSkillPool": ["fireball", "lightning_bolt", "shield", "cone_of_cold"],
 	"passiveSkillPool": [

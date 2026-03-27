@@ -1,0 +1,11 @@
+{
+	"type": "weapon",
+	"id": "quarterstaff",
+	"name": "Quarterstaff",
+	"description": "A simple wooden staff that can be wielded one-handed or two-handed.",
+	"weaponCategory": "staff",
+	"damageDice": "1d6",
+	"damageType": "bludgeoning",
+	"properties": ["versatile"],
+	"versatileDice": "1d8"
+}

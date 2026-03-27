@@ -12,7 +12,7 @@
 	},
 	"startingHp": 100,
 	"hitDie": 8,
-	"startingEquipment": ["dagger-basic", "leather-jacket"],
+	"startingEquipment": ["dagger", "leather_armor"],
 	"startingSkills": ["stealth"],
 	"activeSkillPool": ["smoke_bomb", "sneak_attack", "shadow_step", "poison_blade"],
 	"passiveSkillPool": [
@@ -22,7 +22,7 @@
 		"predators_instinct",
 		"poison_immunity"
 	],
-	"weaponProficiencies": ["dagger", "shortbow", "short-sword"],
+	"weaponProficiencies": ["dagger", "shortbow", "sword"],
 	"armorProficiencies": ["light"],
 	"savingThrowProficiencies": ["dexterity", "intelligence"],
 	"resource": "stamina",

@@ -1,6 +1,8 @@
 import { randomBytes } from "node:crypto";
 import type { RequestHandler } from "express";
 import {
+	applyEquipment,
+	buildEquipmentSlots,
 	computeWalkableMaskForFloor,
 	createInitialState,
 	createGameBodySchema,
@@ -11,7 +13,14 @@ import {
 	resetNpcCounter,
 	type HeroInit,
 } from "@app/shared";
-import { classesById, encountersById, npcsById, vaults, type CharacterClassId } from "@app/content";
+import {
+	classesById,
+	encountersById,
+	itemsById,
+	npcsById,
+	vaults,
+	type CharacterClassId,
+} from "@app/content";
 import { GameSession } from "../models/gameSession.model";
 import { GameSnapshot } from "../models/gameSnapshot.model";
 import { Hero } from "../models/hero.model";
@@ -58,11 +67,30 @@ export const createGame: RequestHandler = async (req, res) => {
 		hitDie: classDef.hitDie,
 		savingThrowProficiencies: classDef.savingThrowProficiencies,
 		skills: classDef.startingSkills.map((id) => ({ id, rank: 1 })),
+		equipment: buildEquipmentSlots(classDef.startingEquipment, itemsById),
+		weaponProficiencies: classDef.weaponProficiencies,
+		armorProficiencies: classDef.armorProficiencies,
 	};
 
 	const seed = body.seed ?? randomBytes(4).readUInt32BE(0);
 	resetNpcCounter();
 	let state = createInitialState(seed, FLOOR_CONFIGS, heroInit);
+
+	// Apply equipment effects to hero actor (AC, equipped weapon dice, proficiency).
+	const heroFloor = state.floors[0];
+	const heroActor = heroFloor?.state.actorsById["hero"];
+	if (heroFloor && heroActor) {
+		const equippedHero = applyEquipment(heroActor, itemsById);
+		const newFloors = state.floors.slice();
+		newFloors[0] = {
+			...heroFloor,
+			state: {
+				...heroFloor.state,
+				actorsById: { ...heroFloor.state.actorsById, hero: equippedHero },
+			},
+		};
+		state = { ...state, floors: newFloors };
+	}
 
 	// Compute base layers once; reused for floor-0 NPC spawn and passed to setSessionState
 	// to avoid a second regenerateBaseMaps call there.

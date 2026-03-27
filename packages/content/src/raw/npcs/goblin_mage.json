@@ -29,5 +29,7 @@
 		{ "id": "fireball", "rank": 1 }
 	],
 	"passiveSkills": [],
-	"startingEquipment": []
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": []
 }

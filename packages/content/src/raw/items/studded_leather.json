@@ -1,0 +1,8 @@
+{
+	"type": "armor",
+	"id": "studded_leather",
+	"name": "Studded Leather",
+	"description": "Leather reinforced with metal studs for improved protection without sacrificing agility.",
+	"armorCategory": "light",
+	"baseAC": 12
+}

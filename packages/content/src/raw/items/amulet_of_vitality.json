@@ -1,0 +1,8 @@
+{
+	"type": "accessory",
+	"id": "amulet_of_vitality",
+	"name": "Amulet of Vitality",
+	"description": "An amulet pulsing with life energy, granting the wearer increased resilience.",
+	"slot": "amulet",
+	"effects": [{ "type": "modify_max_hp", "amount": 5 }]
+}

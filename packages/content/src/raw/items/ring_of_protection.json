@@ -1,0 +1,8 @@
+{
+	"type": "accessory",
+	"id": "ring_of_protection",
+	"name": "Ring of Protection",
+	"description": "A magically imbued ring that subtly deflects incoming blows.",
+	"slot": "ring",
+	"effects": [{ "type": "modify_armor_class", "amount": 1 }]
+}

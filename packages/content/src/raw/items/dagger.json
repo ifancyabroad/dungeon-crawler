@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "dagger",
+	"name": "Dagger",
+	"description": "A small, easily concealed blade favoured by rogues and assassins.",
+	"weaponCategory": "dagger",
+	"damageDice": "1d4",
+	"damageType": "piercing",
+	"properties": ["finesse", "light", "thrown"]
+}

@@ -26,5 +26,7 @@
 	"bloodColor": "#cc0000",
 	"activeSkills": [],
 	"passiveSkills": [],
-	"startingEquipment": []
+	"startingEquipment": ["dagger"],
+	"weaponProficiencies": ["dagger"],
+	"armorProficiencies": []
 }

@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "mace",
+	"name": "Mace",
+	"description": "A bludgeoning weapon effective against armoured foes.",
+	"weaponCategory": "mace",
+	"damageDice": "1d6",
+	"damageType": "bludgeoning",
+	"properties": []
+}

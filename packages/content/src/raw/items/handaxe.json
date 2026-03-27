@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "handaxe",
+	"name": "Handaxe",
+	"description": "A light axe small enough to throw or wield in the off-hand.",
+	"weaponCategory": "axe",
+	"damageDice": "1d6",
+	"damageType": "slashing",
+	"properties": ["light", "thrown"]
+}

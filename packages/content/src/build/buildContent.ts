@@ -15,6 +15,7 @@ import { NpcSchema, type NpcDefinition } from "../schemas/npc.js";
 import { VaultDefSchema, type VaultDefinition } from "../schemas/vault.js";
 import { EncounterDefSchema, type EncounterDefinition } from "../schemas/encounter.js";
 import { SkillDefinitionSchema, type SkillDefinition } from "../schemas/skill.js";
+import { ItemSchema, type ItemDefinition } from "../schemas/item.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");
@@ -23,6 +24,7 @@ const RAW_NPCS_DIR = join(ROOT, "src", "raw", "npcs");
 const RAW_VAULTS_DIR = join(ROOT, "src", "raw", "vaults");
 const RAW_ENCOUNTERS_DIR = join(ROOT, "src", "raw", "encounters");
 const RAW_SKILLS_DIR = join(ROOT, "src", "raw", "skills");
+const RAW_ITEMS_DIR = join(ROOT, "src", "raw", "items");
 const OUT_PATH = join(ROOT, "src", "generated", "index.ts");
 
 function getContentVersion(): string {
@@ -130,6 +132,16 @@ function run(): boolean {
 	}
 	const sortedSkills = [...skills].sort((a, b) => a.id.localeCompare(b.id, "en"));
 
+	const items = loadAndValidate<ItemDefinition>(RAW_ITEMS_DIR, ItemSchema, "items");
+	if (!items) return false;
+
+	const itemIdValues = [...new Set(items.map((i) => i.id))];
+	if (itemIdValues.length !== items.length) {
+		console.error("Duplicate item ids found.");
+		return false;
+	}
+	const sortedItems = [...items].sort((a, b) => a.id.localeCompare(b.id, "en"));
+
 	const classIdValues = sortedClasses.map((c) => c.id);
 	const npcIdValues = sortedNpcs.map((n) => n.id);
 	mkdirSync(dirname(OUT_PATH), { recursive: true });
@@ -142,6 +154,7 @@ function run(): boolean {
 		'import type { VaultDefinition } from "../schemas/vault.js";',
 		'import type { EncounterDefinition } from "../schemas/encounter.js";',
 		'import type { SkillDefinition } from "../schemas/skill.js";',
+		'import type { ItemDefinition } from "../schemas/item.js";',
 		"",
 		"export const characterClassIds = " + JSON.stringify(classIdValues) + " as const;",
 		"export type CharacterClassId = (typeof characterClassIds)[number];",
@@ -194,6 +207,17 @@ function run(): boolean {
 		"for (const s of skills) { _skillsById[s.id] = s; }",
 		"export const skillsById: Record<string, SkillDefinition> = _skillsById;",
 		"",
+		"export const itemIds = " + JSON.stringify(itemIdValues) + " as const;",
+		"export type ItemId = (typeof itemIds)[number];",
+		"",
+		"export const items: readonly ItemDefinition[] = " +
+			JSON.stringify(sortedItems, null, 2) +
+			" as readonly ItemDefinition[];",
+		"",
+		"const _itemsById: Record<string, ItemDefinition> = {};",
+		"for (const i of items) { _itemsById[i.id] = i; }",
+		"export const itemsById: Record<string, ItemDefinition> = _itemsById;",
+		"",
 	];
 	writeFileSync(OUT_PATH, lines.join("\n"), "utf-8");
 	console.log("Wrote", OUT_PATH);
@@ -211,6 +235,7 @@ if (isWatch) {
 	if (existsSync(RAW_VAULTS_DIR)) watch(RAW_VAULTS_DIR, () => run());
 	if (existsSync(RAW_ENCOUNTERS_DIR)) watch(RAW_ENCOUNTERS_DIR, () => run());
 	if (existsSync(RAW_SKILLS_DIR)) watch(RAW_SKILLS_DIR, () => run());
+	if (existsSync(RAW_ITEMS_DIR)) watch(RAW_ITEMS_DIR, () => run());
 } else {
 	if (!run()) process.exit(1);
 }

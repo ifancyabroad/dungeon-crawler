@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "shortbow",
+	"name": "Shortbow",
+	"description": "A compact ranged weapon effective at medium distances.",
+	"weaponCategory": "shortbow",
+	"damageDice": "1d6",
+	"damageType": "piercing",
+	"properties": ["ranged", "two_handed"]
+}
