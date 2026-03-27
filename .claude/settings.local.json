@@ -14,7 +14,8 @@
 			"Bash(pnpm --filter @app/content run generate)",
 			"Bash(pnpm --filter @app/shared run build)",
 			"Bash(pnpm --filter @app/content run build)",
-			"Bash(pnpm --filter @app/api run build)"
+			"Bash(pnpm --filter @app/api run build)",
+			"Bash(grep -r \"zod-to-mongoose\\\\|@zod-to-mongoose\\\\|zod.*mongoose\\\\|mongoose.*zod\" /c/xampp/htdocs/dungeon-crawler-v2 --include=*.json --include=*.ts)"
 		]
 	}
 }
