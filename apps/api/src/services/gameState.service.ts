@@ -304,7 +304,7 @@ export async function reconstructState(
 	if (raw === null || raw === undefined) {
 		throw new Error(`[reconstructState] snapshot state missing for gameId: ${gameId}`);
 	}
-	let snapshotState;
+	let snapshotState: PersistedDynamicState;
 	try {
 		snapshotState = PersistedDynamicStateSchema.parse(raw);
 	} catch (err) {

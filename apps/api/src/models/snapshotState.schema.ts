@@ -19,8 +19,8 @@ const ActorAttributesSchema = new Schema(
 
 const ActorSkillStateSchema = new Schema(
 	{
-		level: Number,
-		cooldownRemaining: Number,
+		rank: { type: Number, required: true },
+		cooldownRemaining: { type: Number, required: true },
 	},
 	{ _id: false },
 );

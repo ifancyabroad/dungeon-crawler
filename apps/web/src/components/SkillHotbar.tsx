@@ -14,6 +14,7 @@ import {
 	type Actor,
 	type UseSkillAction,
 } from "@app/shared";
+import { Info } from "lucide-react";
 import { useGameStore } from "../features/game/gameStore";
 import { useTargetingStore } from "../features/targeting/targetingStore";
 import { useMapStore } from "../features/map/mapStore";
@@ -187,43 +188,80 @@ export function SkillHotbar() {
 	if (skillEntries.length === 0) return null;
 
 	return (
-		<div className="shrink-0 flex items-center justify-center gap-2 px-3 py-2 border-t border-border bg-bg-base">
+		<div
+			className="shrink-0 flex flex-wrap gap-2 justify-start px-3 py-2 border-t border-border bg-bg-base"
+			role="toolbar"
+			aria-label="Active skills"
+		>
 			{skillEntries.map(([skillId, skillState]) => {
 				const skillDef = skillsById[skillId as keyof typeof skillsById] as
 					| ActiveSkillDefinition
 					| undefined;
 				const onCooldown = skillState.cooldownRemaining > 0;
+				const displayName = skillDef?.name ?? skillId;
+				const ariaLabel = onCooldown
+					? `${displayName}, ${skillState.cooldownRemaining} turns cooldown`
+					: `${displayName}, ready`;
+				const infoTooltip = skillDef
+					? `${skillDef.name}\n\n${skillDef.description}`
+					: skillId;
 
 				return (
 					<button
 						key={skillId}
-						onClick={() => handleSkillClick(skillId)}
-						disabled={onCooldown}
-						title={skillDef ? `${skillDef.name}: ${skillDef.description}` : skillId}
+						type="button"
+						aria-disabled={onCooldown}
+						aria-label={ariaLabel}
+						onClick={(e) => {
+							const t = e.target;
+							if (t instanceof Element && t.closest("[data-skill-info]")) {
+								// Reserved: open skill detail modal (tooltip via title on [data-skill-info]).
+								return;
+							}
+							if (onCooldown) return;
+							handleSkillClick(skillId);
+						}}
 						className={[
-							"relative flex flex-col items-center justify-center",
-							"w-16 h-16 border text-xs font-mono transition-colors",
+							"relative flex w-56 flex-none items-stretch gap-2 border px-2 py-2 text-left text-base leading-snug transition-colors",
 							onCooldown
-								? "border-border text-text-muted cursor-not-allowed opacity-50"
-								: "border-border-bright text-text-bright hover:bg-bg-elevated cursor-pointer",
+								? "border-border"
+								: "border-border-bright hover:bg-bg-elevated",
 						].join(" ")}
 					>
-						{/* Skill name */}
-						<span className="text-center leading-tight px-0.5 truncate w-full text-center">
-							{skillDef?.name ?? skillId}
+						<span
+							data-skill-info
+							className="shrink-0 cursor-pointer self-center text-text-muted transition-colors hover:text-text-bright"
+							title={infoTooltip}
+						>
+							<Info className="block" size={16} aria-hidden />
 						</span>
-
-						{/* Cooldown overlay */}
-						{onCooldown && (
-							<span className="absolute inset-0 flex items-center justify-center bg-black/60 text-primary text-base font-bold">
-								{skillState.cooldownRemaining}
+						<span
+							className={[
+								"relative flex min-w-0 flex-1 items-stretch gap-2",
+								onCooldown
+									? "cursor-not-allowed text-text-muted"
+									: "cursor-pointer text-text-bright",
+							].join(" ")}
+						>
+							{onCooldown && (
+								<span
+									className="pointer-events-none absolute inset-0 z-10 bg-black/50"
+									aria-hidden
+								/>
+							)}
+							<span className="relative z-0 min-w-0 flex-1 line-clamp-2 wrap-break-word self-center">
+								{displayName}
 							</span>
-						)}
-
-						{/* Ready indicator */}
-						{!onCooldown && (
-							<span className="text-secondary text-xs mt-0.5">READY</span>
-						)}
+							<span className="relative z-0 flex w-9 shrink-0 flex-col items-center justify-center">
+								{onCooldown ? (
+									<span className="text-base tabular-nums text-primary">
+										{skillState.cooldownRemaining}
+									</span>
+								) : (
+									<span className="text-base text-success">Ready</span>
+								)}
+							</span>
+						</span>
 					</button>
 				);
 			})}
