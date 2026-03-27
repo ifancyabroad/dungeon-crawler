@@ -21,7 +21,6 @@ import type {
 } from "./types";
 import type { PassiveSkillEffectDescriptor } from "../skills/schemas";
 import { abilityModifier } from "../combat/dice";
-import { parseDice } from "../combat/dice";
 
 /** Build equipment slots from an ordered list of item IDs, using the first item of each type. */
 export function buildEquipmentSlots(
@@ -101,22 +100,15 @@ function applyAccessoryEffect(actor: Actor, effect: PassiveSkillEffectDescriptor
 }
 
 function applyWeapon(actor: Actor, weapon: WeaponItemDef): Actor {
-	const { count, sides } = parseDice(weapon.damageDice);
 	const proficient = actor.weaponProficiencies.includes(weapon.weaponCategory);
 	const finesse = weapon.properties.includes("finesse");
 	// Versatile: use two-handed dice when off-hand slot is empty
-	let effectiveDamageDice = weapon.damageDice;
-	if (weapon.versatileDice && !actor.equipment.offHand) {
-		effectiveDamageDice = weapon.versatileDice;
-	}
-	const dice =
-		effectiveDamageDice !== weapon.damageDice
-			? parseDice(effectiveDamageDice)
-			: { count, sides };
+	const effectiveDamageDice =
+		weapon.versatileDice && !actor.equipment.offHand ? weapon.versatileDice : weapon.damageDice;
 
 	return {
 		...actor,
-		equippedWeaponDice: { count: dice.count, sides: dice.sides, damageType: weapon.damageType },
+		equippedWeaponDice: { dice: effectiveDamageDice, damageType: weapon.damageType },
 		equippedAttackStat: "strength" as const,
 		equippedWeaponFinesse: finesse,
 		weaponProficient: proficient,
@@ -183,7 +175,7 @@ export function applyEquipment(actor: Actor, items: Record<string, ItemDef>): Ac
 		const nw = actor.naturalWeapon;
 		result = {
 			...result,
-			equippedWeaponDice: { ...parseDice(nw.damageDice), damageType: nw.damageType },
+			equippedWeaponDice: { dice: nw.damageDice, damageType: nw.damageType },
 			equippedAttackStat: nw.attackStat,
 			equippedWeaponFinesse: false,
 			// Natural attacks are always treated as proficient.

@@ -44,6 +44,34 @@ const NpcAIStateSchema = new Schema(
 	{ _id: false },
 );
 
+const EquipmentSlotsSchema = new Schema(
+	{
+		mainHand: String,
+		offHand: String,
+		armor: String,
+		ring: String,
+	},
+	{ _id: false },
+);
+
+const WeaponDiceSchema = new Schema(
+	{
+		dice: { type: String, required: true },
+		damageType: { type: String, required: true },
+	},
+	{ _id: false },
+);
+
+const NaturalWeaponSchema = new Schema(
+	{
+		name: { type: String, required: true },
+		damageDice: { type: String, required: true },
+		damageType: { type: String, required: true },
+		attackStat: { type: String, required: true },
+	},
+	{ _id: false },
+);
+
 const ActorSchema = new Schema(
 	{
 		id: String,
@@ -65,6 +93,14 @@ const ActorSchema = new Schema(
 		aiState: { type: NpcAIStateSchema, default: undefined },
 		savingThrowProficiencies: { type: [String], default: [] },
 		challengeRating: { type: Number, default: undefined },
+		equipment: { type: EquipmentSlotsSchema, default: () => ({}) },
+		weaponProficiencies: { type: [String], default: [] },
+		armorProficiencies: { type: [String], default: [] },
+		naturalWeapon: { type: NaturalWeaponSchema, default: undefined },
+		equippedWeaponDice: { type: WeaponDiceSchema, required: true },
+		equippedAttackStat: { type: String, required: true },
+		equippedWeaponFinesse: { type: Boolean, required: true },
+		weaponProficient: { type: Boolean, required: true },
 	},
 	{ _id: false },
 );

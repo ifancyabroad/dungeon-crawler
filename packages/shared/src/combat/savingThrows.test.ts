@@ -25,7 +25,7 @@ const ATTRS = {
 	charisma: 10,
 };
 
-const UNARMED_WEAPON_DICE = { sides: 4, count: 1, damageType: "bludgeoning" as const };
+const UNARMED_WEAPON_DICE = { dice: "1d4", damageType: "bludgeoning" as const };
 
 function makeHeroActor(overrides?: Partial<Actor>): Actor {
 	return {

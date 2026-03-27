@@ -10,7 +10,11 @@
 			"Bash(pnpm run:*)",
 			"Bash(pnpm --filter @app/shared tsc --noEmit)",
 			"Bash(pnpm --filter @app/content tsc --noEmit)",
-			"Bash(pnpm test:*)"
+			"Bash(pnpm test:*)",
+			"Bash(pnpm --filter @app/content run generate)",
+			"Bash(pnpm --filter @app/shared run build)",
+			"Bash(pnpm --filter @app/content run build)",
+			"Bash(pnpm --filter @app/api run build)"
 		]
 	}
 }

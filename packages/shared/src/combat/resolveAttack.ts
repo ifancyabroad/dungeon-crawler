@@ -6,7 +6,7 @@
 import type { Rng } from "../rng";
 import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
-import { rollD20Adjusted, rollDice, rollDiceExpr } from "./dice";
+import { rollD20Adjusted, rollDice, rollDiceExpr, parseDice } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
 
 /**
@@ -82,10 +82,11 @@ export function resolveAttack(
 	let damage = 0;
 	let damagePackets: AttackResult["damagePackets"] = [];
 	if (hit) {
-		const diceCount = (weapon.count ?? 1) * (critical ? 2 : 1);
+		const { count, sides } = parseDice(weapon.dice);
+		const diceCount = count * (critical ? 2 : 1);
 		let diceTotal = 0;
 		for (let i = 0; i < diceCount; i++) {
-			diceTotal += rollDice(rng, weapon.sides);
+			diceTotal += rollDice(rng, sides);
 		}
 		const rawWeaponAmount = Math.max(0, diceTotal + attackMod);
 

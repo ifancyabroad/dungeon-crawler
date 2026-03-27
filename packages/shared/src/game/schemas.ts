@@ -159,18 +159,15 @@ export const NpcAIStateSchema = z.object({
 	followTargetId: z.string().optional(),
 });
 
-const EquipmentSlotsSchema = z
-	.object({
-		mainHand: z.string().optional(),
-		offHand: z.string().optional(),
-		armor: z.string().optional(),
-		ring: z.string().optional(),
-	})
-	.default({});
+const EquipmentSlotsSchema = z.object({
+	mainHand: z.string().optional(),
+	offHand: z.string().optional(),
+	armor: z.string().optional(),
+	ring: z.string().optional(),
+});
 
 const WeaponDiceSchema = z.object({
-	sides: z.number(),
-	count: z.number().optional(),
+	dice: z.string(),
 	damageType: DamageTypeSchema,
 });
 
@@ -217,8 +214,8 @@ export const ActorSchema = z.object({
 	xpReward: z.number(),
 	aiState: NpcAIStateSchema.optional(),
 	equipment: EquipmentSlotsSchema,
-	weaponProficiencies: z.array(z.string()).default([]),
-	armorProficiencies: z.array(z.string()).default([]),
+	weaponProficiencies: z.array(z.string()),
+	armorProficiencies: z.array(z.string()),
 	naturalWeapon: NaturalWeaponSchema.optional(),
 	equippedWeaponDice: WeaponDiceSchema,
 	equippedAttackStat: z.enum(["strength", "dexterity"]),

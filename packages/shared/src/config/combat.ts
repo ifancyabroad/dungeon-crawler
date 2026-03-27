@@ -22,8 +22,7 @@ export type DamageType = (typeof DAMAGE_TYPES)[number];
 
 /** Default unarmed weapon: 1d4 bludgeoning. */
 export const UNARMED_WEAPON = {
-	sides: 4,
-	count: 1,
+	dice: "1d4",
 	damageType: "bludgeoning" as DamageType,
 };
 

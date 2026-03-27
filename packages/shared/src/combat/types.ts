@@ -24,10 +24,8 @@ export interface DamagePacket {
 
 /** Weapon dice configuration for attack resolution. */
 export interface WeaponDice {
-	/** Number of sides on the damage die (e.g. 4 for D4, 6 for D6). */
-	sides: number;
-	/** Number of dice to roll (default 1). */
-	count?: number;
+	/** Dice expression, e.g. "1d8". Parsed by resolveAttack via parseDice(). */
+	dice: string;
 	/** Damage type this weapon deals. */
 	damageType: DamageType;
 }
