@@ -88,9 +88,9 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		scatterChance: DEFAULT_SCATTER_CHANCE,
 		waterEnabled: true,
 		encounterTable: [
-			{ encounterId: "goblin_patrol", weight: 3 },
-			{ encounterId: "goblin_guard", weight: 1 },
-			{ encounterId: "rat_pack", weight: 2 },
+			{ encounterId: "goblin_patrol", weight: 1 },
+			{ encounterId: "goblin_guard", weight: 3 },
+			{ encounterId: "rat_straggler", weight: 2 },
 		],
 		enemyDensity: 0.3,
 		itemDensity: 0.0,

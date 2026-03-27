@@ -480,6 +480,17 @@ export const encounters: readonly EncounterDefinition[] = [
         "weight": 1
       }
     ]
+  },
+  {
+    "id": "rat_straggler",
+    "minDepth": 1,
+    "entries": [
+      {
+        "npcId": "rat",
+        "count": 1,
+        "weight": 1
+      }
+    ]
   }
 ] as readonly EncounterDefinition[];
 

@@ -1,0 +1,5 @@
+{
+	"id": "rat_straggler",
+	"minDepth": 1,
+	"entries": [{ "npcId": "rat", "count": 1, "weight": 1 }]
+}

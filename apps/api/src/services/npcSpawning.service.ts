@@ -14,6 +14,13 @@ import type { PassiveSkillDefinition } from "@app/shared";
 
 const MIN_RANDOM_SPAWN_DISTANCE = 4;
 
+/**
+ * Walkable cells per one random encounter group at enemyDensity 1.0.
+ * Higher = fewer groups for the same density (tune with `FloorConfig.enemyDensity`).
+ */
+const ENCOUNTER_GROUPS_WALKABLE_DIVISOR = 50;
+const MAX_ENCOUNTER_GROUPS_PER_FLOOR = 20;
+
 function npcInitFromDef(def: NpcDefinition): NpcInit {
 	return {
 		npcId: def.id,
@@ -80,7 +87,8 @@ function spawnNpcWithPassives(
 
 /**
  * Spawn all NPCs for a floor in one pass:
- *   1. Random encounter groups from the floor's encounterTable (density-scaled).
+ *   1. Random encounter groups from the floor's encounterTable — count scales with
+ *      enemyDensity × walkable cells (see ENCOUNTER_GROUPS_WALKABLE_DIVISOR).
  *   2. Vault-specific encounters pinned to their marker cells (from vaultPlacements in `base`).
  *
  * RNG seed = state.seed + floorIndex + 1 (offset by 1 to avoid collision with map gen RNG).
@@ -113,9 +121,10 @@ export function spawnNpcsForFloor(
 	if (eligible.length > 0) {
 		const totalWeight = eligible.reduce((s, e) => s + e.weight, 0);
 		const walkableCount = walkMask.reduce((n, v) => n + v, 0);
-		const groupCount = Math.max(
-			2,
-			Math.min(20, Math.ceil((config.enemyDensity * walkableCount) / 25)),
+		const rawGroups = (config.enemyDensity * walkableCount) / ENCOUNTER_GROUPS_WALKABLE_DIVISOR;
+		const groupCount = Math.min(
+			MAX_ENCOUNTER_GROUPS_PER_FLOOR,
+			Math.max(0, Math.ceil(rawGroups)),
 		);
 
 		for (let g = 0; g < groupCount; g++) {
