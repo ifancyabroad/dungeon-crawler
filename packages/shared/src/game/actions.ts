@@ -8,7 +8,18 @@
 
 import { z } from "zod";
 
-const DIRECTION = ["up", "down", "left", "right"] as const;
+const DIRECTION = [
+	"up",
+	"down",
+	"left",
+	"right",
+	"up-left",
+	"up-right",
+	"down-left",
+	"down-right",
+] as const;
+
+export type Direction = (typeof DIRECTION)[number];
 
 export const MoveActionSchema = z.object({
 	type: z.literal("move"),

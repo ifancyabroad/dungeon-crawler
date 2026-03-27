@@ -58,7 +58,10 @@ export class ActorSpriteSync {
 			const isVisible = deps.visibleMask?.[actor.idx] === 1;
 
 			if (existing) {
-				deps.moveTweens?.moveNpc(id, existing, px, py);
+				const prevTileX = Math.round((existing.x - TILE_WIDTH / 2) / TILE_WIDTH);
+				const prevTileY = Math.round((existing.y - TILE_HEIGHT / 2) / TILE_HEIGHT);
+				const diagonal = prevTileX !== x && prevTileY !== y;
+				deps.moveTweens?.moveNpc(id, existing, px, py, diagonal);
 				existing.setFrame(tileFrame);
 				existing.setVisible(isVisible);
 				if (isVisible) {

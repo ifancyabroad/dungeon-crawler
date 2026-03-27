@@ -1,9 +1,15 @@
 import type Phaser from "phaser";
-import { getActorAtIdx, idxToXY, xyToIdx, type Action, type GameState } from "@app/shared";
+import {
+	getActorAtIdx,
+	idxToXY,
+	xyToIdx,
+	DIRECTION_DELTA,
+	type Action,
+	type Direction,
+	type GameState,
+} from "@app/shared";
 import { useGameStore } from "../../../features/game/gameStore";
 import { useTargetingStore } from "../../../features/targeting/targetingStore";
-
-type Direction = "up" | "down" | "left" | "right";
 
 export function attachKeyboardOnline(scene: Phaser.Scene): void {
 	const directionAction = (direction: Direction) => {
@@ -18,10 +24,21 @@ export function attachKeyboardOnline(scene: Phaser.Scene): void {
 		sendAction(action);
 	};
 
+	// WASD — cardinal directions
 	scene.input.keyboard?.on("keydown-W", () => directionAction("up"));
 	scene.input.keyboard?.on("keydown-S", () => directionAction("down"));
 	scene.input.keyboard?.on("keydown-A", () => directionAction("left"));
 	scene.input.keyboard?.on("keydown-D", () => directionAction("right"));
+
+	// Numpad — 8 directions (5 = wait, not bound)
+	scene.input.keyboard?.on("keydown-NUMPAD_EIGHT", () => directionAction("up"));
+	scene.input.keyboard?.on("keydown-NUMPAD_TWO", () => directionAction("down"));
+	scene.input.keyboard?.on("keydown-NUMPAD_FOUR", () => directionAction("left"));
+	scene.input.keyboard?.on("keydown-NUMPAD_SIX", () => directionAction("right"));
+	scene.input.keyboard?.on("keydown-NUMPAD_SEVEN", () => directionAction("up-left"));
+	scene.input.keyboard?.on("keydown-NUMPAD_NINE", () => directionAction("up-right"));
+	scene.input.keyboard?.on("keydown-NUMPAD_ONE", () => directionAction("down-left"));
+	scene.input.keyboard?.on("keydown-NUMPAD_THREE", () => directionAction("down-right"));
 }
 
 export function attachTargetingEscapeKey(scene: Phaser.Scene): void {
@@ -33,7 +50,7 @@ export function attachTargetingEscapeKey(scene: Phaser.Scene): void {
 }
 
 /**
- * Determine whether a WASD press should be a move or attack.
+ * Determine whether a directional press should be a move or attack.
  * If a living enemy occupies the target tile, send an attack action.
  */
 function resolveDirectionAction(state: GameState, direction: Direction): Action {
@@ -42,13 +59,7 @@ function resolveDirectionAction(state: GameState, direction: Direction): Action 
 	const hero = floor.state.actorsById[state.heroId];
 	if (!hero) return { type: "move", direction };
 
-	const DELTA: Record<Direction, { dx: number; dy: number }> = {
-		up: { dx: 0, dy: -1 },
-		down: { dx: 0, dy: 1 },
-		left: { dx: -1, dy: 0 },
-		right: { dx: 1, dy: 0 },
-	};
-	const { dx, dy } = DELTA[direction];
+	const { dx, dy } = DIRECTION_DELTA[direction];
 	const { x, y } = idxToXY(hero.idx, floor.config.width);
 	const nx = x + dx;
 	const ny = y + dy;

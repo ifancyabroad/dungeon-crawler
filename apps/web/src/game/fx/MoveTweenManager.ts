@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { useGameStore } from "../../features/game/gameStore";
 
 export const MOVE_DURATION_MS = 80;
+const DIAGONAL_MOVE_DURATION_MS = Math.round(MOVE_DURATION_MS * Math.SQRT2); // ~113ms
 
 /**
  * Manages smooth slide tweens for entity movement.
@@ -18,14 +19,14 @@ export class MoveTweenManager {
 	/**
 	 * Tween the hero sprite to a new pixel position and block input until complete.
 	 */
-	moveHero(sprite: Phaser.GameObjects.Sprite, toX: number, toY: number): void {
+	moveHero(sprite: Phaser.GameObjects.Sprite, toX: number, toY: number, diagonal = false): void {
 		this.killTween("hero");
 		useGameStore.getState().setActionInProgress(true);
 		const tween = this.scene.tweens.add({
 			targets: sprite,
 			x: toX,
 			y: toY,
-			duration: MOVE_DURATION_MS,
+			duration: diagonal ? DIAGONAL_MOVE_DURATION_MS : MOVE_DURATION_MS,
 			ease: Phaser.Math.Easing.Sine.Out,
 			onComplete: () => {
 				this.activeTweens.delete("hero");
@@ -38,13 +39,19 @@ export class MoveTweenManager {
 	/**
 	 * Tween an NPC sprite to a new pixel position (visual-only, no input blocking).
 	 */
-	moveNpc(id: string, sprite: Phaser.GameObjects.Sprite, toX: number, toY: number): void {
+	moveNpc(
+		id: string,
+		sprite: Phaser.GameObjects.Sprite,
+		toX: number,
+		toY: number,
+		diagonal = false,
+	): void {
 		this.killTween(id);
 		const tween = this.scene.tweens.add({
 			targets: sprite,
 			x: toX,
 			y: toY,
-			duration: MOVE_DURATION_MS,
+			duration: diagonal ? DIAGONAL_MOVE_DURATION_MS : MOVE_DURATION_MS,
 			ease: Phaser.Math.Easing.Sine.Out,
 			onComplete: () => {
 				this.activeTweens.delete(id);

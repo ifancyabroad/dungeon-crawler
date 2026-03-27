@@ -1,0 +1,9 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(find /c/xampp/htdocs/dungeon-crawler-v2/packages/shared/src -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))",
+			"WebSearch",
+			"Bash(npx tsc:*)"
+		]
+	}
+}

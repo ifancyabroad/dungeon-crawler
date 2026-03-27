@@ -4,7 +4,7 @@
  * RNG state is only advanced when an action actually uses RNG (e.g. future spawns/combat).
  */
 
-import type { Action } from "./actions";
+import type { Action, Direction } from "./actions";
 import type {
 	Actor,
 	ActorId,
@@ -24,7 +24,14 @@ import { UNARMED_WEAPON } from "../config/combat";
 import { resolveSkill, hasActiveEffect, tickActiveEffects, applyPassiveSkill } from "../skills";
 import { STATUS_HOOKS } from "../config/skills";
 import type { ActiveSkillDefinition } from "../skills";
-import { idxToXY, xyToIdx, getHero, getActorAtIdx, DIRECTION_DELTA } from "./engineUtils";
+import {
+	idxToXY,
+	xyToIdx,
+	getHero,
+	getActorAtIdx,
+	DIRECTION_DELTA,
+	isSqueezeBlocked,
+} from "./engineUtils";
 import type { ApplyActionContext, ApplyActionResult } from "./engineContext";
 import { createActionContext, createEmptyFloorState } from "./engineContext";
 import { processEnemyTurns } from "./engineEnemyTurns";
@@ -37,11 +44,14 @@ import { VISION_RADIUS } from "../config/game";
 
 export {
 	actorKind,
+	DIRECTION_DELTA,
 	findAdjacentWalkable,
 	getActorAtIdx,
 	getAdjacentIndices,
+	getAdjacentIndices8,
 	getHero,
 	idxToXY,
+	isSqueezeBlocked,
 	xyToIdx,
 } from "./engineUtils";
 export {
@@ -60,7 +70,7 @@ export { generateSkillOffers } from "./engineLevelUp";
 
 function computeTargetCell(
 	heroIdx: number,
-	direction: "up" | "down" | "left" | "right",
+	direction: Direction,
 	width: number,
 	height: number,
 ): { nx: number; ny: number; newIdx: number } | null {
@@ -182,6 +192,13 @@ export function applyAction(
 			const { nx, ny, newIdx } = target;
 			if (newIdx < 0 || newIdx >= size || mask[newIdx] !== 1) {
 				return { ok: false, reason: "move_blocked" };
+			}
+			const { dx, dy } = DIRECTION_DELTA[action.direction];
+			if (dx !== 0 && dy !== 0) {
+				const { x: hx, y: hy } = idxToXY(hero.idx, width);
+				if (isSqueezeBlocked(hx, hy, dx, dy, width, height, mask)) {
+					return { ok: false, reason: "move_blocked" };
+				}
 			}
 			if (getActorAtIdx(floor.state, newIdx)) {
 				return { ok: false, reason: "move_blocked_by_enemy" };
@@ -309,6 +326,14 @@ export function applyAction(
 
 			const target = computeTargetCell(hero.idx, action.direction, width, height);
 			if (!target) return { ok: false, reason: "attack_out_of_bounds" };
+			const { dx: adx, dy: ady } = DIRECTION_DELTA[action.direction];
+			if (adx !== 0 && ady !== 0) {
+				const attackMask = context.getWalkableMask(fi);
+				const { x: hx, y: hy } = idxToXY(hero.idx, width);
+				if (isSqueezeBlocked(hx, hy, adx, ady, width, height, attackMask)) {
+					return { ok: false, reason: "attack_out_of_bounds" };
+				}
+			}
 
 			const defender = getActorAtIdx(floor.state, target.newIdx);
 			if (!defender) return { ok: false, reason: "attack_no_target" };

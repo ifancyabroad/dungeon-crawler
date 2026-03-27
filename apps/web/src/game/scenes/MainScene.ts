@@ -252,12 +252,15 @@ export default class MainScene extends Phaser.Scene {
 	private syncHeroToStore(idx: number) {
 		if (!this.player) return;
 		const { x, y } = idxToXY(idx, this.mapWidth);
+		const prevX = this.playerTileX;
+		const prevY = this.playerTileY;
 		this.playerTileX = x;
 		this.playerTileY = y;
 		const toX = x * TILE_WIDTH + TILE_WIDTH / 2;
 		const toY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
+		const diagonal = prevX !== x && prevY !== y;
 		if (this.moveTweens) {
-			this.moveTweens.moveHero(this.player, toX, toY);
+			this.moveTweens.moveHero(this.player, toX, toY, diagonal);
 		} else {
 			this.player.setPosition(toX, toY);
 		}

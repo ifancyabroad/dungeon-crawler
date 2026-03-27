@@ -70,6 +70,15 @@ describe("input bindings", () => {
 		exitSpy.mockRestore();
 	});
 
+	it("numpad diagonal sends move action", () => {
+		const sendAction = vi.fn();
+		useGameStore.setState({ sendAction } as never);
+		const mock = makeScene();
+		attachKeyboardOnline(mock.scene as never);
+		mock.handlers.get("keydown-NUMPAD_NINE")?.();
+		expect(sendAction).toHaveBeenCalledWith({ type: "move", direction: "up-right" });
+	});
+
 	it("ESC exits targeting mode", () => {
 		useTargetingStore.setState({ active: true });
 		const exitSpy = vi.spyOn(useTargetingStore.getState(), "exitTargeting");

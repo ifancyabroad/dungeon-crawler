@@ -5,7 +5,7 @@
  */
 
 import type { FloorState } from "../game/types";
-import { getActorAtIdx, idxToXY, xyToIdx } from "../game/engineUtils";
+import { getActorAtIdx, idxToXY, isSqueezeBlocked } from "../game/engineUtils";
 
 /**
  * BFS from `fromIdx` toward `toIdx`.
@@ -31,7 +31,16 @@ export function bfsNextStep(
 	const queue: number[] = [fromIdx];
 	let head = 0;
 
-	const CARDINAL = [-width, width, -1, 1] as const;
+	const NEIGHBORS: [number, number][] = [
+		[0, -1],
+		[0, 1],
+		[-1, 0],
+		[1, 0], // cardinal
+		[-1, -1],
+		[1, -1],
+		[-1, 1],
+		[1, 1], // diagonal
+	];
 
 	while (head < queue.length) {
 		const current = queue[head++];
@@ -47,16 +56,14 @@ export function bfsNextStep(
 
 		const { x, y } = idxToXY(current, width);
 
-		for (let d = 0; d < 4; d++) {
-			const delta = CARDINAL[d];
-			const next = current + delta;
-
-			// Bounds: left/right wrap guard
-			if (d === 2 && x === 0) continue;
-			if (d === 3 && x === width - 1) continue;
-			if (next < 0 || next >= size) continue;
-
+		for (const [dx, dy] of NEIGHBORS) {
+			const nx = x + dx,
+				ny = y + dy;
+			if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+			const next = ny * width + nx;
 			if (prev[next] !== -1) continue;
+			if (dx !== 0 && dy !== 0 && isSqueezeBlocked(x, y, dx, dy, width, height, walkableMask))
+				continue;
 
 			// Allow destination even if occupied; block other occupied cells
 			const isDestination = next === toIdx;

@@ -14,7 +14,7 @@
  */
 
 import type { AIContext, AITurnResult, NpcAIState } from "./types";
-import { getAdjacentIndices } from "../engine";
+import { getAdjacentIndices8 } from "../engine";
 import { bfsNextStep } from "../../map/pathfinding";
 
 export function runMeleeAI(ctx: AIContext): AITurnResult {
@@ -47,7 +47,7 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 			Math.abs(Math.floor(aIdx / width) - Math.floor(bIdx / width)),
 		);
 
-	const adjacent = getAdjacentIndices(npc.idx, width, height);
+	const adjacent = getAdjacentIndices8(npc.idx, width, height);
 
 	// 1. Adjacent enemy → use an off-cooldown skill if available, otherwise attack
 	const adjacentEnemy = enemies.find((a) => adjacent.includes(a.idx));
