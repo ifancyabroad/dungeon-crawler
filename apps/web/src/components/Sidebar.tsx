@@ -111,7 +111,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
 						{/* Hero identity */}
 						<div className="border-b border-border pb-2">
-							<p className="text-primary uppercase tracking-widest">{hero.name}</p>
+							<p className="text-primary uppercase tracking-widest">
+								{hero.name}
+								{!hero.alive && (
+									<span className="text-death ml-1.5 font-normal normal-case tracking-normal">
+										(Deceased)
+									</span>
+								)}
+							</p>
 							<p className="text-text-label">
 								Level {hero.level}{" "}
 								<span className="text-text-bright">

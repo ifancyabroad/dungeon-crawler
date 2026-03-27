@@ -107,7 +107,14 @@ export function setSessionState(
 		computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
 	);
 
-	sessionStore.set(gameId, { state, walkableByFloor, opacityByFloor, baseLayers });
+	sessionStore.set(gameId, {
+		state,
+		walkableByFloor,
+		opacityByFloor,
+		baseLayers,
+		// Preserve in-memory debug flags (e.g. god mode) across state writes.
+		debugFlags: existing?.debugFlags,
+	});
 }
 
 const inFlightLoads = new Map<string, Promise<GameState | null>>();

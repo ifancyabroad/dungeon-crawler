@@ -65,6 +65,7 @@ export {
 	type ApplyActionResult,
 	type ClassSkillPools,
 } from "./engine";
+export { applyGodModePostProcess } from "./debugGodMode";
 export { computeWalkableMaskForFloor, regenerateBaseMaps, type BaseLayerFloor } from "../map";
 export {
 	AbilityNameSchema,

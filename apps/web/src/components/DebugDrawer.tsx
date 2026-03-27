@@ -24,11 +24,12 @@ const ALL_SKILLS = Object.values(skillsById)
 	.sort((a, b) => a.name.localeCompare(b.name));
 
 export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
-	const [godMode, setGodModeLocal] = useState(false);
 	const [selectedSkillId, setSelectedSkillId] = useState(ALL_SKILLS[0]?.id ?? "");
 	const [xpInput, setXpInput] = useState("");
 
 	const setStateFromServer = useGameStore((s) => s.setStateFromServer);
+	const debugGodMode = useGameStore((s) => s.debugGodMode);
+	const setDebugGodMode = useGameStore((s) => s.setDebugGodMode);
 	const gameId = useGameStore((s) => s.gameId);
 	const showError = useErrorStore((s) => s.showError);
 
@@ -39,10 +40,10 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 	const killEnemies = useDebugKillEnemies();
 	const setXp = useDebugSetXp();
 
-	// Sync local toggle state whenever the query result arrives (drawer open / refetch).
+	// GET /debug/god-mode — align store when drawer opens (socket may not have fired yet).
 	useEffect(() => {
-		if (godModeStatus.data) setGodModeLocal(godModeStatus.data.godMode);
-	}, [godModeStatus.data]);
+		if (godModeStatus.data) setDebugGodMode(godModeStatus.data.godMode);
+	}, [godModeStatus.data, setDebugGodMode]);
 
 	const anyPending =
 		setGodMode.isPending ||
@@ -54,10 +55,10 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 	if (!open) return null;
 
 	async function handleToggleGodMode() {
-		const next = !godMode;
+		const next = !useGameStore.getState().debugGodMode;
 		try {
 			await setGodMode.mutateAsync(next);
-			setGodModeLocal(next);
+			setDebugGodMode(next);
 		} catch (e) {
 			showError(getApiErrorMessage(e));
 		}
@@ -154,7 +155,7 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 							<button
 								type="button"
 								role="switch"
-								aria-checked={godMode}
+								aria-checked={debugGodMode}
 								disabled={anyPending}
 								onClick={handleToggleGodMode}
 								className={[
@@ -162,14 +163,14 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 									"border-2 border-transparent transition-colors duration-200",
 									"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border",
 									"disabled:opacity-50 disabled:cursor-not-allowed",
-									godMode ? "bg-success" : "bg-bg-input",
+									debugGodMode ? "bg-success" : "bg-bg-input",
 								].join(" ")}
 							>
 								<span
 									className={[
 										"pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow",
 										"transform transition-transform duration-200",
-										godMode ? "translate-x-4" : "translate-x-0",
+										debugGodMode ? "translate-x-4" : "translate-x-0",
 									].join(" ")}
 								/>
 							</button>

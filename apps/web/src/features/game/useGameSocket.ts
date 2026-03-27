@@ -45,7 +45,13 @@ export function useGameSocket(gameId: string | null) {
 
 		socket.on(
 			"state",
-			(payload: { gameId: string; turn: number; state: GameState; events?: GameEvent[] }) => {
+			(payload: {
+				gameId: string;
+				turn: number;
+				state: GameState;
+				events?: GameEvent[];
+				debug?: { godMode?: boolean };
+			}) => {
 				// Expose the socket to the store on the first state after (re)connect so that
 				// actions queued during disconnect are flushed with the correct auth context.
 				if (!joinedRef.current) {
@@ -57,6 +63,7 @@ export function useGameSocket(gameId: string | null) {
 					turn: payload.turn,
 					state: payload.state,
 					events: payload.events,
+					debugGodMode: payload.debug?.godMode,
 				});
 			},
 		);

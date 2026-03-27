@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
 	applyAction,
 	applyActionWithDerivedContext,
+	applyGodModePostProcess,
 	computeOpacityMask,
 	computeWalkableMaskForFloor,
 	createActionContext,
@@ -86,14 +87,20 @@ interface GameStoreState {
 	opacityByFloor: Uint8Array[] | null;
 	/** Latest combat events from the most recent action. */
 	events: GameEvent[];
-	/** Whether the hero is currently alive. Derived from state. */
-	heroAlive: boolean;
 	/** Accumulated combat log entries for display. Capped at MAX_COMBAT_LOG. */
 	combatLog: GameEvent[];
 	/** Turn number of the last optimistic event batch we logged. Used to avoid double-logging when server confirms. */
 	lastOptimisticEventTurn: number;
 	/** Pending level-up events to display in sequence. Dismissed one at a time. */
 	levelUpEvents: LevelUpEvent[];
+	/** Debug mirror from server; used to keep optimistic simulation aligned. */
+	debugGodMode: boolean;
+	/**
+	 * Session-only defeat overlay: set true when we observe an authoritative alive→dead transition
+	 * for this gameId. Cleared on revive, game switch, or clearGameId. Not set on initial load/reload
+	 * (prev lastConfirmedState was null) so refresh shows deceased in sidebar instead.
+	 */
+	showDefeatModal: boolean;
 }
 
 interface GameStoreActions {
@@ -103,6 +110,7 @@ interface GameStoreActions {
 		turn: number;
 		state: GameState;
 		events?: GameEvent[];
+		debugGodMode?: boolean;
 	}) => void;
 	setGameId: (id: string | null) => void;
 	/** Send a player action (move or attack). Direction-based: client determines action type. */
@@ -116,6 +124,7 @@ interface GameStoreActions {
 	clearGameId: () => void;
 	/** Dismiss the first pending level-up event. */
 	dismissLevelUp: () => void;
+	setDebugGodMode: (enabled: boolean) => void;
 }
 
 export type GameStore = GameStoreState & GameStoreActions;
@@ -134,10 +143,11 @@ const initialState: GameStoreState = {
 	walkableByFloor: null,
 	opacityByFloor: null,
 	events: [],
-	heroAlive: true,
 	combatLog: [],
 	lastOptimisticEventTurn: -1,
 	levelUpEvents: [],
+	debugGodMode: false,
+	showDefeatModal: false,
 };
 
 function heroFromState(state: GameState): { floorIndex: number; idx: number } {
@@ -152,18 +162,47 @@ function extractLevelUpEvents(events: GameEvent[]): LevelUpEvent[] {
 		.map((e) => ({ newLevel: e.newLevel, hpGained: e.hpGained }));
 }
 
+/** After accepting an authoritative snapshot (same gameId as store). */
+function updateShowDefeatModal(
+	prevConfirmed: GameState | null,
+	nextConfirmed: GameState,
+	payloadGameId: string,
+	storeGameId: string | null,
+	set: (partial: Partial<GameStoreState>) => void,
+): void {
+	if (payloadGameId !== storeGameId) {
+		set({ showDefeatModal: false });
+		return;
+	}
+	if (prevConfirmed === null) {
+		set({ showDefeatModal: false });
+		return;
+	}
+	const hPrev = getHero(prevConfirmed);
+	const hNext = getHero(nextConfirmed);
+	if (hPrev?.alive && hNext && !hNext.alive) {
+		set({ showDefeatModal: true });
+	} else if (hNext?.alive) {
+		set({ showDefeatModal: false });
+	}
+}
+
 function applyStateUpdate(
 	set: (partial: Partial<GameStoreState>) => void,
-	payload: { gameId: string; turn: number; state: GameState },
+	payload: { gameId: string; turn: number; state: GameState; debugGodMode?: boolean },
 ) {
 	const state = payload.state;
-	const hero = getHero(state);
-	set({
+	const next: Partial<GameStoreState> = {
 		gameId: payload.gameId,
 		turn: payload.turn,
 		hero: heroFromState(state),
 		state,
-		heroAlive: hero?.alive ?? false,
+	};
+	if (typeof payload.debugGodMode === "boolean") {
+		next.debugGodMode = payload.debugGodMode;
+	}
+	set({
+		...next,
 	});
 }
 
@@ -207,8 +246,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			combatLog,
 			lastOptimisticEventTurn,
 		} = get();
-		const confirmedTurn = lastConfirmedState?.turn ?? -1;
-		if (payload.turn >= confirmedTurn) set({ lastConfirmedState: payload.state });
+		const prevConfirmed = lastConfirmedState;
+		const confirmedTurn = prevConfirmed?.turn ?? -1;
+		if (payload.turn >= confirmedTurn) {
+			set({ lastConfirmedState: payload.state });
+			updateShowDefeatModal(prevConfirmed, payload.state, payload.gameId, currentGameId, set);
+		}
+		if (typeof payload.debugGodMode === "boolean") {
+			set({ debugGodMode: payload.debugGodMode });
+		}
 
 		const incomingEvents = payload.events ?? [];
 		// Only append server events if we didn't already log them optimistically for this turn
@@ -234,6 +280,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				combatLog: [],
 				events: [],
 				lastOptimisticEventTurn: -1,
+				debugGodMode: payload.debugGodMode ?? false,
+				showDefeatModal: false,
 			});
 			return;
 		}
@@ -257,6 +305,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				gameId: payload.gameId,
 				turn: nextState.turn,
 				state: nextState,
+				debugGodMode: payload.debugGodMode,
 			});
 			// Masks are static for this game session; no recomputation needed on state replay.
 			set({ pendingActions: [] });
@@ -322,6 +371,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			unsentMoves,
 			walkableByFloor,
 			opacityByFloor,
+			debugGodMode,
 		} = get();
 		if (!gameId) return;
 		if (!canSendAction(get())) return;
@@ -354,16 +404,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			return;
 		}
 
+		const guarded = applyGodModePostProcess(result.state, result.events, debugGodMode);
+
 		// Update events from local apply; record the resulting turn so we skip server duplicates
-		if (result.events.length > 0) {
+		if (guarded.events.length > 0) {
 			const currentLog = get().combatLog;
-			const newLog = [...currentLog, ...result.events].slice(-MAX_COMBAT_LOG);
+			const newLog = [...currentLog, ...guarded.events].slice(-MAX_COMBAT_LOG);
 			set({
-				events: result.events,
+				events: guarded.events,
 				combatLog: newLog,
-				lastOptimisticEventTurn: result.state.turn,
+				lastOptimisticEventTurn: guarded.state.turn,
 			});
-			const newLevelUps = extractLevelUpEvents(result.events);
+			const newLevelUps = extractLevelUpEvents(guarded.events);
 			if (newLevelUps.length > 0) {
 				set({ levelUpEvents: [...get().levelUpEvents, ...newLevelUps] });
 			}
@@ -371,11 +423,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
 		applyStateUpdate(set, {
 			gameId,
-			turn: result.state.turn,
-			state: result.state,
+			turn: guarded.state.turn,
+			state: guarded.state,
+			debugGodMode,
 		});
 
-		const inFlightAfterApply = result.state.turn - confirmedTurn - unsentMoves.length;
+		const inFlightAfterApply = guarded.state.turn - confirmedTurn - unsentMoves.length;
 		if (gameSocketRef) {
 			if (inFlightAfterApply < MAX_MOVES_IN_FLIGHT) {
 				gameSocketRef.emit("action", { gameId, action, expectedTurn: state.turn });
@@ -439,16 +492,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			walkableByFloor: null,
 			opacityByFloor: null,
 			events: [],
-			heroAlive: true,
 			combatLog: [],
 			lastOptimisticEventTurn: -1,
 			levelUpEvents: [],
+			debugGodMode: false,
+			showDefeatModal: false,
 		});
 	},
 
 	dismissLevelUp: () => {
 		const { levelUpEvents } = get();
 		set({ levelUpEvents: levelUpEvents.slice(1) });
+	},
+
+	setDebugGodMode: (enabled) => {
+		set({ debugGodMode: enabled });
 	},
 }));
 

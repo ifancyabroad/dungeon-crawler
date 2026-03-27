@@ -80,6 +80,7 @@ export {
 	actorKind,
 	applyAction,
 	applyActionWithDerivedContext,
+	applyGodModePostProcess,
 	buildGameStateFromPersisted,
 	createActionContext,
 	createEmptyFloorState,

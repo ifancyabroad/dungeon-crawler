@@ -19,7 +19,6 @@ const DEBUG_DRAWER_ENABLED = import.meta.env.VITE_DEBUG_DRAWER_ENABLED === "true
 export default function Game() {
 	const navigate = useNavigate();
 	const gameId = useGameStore((s) => s.gameId);
-	const heroAlive = useGameStore((s) => s.heroAlive);
 
 	useEffect(() => {
 		const stored = useGameStore.getState().getStoredGameId();
@@ -83,7 +82,7 @@ export default function Game() {
 				</div>
 			</div>
 
-			<DeathModal open={!heroAlive && gameId !== null} />
+			<DeathModal />
 			<LevelUpModal />
 			<CharacterSheetModal />
 			<InventoryModal />

@@ -9,6 +9,7 @@ import { GameSession } from "../models/gameSession.model";
 import { Hero } from "../models/hero.model";
 import {
 	ActionSchema,
+	applyGodModePostProcess,
 	gameStateToPersisted,
 	getHero,
 	PersistedDynamicStateSchema,
@@ -90,7 +91,13 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 		(socket.data as GameSocketData).gameId = gameId;
 		(socket.data as GameSocketData).authed = true;
 		socket.join(gameId);
-		socket.emit("state", { gameId, turn: state.turn, state, events: [] });
+		socket.emit("state", {
+			gameId,
+			turn: state.turn,
+			state,
+			events: [],
+			debug: { godMode: getDebugFlags(gameId).godMode },
+		});
 	});
 
 	socket.on(
@@ -126,7 +133,12 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 				if (!state) return;
 
 				if (expectedTurn !== state.turn) {
-					socket.emit("state", { gameId, turn: state.turn, state });
+					socket.emit("state", {
+						gameId,
+						turn: state.turn,
+						state,
+						debug: { godMode: getDebugFlags(gameId).godMode },
+					});
 					socket.emit("error", { reason: "turn_mismatch", currentTurn: state.turn });
 					return;
 				}
@@ -136,12 +148,22 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					result = applyAuthoritativeAction(gameId, state, parsed.data);
 				} catch (err) {
 					console.error("[action] applyAuthoritativeAction failed:", err);
-					socket.emit("state", { gameId, turn: state.turn, state });
+					socket.emit("state", {
+						gameId,
+						turn: state.turn,
+						state,
+						debug: { godMode: getDebugFlags(gameId).godMode },
+					});
 					socket.emit("error", { reason: "internal_error" });
 					return;
 				}
 				if (!result.ok) {
-					socket.emit("state", { gameId, turn: state.turn, state });
+					socket.emit("state", {
+						gameId,
+						turn: state.turn,
+						state,
+						debug: { godMode: getDebugFlags(gameId).godMode },
+					});
 					socket.emit("error", { reason: result.reason });
 					return;
 				}
@@ -163,34 +185,9 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 					);
 				}
 
-				// God mode: if the hero died and god mode is active, revive them at 1 HP.
-				// This patch runs server-side before persistence so it is transparent to the engine.
 				const { godMode } = getDebugFlags(gameId);
-				if (godMode) {
-					const maybeDeadHero = getHero(finalState);
-					if (maybeDeadHero && !maybeDeadHero.alive) {
-						const floorIdx = finalState.heroFloorIndex;
-						const floorState = finalState.floors[floorIdx].state;
-						const revivedHero = { ...maybeDeadHero, hp: 1, alive: true };
-						finalState = {
-							...finalState,
-							floors: finalState.floors.map((f, i) =>
-								i === floorIdx
-									? {
-											...f,
-											state: {
-												...floorState,
-												actorsById: {
-													...floorState.actorsById,
-													[revivedHero.id]: revivedHero,
-												},
-											},
-										}
-									: f,
-							),
-						};
-					}
-				}
+				const guarded = applyGodModePostProcess(finalState, result.events, godMode);
+				finalState = guarded.state;
 
 				const newTurn = finalState.turn;
 				const persistedState = gameStateToPersisted(finalState);
@@ -213,14 +210,21 @@ export function registerGameHandlers(io: Server, socket: Socket, getToken: GetTo
 							turn: current.state.turn,
 							state: current.state,
 							events: [],
+							debug: { godMode: getDebugFlags(gameId).godMode },
 						});
 					}
 					return;
 				}
 
 				setSessionState(gameId, finalState);
-				const events: GameEvent[] = result.events;
-				io.to(gameId).emit("state", { gameId, turn: newTurn, state: finalState, events });
+				const events: GameEvent[] = guarded.events;
+				io.to(gameId).emit("state", {
+					gameId,
+					turn: newTurn,
+					state: finalState,
+					events,
+					debug: { godMode },
+				});
 
 				// If the hero died, update the Hero model
 				const hero = getHero(finalState);
