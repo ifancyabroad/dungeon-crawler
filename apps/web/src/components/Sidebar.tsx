@@ -1,23 +1,16 @@
 import { Backpack, Sparkles, User } from "lucide-react";
 import { getHero, XP_PER_LEVEL } from "@app/shared";
-import { classesById, skillsById, type CharacterClassId } from "@app/content";
+import { classesById, type CharacterClassId } from "@app/content";
 import { useGameStore } from "../features/game/gameStore";
 import { useUiStore } from "../features/ui/uiStore";
+import { ABILITY_SHORT_LABELS_ORDERED } from "../lib/abilityLabels";
 import { Button } from "./Button";
+import { SidebarPassiveSkills } from "./SidebarPassiveSkills";
 
 type SidebarProps = {
 	open: boolean;
 	onClose: () => void;
 };
-
-const ATTR_LABELS: { key: string; label: string }[] = [
-	{ key: "strength", label: "Str" },
-	{ key: "dexterity", label: "Dex" },
-	{ key: "constitution", label: "Con" },
-	{ key: "intelligence", label: "Int" },
-	{ key: "wisdom", label: "Wis" },
-	{ key: "charisma", label: "Cha" },
-];
 
 function attrColor(value: number): string {
 	if (value >= 16) return "text-primary";
@@ -151,7 +144,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
 						{/* Attributes — 2 columns */}
 						<div className="grid grid-cols-2 gap-y-0.5">
-							{ATTR_LABELS.map(({ key, label }) => {
+							{ABILITY_SHORT_LABELS_ORDERED.map(({ key, label }) => {
 								const value = hero.attributes[key as keyof typeof hero.attributes];
 								return (
 									<div key={key} className="flex gap-1">
@@ -178,39 +171,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 							</div>
 						</div>
 
-						{/* Passive skills */}
-						{(() => {
-							const passiveSkillIds = Object.keys(hero.skills).filter((id) => {
-								const def = skillsById[id as keyof typeof skillsById];
-								return def?.skillType === "passive";
-							});
-							if (passiveSkillIds.length === 0) return null;
-							return (
-								<div className="border-t border-border pt-2 space-y-1">
-									<p className="text-text-label uppercase tracking-wider">
-										Passive Skills
-									</p>
-									{passiveSkillIds.map((id) => {
-										const def = skillsById[id as keyof typeof skillsById];
-										if (!def) return null;
-										return (
-											<div
-												key={id}
-												className="flex flex-col gap-0.5"
-												title={def.description}
-											>
-												<span className="text-secondary font-mono">
-													{def.name}
-												</span>
-												<span className="text-text-muted leading-tight">
-													{def.description}
-												</span>
-											</div>
-										);
-									})}
-								</div>
-							);
-						})()}
+						<SidebarPassiveSkills skills={hero.skills} />
 					</div>
 				) : (
 					<div className="p-3">
