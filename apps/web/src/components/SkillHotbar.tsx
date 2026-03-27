@@ -15,6 +15,7 @@ import {
 	type UseSkillAction,
 } from "@app/shared";
 import { Info } from "lucide-react";
+import { rankRoman } from "../lib/rankRoman";
 import { useGameStore } from "../features/game/gameStore";
 import { useTargetingStore } from "../features/targeting/targetingStore";
 import { useMapStore } from "../features/map/mapStore";
@@ -199,9 +200,10 @@ export function SkillHotbar() {
 					| undefined;
 				const onCooldown = skillState.cooldownRemaining > 0;
 				const displayName = skillDef?.name ?? skillId;
+				const rankGlyph = rankRoman(skillState.rank);
 				const ariaLabel = onCooldown
-					? `${displayName}, ${skillState.cooldownRemaining} turns cooldown`
-					: `${displayName}, ready`;
+					? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
+					: `${displayName} ${rankGlyph}, ready`;
 				const infoTooltip = skillDef
 					? `${skillDef.name}\n\n${skillDef.description}`
 					: skillId;
@@ -250,7 +252,12 @@ export function SkillHotbar() {
 								/>
 							)}
 							<span className="relative z-0 min-w-0 flex-1 line-clamp-2 wrap-break-word self-center">
-								{displayName}
+								<span
+									className={onCooldown ? "text-text-muted" : "text-text-bright"}
+								>
+									{displayName}
+								</span>
+								<span className="text-primary"> {rankGlyph}</span>
 							</span>
 							<span className="relative z-0 flex w-9 shrink-0 flex-col items-center justify-center">
 								{onCooldown ? (

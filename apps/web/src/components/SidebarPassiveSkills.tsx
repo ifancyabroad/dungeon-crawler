@@ -7,17 +7,11 @@ import { skillsById, type PassiveSkillDefinition } from "@app/content";
 import type { ActorSkillState } from "@app/shared";
 import { Info } from "lucide-react";
 import { formatPassiveEffectsAtRank } from "../lib/formatPassiveSkillEffects";
+import { rankRoman } from "../lib/rankRoman";
 
 type SidebarPassiveSkillsProps = {
 	skills: Record<string, ActorSkillState>;
 };
-
-const RANK_ROMAN = ["I", "II", "III"] as const;
-
-function rankRoman(rank: number): string {
-	const i = Math.max(0, Math.min(2, rank - 1));
-	return RANK_ROMAN[i];
-}
 
 export function SidebarPassiveSkills({ skills }: SidebarPassiveSkillsProps) {
 	const passiveEntries = Object.entries(skills).flatMap(([skillId, skillState]) => {
