@@ -15,7 +15,15 @@
 			"Bash(pnpm --filter @app/shared run build)",
 			"Bash(pnpm --filter @app/content run build)",
 			"Bash(pnpm --filter @app/api run build)",
-			"Bash(grep -r \"zod-to-mongoose\\\\|@zod-to-mongoose\\\\|zod.*mongoose\\\\|mongoose.*zod\" /c/xampp/htdocs/dungeon-crawler-v2 --include=*.json --include=*.ts)"
+			"Bash(grep -r \"zod-to-mongoose\\\\|@zod-to-mongoose\\\\|zod.*mongoose\\\\|mongoose.*zod\" /c/xampp/htdocs/dungeon-crawler-v2 --include=*.json --include=*.ts)",
+			"Bash(mongosh --version)",
+			"Read(//c//**)",
+			"Read(//c/Users/**)",
+			"Bash(npx tsx:*)",
+			"Bash(pnpm --filter @app/api exec tsx src/diag.ts)",
+			"Bash(pnpm --filter @app/api exec tsx src/wipe.ts)",
+			"Bash(pnpm --filter @app/api exec tsx src/wipe.ts --confirm)",
+			"Bash(pnpm --filter @app/api exec tsx -e \":*)"
 		]
 	}
 }

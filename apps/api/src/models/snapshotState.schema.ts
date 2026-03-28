@@ -173,7 +173,7 @@ const ActorSchema = new Schema(
 		critThreshold: Number,
 		faction: String,
 	},
-	{ _id: false },
+	{ _id: false, minimize: false },
 );
 
 const FloorStateSchema = new Schema(
