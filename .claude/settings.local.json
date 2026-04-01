@@ -23,7 +23,11 @@
 			"Bash(pnpm --filter @app/api exec tsx src/diag.ts)",
 			"Bash(pnpm --filter @app/api exec tsx src/wipe.ts)",
 			"Bash(pnpm --filter @app/api exec tsx src/wipe.ts --confirm)",
-			"Bash(pnpm --filter @app/api exec tsx -e \":*)"
+			"Bash(pnpm --filter @app/api exec tsx -e \":*)",
+			"Bash(env)",
+			"Bash(claude mcp:*)",
+			"mcp__mongodb-mcp-server__list-databases",
+			"mcp__mongodb-mcp-server__list-collections"
 		]
 	}
 }
