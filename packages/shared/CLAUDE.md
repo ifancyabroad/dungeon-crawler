@@ -1,0 +1,52 @@
+# Shared Package Rules
+
+`@app/shared` contains the deterministic game engine used by both client and server.
+
+---
+
+## Engine Rules
+
+1. All turn resolution lives here.
+2. State transitions must be pure:
+
+    `result = applyAction(state, action, rng)`
+
+3. No nondeterministic APIs:
+    - No `Math.random`
+    - No `Date.now`
+    - No timers
+4. RNG must be injected and seedable.
+5. State must be JSON-serializable.
+6. Do not import:
+    - React
+    - Phaser
+    - Express
+    - Mongoose
+    - Node-only APIs
+
+Shared must remain platform-agnostic.
+
+---
+
+## Actions
+
+- Actions represent player intent only.
+- Define actions as a discriminated union.
+- Use Zod for action schemas.
+- Export both:
+    - `ActionSchema`
+    - `Action` type (`z.infer`)
+- Do not include resolved combat results or RNG outcomes in actions.
+
+---
+
+## Turn Model
+
+- One valid action = one turn.
+- `applyAction` must return a structured result, for example:
+
+    `{ ok: true, state, events }`
+    or
+    `{ ok: false, reason: string }`
+
+- Shared does not access persistence or networking.
