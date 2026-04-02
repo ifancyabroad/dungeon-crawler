@@ -15,6 +15,7 @@ import type { MultiStrikeEffect } from "../types";
 import { abilityModifier, rollD20Adjusted, rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
+import { collectActiveEffectDamagePackets } from "../../combat/collectActiveEffectDamagePackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 
 export function applyMultiStrike(
@@ -97,17 +98,9 @@ export function applyMultiStrike(
 			);
 
 			// Data-driven melee damage adjustments.
-			for (const eff of caster.activeEffects) {
-				if (eff.remainingTurns <= 0) continue;
-				const adj = eff.adjustments?.meleeDamageFlat;
-				if (adj) {
-					rawPackets.push({
-						damageType: adj.damageType,
-						rawAmount: adj.amount,
-						effectiveAmount: 0,
-					});
-				}
-			}
+			rawPackets.push(
+				...collectActiveEffectDamagePackets(caster, rng, "melee", effect.damageType),
+			);
 
 			const resolved = resolveDamagePackets(rawPackets, currentTarget);
 			damage = resolved.totalEffectiveDamage;

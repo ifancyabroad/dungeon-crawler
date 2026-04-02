@@ -11,6 +11,7 @@ import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
+import { collectActiveEffectDamagePackets } from "../../combat/collectActiveEffectDamagePackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY } from "../../game/engineUtils";
 import { SKILLS_CONFIG } from "../../config";
@@ -67,25 +68,9 @@ export function applyAreaDamage(
 		);
 
 		// Data-driven areaDamageFlat adjustments from active effects (e.g. empower_spell).
-		for (const eff of caster.activeEffects) {
-			if (eff.remainingTurns <= 0) continue;
-			const adj = eff.adjustments?.areaDamageFlat;
-			if (adj) {
-				rawPackets.push({
-					damageType: adj.damageType,
-					rawAmount: adj.amount,
-					effectiveAmount: 0,
-				});
-			}
-			const diceBonusExpr = eff.adjustments?.areaDamageDiceBonus;
-			if (diceBonusExpr) {
-				rawPackets.push({
-					damageType: effect.damageType,
-					rawAmount: rollDiceExpr(rng, diceBonusExpr),
-					effectiveAmount: 0,
-				});
-			}
-		}
+		rawPackets.push(
+			...collectActiveEffectDamagePackets(caster, rng, "area", effect.damageType),
+		);
 
 		let packetsToResolve = rawPackets;
 		if (effect.savingThrow !== undefined) {

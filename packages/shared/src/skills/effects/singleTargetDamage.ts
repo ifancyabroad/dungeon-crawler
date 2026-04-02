@@ -22,6 +22,7 @@ import {
 } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
+import { collectActiveEffectDamagePackets } from "../../combat/collectActiveEffectDamagePackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { SKILLS_CONFIG } from "../../config";
 
@@ -120,25 +121,7 @@ export function applySingleTargetDamage(
 	);
 
 	// Data-driven ranged damage adjustments from active effects (e.g. a "focused_shot" buff).
-	for (const eff of caster.activeEffects) {
-		if (eff.remainingTurns <= 0) continue;
-		const adj = eff.adjustments?.rangedDamageFlat;
-		if (adj) {
-			rawPackets.push({
-				damageType: adj.damageType,
-				rawAmount: adj.amount,
-				effectiveAmount: 0,
-			});
-		}
-		const diceBonusExpr = eff.adjustments?.rangedDamageDiceBonus;
-		if (diceBonusExpr) {
-			rawPackets.push({
-				damageType: effect.damageType,
-				rawAmount: rollDiceExpr(rng, diceBonusExpr),
-				effectiveAmount: 0,
-			});
-		}
-	}
+	rawPackets.push(...collectActiveEffectDamagePackets(caster, rng, "ranged", effect.damageType));
 
 	// --- Saving throw (optional, only when no attackRoll miss already occurred) ---
 	let packetsToResolve = rawPackets;

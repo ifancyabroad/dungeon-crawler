@@ -13,6 +13,7 @@ import type { LeapAttackEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
 import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
+import { collectActiveEffectDamagePackets } from "../../combat/collectActiveEffectDamagePackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY } from "../../game/engineUtils";
 
@@ -86,6 +87,11 @@ export function applyLeapAttack(
 				false,
 				effect.damageType,
 			),
+		);
+
+		// Data-driven area damage adjustments from active effects.
+		rawPackets.push(
+			...collectActiveEffectDamagePackets(movedCaster, rng, "area", effect.damageType),
 		);
 
 		const resolved = resolveDamagePackets(rawPackets, actor);

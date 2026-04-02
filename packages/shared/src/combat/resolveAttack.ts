@@ -9,6 +9,7 @@ import type { AttackResult, WeaponDice } from "./types";
 import { rollD20Adjusted, rollDice, rollDiceExpr, parseDice } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
 import { collectPassiveBonusPackets } from "./collectPassiveBonusPackets";
+import { collectActiveEffectDamagePackets } from "./collectActiveEffectDamagePackets";
 
 /**
  * Resolve a melee attack from attacker against defender.
@@ -114,25 +115,9 @@ export function resolveAttack(
 		// Data-driven melee damage adjustments from active effects (e.g. berserk).
 		// Adjustments are defined in the skill JSON and copied onto the ActiveEffect
 		// at application time — no registry lookup needed.
-		for (const effect of attacker.activeEffects) {
-			if (effect.remainingTurns <= 0) continue;
-			const adj = effect.adjustments?.meleeDamageFlat;
-			if (adj) {
-				rawPackets.push({
-					damageType: adj.damageType,
-					rawAmount: adj.amount,
-					effectiveAmount: 0,
-				});
-			}
-			const diceBonusExpr = effect.adjustments?.meleeDamageDiceBonus;
-			if (diceBonusExpr) {
-				rawPackets.push({
-					damageType: weapon.damageType,
-					rawAmount: rollDiceExpr(rng, diceBonusExpr),
-					effectiveAmount: 0,
-				});
-			}
-		}
+		rawPackets.push(
+			...collectActiveEffectDamagePackets(attacker, rng, "melee", weapon.damageType),
+		);
 
 		const resolved = resolveDamagePackets(rawPackets, defender);
 		damage = resolved.totalEffectiveDamage;
