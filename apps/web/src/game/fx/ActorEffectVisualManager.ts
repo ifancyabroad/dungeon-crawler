@@ -5,7 +5,7 @@
  * Usage:
  *   1. Create an instance, passing the Phaser scene.
  *   2. Register each visual effect with `register()`.
- *   3. Call `sync(actor, x, y)` every turn to add/remove visuals based on the
+ *   3. Call `sync(actor, sprite)` every turn to add/remove visuals based on the
  *      current actor state.
  *   4. Call `destroy()` on scene shutdown.
  *
@@ -39,14 +39,16 @@ export class ActorEffectVisualManager {
 	private readonly active = new Map<string, ActorOverlayHandle>();
 	private readonly scene: Phaser.Scene;
 	private readonly onUpdate: () => void;
-	private px = 0;
-	private py = 0;
+	private sprite: Phaser.GameObjects.Components.Transform | null = null;
 
 	constructor(scene: Phaser.Scene) {
 		this.scene = scene;
 		this.onUpdate = () => {
+			if (!this.sprite) return;
+			const x = this.sprite.x;
+			const y = this.sprite.y;
 			for (const handle of this.active.values()) {
-				handle.reposition(this.px, this.py);
+				handle.reposition(x, y);
 			}
 		};
 		scene.events.on("update", this.onUpdate);
@@ -58,13 +60,13 @@ export class ActorEffectVisualManager {
 
 	/**
 	 * Synchronise overlay visuals with the current actor state.
-	 * @param actor - Current actor.
-	 * @param px    - World X in pixels (sprite centre).
-	 * @param py    - World Y in pixels (sprite centre).
+	 * @param actor  - Current actor.
+	 * @param sprite - Live sprite whose position is tracked every frame.
 	 */
-	sync(actor: Actor, px: number, py: number): void {
-		this.px = px;
-		this.py = py;
+	sync(actor: Actor, sprite: Phaser.GameObjects.Components.Transform): void {
+		this.sprite = sprite;
+		const px = sprite.x;
+		const py = sprite.y;
 
 		for (const effect of this.effects) {
 			const shouldBeActive = effect.isActive(actor);

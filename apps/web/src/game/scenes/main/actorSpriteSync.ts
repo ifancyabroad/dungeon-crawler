@@ -92,7 +92,7 @@ export class ActorSpriteSync {
 			const shieldHp = hero.numericBuffs?.shieldHp ?? 0;
 			deps.healthBars?.update(gameState.heroId, hero.hp, hero.maxHp, deps.player, shieldHp);
 			deps.player.setTint(resolveActorTint(hero));
-			deps.actorEffectVisuals?.sync(hero, deps.player.x, deps.player.y);
+			deps.actorEffectVisuals?.sync(hero, deps.player);
 		}
 	}
 }
