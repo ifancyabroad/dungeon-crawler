@@ -309,7 +309,7 @@ export const AddDamageDiceEffectSchema = z.object({
 	type: z.literal("add_damage_dice"),
 	dice: z.string(),
 	damageType: DamageTypeSchema,
-	appliesTo: z.enum(["melee", "area", "any"]),
+	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	onCritOnly: z.boolean(),
 });
 

@@ -27,7 +27,11 @@
 			"Bash(env)",
 			"Bash(claude mcp:*)",
 			"mcp__mongodb-mcp-server__list-databases",
-			"mcp__mongodb-mcp-server__list-collections"
+			"mcp__mongodb-mcp-server__list-collections",
+			"Bash(ls -1 /c/xampp/htdocs/dungeon-crawler-v2/packages/content/src/raw/skills/*.json)",
+			"Bash(xargs -n1 basename)",
+			"Bash(pnpm content:build)",
+			"Bash(pnpm typecheck:*)"
 		]
 	}
 }

@@ -1,0 +1,43 @@
+{
+	"skillType": "passive",
+	"id": "arcane_constitution",
+	"name": "Arcane Constitution",
+	"description": "Arcane energy reinforces your body. Increases CON and max HP — survival floor for the squishy mage.",
+	"school": "arcane",
+	"tags": ["buff"],
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "constitution",
+				"amount": 1
+			},
+			{
+				"type": "modify_max_hp",
+				"amount": 5
+			}
+		],
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "constitution",
+				"amount": 2
+			},
+			{
+				"type": "modify_max_hp",
+				"amount": 10
+			}
+		],
+		[
+			{
+				"type": "modify_attribute",
+				"attribute": "constitution",
+				"amount": 2
+			},
+			{
+				"type": "modify_max_hp",
+				"amount": 15
+			}
+		]
+	]
+}

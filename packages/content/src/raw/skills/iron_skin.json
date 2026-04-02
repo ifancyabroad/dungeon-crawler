@@ -2,14 +2,14 @@
 	"skillType": "passive",
 	"id": "iron_skin",
 	"name": "Iron Skin",
-	"description": "Your skin hardens through relentless training. +2 Armour Class.",
+	"description": "Your skin hardens through relentless training, granting increasing Armour Class.",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [
 		[
 			{
 				"type": "modify_armor_class",
-				"amount": 2
+				"amount": 1
 			}
 		],
 		[
@@ -21,7 +21,7 @@
 		[
 			{
 				"type": "modify_armor_class",
-				"amount": 2
+				"amount": 3
 			}
 		]
 	]

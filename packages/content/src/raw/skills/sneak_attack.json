@@ -4,8 +4,8 @@
 	"name": "Sneak Attack",
 	"description": "Strike a vital spot from the shadows. Requires stealth — the blow is devastating but breaks your concealment.",
 	"school": "shadow",
-	"tags": ["damage", "stealth", "weapon_attack"],
-	"cooldown": 2,
+	"tags": ["damage", "stealth", "weapon_attack", "finesse", "melee_attack"],
+	"cooldown": 1,
 	"targetType": "actor",
 	"range": 1,
 	"maintainsStealth": true,
@@ -20,14 +20,14 @@
 		[
 			{
 				"type": "sneak_attack",
-				"dice": "3d6",
+				"dice": "5d6",
 				"damageType": "piercing"
 			}
 		],
 		[
 			{
 				"type": "sneak_attack",
-				"dice": "3d6",
+				"dice": "7d6",
 				"damageType": "piercing"
 			}
 		]

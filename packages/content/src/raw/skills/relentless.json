@@ -1,0 +1,28 @@
+{
+	"skillType": "passive",
+	"id": "relentless",
+	"name": "Relentless",
+	"description": "Your relentless assaults find gaps in defences, lowering your critical hit threshold.",
+	"school": "martial",
+	"tags": ["buff"],
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_crit_threshold",
+				"reduction": 1
+			}
+		],
+		[
+			{
+				"type": "modify_crit_threshold",
+				"reduction": 2
+			}
+		],
+		[
+			{
+				"type": "modify_crit_threshold",
+				"reduction": 3
+			}
+		]
+	]
+}

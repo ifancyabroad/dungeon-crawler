@@ -2,26 +2,38 @@
 	"skillType": "passive",
 	"id": "battle_hardened",
 	"name": "Battle Hardened",
-	"description": "Countless wounds have left you resistant to bludgeoning damage.",
+	"description": "Seasons of battle upgrade your resilience. Increases hit die to d12 and maximum health.",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [
 		[
 			{
-				"type": "add_damage_resistance",
-				"damageType": "bludgeoning"
+				"type": "modify_hit_die",
+				"die": 12
+			},
+			{
+				"type": "modify_max_hp",
+				"amount": 5
 			}
 		],
 		[
 			{
-				"type": "add_damage_resistance",
-				"damageType": "bludgeoning"
+				"type": "modify_hit_die",
+				"die": 12
+			},
+			{
+				"type": "modify_max_hp",
+				"amount": 10
 			}
 		],
 		[
 			{
-				"type": "add_damage_resistance",
-				"damageType": "bludgeoning"
+				"type": "modify_hit_die",
+				"die": 12
+			},
+			{
+				"type": "modify_max_hp",
+				"amount": 15
 			}
 		]
 	]

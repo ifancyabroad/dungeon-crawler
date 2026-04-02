@@ -28,7 +28,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 14,
       "charisma": 10
     },
-    "startingHp": 800,
+    "startingHp": 6,
     "hitDie": 6,
     "startingEquipment": [
       "quarterstaff",
@@ -40,15 +40,18 @@ export const classes: readonly CharacterClassDefinition[] = [
     "activeSkillPool": [
       "fireball",
       "lightning_bolt",
-      "shield",
-      "cone_of_cold"
+      "cone_of_cold",
+      "shield"
     ],
     "passiveSkillPool": [
       "arcane_mind",
-      "fire_affinity",
       "mage_armor",
-      "fire_immunity",
-      "arcane_wisdom"
+      "arcane_constitution",
+      "arcane_focus",
+      "fire_mastery",
+      "lightning_mastery",
+      "cold_mastery",
+      "force_mastery"
     ],
     "weaponProficiencies": [
       "staff",
@@ -76,7 +79,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 10,
       "charisma": 14
     },
-    "startingHp": 100,
+    "startingHp": 9,
     "hitDie": 8,
     "startingEquipment": [
       "dagger",
@@ -86,16 +89,19 @@ export const classes: readonly CharacterClassDefinition[] = [
       "stealth"
     ],
     "activeSkillPool": [
-      "smoke_bomb",
       "sneak_attack",
       "shadow_step",
+      "smoke_bomb",
       "poison_blade"
     ],
     "passiveSkillPool": [
       "quick_reflexes",
-      "evasion",
       "shadow_strike",
+      "evasion",
       "predators_instinct",
+      "assassinate",
+      "poison_mastery",
+      "acid_mastery",
       "poison_immunity"
     ],
     "weaponProficiencies": [
@@ -125,7 +131,7 @@ export const classes: readonly CharacterClassDefinition[] = [
       "wisdom": 10,
       "charisma": 12
     },
-    "startingHp": 14,
+    "startingHp": 12,
     "hitDie": 10,
     "startingEquipment": [
       "longsword",
@@ -136,17 +142,20 @@ export const classes: readonly CharacterClassDefinition[] = [
       "charge"
     ],
     "activeSkillPool": [
-      "war_cry",
-      "mighty_leap",
       "cleave",
-      "berserk"
+      "second_wind",
+      "mighty_leap",
+      "reckless_attack"
     ],
     "passiveSkillPool": [
       "warriors_might",
       "iron_skin",
-      "toughness",
+      "battle_hardened",
+      "relentless",
+      "constitution_training",
+      "slashing_mastery",
       "bludgeoning_mastery",
-      "battle_hardened"
+      "piercing_mastery"
     ],
     "weaponProficiencies": [
       "sword",
@@ -515,93 +524,55 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["arcane_mind","arcane_surge","arcane_wisdom","bane","battle_hardened","battle_hymn","battle_meditation","berserk","bless","blessed_hands","bludgeoning_mastery","brittle_bones","charge","cleanse","cleave","cone_of_cold","cure_wounds","dimensional_swap","dispel","dominate","empower_spell","entangle","evasion","fire_affinity","fire_immunity","fireball","flurry_of_blows","grappling_hook","hex","iron_skin","lightning_bolt","mage_armor","magic_arrow","mark_prey","mighty_leap","poison_bite","poison_blade","poison_immunity","prayer_of_mending","predators_instinct","predatory_focus","quick_reflexes","reckless_attack","second_wind","shadow_step","shadow_strike","shield","silence","smoke_bomb","sneak_attack","stealth","terrifying_shout","thunderwave","touch_of_rot","tough","toughness","vampiric_touch","war_cry","ward_of_stone","warriors_might"] as const;
+export const skillIds = ["acid_mastery","arcane_constitution","arcane_focus","arcane_mind","assassinate","battle_hardened","bludgeoning_mastery","charge","cleave","cold_mastery","cone_of_cold","constitution_training","evasion","fire_mastery","fireball","force_mastery","iron_skin","lightning_bolt","lightning_mastery","mage_armor","magic_arrow","mighty_leap","piercing_mastery","poison_bite","poison_blade","poison_immunity","poison_mastery","predators_instinct","quick_reflexes","reckless_attack","relentless","second_wind","shadow_step","shadow_strike","shield","slashing_mastery","smoke_bomb","sneak_attack","stealth","warriors_might"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
   {
     "skillType": "passive",
-    "id": "arcane_mind",
-    "name": "Arcane Mind",
-    "description": "Your intellect sharpens through arcane study. +2 Intelligence.",
-    "school": "arcane",
-    "tags": [
-      "buff"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "intelligence",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "intelligence",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "intelligence",
-          "amount": 2
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "arcane_surge",
-    "name": "Arcane Surge",
-    "description": "Channel raw arcane power to heighten your spells. For 5 turns the DC of your saving throws increases by 2.",
-    "school": "arcane",
+    "id": "acid_mastery",
+    "name": "Acid Mastery",
+    "description": "Corroding your blades with acid adds bonus acid damage on every melee strike.",
+    "school": "shadow",
     "tags": [
       "buff",
-      "spell"
+      "damage"
     ],
-    "cooldown": 14,
-    "targetType": "none",
     "effectsByRank": [
       [
         {
-          "type": "apply_status",
-          "statusId": "arcane_surge",
-          "durationTurns": 5,
-          "adjustments": {
-            "saveDcBonusFlat": 2
-          }
+          "type": "add_damage_dice",
+          "dice": "1d4",
+          "damageType": "acid",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "arcane_surge",
-          "durationTurns": 5,
-          "adjustments": {
-            "saveDcBonusFlat": 2
-          }
+          "type": "add_damage_dice",
+          "dice": "1d6",
+          "damageType": "acid",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "arcane_surge",
-          "durationTurns": 5,
-          "adjustments": {
-            "saveDcBonusFlat": 2
-          }
+          "type": "add_damage_dice",
+          "dice": "1d8",
+          "damageType": "acid",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ]
     ]
   },
   {
     "skillType": "passive",
-    "id": "arcane_wisdom",
-    "name": "Arcane Wisdom",
-    "description": "Deep study expands your magical perception. +2 Wisdom.",
+    "id": "arcane_constitution",
+    "name": "Arcane Constitution",
+    "description": "Arcane energy reinforces your body. Increases CON and max HP — survival floor for the squishy mage.",
     "school": "arcane",
     "tags": [
       "buff"
@@ -610,74 +581,127 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "modify_attribute",
-          "attribute": "wisdom",
-          "amount": 2
+          "attribute": "constitution",
+          "amount": 1
+        },
+        {
+          "type": "modify_max_hp",
+          "amount": 5
         }
       ],
       [
         {
           "type": "modify_attribute",
-          "attribute": "wisdom",
+          "attribute": "constitution",
           "amount": 2
+        },
+        {
+          "type": "modify_max_hp",
+          "amount": 10
         }
       ],
       [
         {
           "type": "modify_attribute",
-          "attribute": "wisdom",
+          "attribute": "constitution",
           "amount": 2
+        },
+        {
+          "type": "modify_max_hp",
+          "amount": 15
         }
       ]
     ]
   },
   {
-    "skillType": "active",
-    "id": "bane",
-    "name": "Bane",
-    "description": "A curse saps the confidence of your foe. For 6 turns the target rolls 1d4 less on every attack roll and saving throw — doubt is a wound all its own.",
-    "school": "divine",
+    "skillType": "passive",
+    "id": "arcane_focus",
+    "name": "Arcane Focus",
+    "description": "Focused attunement to your arcane conduit adds a flat bonus to all spell attack rolls.",
+    "school": "arcane",
     "tags": [
-      "debuff",
-      "spell"
+      "buff"
     ],
-    "cooldown": 15,
-    "targetType": "actor",
-    "range": 4,
     "effectsByRank": [
       [
         {
-          "type": "apply_status",
-          "statusId": "baned",
-          "durationTurns": 6,
-          "target": "target",
-          "adjustments": {
-            "attackRollDicePenalty": "1d4",
-            "savingThrowDicePenalty": "1d4"
-          }
+          "type": "add_attack_roll_bonus",
+          "amount": 1
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "baned",
-          "durationTurns": 6,
-          "target": "target",
-          "adjustments": {
-            "attackRollDicePenalty": "1d4",
-            "savingThrowDicePenalty": "1d4"
-          }
+          "type": "add_attack_roll_bonus",
+          "amount": 2
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "baned",
-          "durationTurns": 6,
-          "target": "target",
-          "adjustments": {
-            "attackRollDicePenalty": "1d4",
-            "savingThrowDicePenalty": "1d4"
-          }
+          "type": "add_attack_roll_bonus",
+          "amount": 3
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "arcane_mind",
+    "name": "Arcane Mind",
+    "description": "Arcane study increases INT, scaling all spell damage, save DCs, and attack rolls.",
+    "school": "arcane",
+    "tags": [
+      "buff"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "modify_attribute",
+          "attribute": "intelligence",
+          "amount": 2
+        }
+      ],
+      [
+        {
+          "type": "modify_attribute",
+          "attribute": "intelligence",
+          "amount": 3
+        }
+      ],
+      [
+        {
+          "type": "modify_attribute",
+          "attribute": "intelligence",
+          "amount": 4
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "assassinate",
+    "name": "Assassinate",
+    "description": "Your killer's instinct while hidden reduces your critical hit threshold.",
+    "school": "shadow",
+    "tags": [
+      "buff"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "modify_crit_threshold",
+          "reduction": 1
+        }
+      ],
+      [
+        {
+          "type": "modify_crit_threshold",
+          "reduction": 2
+        }
+      ],
+      [
+        {
+          "type": "modify_crit_threshold",
+          "reduction": 3
         }
       ]
     ]
@@ -686,7 +710,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "battle_hardened",
     "name": "Battle Hardened",
-    "description": "Countless wounds have left you resistant to bludgeoning damage.",
+    "description": "Seasons of battle upgrade your resilience. Increases hit die to d12 and maximum health.",
     "school": "martial",
     "tags": [
       "buff"
@@ -694,235 +718,32 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_resistance",
-          "damageType": "bludgeoning"
+          "type": "modify_hit_die",
+          "die": 12
+        },
+        {
+          "type": "modify_max_hp",
+          "amount": 5
         }
       ],
       [
         {
-          "type": "add_damage_resistance",
-          "damageType": "bludgeoning"
+          "type": "modify_hit_die",
+          "die": 12
+        },
+        {
+          "type": "modify_max_hp",
+          "amount": 10
         }
       ],
       [
         {
-          "type": "add_damage_resistance",
-          "damageType": "bludgeoning"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "battle_hymn",
-    "name": "Battle Hymn",
-    "description": "A rousing war-chant that sharpens your instincts. For 5 turns every attack and area strike deals an extra 1d4 damage.",
-    "school": "divine",
-    "tags": [
-      "buff",
-      "aoe"
-    ],
-    "cooldown": 15,
-    "targetType": "none",
-    "effectsByRank": [
-      [
+          "type": "modify_hit_die",
+          "die": 12
+        },
         {
-          "type": "apply_status",
-          "statusId": "battle_hymn",
-          "durationTurns": 5,
-          "adjustments": {
-            "meleeDamageDiceBonus": "1d4",
-            "areaDamageDiceBonus": "1d4"
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "battle_hymn",
-          "durationTurns": 5,
-          "adjustments": {
-            "meleeDamageDiceBonus": "1d4",
-            "areaDamageDiceBonus": "1d4"
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "battle_hymn",
-          "durationTurns": 5,
-          "adjustments": {
-            "meleeDamageDiceBonus": "1d4",
-            "areaDamageDiceBonus": "1d4"
-          }
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "battle_meditation",
-    "name": "Battle Meditation",
-    "description": "A moment of focused calm resets your tactical options. All of your skills have their cooldowns reduced by 4 turns.",
-    "school": "martial",
-    "tags": [
-      "utility"
-    ],
-    "cooldown": 30,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "reduce_cooldowns",
-          "amount": 4
-        }
-      ],
-      [
-        {
-          "type": "reduce_cooldowns",
-          "amount": 4
-        }
-      ],
-      [
-        {
-          "type": "reduce_cooldowns",
-          "amount": 4
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "berserk",
-    "name": "Berserk",
-    "description": "Enter a furious rage, dealing more damage with every strike. The frenzy makes you reckless — you take more hits too.",
-    "school": "martial",
-    "tags": [
-      "buff"
-    ],
-    "cooldown": 25,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "berserk",
-          "durationTurns": 8,
-          "adjustments": {
-            "meleeDamageFlat": {
-              "damageType": "bludgeoning",
-              "amount": 5
-            },
-            "incomingDamageFlat": 2
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "berserk",
-          "durationTurns": 8,
-          "adjustments": {
-            "meleeDamageFlat": {
-              "damageType": "bludgeoning",
-              "amount": 5
-            },
-            "incomingDamageFlat": 2
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "berserk",
-          "durationTurns": 8,
-          "adjustments": {
-            "meleeDamageFlat": {
-              "damageType": "bludgeoning",
-              "amount": 5
-            },
-            "incomingDamageFlat": 2
-          }
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "bless",
-    "name": "Bless",
-    "description": "Divine favour bolsters your resolve. For 8 turns you roll an extra 1d4 on every attack roll and saving throw — fortune tips toward the faithful.",
-    "school": "divine",
-    "tags": [
-      "buff",
-      "spell"
-    ],
-    "cooldown": 18,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "blessed",
-          "durationTurns": 8,
-          "adjustments": {
-            "attackRollDiceBonus": "1d4",
-            "savingThrowDiceBonus": "1d4"
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "blessed",
-          "durationTurns": 8,
-          "adjustments": {
-            "attackRollDiceBonus": "1d4",
-            "savingThrowDiceBonus": "1d4"
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "blessed",
-          "durationTurns": 8,
-          "adjustments": {
-            "attackRollDiceBonus": "1d4",
-            "savingThrowDiceBonus": "1d4"
-          }
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "passive",
-    "id": "blessed_hands",
-    "name": "Blessed Hands",
-    "description": "Your healing touch is guided by a higher power. All healing you perform restores 2 additional HP.",
-    "school": "divine",
-    "tags": [
-      "healing",
-      "buff"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "add_healing_bonus_flat",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "add_healing_bonus_flat",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "add_healing_bonus_flat",
-          "amount": 2
+          "type": "modify_max_hp",
+          "amount": 15
         }
       ]
     ]
@@ -930,20 +751,20 @@ export const skills: readonly SkillDefinition[] = [
   {
     "skillType": "passive",
     "id": "bludgeoning_mastery",
-    "name": "Crushing Blows",
-    "description": "Your strikes land with bone-breaking force. Add 1d6 bludgeoning damage to every melee attack.",
+    "name": "Bludgeoning Mastery",
+    "description": "Crushing force adds bonus bludgeoning damage to all attacks — including leaps and sweeping strikes.",
     "school": "martial",
     "tags": [
-      "damage",
-      "buff"
+      "buff",
+      "damage"
     ],
     "effectsByRank": [
       [
         {
           "type": "add_damage_dice",
-          "dice": "1d6",
+          "dice": "1d4",
           "damageType": "bludgeoning",
-          "appliesTo": "melee",
+          "appliesTo": "any",
           "onCritOnly": false
         }
       ],
@@ -952,47 +773,17 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_damage_dice",
           "dice": "1d6",
           "damageType": "bludgeoning",
-          "appliesTo": "melee",
+          "appliesTo": "any",
           "onCritOnly": false
         }
       ],
       [
         {
           "type": "add_damage_dice",
-          "dice": "1d6",
+          "dice": "1d8",
           "damageType": "bludgeoning",
-          "appliesTo": "melee",
+          "appliesTo": "any",
           "onCritOnly": false
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "passive",
-    "id": "brittle_bones",
-    "name": "Brittle Bones",
-    "description": "Years of petrification magic have weakened your frame. You take double damage from bludgeoning attacks.",
-    "school": "arcane",
-    "tags": [
-      "debuff"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "add_damage_vulnerability",
-          "damageType": "bludgeoning"
-        }
-      ],
-      [
-        {
-          "type": "add_damage_vulnerability",
-          "damageType": "bludgeoning"
-        }
-      ],
-      [
-        {
-          "type": "add_damage_vulnerability",
-          "damageType": "bludgeoning"
         }
       ]
     ]
@@ -1006,9 +797,10 @@ export const skills: readonly SkillDefinition[] = [
     "tags": [
       "damage",
       "mobility",
-      "weapon_attack"
+      "weapon_attack",
+      "melee_attack"
     ],
-    "cooldown": 10,
+    "cooldown": 4,
     "targetType": "actor",
     "range": 4,
     "effectsByRank": [
@@ -1016,7 +808,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "charge_attack",
           "maxRangeTiles": 4,
-          "bonusDice": "1d8",
+          "bonusDice": "1d6",
           "bonusDamageType": "bludgeoning"
         }
       ],
@@ -1032,56 +824,8 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "charge_attack",
           "maxRangeTiles": 4,
-          "bonusDice": "1d8",
+          "bonusDice": "1d10",
           "bonusDamageType": "bludgeoning"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "cleanse",
-    "name": "Cleanse",
-    "description": "Purge poison, fire, and bleeding from yourself in a single surge of holy energy.",
-    "school": "divine",
-    "tags": [
-      "utility",
-      "spell"
-    ],
-    "cooldown": 12,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "remove_status",
-          "statusIds": [
-            "poisoned",
-            "burning",
-            "bleeding"
-          ],
-          "target": "self"
-        }
-      ],
-      [
-        {
-          "type": "remove_status",
-          "statusIds": [
-            "poisoned",
-            "burning",
-            "bleeding"
-          ],
-          "target": "self"
-        }
-      ],
-      [
-        {
-          "type": "remove_status",
-          "statusIds": [
-            "poisoned",
-            "burning",
-            "bleeding"
-          ],
-          "target": "self"
         }
       ]
     ]
@@ -1095,9 +839,10 @@ export const skills: readonly SkillDefinition[] = [
     "tags": [
       "damage",
       "aoe",
-      "weapon_attack"
+      "weapon_attack",
+      "melee_attack"
     ],
-    "cooldown": 5,
+    "cooldown": 3,
     "targetType": "tile",
     "range": 1,
     "effectsByRank": [
@@ -1108,27 +853,82 @@ export const skills: readonly SkillDefinition[] = [
           "damageType": "slashing",
           "rangeTiles": 1,
           "angleDegrees": 135,
-          "scalingStat": "strength"
+          "scalingStat": "strength",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "strength",
+            "successDamageMultiplier": 0.5
+          }
         }
       ],
       [
         {
           "type": "cone_damage",
-          "dice": "1d8",
+          "dice": "2d8",
           "damageType": "slashing",
           "rangeTiles": 1,
           "angleDegrees": 135,
-          "scalingStat": "strength"
+          "scalingStat": "strength",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "strength",
+            "successDamageMultiplier": 0.5
+          }
         }
       ],
       [
         {
           "type": "cone_damage",
-          "dice": "1d8",
+          "dice": "3d8",
           "damageType": "slashing",
           "rangeTiles": 1,
           "angleDegrees": 135,
-          "scalingStat": "strength"
+          "scalingStat": "strength",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "strength",
+            "successDamageMultiplier": 0.5
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "cold_mastery",
+    "name": "Cold Mastery",
+    "description": "Frost mastery adds bonus cold damage to every attack.",
+    "school": "arcane",
+    "tags": [
+      "buff",
+      "damage"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d4",
+          "damageType": "cold",
+          "appliesTo": "any",
+          "onCritOnly": false
+        }
+      ],
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d6",
+          "damageType": "cold",
+          "appliesTo": "any",
+          "onCritOnly": false
+        }
+      ],
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d8",
+          "damageType": "cold",
+          "appliesTo": "any",
+          "onCritOnly": false
         }
       ]
     ]
@@ -1137,21 +937,22 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "cone_of_cold",
     "name": "Cone of Cold",
-    "description": "Exhale a blast of freezing air in a cone, chilling all enemies caught within.",
+    "description": "Exhale a blast of freezing air in a cone. At higher ranks the chill roots enemies in place.",
     "school": "arcane",
     "tags": [
       "damage",
+      "control",
       "aoe",
       "spell"
     ],
-    "cooldown": 15,
+    "cooldown": 5,
     "targetType": "tile",
     "range": 3,
     "effectsByRank": [
       [
         {
           "type": "cone_damage",
-          "dice": "2d6",
+          "dice": "2d8",
           "damageType": "cold",
           "rangeTiles": 3,
           "angleDegrees": 90,
@@ -1166,7 +967,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
-          "dice": "2d6",
+          "dice": "3d8",
           "damageType": "cold",
           "rangeTiles": 3,
           "angleDegrees": 90,
@@ -1176,12 +977,19 @@ export const skills: readonly SkillDefinition[] = [
             "dcStat": "intelligence",
             "successDamageMultiplier": 0.5
           }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 1,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
         }
       ],
       [
         {
           "type": "cone_damage",
-          "dice": "2d6",
+          "dice": "4d8",
           "damageType": "cold",
           "rangeTiles": 3,
           "angleDegrees": 90,
@@ -1191,260 +999,53 @@ export const skills: readonly SkillDefinition[] = [
             "dcStat": "intelligence",
             "successDamageMultiplier": 0.5
           }
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "cure_wounds",
-    "name": "Cure Wounds",
-    "description": "Touch a creature to channel healing energy into it. Restores 2d8 hit points plus your Wisdom modifier.",
-    "school": "divine",
-    "tags": [
-      "healing",
-      "spell"
-    ],
-    "cooldown": 10,
-    "targetType": "actor",
-    "range": 1,
-    "effectsByRank": [
-      [
-        {
-          "type": "heal_target",
-          "dice": "2d8",
-          "scalingStat": "wisdom"
-        }
-      ],
-      [
-        {
-          "type": "heal_target",
-          "dice": "2d8",
-          "scalingStat": "wisdom"
-        }
-      ],
-      [
-        {
-          "type": "heal_target",
-          "dice": "2d8",
-          "scalingStat": "wisdom"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "dimensional_swap",
-    "name": "Dimensional Swap",
-    "description": "You fold space between yourself and a target, instantly exchanging your positions. Reposition an enemy into harm's way, or escape a dire situation in the blink of an eye.",
-    "school": "arcane",
-    "tags": [
-      "mobility",
-      "spell"
-    ],
-    "cooldown": 12,
-    "targetType": "actor",
-    "range": 4,
-    "effectsByRank": [
-      [
-        {
-          "type": "teleport_swap"
-        }
-      ],
-      [
-        {
-          "type": "teleport_swap"
-        }
-      ],
-      [
-        {
-          "type": "teleport_swap"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "dispel",
-    "name": "Dispel",
-    "description": "Strip all buffs from a nearby enemy — blessings, shields, and empowerment crumble instantly.",
-    "school": "arcane",
-    "tags": [
-      "debuff",
-      "utility",
-      "spell"
-    ],
-    "cooldown": 15,
-    "targetType": "actor",
-    "range": 4,
-    "effectsByRank": [
-      [
-        {
-          "type": "remove_status",
-          "statusIds": [
-            "blessed",
-            "berserk",
-            "empowered",
-            "stealth"
-          ],
-          "target": "target"
-        }
-      ],
-      [
-        {
-          "type": "remove_status",
-          "statusIds": [
-            "blessed",
-            "berserk",
-            "empowered",
-            "stealth"
-          ],
-          "target": "target"
-        }
-      ],
-      [
-        {
-          "type": "remove_status",
-          "statusIds": [
-            "blessed",
-            "berserk",
-            "empowered",
-            "stealth"
-          ],
-          "target": "target"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "dominate",
-    "name": "Dominate",
-    "description": "Your will bends reality itself, seizing control of an enemy's mind. The target is charmed for 4 turns, turning on its former allies and fighting for you.",
-    "school": "arcane",
-    "tags": [
-      "control",
-      "spell"
-    ],
-    "cooldown": 20,
-    "targetType": "actor",
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "charmed",
-          "durationTurns": 4,
-          "target": "target"
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "charmed",
-          "durationTurns": 4,
-          "target": "target"
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "charmed",
-          "durationTurns": 4,
-          "target": "target"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "empower_spell",
-    "name": "Empower Spell",
-    "description": "You channel raw magical energy into your next area spell. For 3 turns your area-of-effect attacks deal an extra 2 force damage to every target caught in the blast.",
-    "school": "arcane",
-    "tags": [
-      "buff",
-      "spell"
-    ],
-    "cooldown": 10,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "empowered",
-          "durationTurns": 3,
-          "adjustments": {
-            "areaDamageFlat": {
-              "damageType": "force",
-              "amount": 2
-            }
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "empowered",
-          "durationTurns": 3,
-          "adjustments": {
-            "areaDamageFlat": {
-              "damageType": "force",
-              "amount": 2
-            }
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "empowered",
-          "durationTurns": 3,
-          "adjustments": {
-            "areaDamageFlat": {
-              "damageType": "force",
-              "amount": 2
-            }
-          }
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "entangle",
-    "name": "Entangle",
-    "description": "Conjure roots that erupt from the ground and pin an enemy in place for 3 turns. They can still fight, but cannot flee.",
-    "school": "nature",
-    "tags": [
-      "control",
-      "spell"
-    ],
-    "cooldown": 10,
-    "targetType": "actor",
-    "range": 4,
-    "effectsByRank": [
-      [
+        },
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 3,
-          "target": "target"
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "constitution_training",
+    "name": "Constitution Training",
+    "description": "Endurance training improves CON saving throws and boosts second_wind healing.",
+    "school": "martial",
+    "tags": [
+      "buff"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "add_saving_throw_proficiency",
+          "ability": "constitution"
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "rooted",
-          "durationTurns": 3,
-          "target": "target"
+          "type": "add_saving_throw_proficiency",
+          "ability": "constitution"
+        },
+        {
+          "type": "modify_attribute",
+          "attribute": "constitution",
+          "amount": 1
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "rooted",
-          "durationTurns": 3,
-          "target": "target"
+          "type": "add_saving_throw_proficiency",
+          "ability": "constitution"
+        },
+        {
+          "type": "modify_attribute",
+          "attribute": "constitution",
+          "amount": 2
         }
       ]
     ]
@@ -1453,7 +1054,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "evasion",
     "name": "Evasion",
-    "description": "You move like water, deflecting blows with fluid grace. +2 Armour Class.",
+    "description": "Lightning reflexes let you evade magical effects. Grants DEX save proficiency at rank 1; bonus AC at higher ranks.",
     "school": "shadow",
     "tags": [
       "buff"
@@ -1461,17 +1062,25 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "modify_armor_class",
-          "amount": 2
+          "type": "add_saving_throw_proficiency",
+          "ability": "dexterity"
         }
       ],
       [
         {
+          "type": "add_saving_throw_proficiency",
+          "ability": "dexterity"
+        },
+        {
           "type": "modify_armor_class",
-          "amount": 2
+          "amount": 1
         }
       ],
       [
+        {
+          "type": "add_saving_throw_proficiency",
+          "ability": "dexterity"
+        },
         {
           "type": "modify_armor_class",
           "amount": 2
@@ -1481,13 +1090,13 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "passive",
-    "id": "fire_affinity",
-    "name": "Fire Affinity",
-    "description": "Your attunement to fire magic adds a burst of flame to every area spell.",
+    "id": "fire_mastery",
+    "name": "Fire Mastery",
+    "description": "Fire mastery adds bonus fire damage to every attack — area spells and directed bolts alike.",
     "school": "arcane",
     "tags": [
-      "damage",
-      "buff"
+      "buff",
+      "damage"
     ],
     "effectsByRank": [
       [
@@ -1495,56 +1104,26 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_damage_dice",
           "dice": "1d4",
           "damageType": "fire",
-          "appliesTo": "area",
+          "appliesTo": "any",
           "onCritOnly": false
         }
       ],
       [
         {
           "type": "add_damage_dice",
-          "dice": "1d4",
+          "dice": "1d6",
           "damageType": "fire",
-          "appliesTo": "area",
+          "appliesTo": "any",
           "onCritOnly": false
         }
       ],
       [
         {
           "type": "add_damage_dice",
-          "dice": "1d4",
+          "dice": "1d8",
           "damageType": "fire",
-          "appliesTo": "area",
+          "appliesTo": "any",
           "onCritOnly": false
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "passive",
-    "id": "fire_immunity",
-    "name": "Fire Immunity",
-    "description": "Your mastery of flame makes you completely immune to fire damage.",
-    "school": "arcane",
-    "tags": [
-      "utility"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "add_damage_immunity",
-          "damageType": "fire"
-        }
-      ],
-      [
-        {
-          "type": "add_damage_immunity",
-          "damageType": "fire"
-        }
-      ],
-      [
-        {
-          "type": "add_damage_immunity",
-          "damageType": "fire"
         }
       ]
     ]
@@ -1560,7 +1139,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 20,
+    "cooldown": 4,
     "targetType": "tile",
     "range": 5,
     "effectsByRank": [
@@ -1569,6 +1148,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "area_damage",
           "dice": "2d6",
           "radiusTiles": 1,
+          "scalingStat": "intelligence",
           "damageType": "fire",
           "savingThrow": {
             "saveAbility": "dexterity",
@@ -1580,8 +1160,9 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
-          "dice": "2d6",
+          "dice": "4d6",
           "radiusTiles": 1,
+          "scalingStat": "intelligence",
           "damageType": "fire",
           "savingThrow": {
             "saveAbility": "dexterity",
@@ -1593,8 +1174,9 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
-          "dice": "2d6",
-          "radiusTiles": 1,
+          "dice": "4d6",
+          "radiusTiles": 2,
+          "scalingStat": "intelligence",
           "damageType": "fire",
           "savingThrow": {
             "saveAbility": "dexterity",
@@ -1606,149 +1188,41 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
-    "skillType": "active",
-    "id": "flurry_of_blows",
-    "name": "Flurry of Blows",
-    "description": "Unleash a lightning-fast flurry of strikes. Make three separate attacks against the same target — each a full d20 roll that can hit, miss, or crit independently.",
-    "school": "martial",
+    "skillType": "passive",
+    "id": "force_mastery",
+    "name": "Force Mastery",
+    "description": "Raw arcane force adds bonus force damage to every attack — spells, bolts, and blasts alike.",
+    "school": "arcane",
     "tags": [
-      "damage",
-      "weapon_attack"
+      "buff",
+      "damage"
     ],
-    "cooldown": 8,
-    "targetType": "actor",
-    "range": 1,
     "effectsByRank": [
       [
         {
-          "type": "multi_strike",
-          "strikeCount": 3,
-          "dice": "1d6",
-          "damageType": "bludgeoning"
+          "type": "add_damage_dice",
+          "dice": "1d4",
+          "damageType": "force",
+          "appliesTo": "any",
+          "onCritOnly": false
         }
       ],
       [
         {
-          "type": "multi_strike",
-          "strikeCount": 3,
+          "type": "add_damage_dice",
           "dice": "1d6",
-          "damageType": "bludgeoning"
+          "damageType": "force",
+          "appliesTo": "any",
+          "onCritOnly": false
         }
       ],
       [
         {
-          "type": "multi_strike",
-          "strikeCount": 3,
-          "dice": "1d6",
-          "damageType": "bludgeoning"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "grappling_hook",
-    "name": "Grappling Hook",
-    "description": "Launch a hook that snags a nearby enemy and drags them toward you. If they slam into you, they take impact damage.",
-    "school": "martial",
-    "tags": [
-      "control",
-      "mobility"
-    ],
-    "cooldown": 8,
-    "targetType": "actor",
-    "range": 5,
-    "effectsByRank": [
-      [
-        {
-          "type": "pull_actor",
-          "maxPullTiles": 4,
-          "wallDamageDice": "1d8",
-          "wallDamageType": "bludgeoning"
-        }
-      ],
-      [
-        {
-          "type": "pull_actor",
-          "maxPullTiles": 4,
-          "wallDamageDice": "1d8",
-          "wallDamageType": "bludgeoning"
-        }
-      ],
-      [
-        {
-          "type": "pull_actor",
-          "maxPullTiles": 4,
-          "wallDamageDice": "1d8",
-          "wallDamageType": "bludgeoning"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "hex",
-    "name": "Hex",
-    "description": "A curse of necrotic rot settles into your target. You deal 1d6 necrotic damage and mark them — every successful hit causes them to bleed for 3 turns, losing 1 HP per turn.",
-    "school": "shadow",
-    "tags": [
-      "damage",
-      "debuff",
-      "spell"
-    ],
-    "cooldown": 8,
-    "targetType": "actor",
-    "range": 4,
-    "effectsByRank": [
-      [
-        {
-          "type": "single_target_damage",
-          "dice": "1d6",
-          "damageType": "necrotic",
-          "scalingStat": "charisma",
-          "attackRoll": {
-            "modifierStat": "charisma",
-            "useProficiency": true
-          },
-          "onHitStatus": {
-            "statusId": "bleeding",
-            "durationTurns": 3,
-            "value": 1
-          }
-        }
-      ],
-      [
-        {
-          "type": "single_target_damage",
-          "dice": "1d6",
-          "damageType": "necrotic",
-          "scalingStat": "charisma",
-          "attackRoll": {
-            "modifierStat": "charisma",
-            "useProficiency": true
-          },
-          "onHitStatus": {
-            "statusId": "bleeding",
-            "durationTurns": 3,
-            "value": 1
-          }
-        }
-      ],
-      [
-        {
-          "type": "single_target_damage",
-          "dice": "1d6",
-          "damageType": "necrotic",
-          "scalingStat": "charisma",
-          "attackRoll": {
-            "modifierStat": "charisma",
-            "useProficiency": true
-          },
-          "onHitStatus": {
-            "statusId": "bleeding",
-            "durationTurns": 3,
-            "value": 1
-          }
+          "type": "add_damage_dice",
+          "dice": "1d8",
+          "damageType": "force",
+          "appliesTo": "any",
+          "onCritOnly": false
         }
       ]
     ]
@@ -1757,7 +1231,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "iron_skin",
     "name": "Iron Skin",
-    "description": "Your skin hardens through relentless training. +2 Armour Class.",
+    "description": "Your skin hardens through relentless training, granting increasing Armour Class.",
     "school": "martial",
     "tags": [
       "buff"
@@ -1766,7 +1240,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "modify_armor_class",
-          "amount": 2
+          "amount": 1
         }
       ],
       [
@@ -1778,7 +1252,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "modify_armor_class",
-          "amount": 2
+          "amount": 3
         }
       ]
     ]
@@ -1791,10 +1265,9 @@ export const skills: readonly SkillDefinition[] = [
     "school": "arcane",
     "tags": [
       "damage",
-      "aoe",
       "spell"
     ],
-    "cooldown": 15,
+    "cooldown": 4,
     "targetType": "tile",
     "range": 6,
     "effectsByRank": [
@@ -1802,21 +1275,79 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "line_damage",
           "dice": "3d6",
-          "damageType": "lightning"
+          "damageType": "lightning",
+          "scalingStat": "intelligence",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "intelligence",
+            "successDamageMultiplier": 0.5
+          }
         }
       ],
       [
         {
           "type": "line_damage",
-          "dice": "3d6",
-          "damageType": "lightning"
+          "dice": "5d6",
+          "damageType": "lightning",
+          "scalingStat": "intelligence",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "intelligence",
+            "successDamageMultiplier": 0.5
+          }
         }
       ],
       [
         {
           "type": "line_damage",
-          "dice": "3d6",
-          "damageType": "lightning"
+          "dice": "7d6",
+          "damageType": "lightning",
+          "scalingStat": "intelligence",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "intelligence",
+            "successDamageMultiplier": 0.5
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "lightning_mastery",
+    "name": "Lightning Mastery",
+    "description": "Storm mastery adds bonus lightning damage to every attack.",
+    "school": "arcane",
+    "tags": [
+      "buff",
+      "damage"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d4",
+          "damageType": "lightning",
+          "appliesTo": "any",
+          "onCritOnly": false
+        }
+      ],
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d6",
+          "damageType": "lightning",
+          "appliesTo": "any",
+          "onCritOnly": false
+        }
+      ],
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d8",
+          "damageType": "lightning",
+          "appliesTo": "any",
+          "onCritOnly": false
         }
       ]
     ]
@@ -1825,7 +1356,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "mage_armor",
     "name": "Mage Armour",
-    "description": "An invisible arcane barrier surrounds you. +3 Armour Class.",
+    "description": "An invisible arcane barrier surrounds you, granting increasing Armour Class.",
     "school": "arcane",
     "tags": [
       "buff"
@@ -1834,7 +1365,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "modify_armor_class",
-          "amount": 3
+          "amount": 2
         }
       ],
       [
@@ -1846,7 +1377,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "modify_armor_class",
-          "amount": 3
+          "amount": 4
         }
       ]
     ]
@@ -1855,13 +1386,14 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "magic_arrow",
     "name": "Magic Arrow",
-    "description": "Launch a concentrated bolt of arcane energy at a single target.",
+    "description": "A bolt of pure arcane force. Cooldown 0 — the mage's at-will cantrip.",
     "school": "arcane",
     "tags": [
       "damage",
-      "spell"
+      "spell",
+      "ranged"
     ],
-    "cooldown": 3,
+    "cooldown": 0,
     "targetType": "actor",
     "range": 6,
     "effectsByRank": [
@@ -1880,7 +1412,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
-          "dice": "1d6",
+          "dice": "2d6",
           "damageType": "force",
           "scalingStat": "intelligence",
           "attackRoll": {
@@ -1892,53 +1424,13 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
-          "dice": "1d6",
+          "dice": "3d6",
           "damageType": "force",
           "scalingStat": "intelligence",
           "attackRoll": {
             "modifierStat": "intelligence",
             "useProficiency": true
           }
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "mark_prey",
-    "name": "Mark Prey",
-    "description": "Paint your target with an arcane sigil that strips their stealth and prevents them from hiding. The revealed effect lasts 5 turns.",
-    "school": "nature",
-    "tags": [
-      "debuff",
-      "stealth"
-    ],
-    "cooldown": 10,
-    "targetType": "actor",
-    "range": 6,
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "revealed",
-          "durationTurns": 5,
-          "target": "target"
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "revealed",
-          "durationTurns": 5,
-          "target": "target"
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "revealed",
-          "durationTurns": 5,
-          "target": "target"
         }
       ]
     ]
@@ -1954,7 +1446,7 @@ export const skills: readonly SkillDefinition[] = [
       "mobility",
       "aoe"
     ],
-    "cooldown": 12,
+    "cooldown": 5,
     "targetType": "tile",
     "range": 4,
     "effectsByRank": [
@@ -1963,7 +1455,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "leap_attack",
           "maxRangeTiles": 4,
           "landingRadiusTiles": 1,
-          "dice": "2d6",
+          "dice": "1d8",
           "damageType": "bludgeoning",
           "scalingStat": "strength"
         }
@@ -1973,7 +1465,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "leap_attack",
           "maxRangeTiles": 4,
           "landingRadiusTiles": 1,
-          "dice": "2d6",
+          "dice": "2d8",
           "damageType": "bludgeoning",
           "scalingStat": "strength"
         }
@@ -1983,9 +1475,49 @@ export const skills: readonly SkillDefinition[] = [
           "type": "leap_attack",
           "maxRangeTiles": 4,
           "landingRadiusTiles": 1,
-          "dice": "2d6",
+          "dice": "3d8",
           "damageType": "bludgeoning",
           "scalingStat": "strength"
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "piercing_mastery",
+    "name": "Piercing Mastery",
+    "description": "Polearm and spear mastery adds bonus piercing damage to every weapon strike.",
+    "school": "martial",
+    "tags": [
+      "buff",
+      "damage"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d6",
+          "damageType": "piercing",
+          "appliesTo": "melee",
+          "onCritOnly": false
+        }
+      ],
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d8",
+          "damageType": "piercing",
+          "appliesTo": "melee",
+          "onCritOnly": false
+        }
+      ],
+      [
+        {
+          "type": "add_damage_dice",
+          "dice": "1d10",
+          "damageType": "piercing",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ]
     ]
@@ -1995,11 +1527,12 @@ export const skills: readonly SkillDefinition[] = [
     "id": "poison_bite",
     "name": "Poison Bite",
     "description": "A venomous bite that deals piercing damage and injects poison, dealing damage over time.",
-    "school": "nature",
+    "school": "bestial",
     "tags": [
       "damage",
       "debuff",
-      "weapon_attack"
+      "weapon_attack",
+      "melee_attack"
     ],
     "cooldown": 3,
     "targetType": "actor",
@@ -2024,7 +1557,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
-          "dice": "1d4",
+          "dice": "1d6",
           "damageType": "piercing",
           "attackRoll": {
             "modifierStat": "dexterity",
@@ -2032,15 +1565,15 @@ export const skills: readonly SkillDefinition[] = [
           },
           "onHitStatus": {
             "statusId": "poisoned",
-            "durationTurns": 3,
-            "value": 1
+            "durationTurns": 4,
+            "value": 2
           }
         }
       ],
       [
         {
           "type": "single_target_damage",
-          "dice": "1d4",
+          "dice": "1d8",
           "damageType": "piercing",
           "attackRoll": {
             "modifierStat": "dexterity",
@@ -2048,8 +1581,8 @@ export const skills: readonly SkillDefinition[] = [
           },
           "onHitStatus": {
             "statusId": "poisoned",
-            "durationTurns": 3,
-            "value": 1
+            "durationTurns": 5,
+            "value": 3
           }
         }
       ]
@@ -2060,13 +1593,15 @@ export const skills: readonly SkillDefinition[] = [
     "id": "poison_blade",
     "name": "Poison Blade",
     "description": "A swift slash that coats the wound with venom, dealing damage over time.",
-    "school": "nature",
+    "school": "shadow",
     "tags": [
       "damage",
       "debuff",
-      "weapon_attack"
+      "weapon_attack",
+      "finesse",
+      "melee_attack"
     ],
-    "cooldown": 10,
+    "cooldown": 3,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -2075,56 +1610,47 @@ export const skills: readonly SkillDefinition[] = [
           "type": "single_target_damage",
           "dice": "1d6",
           "damageType": "piercing",
-          "scalingStat": "dexterity",
           "attackRoll": {
             "modifierStat": "dexterity",
             "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "poisoned",
+            "durationTurns": 3,
+            "value": 2
           }
-        },
-        {
-          "type": "apply_status",
-          "statusId": "poisoned",
-          "durationTurns": 5,
-          "value": 3,
-          "target": "target"
         }
       ],
       [
         {
           "type": "single_target_damage",
-          "dice": "1d6",
+          "dice": "2d6",
           "damageType": "piercing",
-          "scalingStat": "dexterity",
           "attackRoll": {
             "modifierStat": "dexterity",
             "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "poisoned",
+            "durationTurns": 4,
+            "value": 3
           }
-        },
-        {
-          "type": "apply_status",
-          "statusId": "poisoned",
-          "durationTurns": 5,
-          "value": 3,
-          "target": "target"
         }
       ],
       [
         {
           "type": "single_target_damage",
-          "dice": "1d6",
+          "dice": "2d6",
           "damageType": "piercing",
-          "scalingStat": "dexterity",
           "attackRoll": {
             "modifierStat": "dexterity",
             "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "poisoned",
+            "durationTurns": 5,
+            "value": 4
           }
-        },
-        {
-          "type": "apply_status",
-          "statusId": "poisoned",
-          "durationTurns": 5,
-          "value": 3,
-          "target": "target"
         }
       ]
     ]
@@ -2133,25 +1659,34 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "poison_immunity",
     "name": "Poison Immunity",
-    "description": "Years of exposure to toxins have made you completely immune to poison.",
-    "school": "nature",
+    "description": "Years of exposure to toxins harden your body against poison. Full immunity at rank 1; complete damage negation at rank 3.",
+    "school": "shadow",
     "tags": [
+      "buff",
       "utility"
     ],
     "effectsByRank": [
       [
         {
-          "type": "add_damage_immunity",
+          "type": "add_status_immunity",
+          "statusId": "poisoned"
+        }
+      ],
+      [
+        {
+          "type": "add_status_immunity",
+          "statusId": "poisoned"
+        },
+        {
+          "type": "add_damage_resistance",
           "damageType": "poison"
         }
       ],
       [
         {
-          "type": "add_damage_immunity",
-          "damageType": "poison"
-        }
-      ],
-      [
+          "type": "add_status_immunity",
+          "statusId": "poisoned"
+        },
         {
           "type": "add_damage_immunity",
           "damageType": "poison"
@@ -2160,47 +1695,32 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
-    "skillType": "active",
-    "id": "prayer_of_mending",
-    "name": "Prayer of Mending",
-    "description": "A brief prayer that amplifies your healing touch. For 4 turns all healing you perform restores 3 additional HP.",
-    "school": "divine",
+    "skillType": "passive",
+    "id": "poison_mastery",
+    "name": "Poison Mastery",
+    "description": "Mastery of toxicology makes every tick of every poison, bleed, or burn more lethal.",
+    "school": "shadow",
     "tags": [
       "buff",
-      "healing",
-      "spell"
+      "debuff"
     ],
-    "cooldown": 12,
-    "targetType": "none",
     "effectsByRank": [
       [
         {
-          "type": "apply_status",
-          "statusId": "prayer_of_mending",
-          "durationTurns": 4,
-          "adjustments": {
-            "healingDoneFlat": 3
-          }
+          "type": "add_dot_amplify_flat",
+          "amount": 1
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "prayer_of_mending",
-          "durationTurns": 4,
-          "adjustments": {
-            "healingDoneFlat": 3
-          }
+          "type": "add_dot_amplify_flat",
+          "amount": 2
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "prayer_of_mending",
-          "durationTurns": 4,
-          "adjustments": {
-            "healingDoneFlat": 3
-          }
+          "type": "add_dot_amplify_flat",
+          "amount": 3
         }
       ]
     ]
@@ -2209,93 +1729,28 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "predators_instinct",
     "name": "Predator's Instinct",
-    "description": "Your predatory senses sharpen. +2 Charisma and +2 Wisdom.",
-    "school": "nature",
+    "description": "Predatory precision adds a flat bonus to all attack rolls, making your strikes harder to dodge.",
+    "school": "shadow",
     "tags": [
       "buff"
     ],
     "effectsByRank": [
       [
         {
-          "type": "modify_attribute",
-          "attribute": "charisma",
-          "amount": 2
-        },
+          "type": "add_attack_roll_bonus",
+          "amount": 1
+        }
+      ],
+      [
         {
-          "type": "modify_attribute",
-          "attribute": "wisdom",
+          "type": "add_attack_roll_bonus",
           "amount": 2
         }
       ],
       [
         {
-          "type": "modify_attribute",
-          "attribute": "charisma",
-          "amount": 2
-        },
-        {
-          "type": "modify_attribute",
-          "attribute": "wisdom",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "charisma",
-          "amount": 2
-        },
-        {
-          "type": "modify_attribute",
-          "attribute": "wisdom",
-          "amount": 2
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "predatory_focus",
-    "name": "Predatory Focus",
-    "description": "You lock onto a weakness. For 4 turns your targeted skill attacks deal an extra 1d6 damage and your critical hit range expands by 1.",
-    "school": "nature",
-    "tags": [
-      "buff"
-    ],
-    "cooldown": 12,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "predatory_focus",
-          "durationTurns": 4,
-          "adjustments": {
-            "rangedDamageDiceBonus": "1d6",
-            "critThresholdReduction": 1
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "predatory_focus",
-          "durationTurns": 4,
-          "adjustments": {
-            "rangedDamageDiceBonus": "1d6",
-            "critThresholdReduction": 1
-          }
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "predatory_focus",
-          "durationTurns": 4,
-          "adjustments": {
-            "rangedDamageDiceBonus": "1d6",
-            "critThresholdReduction": 1
-          }
+          "type": "add_attack_roll_bonus",
+          "amount": 3
         }
       ]
     ]
@@ -2304,8 +1759,8 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "quick_reflexes",
     "name": "Quick Reflexes",
-    "description": "Your agility becomes legendary. +2 Dexterity.",
-    "school": "martial",
+    "description": "DEX bonus that scales attack rolls, AC, and DEX saving throws. Foundation of most rogue builds.",
+    "school": "shadow",
     "tags": [
       "buff"
     ],
@@ -2321,14 +1776,14 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "modify_attribute",
           "attribute": "dexterity",
-          "amount": 2
+          "amount": 3
         }
       ],
       [
         {
           "type": "modify_attribute",
           "attribute": "dexterity",
-          "amount": 2
+          "amount": 4
         }
       ]
     ]
@@ -2337,21 +1792,36 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "reckless_attack",
     "name": "Reckless Attack",
-    "description": "You throw caution to the wind, swinging with reckless abandon. For 6 turns you gain advantage on all attack rolls — but your guard is down and enemies gain advantage against you too.",
+    "description": "Trade defence for devastating power. Grants advantage on this strike but leaves you exposed.",
     "school": "martial",
     "tags": [
-      "buff"
+      "damage",
+      "weapon_attack",
+      "melee_attack"
     ],
-    "cooldown": 6,
-    "targetType": "none",
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 1,
     "effectsByRank": [
       [
         {
           "type": "apply_status",
           "statusId": "reckless",
-          "durationTurns": 6,
+          "durationTurns": 2,
+          "target": "self",
           "adjustments": {
+            "acBonus": -2,
             "hasAdvantage": true
+          }
+        },
+        {
+          "type": "single_target_damage",
+          "dice": "2d8",
+          "damageType": "slashing",
+          "scalingStat": "strength",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
           }
         }
       ],
@@ -2359,9 +1829,21 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "reckless",
-          "durationTurns": 6,
+          "durationTurns": 2,
+          "target": "self",
           "adjustments": {
+            "acBonus": -2,
             "hasAdvantage": true
+          }
+        },
+        {
+          "type": "single_target_damage",
+          "dice": "3d8",
+          "damageType": "slashing",
+          "scalingStat": "strength",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
           }
         }
       ],
@@ -2369,10 +1851,52 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "reckless",
-          "durationTurns": 6,
+          "durationTurns": 2,
+          "target": "self",
           "adjustments": {
+            "acBonus": -2,
             "hasAdvantage": true
           }
+        },
+        {
+          "type": "single_target_damage",
+          "dice": "4d8",
+          "damageType": "slashing",
+          "scalingStat": "strength",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "passive",
+    "id": "relentless",
+    "name": "Relentless",
+    "description": "Your relentless assaults find gaps in defences, lowering your critical hit threshold.",
+    "school": "martial",
+    "tags": [
+      "buff"
+    ],
+    "effectsByRank": [
+      [
+        {
+          "type": "modify_crit_threshold",
+          "reduction": 1
+        }
+      ],
+      [
+        {
+          "type": "modify_crit_threshold",
+          "reduction": 2
+        }
+      ],
+      [
+        {
+          "type": "modify_crit_threshold",
+          "reduction": 3
         }
       ]
     ]
@@ -2381,12 +1905,13 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "second_wind",
     "name": "Second Wind",
-    "description": "Draw on reserves of stamina to recover. Roll 1d10 and add your Constitution modifier — that is how much HP you regain.",
+    "description": "Draw on reserves of stamina to recover. Roll your hit dice and add your Constitution modifier — that is how much HP you regain.",
     "school": "martial",
     "tags": [
-      "healing"
+      "healing",
+      "utility"
     ],
-    "cooldown": 20,
+    "cooldown": 5,
     "targetType": "none",
     "effectsByRank": [
       [
@@ -2399,14 +1924,14 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "heal_self",
-          "dice": "1d10",
+          "dice": "2d10",
           "scalingStat": "constitution"
         }
       ],
       [
         {
           "type": "heal_self",
-          "dice": "1d10",
+          "dice": "3d10",
           "scalingStat": "constitution"
         }
       ]
@@ -2416,15 +1941,15 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "shadow_step",
     "name": "Shadow Step",
-    "description": "Melt into the darkness and re-emerge at a distant location, leaving no trace of your passing.",
+    "description": "Melt into the darkness and re-emerge at a distant location. At higher ranks you vanish on arrival.",
     "school": "shadow",
     "tags": [
       "mobility",
       "stealth"
     ],
-    "cooldown": 15,
+    "cooldown": 4,
     "targetType": "tile",
-    "range": 5,
+    "range": 4,
     "maintainsStealth": true,
     "effectsByRank": [
       [
@@ -2435,11 +1960,23 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "shadow_step"
+        },
+        {
+          "type": "apply_status",
+          "statusId": "stealth",
+          "durationTurns": 1,
+          "target": "self"
         }
       ],
       [
         {
           "type": "shadow_step"
+        },
+        {
+          "type": "apply_status",
+          "statusId": "stealth",
+          "durationTurns": 2,
+          "target": "self"
         }
       ]
     ]
@@ -2448,12 +1985,11 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "shadow_strike",
     "name": "Shadow Strike",
-    "description": "Your attacks from the darkness pierce deep. Add 1d4 piercing damage to every melee attack.",
+    "description": "Strikes from the shadows find vital points, adding bonus piercing damage to every melee attack.",
     "school": "shadow",
     "tags": [
-      "damage",
-      "stealth",
-      "buff"
+      "buff",
+      "damage"
     ],
     "effectsByRank": [
       [
@@ -2468,7 +2004,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "add_damage_dice",
-          "dice": "1d4",
+          "dice": "1d6",
           "damageType": "piercing",
           "appliesTo": "melee",
           "onCritOnly": false
@@ -2477,7 +2013,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "add_damage_dice",
-          "dice": "1d4",
+          "dice": "1d8",
           "damageType": "piercing",
           "appliesTo": "melee",
           "onCritOnly": false
@@ -2495,19 +2031,19 @@ export const skills: readonly SkillDefinition[] = [
       "buff",
       "spell"
     ],
-    "cooldown": 25,
+    "cooldown": 5,
     "targetType": "none",
     "effectsByRank": [
       [
         {
           "type": "apply_shield",
-          "amount": 20
+          "amount": 10
         }
       ],
       [
         {
           "type": "apply_shield",
-          "amount": 20
+          "amount": 15
         }
       ],
       [
@@ -2519,42 +2055,41 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
-    "skillType": "active",
-    "id": "silence",
-    "name": "Silence",
-    "description": "Whisper a word of negation that seals an enemy's ability to cast skills. The target is silenced for 4 turns.",
-    "school": "arcane",
+    "skillType": "passive",
+    "id": "slashing_mastery",
+    "name": "Slashing Mastery",
+    "description": "Blade mastery adds bonus slashing damage to every weapon strike and charge.",
+    "school": "martial",
     "tags": [
-      "control",
-      "debuff",
-      "spell"
+      "buff",
+      "damage"
     ],
-    "cooldown": 14,
-    "targetType": "actor",
-    "range": 4,
     "effectsByRank": [
       [
         {
-          "type": "apply_status",
-          "statusId": "silenced",
-          "durationTurns": 4,
-          "target": "target"
+          "type": "add_damage_dice",
+          "dice": "1d6",
+          "damageType": "slashing",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "silenced",
-          "durationTurns": 4,
-          "target": "target"
+          "type": "add_damage_dice",
+          "dice": "1d8",
+          "damageType": "slashing",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ],
       [
         {
-          "type": "apply_status",
-          "statusId": "silenced",
-          "durationTurns": 4,
-          "target": "target"
+          "type": "add_damage_dice",
+          "dice": "1d10",
+          "damageType": "slashing",
+          "appliesTo": "melee",
+          "onCritOnly": false
         }
       ]
     ]
@@ -2563,54 +2098,42 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "active",
     "id": "smoke_bomb",
     "name": "Smoke Bomb",
-    "description": "Hurl a choking smoke bomb that poisons adjacent enemies and vanishes you from sight.",
+    "description": "Hurl a choking smoke bomb that roots enemies caught in the blast.",
     "school": "shadow",
     "tags": [
-      "damage",
-      "stealth",
+      "control",
+      "utility",
       "aoe"
     ],
-    "cooldown": 18,
-    "targetType": "none",
-    "maintainsStealth": true,
+    "cooldown": 5,
+    "targetType": "tile",
+    "range": 4,
     "effectsByRank": [
       [
         {
-          "type": "area_damage",
-          "dice": "1d4",
-          "radiusTiles": 1,
-          "damageType": "poison"
-        },
-        {
           "type": "apply_status",
-          "statusId": "stealth",
-          "durationTurns": 8
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
         }
       ],
       [
         {
-          "type": "area_damage",
-          "dice": "1d4",
-          "radiusTiles": 1,
-          "damageType": "poison"
-        },
-        {
           "type": "apply_status",
-          "statusId": "stealth",
-          "durationTurns": 8
+          "statusId": "rooted",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
         }
       ],
       [
         {
-          "type": "area_damage",
-          "dice": "1d4",
-          "radiusTiles": 1,
-          "damageType": "poison"
-        },
-        {
           "type": "apply_status",
-          "statusId": "stealth",
-          "durationTurns": 8
+          "statusId": "rooted",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
         }
       ]
     ]
@@ -2624,9 +2147,11 @@ export const skills: readonly SkillDefinition[] = [
     "tags": [
       "damage",
       "stealth",
-      "weapon_attack"
+      "weapon_attack",
+      "finesse",
+      "melee_attack"
     ],
-    "cooldown": 2,
+    "cooldown": 1,
     "targetType": "actor",
     "range": 1,
     "maintainsStealth": true,
@@ -2641,14 +2166,14 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "sneak_attack",
-          "dice": "3d6",
+          "dice": "5d6",
           "damageType": "piercing"
         }
       ],
       [
         {
           "type": "sneak_attack",
-          "dice": "3d6",
+          "dice": "7d6",
           "damageType": "piercing"
         }
       ]
@@ -2664,7 +2189,7 @@ export const skills: readonly SkillDefinition[] = [
       "stealth",
       "utility"
     ],
-    "cooldown": 30,
+    "cooldown": 5,
     "targetType": "none",
     "maintainsStealth": true,
     "effectsByRank": [
@@ -2672,359 +2197,23 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "stealth",
-          "durationTurns": 20
+          "durationTurns": 8,
+          "target": "self"
         }
       ],
       [
         {
           "type": "apply_status",
           "statusId": "stealth",
-          "durationTurns": 20
+          "durationTurns": 12,
+          "target": "self"
         }
       ],
       [
         {
           "type": "apply_status",
           "statusId": "stealth",
-          "durationTurns": 20
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "terrifying_shout",
-    "name": "Terrifying Shout",
-    "description": "You unleash a bone-chilling war cry that sends nearby enemies fleeing for their lives. Every monster within 3 tiles is frightened for 6 turns, desperately trying to escape your presence.",
-    "school": "martial",
-    "tags": [
-      "control",
-      "debuff",
-      "aoe"
-    ],
-    "cooldown": 14,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "apply_status",
-          "statusId": "frightened",
-          "durationTurns": 6,
-          "target": "aoe",
-          "aoeRadiusTiles": 3
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "frightened",
-          "durationTurns": 6,
-          "target": "aoe",
-          "aoeRadiusTiles": 3
-        }
-      ],
-      [
-        {
-          "type": "apply_status",
-          "statusId": "frightened",
-          "durationTurns": 6,
-          "target": "aoe",
-          "aoeRadiusTiles": 3
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "thunderwave",
-    "name": "Thunderwave",
-    "description": "A wave of thunderous force sweeps out from you. Deals 1d8 thunder damage to nearby enemies and hurls your target up to 2 tiles away — walls make for a painful stop.",
-    "school": "martial",
-    "tags": [
-      "damage",
-      "control",
-      "aoe"
-    ],
-    "cooldown": 12,
-    "targetType": "actor",
-    "range": 1,
-    "effectsByRank": [
-      [
-        {
-          "type": "area_damage",
-          "dice": "1d8",
-          "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "thunder",
-          "savingThrow": {
-            "saveAbility": "constitution",
-            "dcStat": "strength",
-            "successDamageMultiplier": 0.5
-          }
-        },
-        {
-          "type": "push_actor",
-          "maxPushTiles": 2,
-          "wallDamageDice": "1d6",
-          "wallDamageType": "bludgeoning"
-        }
-      ],
-      [
-        {
-          "type": "area_damage",
-          "dice": "1d8",
-          "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "thunder",
-          "savingThrow": {
-            "saveAbility": "constitution",
-            "dcStat": "strength",
-            "successDamageMultiplier": 0.5
-          }
-        },
-        {
-          "type": "push_actor",
-          "maxPushTiles": 2,
-          "wallDamageDice": "1d6",
-          "wallDamageType": "bludgeoning"
-        }
-      ],
-      [
-        {
-          "type": "area_damage",
-          "dice": "1d8",
-          "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "thunder",
-          "savingThrow": {
-            "saveAbility": "constitution",
-            "dcStat": "strength",
-            "successDamageMultiplier": 0.5
-          }
-        },
-        {
-          "type": "push_actor",
-          "maxPushTiles": 2,
-          "wallDamageDice": "1d6",
-          "wallDamageType": "bludgeoning"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "passive",
-    "id": "touch_of_rot",
-    "name": "Touch of Rot",
-    "description": "Your poisons and bleeds fester more savagely — every damage-over-time effect you apply deals 2 additional damage per turn.",
-    "school": "shadow",
-    "tags": [
-      "damage",
-      "debuff",
-      "buff"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "add_dot_amplify_flat",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "add_dot_amplify_flat",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "add_dot_amplify_flat",
-          "amount": 2
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "passive",
-    "id": "tough",
-    "name": "Tough",
-    "description": "Your body is harder to kill than most. Gain 10 maximum hit points immediately upon taking this feat.",
-    "school": "martial",
-    "tags": [
-      "buff"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "modify_max_hp",
-          "amount": 10
-        }
-      ],
-      [
-        {
-          "type": "modify_max_hp",
-          "amount": 10
-        }
-      ],
-      [
-        {
-          "type": "modify_max_hp",
-          "amount": 10
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "passive",
-    "id": "toughness",
-    "name": "Toughness",
-    "description": "Your constitution hardens through battle. +2 Constitution.",
-    "school": "martial",
-    "tags": [
-      "buff"
-    ],
-    "effectsByRank": [
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "constitution",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "constitution",
-          "amount": 2
-        }
-      ],
-      [
-        {
-          "type": "modify_attribute",
-          "attribute": "constitution",
-          "amount": 2
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "vampiric_touch",
-    "name": "Vampiric Touch",
-    "description": "Drain the life force from an enemy. Deals 2d6 necrotic damage and independently restores 1d6 hit points to you — whether or not the full damage lands.",
-    "school": "shadow",
-    "tags": [
-      "damage",
-      "healing",
-      "spell"
-    ],
-    "cooldown": 14,
-    "targetType": "actor",
-    "range": 1,
-    "effectsByRank": [
-      [
-        {
-          "type": "drain_life",
-          "dice": "2d6",
-          "damageType": "necrotic",
-          "healDice": "1d6"
-        }
-      ],
-      [
-        {
-          "type": "drain_life",
-          "dice": "2d6",
-          "damageType": "necrotic",
-          "healDice": "1d6"
-        }
-      ],
-      [
-        {
-          "type": "drain_life",
-          "dice": "2d6",
-          "damageType": "necrotic",
-          "healDice": "1d6"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "war_cry",
-    "name": "War Cry",
-    "description": "Unleash a thunderous battle cry that rattles all nearby enemies.",
-    "school": "martial",
-    "tags": [
-      "damage",
-      "aoe"
-    ],
-    "cooldown": 15,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "area_damage",
-          "dice": "1d6",
-          "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "thunder"
-        }
-      ],
-      [
-        {
-          "type": "area_damage",
-          "dice": "1d6",
-          "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "thunder"
-        }
-      ],
-      [
-        {
-          "type": "area_damage",
-          "dice": "1d6",
-          "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "thunder"
-        }
-      ]
-    ]
-  },
-  {
-    "skillType": "active",
-    "id": "ward_of_stone",
-    "name": "Ward of Stone",
-    "description": "Conjure a stone ward that absorbs incoming blows. Stacks on top of any existing magical shield.",
-    "school": "martial",
-    "tags": [
-      "buff"
-    ],
-    "cooldown": 18,
-    "targetType": "none",
-    "effectsByRank": [
-      [
-        {
-          "type": "modify_numeric_buff",
-          "key": "shieldHp",
-          "operation": "add",
-          "value": 15,
-          "target": "self"
-        }
-      ],
-      [
-        {
-          "type": "modify_numeric_buff",
-          "key": "shieldHp",
-          "operation": "add",
-          "value": 15,
-          "target": "self"
-        }
-      ],
-      [
-        {
-          "type": "modify_numeric_buff",
-          "key": "shieldHp",
-          "operation": "add",
-          "value": 15,
+          "durationTurns": 16,
           "target": "self"
         }
       ]
@@ -3034,7 +2223,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "warriors_might",
     "name": "Warrior's Might",
-    "description": "Years of combat training have strengthened your body. +2 Strength.",
+    "description": "Years of combat training have strengthened your body. Increases Strength, scaling all melee attack and damage rolls.",
     "school": "martial",
     "tags": [
       "buff"
@@ -3051,14 +2240,14 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "modify_attribute",
           "attribute": "strength",
-          "amount": 2
+          "amount": 3
         }
       ],
       [
         {
           "type": "modify_attribute",
           "attribute": "strength",
-          "amount": 2
+          "amount": 4
         }
       ]
     ]

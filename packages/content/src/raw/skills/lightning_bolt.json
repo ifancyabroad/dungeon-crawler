@@ -4,8 +4,8 @@
 	"name": "Lightning Bolt",
 	"description": "Hurl a bolt of lightning that arcs in a line from you to the target tile, striking every enemy in its path.",
 	"school": "arcane",
-	"tags": ["damage", "aoe", "spell"],
-	"cooldown": 15,
+	"tags": ["damage", "spell"],
+	"cooldown": 4,
 	"targetType": "tile",
 	"range": 6,
 	"effectsByRank": [
@@ -13,21 +13,39 @@
 			{
 				"type": "line_damage",
 				"dice": "3d6",
-				"damageType": "lightning"
+				"damageType": "lightning",
+				"scalingStat": "intelligence",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
 			}
 		],
 		[
 			{
 				"type": "line_damage",
-				"dice": "3d6",
-				"damageType": "lightning"
+				"dice": "5d6",
+				"damageType": "lightning",
+				"scalingStat": "intelligence",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
 			}
 		],
 		[
 			{
 				"type": "line_damage",
-				"dice": "3d6",
-				"damageType": "lightning"
+				"dice": "7d6",
+				"damageType": "lightning",
+				"scalingStat": "intelligence",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
 			}
 		]
 	]

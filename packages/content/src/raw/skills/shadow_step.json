@@ -2,12 +2,12 @@
 	"skillType": "active",
 	"id": "shadow_step",
 	"name": "Shadow Step",
-	"description": "Melt into the darkness and re-emerge at a distant location, leaving no trace of your passing.",
+	"description": "Melt into the darkness and re-emerge at a distant location. At higher ranks you vanish on arrival.",
 	"school": "shadow",
 	"tags": ["mobility", "stealth"],
-	"cooldown": 15,
+	"cooldown": 4,
 	"targetType": "tile",
-	"range": 5,
+	"range": 4,
 	"maintainsStealth": true,
 	"effectsByRank": [
 		[
@@ -18,11 +18,23 @@
 		[
 			{
 				"type": "shadow_step"
+			},
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 1,
+				"target": "self"
 			}
 		],
 		[
 			{
 				"type": "shadow_step"
+			},
+			{
+				"type": "apply_status",
+				"statusId": "stealth",
+				"durationTurns": 2,
+				"target": "self"
 			}
 		]
 	]

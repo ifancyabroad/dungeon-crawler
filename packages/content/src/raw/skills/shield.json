@@ -5,19 +5,19 @@
 	"description": "Conjure a magical barrier around yourself, absorbing incoming damage before it reaches you.",
 	"school": "arcane",
 	"tags": ["buff", "spell"],
-	"cooldown": 25,
+	"cooldown": 5,
 	"targetType": "none",
 	"effectsByRank": [
 		[
 			{
 				"type": "apply_shield",
-				"amount": 20
+				"amount": 10
 			}
 		],
 		[
 			{
 				"type": "apply_shield",
-				"amount": 20
+				"amount": 15
 			}
 		],
 		[

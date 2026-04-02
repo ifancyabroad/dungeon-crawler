@@ -1,9 +1,9 @@
 {
 	"skillType": "passive",
-	"id": "predators_instinct",
-	"name": "Predator's Instinct",
-	"description": "Predatory precision adds a flat bonus to all attack rolls, making your strikes harder to dodge.",
-	"school": "shadow",
+	"id": "arcane_focus",
+	"name": "Arcane Focus",
+	"description": "Focused attunement to your arcane conduit adds a flat bonus to all spell attack rolls.",
+	"school": "arcane",
 	"tags": ["buff"],
 	"effectsByRank": [
 		[

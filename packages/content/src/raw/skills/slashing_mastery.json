@@ -1,25 +1,16 @@
 {
 	"skillType": "passive",
-	"id": "shadow_strike",
-	"name": "Shadow Strike",
-	"description": "Strikes from the shadows find vital points, adding bonus piercing damage to every melee attack.",
-	"school": "shadow",
+	"id": "slashing_mastery",
+	"name": "Slashing Mastery",
+	"description": "Blade mastery adds bonus slashing damage to every weapon strike and charge.",
+	"school": "martial",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [
 		[
 			{
 				"type": "add_damage_dice",
-				"dice": "1d4",
-				"damageType": "piercing",
-				"appliesTo": "melee",
-				"onCritOnly": false
-			}
-		],
-		[
-			{
-				"type": "add_damage_dice",
 				"dice": "1d6",
-				"damageType": "piercing",
+				"damageType": "slashing",
 				"appliesTo": "melee",
 				"onCritOnly": false
 			}
@@ -28,7 +19,16 @@
 			{
 				"type": "add_damage_dice",
 				"dice": "1d8",
-				"damageType": "piercing",
+				"damageType": "slashing",
+				"appliesTo": "melee",
+				"onCritOnly": false
+			}
+		],
+		[
+			{
+				"type": "add_damage_dice",
+				"dice": "1d10",
+				"damageType": "slashing",
 				"appliesTo": "melee",
 				"onCritOnly": false
 			}

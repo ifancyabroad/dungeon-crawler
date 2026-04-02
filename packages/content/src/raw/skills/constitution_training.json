@@ -1,0 +1,38 @@
+{
+	"skillType": "passive",
+	"id": "constitution_training",
+	"name": "Constitution Training",
+	"description": "Endurance training improves CON saving throws and boosts second_wind healing.",
+	"school": "martial",
+	"tags": ["buff"],
+	"effectsByRank": [
+		[
+			{
+				"type": "add_saving_throw_proficiency",
+				"ability": "constitution"
+			}
+		],
+		[
+			{
+				"type": "add_saving_throw_proficiency",
+				"ability": "constitution"
+			},
+			{
+				"type": "modify_attribute",
+				"attribute": "constitution",
+				"amount": 1
+			}
+		],
+		[
+			{
+				"type": "add_saving_throw_proficiency",
+				"ability": "constitution"
+			},
+			{
+				"type": "modify_attribute",
+				"attribute": "constitution",
+				"amount": 2
+			}
+		]
+	]
+}

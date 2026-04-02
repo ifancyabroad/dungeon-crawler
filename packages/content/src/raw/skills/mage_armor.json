@@ -2,14 +2,14 @@
 	"skillType": "passive",
 	"id": "mage_armor",
 	"name": "Mage Armour",
-	"description": "An invisible arcane barrier surrounds you. +3 Armour Class.",
+	"description": "An invisible arcane barrier surrounds you, granting increasing Armour Class.",
 	"school": "arcane",
 	"tags": ["buff"],
 	"effectsByRank": [
 		[
 			{
 				"type": "modify_armor_class",
-				"amount": 3
+				"amount": 2
 			}
 		],
 		[
@@ -21,7 +21,7 @@
 		[
 			{
 				"type": "modify_armor_class",
-				"amount": 3
+				"amount": 4
 			}
 		]
 	]

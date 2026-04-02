@@ -2,10 +2,10 @@
 	"skillType": "active",
 	"id": "magic_arrow",
 	"name": "Magic Arrow",
-	"description": "Launch a concentrated bolt of arcane energy at a single target.",
+	"description": "A bolt of pure arcane force. Cooldown 0 — the mage's at-will cantrip.",
 	"school": "arcane",
-	"tags": ["damage", "spell"],
-	"cooldown": 3,
+	"tags": ["damage", "spell", "ranged"],
+	"cooldown": 0,
 	"targetType": "actor",
 	"range": 6,
 	"effectsByRank": [
@@ -24,7 +24,7 @@
 		[
 			{
 				"type": "single_target_damage",
-				"dice": "1d6",
+				"dice": "2d6",
 				"damageType": "force",
 				"scalingStat": "intelligence",
 				"attackRoll": {
@@ -36,7 +36,7 @@
 		[
 			{
 				"type": "single_target_damage",
-				"dice": "1d6",
+				"dice": "3d6",
 				"damageType": "force",
 				"scalingStat": "intelligence",
 				"attackRoll": {

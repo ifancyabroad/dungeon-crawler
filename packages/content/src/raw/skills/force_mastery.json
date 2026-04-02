@@ -1,17 +1,17 @@
 {
 	"skillType": "passive",
-	"id": "shadow_strike",
-	"name": "Shadow Strike",
-	"description": "Strikes from the shadows find vital points, adding bonus piercing damage to every melee attack.",
-	"school": "shadow",
+	"id": "force_mastery",
+	"name": "Force Mastery",
+	"description": "Raw arcane force adds bonus force damage to every attack — spells, bolts, and blasts alike.",
+	"school": "arcane",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [
 		[
 			{
 				"type": "add_damage_dice",
 				"dice": "1d4",
-				"damageType": "piercing",
-				"appliesTo": "melee",
+				"damageType": "force",
+				"appliesTo": "any",
 				"onCritOnly": false
 			}
 		],
@@ -19,8 +19,8 @@
 			{
 				"type": "add_damage_dice",
 				"dice": "1d6",
-				"damageType": "piercing",
-				"appliesTo": "melee",
+				"damageType": "force",
+				"appliesTo": "any",
 				"onCritOnly": false
 			}
 		],
@@ -28,8 +28,8 @@
 			{
 				"type": "add_damage_dice",
 				"dice": "1d8",
-				"damageType": "piercing",
-				"appliesTo": "melee",
+				"damageType": "force",
+				"appliesTo": "any",
 				"onCritOnly": false
 			}
 		]

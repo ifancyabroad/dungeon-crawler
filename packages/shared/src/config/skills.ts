@@ -69,6 +69,12 @@ export const SKILL_TAGS = [
 	"spell",
 	"weapon_attack",
 	"aoe",
+	/** Marks active skills that use DEX (or STR, whichever is higher) for attack/damage rolls. */
+	"finesse",
+	/** Marks active skills that require adjacency (range ≤ 1). */
+	"melee_attack",
+	/** Marks active skills that are ranged (do not require adjacency). */
+	"ranged",
 ] as const;
 export type SkillTag = (typeof SKILL_TAGS)[number];
 
@@ -76,7 +82,14 @@ export type SkillTag = (typeof SKILL_TAGS)[number];
  * The thematic school of a skill — its source of power.
  * Used for UI grouping, content flavour, and future resistance/affinity mechanics.
  */
-export const SKILL_SCHOOLS = ["martial", "arcane", "divine", "shadow", "nature"] as const;
+export const SKILL_SCHOOLS = [
+	"martial",
+	"arcane",
+	"divine",
+	"shadow",
+	"nature",
+	"bestial",
+] as const;
 export type SkillSchool = (typeof SKILL_SCHOOLS)[number];
 
 export const SKILLS_CONFIG = {

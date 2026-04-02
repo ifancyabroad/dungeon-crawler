@@ -2,10 +2,10 @@
 	"skillType": "active",
 	"id": "second_wind",
 	"name": "Second Wind",
-	"description": "Draw on reserves of stamina to recover. Roll 1d10 and add your Constitution modifier — that is how much HP you regain.",
+	"description": "Draw on reserves of stamina to recover. Roll your hit dice and add your Constitution modifier — that is how much HP you regain.",
 	"school": "martial",
-	"tags": ["healing"],
-	"cooldown": 20,
+	"tags": ["healing", "utility"],
+	"cooldown": 5,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -18,14 +18,14 @@
 		[
 			{
 				"type": "heal_self",
-				"dice": "1d10",
+				"dice": "2d10",
 				"scalingStat": "constitution"
 			}
 		],
 		[
 			{
 				"type": "heal_self",
-				"dice": "1d10",
+				"dice": "3d10",
 				"scalingStat": "constitution"
 			}
 		]

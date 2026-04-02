@@ -1,0 +1,28 @@
+{
+	"skillType": "passive",
+	"id": "assassinate",
+	"name": "Assassinate",
+	"description": "Your killer's instinct while hidden reduces your critical hit threshold.",
+	"school": "shadow",
+	"tags": ["buff"],
+	"effectsByRank": [
+		[
+			{
+				"type": "modify_crit_threshold",
+				"reduction": 1
+			}
+		],
+		[
+			{
+				"type": "modify_crit_threshold",
+				"reduction": 2
+			}
+		],
+		[
+			{
+				"type": "modify_crit_threshold",
+				"reduction": 3
+			}
+		]
+	]
+}

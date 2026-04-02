@@ -5,7 +5,7 @@
 	"description": "Melt into the shadows. Enemies lose track of you and cannot detect your presence.",
 	"school": "shadow",
 	"tags": ["stealth", "utility"],
-	"cooldown": 30,
+	"cooldown": 5,
 	"targetType": "none",
 	"maintainsStealth": true,
 	"effectsByRank": [
@@ -13,21 +13,24 @@
 			{
 				"type": "apply_status",
 				"statusId": "stealth",
-				"durationTurns": 20
+				"durationTurns": 8,
+				"target": "self"
 			}
 		],
 		[
 			{
 				"type": "apply_status",
 				"statusId": "stealth",
-				"durationTurns": 20
+				"durationTurns": 12,
+				"target": "self"
 			}
 		],
 		[
 			{
 				"type": "apply_status",
 				"statusId": "stealth",
-				"durationTurns": 20
+				"durationTurns": 16,
+				"target": "self"
 			}
 		]
 	]

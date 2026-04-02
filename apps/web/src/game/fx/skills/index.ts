@@ -7,7 +7,9 @@ import type { SkillAnimHandlerFn } from "./types";
 import { DEFAULT_ANIM_RESULT } from "./types";
 import { playFireball } from "./fireball";
 import { playCharge } from "./charge";
-import { playWarCry } from "./warCry";
+import { playSecondWind } from "./secondWind";
+import { playRecklessAttack } from "./recklessAttack";
+import { playStealth } from "./stealth";
 import { playLightningBolt } from "./lightningBolt";
 import { playSmokeBomb } from "./smokeBomb";
 import { playMagicArrow } from "./magicArrow";
@@ -15,7 +17,7 @@ import { playShield } from "./shield";
 import { playConeOfCold } from "./coneOfCold";
 import { playMightyLeap } from "./mightyLeap";
 import { playCleave } from "./cleave";
-import { playBerserk } from "./berserk";
+
 import { playSneakAttack } from "./sneakAttack";
 import { playShadowStep } from "./shadowStep";
 import { playPoisonBlade } from "./poisonBlade";
@@ -43,10 +45,26 @@ const chargeHandler: SkillAnimHandlerFn = (ctx, _scene, mapWidth) => {
 	return { handled: true, fxDeferred: true, newHeroTilePos: { x, y } };
 };
 
-/** Emanates from caster position; calls onImpact immediately so damage numbers show with the burst. */
-const warCryHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playWarCry(scene, ctx.casterSprite, ctx.onImpact);
+const secondWindHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playSecondWind(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const recklessAttackHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playRecklessAttack(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
 	return { handled: true, fxDeferred: true };
+};
+
+const stealthHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playStealth(scene, ctx.casterSprite);
+	return { handled: true, fxDeferred: false };
 };
 
 const lightningBoltHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
@@ -120,11 +138,6 @@ const cleaveHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
 	return { handled: true, fxDeferred: true };
 };
 
-const berserkHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
-	playBerserk(scene, ctx.casterSprite, ctx.onImpact);
-	return { handled: true, fxDeferred: true };
-};
-
 const sneakAttackHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
 	if (ctx.event.targetActorIdx === undefined) return DEFAULT_ANIM_RESULT;
 	playSneakAttack(scene, ctx.casterSprite, ctx.event.targetActorIdx, mapWidth, ctx.onImpact);
@@ -160,7 +173,6 @@ const poisonBiteHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
 export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	fireball: fireballHandler,
 	charge: chargeHandler,
-	war_cry: warCryHandler,
 	lightning_bolt: lightningBoltHandler,
 	smoke_bomb: smokeBombHandler,
 	magic_arrow: magicArrowHandler,
@@ -168,11 +180,13 @@ export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	cone_of_cold: coneOfColdHandler,
 	mighty_leap: mightyLeapHandler,
 	cleave: cleaveHandler,
-	berserk: berserkHandler,
 	sneak_attack: sneakAttackHandler,
 	shadow_step: shadowStepHandler,
 	poison_blade: poisonBladeHandler,
 	poison_bite: poisonBiteHandler,
+	second_wind: secondWindHandler,
+	reckless_attack: recklessAttackHandler,
+	stealth: stealthHandler,
 };
 
 export { DEFAULT_ANIM_RESULT } from "./types";

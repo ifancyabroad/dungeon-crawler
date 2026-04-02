@@ -2,23 +2,31 @@
 	"skillType": "passive",
 	"id": "evasion",
 	"name": "Evasion",
-	"description": "You move like water, deflecting blows with fluid grace. +2 Armour Class.",
+	"description": "Lightning reflexes let you evade magical effects. Grants DEX save proficiency at rank 1; bonus AC at higher ranks.",
 	"school": "shadow",
 	"tags": ["buff"],
 	"effectsByRank": [
 		[
 			{
-				"type": "modify_armor_class",
-				"amount": 2
+				"type": "add_saving_throw_proficiency",
+				"ability": "dexterity"
 			}
 		],
 		[
 			{
+				"type": "add_saving_throw_proficiency",
+				"ability": "dexterity"
+			},
+			{
 				"type": "modify_armor_class",
-				"amount": 2
+				"amount": 1
 			}
 		],
 		[
+			{
+				"type": "add_saving_throw_proficiency",
+				"ability": "dexterity"
+			},
 			{
 				"type": "modify_armor_class",
 				"amount": 2

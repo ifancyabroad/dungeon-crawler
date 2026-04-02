@@ -1,8 +1,8 @@
 {
 	"skillType": "passive",
-	"id": "shadow_strike",
-	"name": "Shadow Strike",
-	"description": "Strikes from the shadows find vital points, adding bonus piercing damage to every melee attack.",
+	"id": "acid_mastery",
+	"name": "Acid Mastery",
+	"description": "Corroding your blades with acid adds bonus acid damage on every melee strike.",
 	"school": "shadow",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [
@@ -10,7 +10,7 @@
 			{
 				"type": "add_damage_dice",
 				"dice": "1d4",
-				"damageType": "piercing",
+				"damageType": "acid",
 				"appliesTo": "melee",
 				"onCritOnly": false
 			}
@@ -19,7 +19,7 @@
 			{
 				"type": "add_damage_dice",
 				"dice": "1d6",
-				"damageType": "piercing",
+				"damageType": "acid",
 				"appliesTo": "melee",
 				"onCritOnly": false
 			}
@@ -28,7 +28,7 @@
 			{
 				"type": "add_damage_dice",
 				"dice": "1d8",
-				"damageType": "piercing",
+				"damageType": "acid",
 				"appliesTo": "melee",
 				"onCritOnly": false
 			}

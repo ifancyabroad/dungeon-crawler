@@ -2,23 +2,31 @@
 	"skillType": "passive",
 	"id": "poison_immunity",
 	"name": "Poison Immunity",
-	"description": "Years of exposure to toxins have made you completely immune to poison.",
-	"school": "nature",
-	"tags": ["utility"],
+	"description": "Years of exposure to toxins harden your body against poison. Full immunity at rank 1; complete damage negation at rank 3.",
+	"school": "shadow",
+	"tags": ["buff", "utility"],
 	"effectsByRank": [
 		[
 			{
-				"type": "add_damage_immunity",
+				"type": "add_status_immunity",
+				"statusId": "poisoned"
+			}
+		],
+		[
+			{
+				"type": "add_status_immunity",
+				"statusId": "poisoned"
+			},
+			{
+				"type": "add_damage_resistance",
 				"damageType": "poison"
 			}
 		],
 		[
 			{
-				"type": "add_damage_immunity",
-				"damageType": "poison"
-			}
-		],
-		[
+				"type": "add_status_immunity",
+				"statusId": "poisoned"
+			},
 			{
 				"type": "add_damage_immunity",
 				"damageType": "poison"

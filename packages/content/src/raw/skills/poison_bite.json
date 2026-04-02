@@ -3,8 +3,8 @@
 	"id": "poison_bite",
 	"name": "Poison Bite",
 	"description": "A venomous bite that deals piercing damage and injects poison, dealing damage over time.",
-	"school": "nature",
-	"tags": ["damage", "debuff", "weapon_attack"],
+	"school": "bestial",
+	"tags": ["damage", "debuff", "weapon_attack", "melee_attack"],
 	"cooldown": 3,
 	"targetType": "actor",
 	"range": 1,
@@ -28,7 +28,7 @@
 		[
 			{
 				"type": "single_target_damage",
-				"dice": "1d4",
+				"dice": "1d6",
 				"damageType": "piercing",
 				"attackRoll": {
 					"modifierStat": "dexterity",
@@ -36,15 +36,15 @@
 				},
 				"onHitStatus": {
 					"statusId": "poisoned",
-					"durationTurns": 3,
-					"value": 1
+					"durationTurns": 4,
+					"value": 2
 				}
 			}
 		],
 		[
 			{
 				"type": "single_target_damage",
-				"dice": "1d4",
+				"dice": "1d8",
 				"damageType": "piercing",
 				"attackRoll": {
 					"modifierStat": "dexterity",
@@ -52,8 +52,8 @@
 				},
 				"onHitStatus": {
 					"statusId": "poisoned",
-					"durationTurns": 3,
-					"value": 1
+					"durationTurns": 5,
+					"value": 3
 				}
 			}
 		]

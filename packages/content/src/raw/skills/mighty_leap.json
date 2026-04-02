@@ -5,7 +5,7 @@
 	"description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
 	"school": "martial",
 	"tags": ["damage", "mobility", "aoe"],
-	"cooldown": 12,
+	"cooldown": 5,
 	"targetType": "tile",
 	"range": 4,
 	"effectsByRank": [
@@ -14,7 +14,7 @@
 				"type": "leap_attack",
 				"maxRangeTiles": 4,
 				"landingRadiusTiles": 1,
-				"dice": "2d6",
+				"dice": "1d8",
 				"damageType": "bludgeoning",
 				"scalingStat": "strength"
 			}
@@ -24,7 +24,7 @@
 				"type": "leap_attack",
 				"maxRangeTiles": 4,
 				"landingRadiusTiles": 1,
-				"dice": "2d6",
+				"dice": "2d8",
 				"damageType": "bludgeoning",
 				"scalingStat": "strength"
 			}
@@ -34,7 +34,7 @@
 				"type": "leap_attack",
 				"maxRangeTiles": 4,
 				"landingRadiusTiles": 1,
-				"dice": "2d6",
+				"dice": "3d8",
 				"damageType": "bludgeoning",
 				"scalingStat": "strength"
 			}

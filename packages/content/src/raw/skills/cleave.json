@@ -4,8 +4,8 @@
 	"name": "Cleave",
 	"description": "Swing your weapon in a wide arc, striking the three tiles directly in front of you.",
 	"school": "martial",
-	"tags": ["damage", "aoe", "weapon_attack"],
-	"cooldown": 5,
+	"tags": ["damage", "aoe", "weapon_attack", "melee_attack"],
+	"cooldown": 3,
 	"targetType": "tile",
 	"range": 1,
 	"effectsByRank": [
@@ -16,27 +16,42 @@
 				"damageType": "slashing",
 				"rangeTiles": 1,
 				"angleDegrees": 135,
-				"scalingStat": "strength"
+				"scalingStat": "strength",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "strength",
+					"successDamageMultiplier": 0.5
+				}
 			}
 		],
 		[
 			{
 				"type": "cone_damage",
-				"dice": "1d8",
+				"dice": "2d8",
 				"damageType": "slashing",
 				"rangeTiles": 1,
 				"angleDegrees": 135,
-				"scalingStat": "strength"
+				"scalingStat": "strength",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "strength",
+					"successDamageMultiplier": 0.5
+				}
 			}
 		],
 		[
 			{
 				"type": "cone_damage",
-				"dice": "1d8",
+				"dice": "3d8",
 				"damageType": "slashing",
 				"rangeTiles": 1,
 				"angleDegrees": 135,
-				"scalingStat": "strength"
+				"scalingStat": "strength",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "strength",
+					"successDamageMultiplier": 0.5
+				}
 			}
 		]
 	]

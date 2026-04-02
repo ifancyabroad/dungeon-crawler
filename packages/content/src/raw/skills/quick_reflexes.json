@@ -2,8 +2,8 @@
 	"skillType": "passive",
 	"id": "quick_reflexes",
 	"name": "Quick Reflexes",
-	"description": "Your agility becomes legendary. +2 Dexterity.",
-	"school": "martial",
+	"description": "DEX bonus that scales attack rolls, AC, and DEX saving throws. Foundation of most rogue builds.",
+	"school": "shadow",
 	"tags": ["buff"],
 	"effectsByRank": [
 		[
@@ -17,14 +17,14 @@
 			{
 				"type": "modify_attribute",
 				"attribute": "dexterity",
-				"amount": 2
+				"amount": 3
 			}
 		],
 		[
 			{
 				"type": "modify_attribute",
 				"attribute": "dexterity",
-				"amount": 2
+				"amount": 4
 			}
 		]
 	]

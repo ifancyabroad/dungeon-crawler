@@ -10,17 +10,20 @@
 		"wisdom": 10,
 		"charisma": 12
 	},
-	"startingHp": 14,
+	"startingHp": 12,
 	"hitDie": 10,
 	"startingEquipment": ["longsword", "wooden_shield", "chain_mail"],
 	"startingSkills": ["charge"],
-	"activeSkillPool": ["war_cry", "mighty_leap", "cleave", "berserk"],
+	"activeSkillPool": ["cleave", "second_wind", "mighty_leap", "reckless_attack"],
 	"passiveSkillPool": [
 		"warriors_might",
 		"iron_skin",
-		"toughness",
+		"battle_hardened",
+		"relentless",
+		"constitution_training",
+		"slashing_mastery",
 		"bludgeoning_mastery",
-		"battle_hardened"
+		"piercing_mastery"
 	],
 	"weaponProficiencies": ["sword", "axe", "mace", "polearm"],
 	"armorProficiencies": ["light", "medium", "heavy", "shield"],

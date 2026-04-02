@@ -2,19 +2,32 @@
 	"skillType": "active",
 	"id": "reckless_attack",
 	"name": "Reckless Attack",
-	"description": "You throw caution to the wind, swinging with reckless abandon. For 6 turns you gain advantage on all attack rolls — but your guard is down and enemies gain advantage against you too.",
+	"description": "Trade defence for devastating power. Grants advantage on this strike but leaves you exposed.",
 	"school": "martial",
-	"tags": ["buff"],
-	"cooldown": 6,
-	"targetType": "none",
+	"tags": ["damage", "weapon_attack", "melee_attack"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 1,
 	"effectsByRank": [
 		[
 			{
 				"type": "apply_status",
 				"statusId": "reckless",
-				"durationTurns": 6,
+				"target": "self",
+				"durationTurns": 2,
 				"adjustments": {
-					"hasAdvantage": true
+					"hasAdvantage": true,
+					"acBonus": -2
+				}
+			},
+			{
+				"type": "single_target_damage",
+				"dice": "2d8",
+				"damageType": "slashing",
+				"scalingStat": "strength",
+				"attackRoll": {
+					"modifierStat": "strength",
+					"useProficiency": true
 				}
 			}
 		],
@@ -22,9 +35,21 @@
 			{
 				"type": "apply_status",
 				"statusId": "reckless",
-				"durationTurns": 6,
+				"target": "self",
+				"durationTurns": 2,
 				"adjustments": {
-					"hasAdvantage": true
+					"hasAdvantage": true,
+					"acBonus": -2
+				}
+			},
+			{
+				"type": "single_target_damage",
+				"dice": "3d8",
+				"damageType": "slashing",
+				"scalingStat": "strength",
+				"attackRoll": {
+					"modifierStat": "strength",
+					"useProficiency": true
 				}
 			}
 		],
@@ -32,9 +57,21 @@
 			{
 				"type": "apply_status",
 				"statusId": "reckless",
-				"durationTurns": 6,
+				"target": "self",
+				"durationTurns": 2,
 				"adjustments": {
-					"hasAdvantage": true
+					"hasAdvantage": true,
+					"acBonus": -2
+				}
+			},
+			{
+				"type": "single_target_damage",
+				"dice": "4d8",
+				"damageType": "slashing",
+				"scalingStat": "strength",
+				"attackRoll": {
+					"modifierStat": "strength",
+					"useProficiency": true
 				}
 			}
 		]

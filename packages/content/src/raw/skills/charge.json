@@ -4,8 +4,8 @@
 	"name": "Charge",
 	"description": "Sprint toward a distant enemy in a straight line and deliver a devastating blow on arrival.",
 	"school": "martial",
-	"tags": ["damage", "mobility", "weapon_attack"],
-	"cooldown": 10,
+	"tags": ["damage", "mobility", "weapon_attack", "melee_attack"],
+	"cooldown": 4,
 	"targetType": "actor",
 	"range": 4,
 	"effectsByRank": [
@@ -13,7 +13,7 @@
 			{
 				"type": "charge_attack",
 				"maxRangeTiles": 4,
-				"bonusDice": "1d8",
+				"bonusDice": "1d6",
 				"bonusDamageType": "bludgeoning"
 			}
 		],
@@ -29,7 +29,7 @@
 			{
 				"type": "charge_attack",
 				"maxRangeTiles": 4,
-				"bonusDice": "1d8",
+				"bonusDice": "1d10",
 				"bonusDamageType": "bludgeoning"
 			}
 		]

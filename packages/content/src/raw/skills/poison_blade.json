@@ -3,9 +3,9 @@
 	"id": "poison_blade",
 	"name": "Poison Blade",
 	"description": "A swift slash that coats the wound with venom, dealing damage over time.",
-	"school": "nature",
-	"tags": ["damage", "debuff", "weapon_attack"],
-	"cooldown": 10,
+	"school": "shadow",
+	"tags": ["damage", "debuff", "weapon_attack", "finesse", "melee_attack"],
+	"cooldown": 3,
 	"targetType": "actor",
 	"range": 1,
 	"effectsByRank": [
@@ -14,56 +14,47 @@
 				"type": "single_target_damage",
 				"dice": "1d6",
 				"damageType": "piercing",
-				"scalingStat": "dexterity",
 				"attackRoll": {
 					"modifierStat": "dexterity",
 					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "poisoned",
+					"durationTurns": 3,
+					"value": 2
 				}
-			},
-			{
-				"type": "apply_status",
-				"statusId": "poisoned",
-				"durationTurns": 5,
-				"value": 3,
-				"target": "target"
 			}
 		],
 		[
 			{
 				"type": "single_target_damage",
-				"dice": "1d6",
+				"dice": "2d6",
 				"damageType": "piercing",
-				"scalingStat": "dexterity",
 				"attackRoll": {
 					"modifierStat": "dexterity",
 					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "poisoned",
+					"durationTurns": 4,
+					"value": 3
 				}
-			},
-			{
-				"type": "apply_status",
-				"statusId": "poisoned",
-				"durationTurns": 5,
-				"value": 3,
-				"target": "target"
 			}
 		],
 		[
 			{
 				"type": "single_target_damage",
-				"dice": "1d6",
+				"dice": "2d6",
 				"damageType": "piercing",
-				"scalingStat": "dexterity",
 				"attackRoll": {
 					"modifierStat": "dexterity",
 					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "poisoned",
+					"durationTurns": 5,
+					"value": 4
 				}
-			},
-			{
-				"type": "apply_status",
-				"statusId": "poisoned",
-				"durationTurns": 5,
-				"value": 3,
-				"target": "target"
 			}
 		]
 	]

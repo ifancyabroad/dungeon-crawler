@@ -10,16 +10,19 @@
 		"wisdom": 10,
 		"charisma": 14
 	},
-	"startingHp": 100,
+	"startingHp": 9,
 	"hitDie": 8,
 	"startingEquipment": ["dagger", "leather_armor"],
 	"startingSkills": ["stealth"],
-	"activeSkillPool": ["smoke_bomb", "sneak_attack", "shadow_step", "poison_blade"],
+	"activeSkillPool": ["sneak_attack", "shadow_step", "smoke_bomb", "poison_blade"],
 	"passiveSkillPool": [
 		"quick_reflexes",
-		"evasion",
 		"shadow_strike",
+		"evasion",
 		"predators_instinct",
+		"assassinate",
+		"poison_mastery",
+		"acid_mastery",
 		"poison_immunity"
 	],
 	"weaponProficiencies": ["dagger", "shortbow", "sword"],

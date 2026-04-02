@@ -2,17 +2,17 @@
 	"skillType": "active",
 	"id": "cone_of_cold",
 	"name": "Cone of Cold",
-	"description": "Exhale a blast of freezing air in a cone, chilling all enemies caught within.",
+	"description": "Exhale a blast of freezing air in a cone. At higher ranks the chill roots enemies in place.",
 	"school": "arcane",
-	"tags": ["damage", "aoe", "spell"],
-	"cooldown": 15,
+	"tags": ["damage", "control", "aoe", "spell"],
+	"cooldown": 5,
 	"targetType": "tile",
 	"range": 3,
 	"effectsByRank": [
 		[
 			{
 				"type": "cone_damage",
-				"dice": "2d6",
+				"dice": "2d8",
 				"damageType": "cold",
 				"rangeTiles": 3,
 				"angleDegrees": 90,
@@ -27,7 +27,7 @@
 		[
 			{
 				"type": "cone_damage",
-				"dice": "2d6",
+				"dice": "3d8",
 				"damageType": "cold",
 				"rangeTiles": 3,
 				"angleDegrees": 90,
@@ -37,12 +37,19 @@
 					"dcStat": "intelligence",
 					"successDamageMultiplier": 0.5
 				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"durationTurns": 1,
+				"target": "aoe",
+				"aoeRadiusTiles": 1
 			}
 		],
 		[
 			{
 				"type": "cone_damage",
-				"dice": "2d6",
+				"dice": "4d8",
 				"damageType": "cold",
 				"rangeTiles": 3,
 				"angleDegrees": 90,
@@ -52,6 +59,13 @@
 					"dcStat": "intelligence",
 					"successDamageMultiplier": 0.5
 				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"durationTurns": 2,
+				"target": "aoe",
+				"aoeRadiusTiles": 1
 			}
 		]
 	]

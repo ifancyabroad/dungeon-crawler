@@ -1,0 +1,28 @@
+{
+	"skillType": "passive",
+	"id": "poison_mastery",
+	"name": "Poison Mastery",
+	"description": "Mastery of toxicology makes every tick of every poison, bleed, or burn more lethal.",
+	"school": "shadow",
+	"tags": ["buff", "debuff"],
+	"effectsByRank": [
+		[
+			{
+				"type": "add_dot_amplify_flat",
+				"amount": 1
+			}
+		],
+		[
+			{
+				"type": "add_dot_amplify_flat",
+				"amount": 2
+			}
+		],
+		[
+			{
+				"type": "add_dot_amplify_flat",
+				"amount": 3
+			}
+		]
+	]
+}

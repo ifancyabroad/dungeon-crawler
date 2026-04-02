@@ -10,17 +10,20 @@
 		"wisdom": 14,
 		"charisma": 10
 	},
-	"startingHp": 800,
+	"startingHp": 6,
 	"hitDie": 6,
 	"startingEquipment": ["quarterstaff", "cloth_robe"],
 	"startingSkills": ["magic_arrow"],
-	"activeSkillPool": ["fireball", "lightning_bolt", "shield", "cone_of_cold"],
+	"activeSkillPool": ["fireball", "lightning_bolt", "cone_of_cold", "shield"],
 	"passiveSkillPool": [
 		"arcane_mind",
-		"fire_affinity",
 		"mage_armor",
-		"fire_immunity",
-		"arcane_wisdom"
+		"arcane_constitution",
+		"arcane_focus",
+		"fire_mastery",
+		"lightning_mastery",
+		"cold_mastery",
+		"force_mastery"
 	],
 	"weaponProficiencies": ["staff", "dagger"],
 	"armorProficiencies": ["cloth"],
