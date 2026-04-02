@@ -116,9 +116,44 @@ Features are listed in priority order. Implementation details below are starting
 
 **Shipped:** Starting skill per class, passive skill system, level-up mixed pick-from-3 (caps, ranks 1–3, upgrades), skill pools per class, reroll support, and sidebar passive skill listing.
 
+#### Design Principles
+
+**Class identity**
+Each class must feel mechanically distinct from the others. Differences should be felt in moment-to-moment play, not just in stat sheets. This is achieved through:
+
+- Class-exclusive skill pools: no skill is available to more than one class. A player who has seen one class's level-up offers cannot predict another class's options.
+- A starting kit that communicates the class fantasy immediately — the first run of a new class should feel like a different game.
+
+**Build diversity within a class**
+Each class must support at least two meaningfully different builds by the time the dungeon is complete. A "build" here means a coherent set of actives and passives whose combined effect is greater than the sum of their parts. Build paths should emerge from skill selection, not be prescribed.
+
+Guidelines:
+
+- Offer at least two distinct "axes" of play per class (e.g. Warrior: sustained DPS vs. burst + defensive; Rogue: single-target burst vs. area DoT; Mage: direct damage vs. crowd-control + attrition).
+- Items acquired on a run should be able to push a player further down an already-chosen axis or open a hybrid route.
+- No build should require a specific skill to be functional; options should feel like meaningful choices rather than mandatory picks.
+
+**Skill synergies**
+Synergies are the primary driver of replayability. When two skills interact, the combined effect should be discoverable through play — not explained in a tutorial.
+
+Synergy patterns to encode in skill design:
+
+- **Condition → payoff**: one skill inflicts a status (e.g. Bleed, Stun, Ignite); another skill deals bonus damage or gains bonus effect against targets in that state.
+- **Stance / mode toggle**: a passive or active changes the rules for a window of time; other skills should have explicit in-window bonuses.
+- **Scaling amplifier**: a passive multiplies the effect of a specific damage type or skill category, making later picks of that category materially stronger.
+
+Each class's skill pool should contain enough synergy pairs that a player will encounter different combinations across runs, with no single "solved" build being clearly dominant.
+
+**Run variance ("no two runs feel the same")**
+The level-up offer system (pick-from-3, reroll) is the main engine of run variance. To sustain this:
+
+- A class's total skill pool must be large enough that any two runs are unlikely to see the same offer sequence.
+- The interaction between skill choices and item drops on a given run should produce emergent combinations that the player didn't plan for going in.
+
 **Remaining scope:**
 
-- Expand skill pools per class (more active and passive options).
+- Expand skill pools per class (more active and passive options) — minimum target: ~8–10 distinct skills per class before the pool feels repetitive.
+- Define and document all intended synergy pairs per class so they can be validated in content review.
 - Reroll cost in gold (currently free).
 - Full skills modal (currently stubbed) showing all acquired skills with descriptions.
 
