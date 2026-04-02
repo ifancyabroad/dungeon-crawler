@@ -11,14 +11,19 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 
 ## Terminology
 
-| Term       | Definition                                                                                                                                                                                                                                                 |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Run**    | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                                                                         |
-| **Turn**   | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                                                                    |
-| **Floor**  | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles).                                               |
-| **Actor**  | Any entity that occupies a tile and can act — the hero and all NPCs. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                             |
-| **Action** | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), `use_skill` (skillId + optional target), `select_skill_choice`, and `reroll_skill_choice`. Actions are the only input the server accepts. |
-| **Event**  | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                                                                          |
+| Term           | Definition                                                                                                                                                                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Run**        | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                                                                         |
+| **Turn**       | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                                                                    |
+| **Floor**      | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles).                                               |
+| **Actor**      | Any entity that occupies a tile and can act — the hero and all NPCs. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                             |
+| **Action**     | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), `use_skill` (skillId + optional target), `select_skill_choice`, and `reroll_skill_choice`. Actions are the only input the server accepts. |
+| **Event**      | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                                                                          |
+| **Item**       | A piece of equipment the hero can pick up and equip during a run. Items are generated procedurally (or hand-crafted for uniques) and exist only within the run they were found in.                                                                         |
+| **Affix**      | A randomly selected bonus property attached to an item at generation time (e.g. +10 max HP, +5% crit chance, fire resistance). The number of affixes an item can carry is determined by its rarity.                                                        |
+| **Rarity**     | A tier that determines an item's enhancement bonus and affix count: Common, Uncommon, Rare, Epic, or Unique. Higher rarity items are less likely to drop.                                                                                                  |
+| **Loot table** | A per-NPC weighted list of possible drops (items and/or gold). Evaluated deterministically using the run seed at the moment of the monster's death.                                                                                                        |
+| **Gold**       | A currency dropped by enemies and spent in-run on skill rerolls (and eventually at a merchant). Gold does not persist between runs.                                                                                                                        |
 
 ---
 
@@ -91,22 +96,109 @@ Features are listed in priority order. Implementation details below are starting
 
 ### 1. Items & Inventory
 
-**Goal:** Give players gear to find and equip, increasing build diversity and strategic choice.
+**Goal:** Give players gear to find and equip, increasing build diversity and strategic choice across runs.
 
-**Scope:**
+---
 
-- Weapons (melee, ranged), armor, and consumables (potions).
-- Items dropped by monsters or found in treasure rooms.
-- Equip/unequip from the inventory modal (stub already present in `apps/web`).
-- Equipped items modify actor stats at turn resolution time via the shared engine.
+#### Equipment Slots
 
-<!-- TODO: Define item types and their stat effects in more detail.
-     - What slots exist? (weapon, offhand, head, body, feet, …)
-     - Should there be item rarity tiers?
-     - How are consumables (potions) used — as a dedicated action type?
-     - How many items can a floor drop? Any guarantees (e.g. always one weapon per floor)? -->
+Each hero has nine equipment slots:
 
-**Content location:** `packages/content/src/raw/` — add `items/` directory following the existing pattern (JSON → Zod-validated → typed lookup).
+| Slot      | Notes                      |
+| --------- | -------------------------- |
+| Weapon    | Melee or ranged (bow)      |
+| Off-hand  | Shield or off-hand weapon  |
+| Head      |                            |
+| Body      |                            |
+| Hands     |                            |
+| Feet      |                            |
+| Ring (×2) | Two independent ring slots |
+| Amulet    |                            |
+
+Inventory capacity equals exactly what the hero can wear — there is no bag or stash. Picking up a new item immediately prompts a swap decision if the relevant slot is already occupied.
+
+Consumables (potions) are handled by a separate system and do not occupy equipment slots.
+
+---
+
+#### Rarity
+
+Items have one of five rarity tiers. Rarity determines both the enhancement bonus and the number of affixes rolled at generation time.
+
+| Rarity   | Colour | Enhancement bonus | Affix count |
+| -------- | ------ | ----------------- | ----------- |
+| Common   | White  | None              | 0           |
+| Uncommon | Green  | +1                | 1           |
+| Rare     | Blue   | +2                | 2           |
+| Epic     | Purple | +3                | 3           |
+| Unique   | Gold   | +4 or +5          | Fixed       |
+
+The enhancement bonus maps directly to the D&D +N system and applies to the item's core stat (attack bonus for weapons, AC bonus for armour, etc.).
+
+---
+
+#### Procedural Item Generation
+
+All non-unique items are generated at the moment of a loot roll. Generation is fully deterministic — the run seed combined with the turn number produces the same item every time given the same inputs.
+
+**Base items** define the item's type, slot, and core stats (e.g. a Longsword with 1d8 damage, a Leather Armour with AC 11). Base item definitions live in `packages/content/src/raw/items/`.
+
+**Affixes** are randomly drawn from a global affix pool and attached according to rarity. Each affix definition declares which slot types it is eligible for — this constrains which affixes can appear on which items at generation time. Examples of affixes by category:
+
+- Stat bonuses: +max HP, +STR/DEX/INT modifier, +AC — eligible on any slot
+- Defensive: resistance or immunity to a damage type (fire, poison, etc.) — eligible on any slot
+- Offensive on-hit effects: bonus flat damage of a damage type on hit (e.g. +1d4 fire), chance to apply a status effect on hit (e.g. 20% chance to poison) — **weapons only**
+- Recovery: HP regen per turn, life-on-hit — eligible on any slot
+- Skill-related: reduced cooldown on a skill category, bonus damage when a status condition is active on the target — eligible on any slot
+
+The affix pool must be large enough that no two runs are likely to produce the same combination of gear. More affix types should be added over time to keep runs feeling distinct.
+
+**Naming** is generated dynamically from the base item name and its affixes (e.g. "Fiery Longsword of the Bear"). Each affix definition declares an optional `namePrefix`, an optional `nameSuffix`, and a numeric `namePriority`. The name composer selects at most one prefix and one suffix: when multiple affixes on the same item compete for the same position, the one with the highest `namePriority` wins. Items with no winning prefix or suffix simply use the bare base item name.
+
+---
+
+#### Unique Items
+
+Uniques are hand-crafted and defined as JSON in `packages/content/src/raw/items/`, alongside base item definitions. They are distinguished by `"rarity": "unique"` in the JSON. They have fully specified, fixed stats — no affix slots, no random rolls — and carry +4 or +5 enhancement bonuses (tiers reserved exclusively for uniques). They are displayed in gold and are rarer than epic items. Uniques can drop from enemies via the standard loot table system.
+
+---
+
+#### Loot Tables
+
+Each NPC definition includes a weighted loot table describing what it can drop on death. A loot roll evaluates:
+
+1. **Drop chance** — probability that anything drops at all.
+2. **Gold amount** — optional gold drop range (min/max).
+3. **Item drop** — optional weighted list of base item types and rarity weights.
+
+Floor depth influences rarity weights: higher floors bias rolls toward better rarities and higher-tier base items. However, good items can drop on any floor — floor depth affects probability, not hard caps.
+
+---
+
+#### Gold
+
+Gold drops alongside items and accumulates in the hero's run wallet. Current uses:
+
+- **Skill rerolls** — spending gold replaces the current level-up offer with a new set of three choices (currently free; gold cost will be introduced with this system).
+- **Merchant** (planned) — a future vendor NPC will offer items and services in exchange for gold.
+
+Gold does not persist between runs.
+
+---
+
+#### Inventory UX
+
+- The inventory modal (stub already present in `apps/web`) shows all nine slots and the hero's currently equipped items.
+- Clicking a slot opens an item comparison view if the hero is holding a replacement.
+- Equipped items modify actor stats at turn resolution time via the shared engine — the engine must derive effective stats from the equipped item set on every stat read.
+
+---
+
+**Content locations:**
+
+- Item definitions (base items and uniques): `packages/content/src/raw/items/`
+- Affix pool: `packages/content/src/raw/affixes/`
+- NPC loot tables: extend existing NPC definitions in `packages/content/src/raw/npcs/`
 
 ---
 
