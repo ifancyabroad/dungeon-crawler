@@ -1,0 +1,61 @@
+{
+	"skillType": "active",
+	"id": "mind_spike",
+	"name": "Mind Spike",
+	"description": "Drive a psychic lance through the enemy's mind, dealing psychic damage and silencing them.",
+	"school": "arcane",
+	"tags": ["damage", "debuff", "spell", "ranged"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 4,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d8",
+				"damageType": "psychic",
+				"scalingStat": "intelligence",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "silenced",
+					"durationTurns": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "2d6",
+				"damageType": "psychic",
+				"scalingStat": "intelligence",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "silenced",
+					"durationTurns": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "2d8",
+				"damageType": "psychic",
+				"scalingStat": "intelligence",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "silenced",
+					"durationTurns": 3
+				}
+			}
+		]
+	]
+}

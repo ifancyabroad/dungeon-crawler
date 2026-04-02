@@ -1,0 +1,37 @@
+{
+	"skillType": "active",
+	"id": "soul_drain",
+	"name": "Soul Drain",
+	"description": "Drain the life force from an enemy at range, dealing force damage and restoring your own health.",
+	"school": "arcane",
+	"tags": ["damage", "healing", "spell", "ranged"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 4,
+	"effectsByRank": [
+		[
+			{
+				"type": "drain_life",
+				"dice": "1d8",
+				"damageType": "force",
+				"healDice": "1d4"
+			}
+		],
+		[
+			{
+				"type": "drain_life",
+				"dice": "2d6",
+				"damageType": "force",
+				"healDice": "1d6"
+			}
+		],
+		[
+			{
+				"type": "drain_life",
+				"dice": "2d8",
+				"damageType": "force",
+				"healDice": "1d8"
+			}
+		]
+	]
+}

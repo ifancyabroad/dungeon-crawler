@@ -14,7 +14,16 @@
 	"hitDie": 6,
 	"startingEquipment": ["quarterstaff", "cloth_robe"],
 	"startingSkills": ["magic_arrow"],
-	"activeSkillPool": ["fireball", "lightning_bolt", "cone_of_cold", "shield"],
+	"activeSkillPool": [
+		"fireball",
+		"lightning_bolt",
+		"cone_of_cold",
+		"shield",
+		"frost_nova",
+		"mind_spike",
+		"arcane_surge",
+		"soul_drain"
+	],
 	"passiveSkillPool": [
 		"arcane_mind",
 		"mage_armor",

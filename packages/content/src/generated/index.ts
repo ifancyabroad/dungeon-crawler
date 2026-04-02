@@ -41,7 +41,11 @@ export const classes: readonly CharacterClassDefinition[] = [
       "fireball",
       "lightning_bolt",
       "cone_of_cold",
-      "shield"
+      "shield",
+      "frost_nova",
+      "mind_spike",
+      "arcane_surge",
+      "soul_drain"
     ],
     "passiveSkillPool": [
       "arcane_mind",
@@ -92,7 +96,11 @@ export const classes: readonly CharacterClassDefinition[] = [
       "sneak_attack",
       "shadow_step",
       "smoke_bomb",
-      "poison_blade"
+      "poison_blade",
+      "garrote",
+      "hemorrhage",
+      "marked_for_death",
+      "caltrops"
     ],
     "passiveSkillPool": [
       "quick_reflexes",
@@ -145,7 +153,11 @@ export const classes: readonly CharacterClassDefinition[] = [
       "cleave",
       "second_wind",
       "mighty_leap",
-      "reckless_attack"
+      "reckless_attack",
+      "whirlwind_strike",
+      "shield_bash",
+      "battle_cry",
+      "berserker_rage"
     ],
     "passiveSkillPool": [
       "warriors_might",
@@ -524,7 +536,7 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["acid_mastery","arcane_constitution","arcane_focus","arcane_mind","assassinate","battle_hardened","bludgeoning_mastery","charge","cleave","cold_mastery","cone_of_cold","constitution_training","evasion","fire_mastery","fireball","force_mastery","iron_skin","lightning_bolt","lightning_mastery","mage_armor","magic_arrow","mighty_leap","piercing_mastery","poison_bite","poison_blade","poison_immunity","poison_mastery","predators_instinct","quick_reflexes","reckless_attack","relentless","second_wind","shadow_step","shadow_strike","shield","slashing_mastery","smoke_bomb","sneak_attack","stealth","warriors_might"] as const;
+export const skillIds = ["acid_mastery","arcane_constitution","arcane_focus","arcane_mind","arcane_surge","assassinate","battle_cry","battle_hardened","berserker_rage","bludgeoning_mastery","caltrops","charge","cleave","cold_mastery","cone_of_cold","constitution_training","evasion","fire_mastery","fireball","force_mastery","frost_nova","garrote","hemorrhage","iron_skin","lightning_bolt","lightning_mastery","mage_armor","magic_arrow","marked_for_death","mighty_leap","mind_spike","piercing_mastery","poison_bite","poison_blade","poison_immunity","poison_mastery","predators_instinct","quick_reflexes","reckless_attack","relentless","second_wind","shadow_step","shadow_strike","shield","shield_bash","slashing_mastery","smoke_bomb","sneak_attack","soul_drain","stealth","warriors_might","whirlwind_strike"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
@@ -532,7 +544,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "acid_mastery",
     "name": "Acid Mastery",
-    "description": "Corroding your blades with acid adds bonus acid damage on every melee strike.",
+    "description": "Corrosive technique adds a reliable acid bonus to melee attacks that deal acid damage.",
     "school": "shadow",
     "tags": [
       "buff",
@@ -541,29 +553,29 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d4",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "acid",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "acid"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "acid",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "acid"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 5,
           "damageType": "acid",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "acid"
         }
       ]
     ]
@@ -677,6 +689,61 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "arcane_surge",
+    "name": "Arcane Surge",
+    "description": "Channel raw arcane energy, empowering your next spells with bonus damage dice and increased spell save DCs.",
+    "school": "arcane",
+    "tags": [
+      "buff",
+      "spell",
+      "utility"
+    ],
+    "cooldown": 5,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "arcane_surge",
+          "durationTurns": 3,
+          "target": "self",
+          "adjustments": {
+            "rangedDamageDiceBonus": "1d6",
+            "areaDamageDiceBonus": "1d6",
+            "saveDcBonusFlat": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "arcane_surge",
+          "durationTurns": 3,
+          "target": "self",
+          "adjustments": {
+            "rangedDamageDiceBonus": "2d6",
+            "areaDamageDiceBonus": "2d6",
+            "saveDcBonusFlat": 3
+          }
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "arcane_surge",
+          "durationTurns": 4,
+          "target": "self",
+          "adjustments": {
+            "rangedDamageDiceBonus": "2d6",
+            "areaDamageDiceBonus": "2d6",
+            "saveDcBonusFlat": 3
+          }
+        }
+      ]
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "assassinate",
     "name": "Assassinate",
@@ -702,6 +769,77 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "modify_crit_threshold",
           "reduction": 3
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "battle_cry",
+    "name": "Battle Cry",
+    "description": "Let out a fearsome war roar, bolstering your own attacks and sending nearby enemies fleeing in terror.",
+    "school": "martial",
+    "tags": [
+      "buff",
+      "debuff",
+      "control",
+      "utility"
+    ],
+    "cooldown": 5,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rallied",
+          "durationTurns": 3,
+          "target": "self",
+          "adjustments": {
+            "attackRollDiceBonus": "1d4"
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "frightened",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rallied",
+          "durationTurns": 4,
+          "target": "self",
+          "adjustments": {
+            "attackRollDiceBonus": "1d4"
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "frightened",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rallied",
+          "durationTurns": 4,
+          "target": "self",
+          "adjustments": {
+            "attackRollDiceBonus": "1d6"
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "frightened",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 3
         }
       ]
     ]
@@ -749,10 +887,64 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "berserker_rage",
+    "name": "Berserker Rage",
+    "description": "Channel primal fury, dealing bonus damage on every strike but leaving yourself exposed to hits.",
+    "school": "martial",
+    "tags": [
+      "buff",
+      "utility"
+    ],
+    "cooldown": 6,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "berserk",
+          "durationTurns": 3,
+          "target": "self",
+          "adjustments": {
+            "incomingDamageFlat": 2,
+            "meleeDamageDiceBonus": "1d6",
+            "areaDamageDiceBonus": "1d6"
+          }
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "berserk",
+          "durationTurns": 4,
+          "target": "self",
+          "adjustments": {
+            "incomingDamageFlat": 2,
+            "meleeDamageDiceBonus": "1d8",
+            "areaDamageDiceBonus": "1d8"
+          }
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "berserk",
+          "durationTurns": 5,
+          "target": "self",
+          "adjustments": {
+            "incomingDamageFlat": 2,
+            "meleeDamageDiceBonus": "1d10",
+            "areaDamageDiceBonus": "1d10"
+          }
+        }
+      ]
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "bludgeoning_mastery",
     "name": "Bludgeoning Mastery",
-    "description": "Crushing force adds bonus bludgeoning damage to all attacks — including leaps and sweeping strikes.",
+    "description": "Crushing force mastery adds a reliable bludgeoning bonus to attacks that deal bludgeoning damage — including leaps and sweeping strikes.",
     "school": "martial",
     "tags": [
       "buff",
@@ -761,29 +953,97 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d4",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "bludgeoning",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "bludgeoning"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "bludgeoning",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "bludgeoning"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 5,
           "damageType": "bludgeoning",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "bludgeoning"
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "caltrops",
+    "name": "Caltrops",
+    "description": "Scatter razor-sharp caltrops around your feet, rooting and bleeding all adjacent enemies.",
+    "school": "shadow",
+    "tags": [
+      "control",
+      "debuff",
+      "aoe",
+      "utility"
+    ],
+    "cooldown": 5,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        },
+        {
+          "type": "apply_status",
+          "statusId": "bleeding",
+          "durationTurns": 3,
+          "value": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        },
+        {
+          "type": "apply_status",
+          "statusId": "bleeding",
+          "durationTurns": 4,
+          "value": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        },
+        {
+          "type": "apply_status",
+          "statusId": "bleeding",
+          "durationTurns": 4,
+          "value": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
         }
       ]
     ]
@@ -897,7 +1157,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "cold_mastery",
     "name": "Cold Mastery",
-    "description": "Frost mastery adds bonus cold damage to every attack.",
+    "description": "Frost mastery adds a reliable bonus to attacks that deal cold damage.",
     "school": "arcane",
     "tags": [
       "buff",
@@ -906,29 +1166,29 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d4",
+          "type": "add_flat_damage_bonus",
+          "amount": 1,
           "damageType": "cold",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "cold"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "cold",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "cold"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "cold",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "cold"
         }
       ]
     ]
@@ -1092,7 +1352,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "fire_mastery",
     "name": "Fire Mastery",
-    "description": "Fire mastery adds bonus fire damage to every attack — area spells and directed bolts alike.",
+    "description": "Fire mastery adds a reliable bonus to attacks that deal fire damage.",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1101,29 +1361,29 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d4",
+          "type": "add_flat_damage_bonus",
+          "amount": 1,
           "damageType": "fire",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "fire"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "fire",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "fire"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "fire",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "fire"
         }
       ]
     ]
@@ -1191,7 +1451,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "force_mastery",
     "name": "Force Mastery",
-    "description": "Raw arcane force adds bonus force damage to every attack — spells, bolts, and blasts alike.",
+    "description": "Raw arcane force mastery adds a reliable bonus to attacks that deal force damage.",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1200,29 +1460,241 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d4",
+          "type": "add_flat_damage_bonus",
+          "amount": 1,
           "damageType": "force",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "force"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
+          "damageType": "force",
+          "appliesTo": "any",
+          "requiredDamageType": "force"
+        }
+      ],
+      [
+        {
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
+          "damageType": "force",
+          "appliesTo": "any",
+          "requiredDamageType": "force"
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "frost_nova",
+    "name": "Frost Nova",
+    "description": "Unleash an explosion of freezing energy from within, damaging and rooting all nearby enemies.",
+    "school": "arcane",
+    "tags": [
+      "damage",
+      "control",
+      "spell",
+      "aoe"
+    ],
+    "cooldown": 4,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "area_damage",
           "dice": "1d6",
-          "damageType": "force",
-          "appliesTo": "any",
-          "onCritOnly": false
+          "radiusTiles": 1,
+          "scalingStat": "intelligence",
+          "damageType": "cold",
+          "savingThrow": {
+            "saveAbility": "constitution",
+            "dcStat": "intelligence",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
         }
       ],
       [
         {
-          "type": "add_damage_dice",
+          "type": "area_damage",
+          "dice": "2d6",
+          "radiusTiles": 1,
+          "scalingStat": "intelligence",
+          "damageType": "cold",
+          "savingThrow": {
+            "saveAbility": "constitution",
+            "dcStat": "intelligence",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        }
+      ],
+      [
+        {
+          "type": "area_damage",
+          "dice": "2d8",
+          "radiusTiles": 2,
+          "scalingStat": "intelligence",
+          "damageType": "cold",
+          "savingThrow": {
+            "saveAbility": "constitution",
+            "dcStat": "intelligence",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "garrote",
+    "name": "Garrote",
+    "description": "Clamp a hand around the enemy's throat, dealing piercing damage and silencing them before they can act.",
+    "school": "shadow",
+    "tags": [
+      "damage",
+      "debuff",
+      "control",
+      "weapon_attack",
+      "finesse",
+      "melee_attack"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 1,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "1d6",
+          "damageType": "piercing",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "silenced",
+            "durationTurns": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "2d4",
+          "damageType": "piercing",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "silenced",
+            "durationTurns": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "2d6",
+          "damageType": "piercing",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "silenced",
+            "durationTurns": 3
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "hemorrhage",
+    "name": "Hemorrhage",
+    "description": "Open a deep wound that bleeds heavily, dealing upfront slashing damage and leaving the target bleeding.",
+    "school": "shadow",
+    "tags": [
+      "damage",
+      "debuff",
+      "weapon_attack",
+      "finesse",
+      "melee_attack"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 1,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
           "dice": "1d8",
-          "damageType": "force",
-          "appliesTo": "any",
-          "onCritOnly": false
+          "damageType": "slashing",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 4,
+            "value": 3
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "1d10",
+          "damageType": "slashing",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 5,
+            "value": 3
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "2d6",
+          "damageType": "slashing",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 5,
+            "value": 4
+          }
         }
       ]
     ]
@@ -1316,7 +1788,7 @@ export const skills: readonly SkillDefinition[] = [
     "skillType": "passive",
     "id": "lightning_mastery",
     "name": "Lightning Mastery",
-    "description": "Storm mastery adds bonus lightning damage to every attack.",
+    "description": "Storm mastery adds a reliable bonus to attacks that deal lightning damage.",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1325,29 +1797,29 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d4",
+          "type": "add_flat_damage_bonus",
+          "amount": 1,
           "damageType": "lightning",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "lightning"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "lightning",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "lightning"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "lightning",
           "appliesTo": "any",
-          "onCritOnly": false
+          "requiredDamageType": "lightning"
         }
       ]
     ]
@@ -1437,6 +1909,55 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "active",
+    "id": "marked_for_death",
+    "name": "Marked for Death",
+    "description": "Paint a target with a death mark, causing them to take increased damage from all sources.",
+    "school": "shadow",
+    "tags": [
+      "debuff",
+      "utility"
+    ],
+    "cooldown": 4,
+    "targetType": "actor",
+    "range": 4,
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "marked",
+          "durationTurns": 3,
+          "target": "target",
+          "adjustments": {
+            "incomingDamageFlat": 4
+          }
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "marked",
+          "durationTurns": 4,
+          "target": "target",
+          "adjustments": {
+            "incomingDamageFlat": 5
+          }
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "marked",
+          "durationTurns": 4,
+          "target": "target",
+          "adjustments": {
+            "incomingDamageFlat": 6
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "mighty_leap",
     "name": "Mighty Leap",
     "description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
@@ -1483,10 +2004,76 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "mind_spike",
+    "name": "Mind Spike",
+    "description": "Drive a psychic lance through the enemy's mind, dealing psychic damage and silencing them.",
+    "school": "arcane",
+    "tags": [
+      "damage",
+      "debuff",
+      "spell",
+      "ranged"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 4,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "1d8",
+          "damageType": "psychic",
+          "scalingStat": "intelligence",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "silenced",
+            "durationTurns": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "2d6",
+          "damageType": "psychic",
+          "scalingStat": "intelligence",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "silenced",
+            "durationTurns": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "2d8",
+          "damageType": "psychic",
+          "scalingStat": "intelligence",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "silenced",
+            "durationTurns": 3
+          }
+        }
+      ]
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "piercing_mastery",
     "name": "Piercing Mastery",
-    "description": "Polearm and spear mastery adds bonus piercing damage to every weapon strike.",
+    "description": "Polearm and spear mastery adds a reliable piercing bonus to melee attacks that deal piercing damage.",
     "school": "martial",
     "tags": [
       "buff",
@@ -1495,29 +2082,29 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "piercing",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "piercing"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "piercing",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "piercing"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d10",
+          "type": "add_flat_damage_bonus",
+          "amount": 5,
           "damageType": "piercing",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "piercing"
         }
       ]
     ]
@@ -2055,10 +2642,73 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "shield_bash",
+    "name": "Shield Bash",
+    "description": "Drive your shield into the enemy with bone-crunching force, stunning them momentarily.",
+    "school": "martial",
+    "tags": [
+      "damage",
+      "control",
+      "weapon_attack",
+      "melee_attack"
+    ],
+    "cooldown": 4,
+    "targetType": "actor",
+    "range": 1,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "1d6",
+          "damageType": "bludgeoning",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "stunned",
+            "durationTurns": 1
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "1d8",
+          "damageType": "bludgeoning",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "stunned",
+            "durationTurns": 1
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "dice": "2d6",
+          "damageType": "bludgeoning",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "stunned",
+            "durationTurns": 2
+          }
+        }
+      ]
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "slashing_mastery",
     "name": "Slashing Mastery",
-    "description": "Blade mastery adds bonus slashing damage to every weapon strike and charge.",
+    "description": "Blade mastery adds a reliable slashing bonus to melee attacks that deal slashing damage.",
     "school": "martial",
     "tags": [
       "buff",
@@ -2067,29 +2717,29 @@ export const skills: readonly SkillDefinition[] = [
     "effectsByRank": [
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d6",
+          "type": "add_flat_damage_bonus",
+          "amount": 2,
           "damageType": "slashing",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "slashing"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d8",
+          "type": "add_flat_damage_bonus",
+          "amount": 3,
           "damageType": "slashing",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "slashing"
         }
       ],
       [
         {
-          "type": "add_damage_dice",
-          "dice": "1d10",
+          "type": "add_flat_damage_bonus",
+          "amount": 5,
           "damageType": "slashing",
           "appliesTo": "melee",
-          "onCritOnly": false
+          "requiredDamageType": "slashing"
         }
       ]
     ]
@@ -2181,6 +2831,48 @@ export const skills: readonly SkillDefinition[] = [
   },
   {
     "skillType": "active",
+    "id": "soul_drain",
+    "name": "Soul Drain",
+    "description": "Drain the life force from an enemy at range, dealing force damage and restoring your own health.",
+    "school": "arcane",
+    "tags": [
+      "damage",
+      "healing",
+      "spell",
+      "ranged"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 4,
+    "effectsByRank": [
+      [
+        {
+          "type": "drain_life",
+          "dice": "1d8",
+          "damageType": "force",
+          "healDice": "1d4"
+        }
+      ],
+      [
+        {
+          "type": "drain_life",
+          "dice": "2d6",
+          "damageType": "force",
+          "healDice": "1d6"
+        }
+      ],
+      [
+        {
+          "type": "drain_life",
+          "dice": "2d8",
+          "damageType": "force",
+          "healDice": "1d8"
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
     "id": "stealth",
     "name": "Stealth",
     "description": "Melt into the shadows. Enemies lose track of you and cannot detect your presence.",
@@ -2248,6 +2940,50 @@ export const skills: readonly SkillDefinition[] = [
           "type": "modify_attribute",
           "attribute": "strength",
           "amount": 4
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "whirlwind_strike",
+    "name": "Whirlwind Strike",
+    "description": "Spin with your weapon extended, striking every adjacent enemy simultaneously.",
+    "school": "martial",
+    "tags": [
+      "damage",
+      "aoe",
+      "weapon_attack",
+      "melee_attack"
+    ],
+    "cooldown": 3,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "area_damage",
+          "dice": "1d8",
+          "radiusTiles": 1,
+          "scalingStat": "strength",
+          "damageType": "slashing"
+        }
+      ],
+      [
+        {
+          "type": "area_damage",
+          "dice": "2d8",
+          "radiusTiles": 1,
+          "scalingStat": "strength",
+          "damageType": "slashing"
+        }
+      ],
+      [
+        {
+          "type": "area_damage",
+          "dice": "3d8",
+          "radiusTiles": 1,
+          "scalingStat": "strength",
+          "damageType": "slashing"
         }
       ]
     ]

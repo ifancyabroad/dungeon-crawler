@@ -14,7 +14,16 @@
 	"hitDie": 10,
 	"startingEquipment": ["longsword", "wooden_shield", "chain_mail"],
 	"startingSkills": ["charge"],
-	"activeSkillPool": ["cleave", "second_wind", "mighty_leap", "reckless_attack"],
+	"activeSkillPool": [
+		"cleave",
+		"second_wind",
+		"mighty_leap",
+		"reckless_attack",
+		"whirlwind_strike",
+		"shield_bash",
+		"battle_cry",
+		"berserker_rage"
+	],
 	"passiveSkillPool": [
 		"warriors_might",
 		"iron_skin",

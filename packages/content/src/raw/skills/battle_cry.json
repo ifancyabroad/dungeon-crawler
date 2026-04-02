@@ -1,0 +1,66 @@
+{
+	"skillType": "active",
+	"id": "battle_cry",
+	"name": "Battle Cry",
+	"description": "Let out a fearsome war roar, bolstering your own attacks and sending nearby enemies fleeing in terror.",
+	"school": "martial",
+	"tags": ["buff", "debuff", "control", "utility"],
+	"cooldown": 5,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rallied",
+				"target": "self",
+				"durationTurns": 3,
+				"adjustments": {
+					"attackRollDiceBonus": "1d4"
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "frightened",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 2
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rallied",
+				"target": "self",
+				"durationTurns": 4,
+				"adjustments": {
+					"attackRollDiceBonus": "1d4"
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "frightened",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 3
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rallied",
+				"target": "self",
+				"durationTurns": 4,
+				"adjustments": {
+					"attackRollDiceBonus": "1d6"
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "frightened",
+				"target": "aoe",
+				"aoeRadiusTiles": 3,
+				"durationTurns": 3
+			}
+		]
+	]
+}

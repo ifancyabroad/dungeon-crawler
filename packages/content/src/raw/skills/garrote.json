@@ -1,0 +1,58 @@
+{
+	"skillType": "active",
+	"id": "garrote",
+	"name": "Garrote",
+	"description": "Clamp a hand around the enemy's throat, dealing piercing damage and silencing them before they can act.",
+	"school": "shadow",
+	"tags": ["damage", "debuff", "control", "weapon_attack", "finesse", "melee_attack"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 1,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "piercing",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "silenced",
+					"durationTurns": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "2d4",
+				"damageType": "piercing",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "silenced",
+					"durationTurns": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "2d6",
+				"damageType": "piercing",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "silenced",
+					"durationTurns": 3
+				}
+			}
+		]
+	]
+}

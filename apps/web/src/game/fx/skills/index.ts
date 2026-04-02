@@ -22,6 +22,18 @@ import { playSneakAttack } from "./sneakAttack";
 import { playShadowStep } from "./shadowStep";
 import { playPoisonBlade } from "./poisonBlade";
 import { playPoisonBite } from "./poisonBite";
+import { playWhirlwindStrike } from "./whirlwindStrike";
+import { playShieldBash } from "./shieldBash";
+import { playBattleCry } from "./battleCry";
+import { playBerserkerRage } from "./berserkerRage";
+import { playFrostNova } from "./frostNova";
+import { playMindSpike } from "./mindSpike";
+import { playArcaneSurge } from "./arcaneSurge";
+import { playSoulDrain } from "./soulDrain";
+import { playGarrote } from "./garrote";
+import { playHemorrhage } from "./hemorrhage";
+import { playMarkedForDeath } from "./markedForDeath";
+import { playCaltrops } from "./caltrops";
 import { idxToXY, getTilesInLine } from "@app/shared";
 import { TILE_WIDTH, TILE_HEIGHT } from "../../tiles/tilesetRegistry";
 import { useMapStore } from "../../../features/map/mapStore";
@@ -169,6 +181,84 @@ const poisonBiteHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
 	return { handled: true, fxDeferred: false };
 };
 
+const whirlwindStrikeHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playWhirlwindStrike(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const shieldBashHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
+	if (ctx.event.targetActorIdx === undefined) return DEFAULT_ANIM_RESULT;
+	playShieldBash(scene, ctx.casterSprite, ctx.event.targetActorIdx, mapWidth, ctx.onImpact);
+	return { handled: true, fxDeferred: true };
+};
+
+const battleCryHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playBattleCry(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const berserkerRageHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playBerserkerRage(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const frostNovaHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playFrostNova(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const mindSpikeHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playMindSpike(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
+	return { handled: true, fxDeferred: true };
+};
+
+const arcaneSurgeHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playArcaneSurge(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const soulDrainHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playSoulDrain(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
+	return { handled: true, fxDeferred: false };
+};
+
+const garroteHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
+	if (ctx.event.targetActorIdx === undefined) return DEFAULT_ANIM_RESULT;
+	playGarrote(scene, ctx.casterSprite, ctx.event.targetActorIdx, mapWidth, ctx.onImpact);
+	return { handled: true, fxDeferred: true };
+};
+
+const hemorrhageHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
+	if (ctx.event.targetActorIdx === undefined) return DEFAULT_ANIM_RESULT;
+	playHemorrhage(scene, ctx.casterSprite, ctx.event.targetActorIdx, mapWidth, ctx.onImpact);
+	return { handled: true, fxDeferred: true };
+};
+
+const markedForDeathHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playMarkedForDeath(scene, ctx.targetWorldPos.px, ctx.targetWorldPos.py, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const caltropsHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playCaltrops(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
 /** Map skill ID → animation handler. Add entries here to support new skill animations. */
 export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	fireball: fireballHandler,
@@ -187,6 +277,18 @@ export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	second_wind: secondWindHandler,
 	reckless_attack: recklessAttackHandler,
 	stealth: stealthHandler,
+	whirlwind_strike: whirlwindStrikeHandler,
+	shield_bash: shieldBashHandler,
+	battle_cry: battleCryHandler,
+	berserker_rage: berserkerRageHandler,
+	frost_nova: frostNovaHandler,
+	mind_spike: mindSpikeHandler,
+	arcane_surge: arcaneSurgeHandler,
+	soul_drain: soulDrainHandler,
+	garrote: garroteHandler,
+	hemorrhage: hemorrhageHandler,
+	marked_for_death: markedForDeathHandler,
+	caltrops: caltropsHandler,
 };
 
 export { DEFAULT_ANIM_RESULT } from "./types";

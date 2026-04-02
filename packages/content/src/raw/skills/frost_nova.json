@@ -1,0 +1,75 @@
+{
+	"skillType": "active",
+	"id": "frost_nova",
+	"name": "Frost Nova",
+	"description": "Unleash an explosion of freezing energy from within, damaging and rooting all nearby enemies.",
+	"school": "arcane",
+	"tags": ["damage", "control", "spell", "aoe"],
+	"cooldown": 4,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d6",
+				"radiusTiles": 1,
+				"damageType": "cold",
+				"scalingStat": "intelligence",
+				"savingThrow": {
+					"saveAbility": "constitution",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 2
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "2d6",
+				"radiusTiles": 1,
+				"damageType": "cold",
+				"scalingStat": "intelligence",
+				"savingThrow": {
+					"saveAbility": "constitution",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 2
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "2d8",
+				"radiusTiles": 2,
+				"damageType": "cold",
+				"scalingStat": "intelligence",
+				"savingThrow": {
+					"saveAbility": "constitution",
+					"dcStat": "intelligence",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 2
+			}
+		]
+	]
+}

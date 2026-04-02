@@ -1,0 +1,51 @@
+{
+	"skillType": "active",
+	"id": "arcane_surge",
+	"name": "Arcane Surge",
+	"description": "Channel raw arcane energy, empowering your next spells with bonus damage dice and increased spell save DCs.",
+	"school": "arcane",
+	"tags": ["buff", "spell", "utility"],
+	"cooldown": 5,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "arcane_surge",
+				"target": "self",
+				"durationTurns": 3,
+				"adjustments": {
+					"areaDamageDiceBonus": "1d6",
+					"rangedDamageDiceBonus": "1d6",
+					"saveDcBonusFlat": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "arcane_surge",
+				"target": "self",
+				"durationTurns": 3,
+				"adjustments": {
+					"areaDamageDiceBonus": "2d6",
+					"rangedDamageDiceBonus": "2d6",
+					"saveDcBonusFlat": 3
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "arcane_surge",
+				"target": "self",
+				"durationTurns": 4,
+				"adjustments": {
+					"areaDamageDiceBonus": "2d6",
+					"rangedDamageDiceBonus": "2d6",
+					"saveDcBonusFlat": 3
+				}
+			}
+		]
+	]
+}

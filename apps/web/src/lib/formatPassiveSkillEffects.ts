@@ -55,6 +55,10 @@ export function formatPassiveSkillEffectLine(effect: PassiveSkillEffectDescripto
 			return `+${effect.amount} to healing you apply`;
 		case "add_dot_amplify_flat":
 			return `+${effect.amount} to DoT damage you apply`;
+		case "add_flat_damage_bonus": {
+			const scope = effect.appliesTo;
+			return `+${effect.amount} ${titleCaseWord(effect.damageType)} on ${scope} attacks`;
+		}
 	}
 }
 

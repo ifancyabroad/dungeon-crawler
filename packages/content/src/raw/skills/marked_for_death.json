@@ -1,0 +1,46 @@
+{
+	"skillType": "active",
+	"id": "marked_for_death",
+	"name": "Marked for Death",
+	"description": "Paint a target with a death mark, causing them to take increased damage from all sources.",
+	"school": "shadow",
+	"tags": ["debuff", "utility"],
+	"cooldown": 4,
+	"targetType": "actor",
+	"range": 4,
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "marked",
+				"target": "target",
+				"durationTurns": 3,
+				"adjustments": {
+					"incomingDamageFlat": 4
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "marked",
+				"target": "target",
+				"durationTurns": 4,
+				"adjustments": {
+					"incomingDamageFlat": 5
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "marked",
+				"target": "target",
+				"durationTurns": 4,
+				"adjustments": {
+					"incomingDamageFlat": 6
+				}
+			}
+		]
+	]
+}

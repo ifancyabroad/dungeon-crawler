@@ -1,0 +1,63 @@
+{
+	"skillType": "active",
+	"id": "caltrops",
+	"name": "Caltrops",
+	"description": "Scatter razor-sharp caltrops around your feet, rooting and bleeding all adjacent enemies.",
+	"school": "shadow",
+	"tags": ["control", "debuff", "aoe", "utility"],
+	"cooldown": 5,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 2
+			},
+			{
+				"type": "apply_status",
+				"statusId": "bleeding",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 3,
+				"value": 2
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 2
+			},
+			{
+				"type": "apply_status",
+				"statusId": "bleeding",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 4,
+				"value": 2
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 2
+			},
+			{
+				"type": "apply_status",
+				"statusId": "bleeding",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 4,
+				"value": 3
+			}
+		]
+	]
+}

@@ -1,0 +1,61 @@
+{
+	"skillType": "active",
+	"id": "hemorrhage",
+	"name": "Hemorrhage",
+	"description": "Open a deep wound that bleeds heavily, dealing upfront slashing damage and leaving the target bleeding.",
+	"school": "shadow",
+	"tags": ["damage", "debuff", "weapon_attack", "finesse", "melee_attack"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 1,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d8",
+				"damageType": "slashing",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "bleeding",
+					"durationTurns": 4,
+					"value": 3
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d10",
+				"damageType": "slashing",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "bleeding",
+					"durationTurns": 5,
+					"value": 3
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "2d6",
+				"damageType": "slashing",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "bleeding",
+					"durationTurns": 5,
+					"value": 4
+				}
+			}
+		]
+	]
+}

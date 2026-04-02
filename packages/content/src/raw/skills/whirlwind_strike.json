@@ -1,0 +1,39 @@
+{
+	"skillType": "active",
+	"id": "whirlwind_strike",
+	"name": "Whirlwind Strike",
+	"description": "Spin with your weapon extended, striking every adjacent enemy simultaneously.",
+	"school": "martial",
+	"tags": ["damage", "aoe", "weapon_attack", "melee_attack"],
+	"cooldown": 3,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "area_damage",
+				"dice": "1d8",
+				"radiusTiles": 1,
+				"damageType": "slashing",
+				"scalingStat": "strength"
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "2d8",
+				"radiusTiles": 1,
+				"damageType": "slashing",
+				"scalingStat": "strength"
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"dice": "3d8",
+				"radiusTiles": 1,
+				"damageType": "slashing",
+				"scalingStat": "strength"
+			}
+		]
+	]
+}

@@ -1,0 +1,51 @@
+{
+	"skillType": "active",
+	"id": "berserker_rage",
+	"name": "Berserker Rage",
+	"description": "Channel primal fury, dealing bonus damage on every strike but leaving yourself exposed to hits.",
+	"school": "martial",
+	"tags": ["buff", "utility"],
+	"cooldown": 6,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "berserk",
+				"target": "self",
+				"durationTurns": 3,
+				"adjustments": {
+					"meleeDamageDiceBonus": "1d6",
+					"areaDamageDiceBonus": "1d6",
+					"incomingDamageFlat": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "berserk",
+				"target": "self",
+				"durationTurns": 4,
+				"adjustments": {
+					"meleeDamageDiceBonus": "1d8",
+					"areaDamageDiceBonus": "1d8",
+					"incomingDamageFlat": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "berserk",
+				"target": "self",
+				"durationTurns": 5,
+				"adjustments": {
+					"meleeDamageDiceBonus": "1d10",
+					"areaDamageDiceBonus": "1d10",
+					"incomingDamageFlat": 2
+				}
+			}
+		]
+	]
+}

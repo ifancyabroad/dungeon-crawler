@@ -1,0 +1,58 @@
+{
+	"skillType": "active",
+	"id": "shield_bash",
+	"name": "Shield Bash",
+	"description": "Drive your shield into the enemy with bone-crunching force, stunning them momentarily.",
+	"school": "martial",
+	"tags": ["damage", "control", "weapon_attack", "melee_attack"],
+	"cooldown": 4,
+	"targetType": "actor",
+	"range": 1,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d6",
+				"damageType": "bludgeoning",
+				"attackRoll": {
+					"modifierStat": "strength",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "stunned",
+					"durationTurns": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "1d8",
+				"damageType": "bludgeoning",
+				"attackRoll": {
+					"modifierStat": "strength",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "stunned",
+					"durationTurns": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"dice": "2d6",
+				"damageType": "bludgeoning",
+				"attackRoll": {
+					"modifierStat": "strength",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "stunned",
+					"durationTurns": 2
+				}
+			}
+		]
+	]
+}

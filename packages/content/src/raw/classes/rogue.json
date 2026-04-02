@@ -14,7 +14,16 @@
 	"hitDie": 8,
 	"startingEquipment": ["dagger", "leather_armor"],
 	"startingSkills": ["stealth"],
-	"activeSkillPool": ["sneak_attack", "shadow_step", "smoke_bomb", "poison_blade"],
+	"activeSkillPool": [
+		"sneak_attack",
+		"shadow_step",
+		"smoke_bomb",
+		"poison_blade",
+		"garrote",
+		"hemorrhage",
+		"marked_for_death",
+		"caltrops"
+	],
 	"passiveSkillPool": [
 		"quick_reflexes",
 		"shadow_strike",
