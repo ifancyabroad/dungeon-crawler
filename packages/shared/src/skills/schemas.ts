@@ -311,6 +311,8 @@ export const AddDamageDiceEffectSchema = z.object({
 	damageType: DamageTypeSchema,
 	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	onCritOnly: z.boolean(),
+	/** If set, only fires when the attack's primary damage type matches. */
+	requiredDamageType: DamageTypeSchema.optional(),
 });
 
 export const AddStatusImmunityEffectSchema = z.object({
@@ -364,6 +366,17 @@ export const AddDotAmplifyFlatEffectSchema = z.object({
 	amount: z.number().int().min(1),
 });
 
+export const AddFlatDamageBonusEffectSchema = z.object({
+	type: z.literal("add_flat_damage_bonus"),
+	/** Flat integer damage added as a packet. */
+	amount: z.number().int().min(1),
+	/** The damage type this bonus adds. */
+	damageType: DamageTypeSchema,
+	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
+	/** If set, only fires when the attack's primary damage type matches. */
+	requiredDamageType: DamageTypeSchema.optional(),
+});
+
 export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	ModifyAttributeEffectSchema,
 	ModifyArmorClassEffectSchema,
@@ -379,6 +392,7 @@ export const PassiveSkillEffectDescriptorSchema = z.discriminatedUnion("type", [
 	AddDamageVulnerabilityEffectSchema,
 	AddHealingBonusFlatEffectSchema,
 	AddDotAmplifyFlatEffectSchema,
+	AddFlatDamageBonusEffectSchema,
 ]);
 
 export type PassiveSkillEffectDescriptor = z.infer<typeof PassiveSkillEffectDescriptorSchema>;
@@ -397,6 +411,7 @@ export type ModifyCritThresholdEffect = z.infer<typeof ModifyCritThresholdEffect
 export type AddDamageVulnerabilityEffect = z.infer<typeof AddDamageVulnerabilityEffectSchema>;
 export type AddHealingBonusFlatEffect = z.infer<typeof AddHealingBonusFlatEffectSchema>;
 export type AddDotAmplifyFlatEffect = z.infer<typeof AddDotAmplifyFlatEffectSchema>;
+export type AddFlatDamageBonusEffect = z.infer<typeof AddFlatDamageBonusEffectSchema>;
 
 // ---------------------------------------------------------------------------
 // Skill classification schemas (raw constants and types live in config/skills)

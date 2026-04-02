@@ -11,7 +11,7 @@
  * applied at the initial grant (previousRank === 0); they are the same at
  * every rank and cannot be meaningfully "upgraded".
  *
- * add_damage_dice replaces the old rank's entry using sourceSkillId tracking.
+ * add_damage_dice and add_flat_damage_bonus replace the old rank's entry using sourceSkillId tracking.
  */
 
 import type { Actor } from "../game/types";
@@ -70,6 +70,27 @@ function applyEffect(
 						appliesTo: effect.appliesTo,
 						onCritOnly: effect.onCritOnly,
 						sourceSkillId: skillId,
+						requiredDamageType: effect.requiredDamageType,
+					},
+				],
+			};
+		}
+
+		case "add_flat_damage_bonus": {
+			// Replace existing entry for this skill with the new rank's values
+			const filtered = actor.passiveFlatDamageBonuses.filter(
+				(b) => b.sourceSkillId !== skillId,
+			);
+			return {
+				...actor,
+				passiveFlatDamageBonuses: [
+					...filtered,
+					{
+						amount: effect.amount,
+						damageType: effect.damageType,
+						appliesTo: effect.appliesTo,
+						sourceSkillId: skillId,
+						requiredDamageType: effect.requiredDamageType,
 					},
 				],
 			};

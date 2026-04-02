@@ -2,35 +2,35 @@
 	"skillType": "passive",
 	"id": "slashing_mastery",
 	"name": "Slashing Mastery",
-	"description": "Blade mastery adds bonus slashing damage to every weapon strike and charge.",
+	"description": "Blade mastery adds a reliable slashing bonus to melee attacks that deal slashing damage.",
 	"school": "martial",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d6",
+				"type": "add_flat_damage_bonus",
+				"amount": 2,
 				"damageType": "slashing",
 				"appliesTo": "melee",
-				"onCritOnly": false
+				"requiredDamageType": "slashing"
 			}
 		],
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d8",
+				"type": "add_flat_damage_bonus",
+				"amount": 3,
 				"damageType": "slashing",
 				"appliesTo": "melee",
-				"onCritOnly": false
+				"requiredDamageType": "slashing"
 			}
 		],
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d10",
+				"type": "add_flat_damage_bonus",
+				"amount": 5,
 				"damageType": "slashing",
 				"appliesTo": "melee",
-				"onCritOnly": false
+				"requiredDamageType": "slashing"
 			}
 		]
 	]

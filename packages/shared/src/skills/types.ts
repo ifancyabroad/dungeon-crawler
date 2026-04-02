@@ -53,6 +53,7 @@ export type {
 	ModifyCritThresholdEffect,
 	ModifyHitDieEffect,
 	ModifyMaxHpEffect,
+	AddFlatDamageBonusEffect,
 } from "./schemas";
 
 // ---------------------------------------------------------------------------

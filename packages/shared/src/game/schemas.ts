@@ -145,6 +145,19 @@ export const PassiveDamageBonusSchema = z.object({
 	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	onCritOnly: z.boolean(),
 	sourceSkillId: z.string().optional(),
+	/** If set, only fires when the attack's primary damage type matches. */
+	requiredDamageType: DamageTypeSchema.optional(),
+});
+
+export const PassiveFlatDamageBonusSchema = z.object({
+	amount: z.number().int().min(1),
+	/** The damage type this bonus adds. */
+	damageType: DamageTypeSchema,
+	/** "melee" = weapon attacks; "area" = AoE skills; "ranged" = single-target skill attacks; "any" = all. */
+	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
+	sourceSkillId: z.string().optional(),
+	/** If set, only fires when the attack's primary damage type matches. */
+	requiredDamageType: DamageTypeSchema.optional(),
 });
 
 export const ActorDefSchema = z.discriminatedUnion("type", [
@@ -194,6 +207,7 @@ export const ActorSchema = z.object({
 	activeEffects: z.array(ActiveEffectSchema).default([]),
 	numericBuffs: z.record(z.string(), z.number()).default({}),
 	passiveDamageBonuses: z.array(PassiveDamageBonusSchema).default([]),
+	passiveFlatDamageBonuses: z.array(PassiveFlatDamageBonusSchema).default([]),
 	statusImmunities: z.array(z.string()).default([]),
 	savingThrowProficiencies: z.array(AbilityNameSchema).default([]),
 	challengeRating: z.number().optional(),

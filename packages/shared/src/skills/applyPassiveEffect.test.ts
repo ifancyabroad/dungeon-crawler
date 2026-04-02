@@ -9,6 +9,7 @@ import {
 import {
 	mockPassiveAcSkill,
 	mockPassiveDamageDice,
+	mockPassiveFlatDamageBonus,
 	mockPassiveResistance,
 	mockPassiveStrSkill,
 	SEED,
@@ -38,5 +39,19 @@ describe("applyPassiveSkill", () => {
 		const hero = getHero(createInitialState(SEED, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT))!;
 		const updated = applyPassiveSkill(hero, mockPassiveDamageDice, 0, 1);
 		expect(updated.passiveDamageBonuses[0]?.dice).toBe("1d6");
+	});
+
+	it("add_flat_damage_bonus appends to passiveFlatDamageBonuses", () => {
+		const hero = getHero(createInitialState(SEED, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT))!;
+		const updated = applyPassiveSkill(hero, mockPassiveFlatDamageBonus, 0, 1);
+		expect(updated.passiveFlatDamageBonuses[0]?.amount).toBe(2);
+		expect(updated.passiveFlatDamageBonuses[0]?.damageType).toBe("fire");
+	});
+
+	it("add_flat_damage_bonus upgrade replaces entry rather than stacking", () => {
+		const hero = getHero(createInitialState(SEED, [DEFAULT_FLOOR_CONFIG], DEFAULT_HERO_INIT))!;
+		const rank1 = applyPassiveSkill(hero, mockPassiveFlatDamageBonus, 0, 1);
+		const rank2 = applyPassiveSkill(rank1, mockPassiveFlatDamageBonus, 1, 2);
+		expect(rank2.passiveFlatDamageBonuses).toHaveLength(1);
 	});
 });

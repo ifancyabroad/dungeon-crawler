@@ -12,6 +12,7 @@ import type { Rng } from "../../rng";
 import type { LeapAttackEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY } from "../../game/engineUtils";
 
@@ -76,16 +77,16 @@ export function applyLeapAttack(
 		];
 
 		// Apply passive area/any damage bonuses.
-		for (const bonus of movedCaster.passiveDamageBonuses) {
-			if (bonus.appliesTo !== "area" && bonus.appliesTo !== "any") continue;
-			if (bonus.onCritOnly) continue;
-			const bonusRoll = rollDiceExpr(rng, bonus.dice);
-			rawPackets.push({
-				damageType: bonus.damageType,
-				rawAmount: bonusRoll,
-				effectiveAmount: 0,
-			});
-		}
+		rawPackets.push(
+			...collectPassiveBonusPackets(
+				movedCaster,
+				rng,
+				"area",
+				false,
+				false,
+				effect.damageType,
+			),
+		);
 
 		const resolved = resolveDamagePackets(rawPackets, actor);
 		const effectiveDamage = resolved.totalEffectiveDamage;

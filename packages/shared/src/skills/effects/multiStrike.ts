@@ -14,6 +14,7 @@ import type { Rng } from "../../rng";
 import type { MultiStrikeEffect } from "../types";
 import { abilityModifier, rollD20Adjusted, rollDiceExpr } from "../../combat/dice";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 
 export function applyMultiStrike(
@@ -84,19 +85,16 @@ export function applyMultiStrike(
 			];
 
 			// Passive melee / any bonuses.
-			for (const bonus of caster.passiveDamageBonuses) {
-				if (bonus.appliesTo !== "melee" && bonus.appliesTo !== "any") continue;
-				if (bonus.onCritOnly && !isCritical) continue;
-				rawPackets.push({
-					damageType: bonus.damageType,
-					rawAmount: rollDiceExpr(
-						rng,
-						bonus.dice,
-						isCritical && bonus.onCritOnly ? 2 : 1,
-					),
-					effectiveAmount: 0,
-				});
-			}
+			rawPackets.push(
+				...collectPassiveBonusPackets(
+					caster,
+					rng,
+					"melee",
+					isCritical,
+					true,
+					effect.damageType,
+				),
+			);
 
 			// Data-driven melee damage adjustments.
 			for (const eff of caster.activeEffects) {

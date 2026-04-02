@@ -9,6 +9,7 @@ import type { LineDamageEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { getTilesInLine } from "../geometry";
 import { SKILLS_CONFIG } from "../../config";
@@ -56,15 +57,9 @@ export function applyLineDamage(
 		];
 
 		// Apply passive area/any damage bonuses from the caster.
-		for (const bonus of caster.passiveDamageBonuses) {
-			if (bonus.appliesTo !== "area" && bonus.appliesTo !== "any") continue;
-			if (bonus.onCritOnly) continue;
-			rawPackets.push({
-				damageType: bonus.damageType,
-				rawAmount: rollDiceExpr(rng, bonus.dice),
-				effectiveAmount: 0,
-			});
-		}
+		rawPackets.push(
+			...collectPassiveBonusPackets(caster, rng, "area", false, false, effect.damageType),
+		);
 
 		// Data-driven area damage adjustments from active effects.
 		for (const eff of caster.activeEffects) {

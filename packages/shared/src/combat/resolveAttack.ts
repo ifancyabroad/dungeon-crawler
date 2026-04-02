@@ -8,6 +8,7 @@ import type { Actor } from "../game/types";
 import type { AttackResult, WeaponDice } from "./types";
 import { rollD20Adjusted, rollDice, rollDiceExpr, parseDice } from "./dice";
 import { resolveDamagePackets } from "./resolveDamage";
+import { collectPassiveBonusPackets } from "./collectPassiveBonusPackets";
 
 /**
  * Resolve a melee attack from attacker against defender.
@@ -99,16 +100,16 @@ export function resolveAttack(
 		];
 
 		// Apply passive damage bonuses from the attacker
-		for (const bonus of attacker.passiveDamageBonuses) {
-			if (bonus.appliesTo !== "melee" && bonus.appliesTo !== "any") continue;
-			if (bonus.onCritOnly && !critical) continue;
-			const bonusRoll = rollDiceExpr(rng, bonus.dice);
-			rawPackets.push({
-				damageType: bonus.damageType,
-				rawAmount: bonusRoll,
-				effectiveAmount: 0,
-			});
-		}
+		rawPackets.push(
+			...collectPassiveBonusPackets(
+				attacker,
+				rng,
+				"melee",
+				critical,
+				true,
+				weapon.damageType,
+			),
+		);
 
 		// Data-driven melee damage adjustments from active effects (e.g. berserk).
 		// Adjustments are defined in the skill JSON and copied onto the ActiveEffect

@@ -10,6 +10,7 @@ import type { AreaDamageEffect } from "../types";
 import { abilityModifier, rollDiceExpr } from "../../combat/dice";
 import { computeSavingThrowDC, resolveSavingThrow } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { idxToXY } from "../../game/engineUtils";
 import { SKILLS_CONFIG } from "../../config";
@@ -60,18 +61,10 @@ export function applyAreaDamage(
 			},
 		];
 
-		// Apply passive area/any damage bonuses from the caster
-		for (const bonus of caster.passiveDamageBonuses) {
-			if (bonus.appliesTo !== "area" && bonus.appliesTo !== "any") continue;
-			// onCritOnly bonuses don't apply to area damage (no crit concept)
-			if (bonus.onCritOnly) continue;
-			const bonusRoll = rollDiceExpr(rng, bonus.dice);
-			rawPackets.push({
-				damageType: bonus.damageType,
-				rawAmount: bonusRoll,
-				effectiveAmount: 0,
-			});
-		}
+		// Apply passive area/any damage bonuses from the caster.
+		rawPackets.push(
+			...collectPassiveBonusPackets(caster, rng, "area", false, false, effect.damageType),
+		);
 
 		// Data-driven areaDamageFlat adjustments from active effects (e.g. empower_spell).
 		for (const eff of caster.activeEffects) {

@@ -2,35 +2,35 @@
 	"skillType": "passive",
 	"id": "bludgeoning_mastery",
 	"name": "Bludgeoning Mastery",
-	"description": "Crushing force adds bonus bludgeoning damage to all attacks — including leaps and sweeping strikes.",
+	"description": "Crushing force mastery adds a reliable bludgeoning bonus to attacks that deal bludgeoning damage — including leaps and sweeping strikes.",
 	"school": "martial",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d4",
+				"type": "add_flat_damage_bonus",
+				"amount": 2,
 				"damageType": "bludgeoning",
 				"appliesTo": "any",
-				"onCritOnly": false
+				"requiredDamageType": "bludgeoning"
 			}
 		],
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d6",
+				"type": "add_flat_damage_bonus",
+				"amount": 3,
 				"damageType": "bludgeoning",
 				"appliesTo": "any",
-				"onCritOnly": false
+				"requiredDamageType": "bludgeoning"
 			}
 		],
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d8",
+				"type": "add_flat_damage_bonus",
+				"amount": 5,
 				"damageType": "bludgeoning",
 				"appliesTo": "any",
-				"onCritOnly": false
+				"requiredDamageType": "bludgeoning"
 			}
 		]
 	]

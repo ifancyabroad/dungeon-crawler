@@ -55,6 +55,25 @@ export interface PassiveDamageBonus {
 	onCritOnly: boolean;
 	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
 	sourceSkillId?: string;
+	/** If set, only fires when the attack's primary damage type matches. */
+	requiredDamageType?: DamageType;
+}
+
+/**
+ * A flat (fixed integer) damage bonus stored on the actor.
+ * Only fires when the attack's primary damage type matches this bonus's damageType,
+ * enabling build synergy with specific weapons or spells.
+ */
+export interface PassiveFlatDamageBonus {
+	amount: number;
+	/** The damage type this bonus adds. */
+	damageType: DamageType;
+	/** Which attack types this bonus applies to. "ranged" covers single-target skill attacks. */
+	appliesTo: "melee" | "area" | "ranged" | "any";
+	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
+	sourceSkillId?: string;
+	/** If set, only fires when the attack's primary damage type matches. */
+	requiredDamageType?: DamageType;
 }
 
 /**
@@ -192,6 +211,12 @@ export interface Actor {
 	 * Consulted during resolveAttack, applyAreaDamage, applyChargeAttack.
 	 */
 	passiveDamageBonuses: PassiveDamageBonus[];
+	/**
+	 * Flat (fixed integer) damage bonuses applied from passive skills.
+	 * Each bonus fires unconditionally or, if requiredDamageType is set, only when the attack's
+	 * primary damage type matches.
+	 */
+	passiveFlatDamageBonuses: PassiveFlatDamageBonus[];
 	/**
 	 * Status effect ids the actor is immune to.
 	 * applyStatus silently skips effects in this list.

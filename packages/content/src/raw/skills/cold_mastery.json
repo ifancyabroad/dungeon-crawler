@@ -2,35 +2,35 @@
 	"skillType": "passive",
 	"id": "cold_mastery",
 	"name": "Cold Mastery",
-	"description": "Frost mastery adds bonus cold damage to every attack.",
+	"description": "Frost mastery adds a reliable bonus to attacks that deal cold damage.",
 	"school": "arcane",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d4",
+				"type": "add_flat_damage_bonus",
+				"amount": 1,
 				"damageType": "cold",
 				"appliesTo": "any",
-				"onCritOnly": false
+				"requiredDamageType": "cold"
 			}
 		],
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d6",
+				"type": "add_flat_damage_bonus",
+				"amount": 2,
 				"damageType": "cold",
 				"appliesTo": "any",
-				"onCritOnly": false
+				"requiredDamageType": "cold"
 			}
 		],
 		[
 			{
-				"type": "add_damage_dice",
-				"dice": "1d8",
+				"type": "add_flat_damage_bonus",
+				"amount": 3,
 				"damageType": "cold",
 				"appliesTo": "any",
-				"onCritOnly": false
+				"requiredDamageType": "cold"
 			}
 		]
 	]

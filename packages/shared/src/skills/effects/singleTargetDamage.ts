@@ -21,6 +21,7 @@ import {
 	getActorProficiencyBonus,
 } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { SKILLS_CONFIG } from "../../config";
 
@@ -114,15 +115,9 @@ export function applySingleTargetDamage(
 
 	// Apply passive "ranged" and "any" bonuses.
 	// "melee" and "area" bonuses are excluded since this is a targeted skill attack.
-	for (const bonus of caster.passiveDamageBonuses) {
-		if (bonus.appliesTo !== "any" && bonus.appliesTo !== "ranged") continue;
-		if (bonus.onCritOnly && !isCritical) continue;
-		rawPackets.push({
-			damageType: bonus.damageType,
-			rawAmount: rollDiceExpr(rng, bonus.dice, isCritical && bonus.onCritOnly ? 2 : 1),
-			effectiveAmount: 0,
-		});
-	}
+	rawPackets.push(
+		...collectPassiveBonusPackets(caster, rng, "ranged", isCritical, true, effect.damageType),
+	);
 
 	// Data-driven ranged damage adjustments from active effects (e.g. a "focused_shot" buff).
 	for (const eff of caster.activeEffects) {

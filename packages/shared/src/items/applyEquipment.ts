@@ -81,6 +81,20 @@ function applyAccessoryEffect(actor: Actor, effect: PassiveSkillEffectDescriptor
 						damageType: effect.damageType,
 						appliesTo: effect.appliesTo,
 						onCritOnly: effect.onCritOnly,
+						requiredDamageType: effect.requiredDamageType,
+					},
+				],
+			};
+		case "add_flat_damage_bonus":
+			return {
+				...actor,
+				passiveFlatDamageBonuses: [
+					...actor.passiveFlatDamageBonuses,
+					{
+						amount: effect.amount,
+						damageType: effect.damageType,
+						appliesTo: effect.appliesTo,
+						requiredDamageType: effect.requiredDamageType,
 					},
 				],
 			};

@@ -60,6 +60,22 @@ export const mockPassiveDamageDice: PassiveSkillDefinition = {
 		},
 	]),
 };
+export const mockPassiveFlatDamageBonus: PassiveSkillDefinition = {
+	skillType: "passive",
+	id: "passive_flat_fire",
+	name: "Fire Affinity",
+	description: "+2 flat fire",
+	school: "arcane",
+	tags: ["damage", "buff"],
+	effectsByRank: tripleEffects([
+		{
+			type: "add_flat_damage_bonus",
+			amount: 2,
+			damageType: "fire",
+			appliesTo: "any",
+		},
+	]),
+};
 export const mockSkillDefs: Record<string, PassiveSkillDefinition> = {
 	passive_str: mockPassiveStrSkill,
 	passive_ac: mockPassiveAcSkill,
