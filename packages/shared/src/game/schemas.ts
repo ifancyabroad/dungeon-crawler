@@ -145,6 +145,7 @@ export const PassiveDamageBonusSchema = z.object({
 	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	onCritOnly: z.boolean(),
 	sourceSkillId: z.string().optional(),
+	sourceItemInstanceId: z.string().optional(),
 	/** If set, only fires when the attack's primary damage type matches. */
 	requiredDamageType: DamageTypeSchema.optional(),
 });
@@ -156,6 +157,7 @@ export const PassiveFlatDamageBonusSchema = z.object({
 	/** "melee" = weapon attacks; "area" = AoE skills; "ranged" = single-target skill attacks; "any" = all. */
 	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
 	sourceSkillId: z.string().optional(),
+	sourceItemInstanceId: z.string().optional(),
 	/** If set, only fires when the attack's primary damage type matches. */
 	requiredDamageType: DamageTypeSchema.optional(),
 });
@@ -175,8 +177,13 @@ export const NpcAIStateSchema = z.object({
 const EquipmentSlotsSchema = z.object({
 	mainHand: z.string().optional(),
 	offHand: z.string().optional(),
-	armor: z.string().optional(),
-	ring: z.string().optional(),
+	body: z.string().optional(),
+	head: z.string().optional(),
+	hands: z.string().optional(),
+	feet: z.string().optional(),
+	ring1: z.string().optional(),
+	ring2: z.string().optional(),
+	amulet: z.string().optional(),
 });
 
 const WeaponDiceSchema = z.object({
@@ -189,6 +196,15 @@ const NaturalWeaponSchema = z.object({
 	damageDice: z.string(),
 	damageType: DamageTypeSchema,
 	attackStat: z.enum(["strength", "dexterity"]),
+});
+
+const ItemInstanceSchema = z.object({
+	instanceId: z.string(),
+	baseItemId: z.string(),
+	rarity: z.enum(["common", "uncommon", "rare", "epic", "unique"]),
+	enhancementBonus: z.number(),
+	affixIds: z.array(z.string()),
+	generatedName: z.string(),
 });
 
 export const ActorSchema = z.object({
@@ -235,9 +251,26 @@ export const ActorSchema = z.object({
 	equippedAttackStat: z.enum(["strength", "dexterity"]),
 	equippedWeaponFinesse: z.boolean(),
 	weaponProficient: z.boolean(),
+	gold: z.number().default(0),
+	itemInstances: z.record(z.string(), ItemInstanceSchema).default({}),
+	itemAttackBonusFlat: z.number().default(0),
+	itemAcBonus: z.number().default(0),
+	lootTable: z
+		.object({
+			dropChance: z.number(),
+			gold: z.object({ min: z.number(), max: z.number() }).optional(),
+			items: z.array(z.object({ baseItemId: z.string(), weight: z.number() })).optional(),
+			rarityWeights: z.record(z.string(), z.number()).optional(),
+		})
+		.optional(),
 });
 
 export const ActorsByIdSchema = z.record(z.string(), ActorSchema);
+
+const LootDropSchema = z.object({
+	gold: z.number().optional(),
+	items: z.array(ItemInstanceSchema),
+});
 
 /** tileOverrides: keys are stringified numbers (cell index) when parsed from JSON. */
 export const FloorStateSchema = z.object({
@@ -246,6 +279,7 @@ export const FloorStateSchema = z.object({
 	explored: z.array(z.number()),
 	spawnIdx: z.number(),
 	exitIdx: z.number().nullable(),
+	lootByIdx: z.record(z.string(), LootDropSchema).default({}),
 });
 
 export const SkillOfferSchema = z.object({
@@ -254,12 +288,20 @@ export const SkillOfferSchema = z.object({
 });
 
 export const PendingInteractionSchema = z
-	.object({
-		type: z.literal("skill_choice"),
-		levelReached: z.number(),
-		offers: z.array(SkillOfferSchema),
-		rerollsUsed: z.number(),
-	})
+	.discriminatedUnion("type", [
+		z.object({
+			type: z.literal("skill_choice"),
+			levelReached: z.number(),
+			offers: z.array(SkillOfferSchema),
+			rerollsUsed: z.number(),
+			rerollCost: z.number(),
+		}),
+		z.object({
+			type: z.literal("loot_pickup"),
+			tileIdx: z.number().int().min(0),
+			loot: LootDropSchema,
+		}),
+	])
 	.nullable();
 
 /** Persisted dynamic state; validate snapshots with this (includes RngState). */

@@ -6,6 +6,7 @@ import type { VaultDefinition } from "../schemas/vault.js";
 import type { EncounterDefinition } from "../schemas/encounter.js";
 import type { SkillDefinition } from "../schemas/skill.js";
 import type { ItemDefinition } from "../schemas/item.js";
+import type { AffixDefinition } from "../schemas/affix.js";
 
 export const characterClassIds = ["mage","rogue","warrior"] as const;
 export type CharacterClassId = (typeof characterClassIds)[number];
@@ -231,7 +232,35 @@ export const npcs: readonly NpcDefinition[] = [
     "weaponProficiencies": [
       "dagger"
     ],
-    "armorProficiencies": []
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 0.6,
+      "gold": {
+        "min": 2,
+        "max": 6
+      },
+      "items": [
+        {
+          "baseItemId": "dagger",
+          "weight": 15
+        },
+        {
+          "baseItemId": "shortsword",
+          "weight": 8
+        },
+        {
+          "baseItemId": "leather_armor",
+          "weight": 5
+        }
+      ],
+      "rarityWeights": {
+        "common": 65,
+        "uncommon": 25,
+        "rare": 8,
+        "epic": 2,
+        "unique": 0
+      }
+    }
   },
   {
     "id": "goblin_mage",
@@ -276,7 +305,35 @@ export const npcs: readonly NpcDefinition[] = [
     "passiveSkills": [],
     "startingEquipment": [],
     "weaponProficiencies": [],
-    "armorProficiencies": []
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 0.7,
+      "gold": {
+        "min": 4,
+        "max": 10
+      },
+      "items": [
+        {
+          "baseItemId": "quarterstaff",
+          "weight": 10
+        },
+        {
+          "baseItemId": "cloth_robe",
+          "weight": 8
+        },
+        {
+          "baseItemId": "shadow_blade",
+          "weight": 1
+        }
+      ],
+      "rarityWeights": {
+        "common": 65,
+        "uncommon": 25,
+        "rare": 8,
+        "epic": 2,
+        "unique": 0
+      }
+    }
   },
   {
     "id": "rat",
@@ -319,6 +376,13 @@ export const npcs: readonly NpcDefinition[] = [
       "damageDice": "1d4",
       "damageType": "piercing",
       "attackStat": "dexterity"
+    },
+    "lootTable": {
+      "dropChance": 0.3,
+      "gold": {
+        "min": 1,
+        "max": 3
+      }
     }
   }
 ] as readonly NpcDefinition[];
@@ -2994,7 +3058,7 @@ const _skillsById: Record<string, SkillDefinition> = {};
 for (const s of skills) { _skillsById[s.id] = s; }
 export const skillsById: Record<string, SkillDefinition> = _skillsById;
 
-export const itemIds = ["amulet_of_vitality","chain_mail","chain_shirt","cloth_robe","dagger","greataxe","handaxe","leather_armor","longsword","mace","plate_armor","quarterstaff","ring_of_protection","shortbow","shortsword","studded_leather","wooden_shield"] as const;
+export const itemIds = ["amulet_of_vitality","chain_mail","chain_shirt","cloth_robe","dagger","greataxe","handaxe","leather_armor","leather_boots","leather_cap","leather_gloves","longsword","mace","plate_armor","quarterstaff","ring_of_protection","ring_of_the_ancients","shadow_blade","shortbow","shortsword","studded_leather","wooden_shield"] as const;
 export type ItemId = (typeof itemIds)[number];
 
 export const items: readonly ItemDefinition[] = [
@@ -3016,6 +3080,7 @@ export const items: readonly ItemDefinition[] = [
     "id": "chain_mail",
     "name": "Chain Mail",
     "description": "A full suit of interlocked metal rings providing excellent protection. Requires significant strength to wear effectively.",
+    "slot": "body",
     "armorCategory": "heavy",
     "baseAC": 16,
     "strengthRequirement": 13,
@@ -3026,6 +3091,7 @@ export const items: readonly ItemDefinition[] = [
     "id": "chain_shirt",
     "name": "Chain Shirt",
     "description": "A shirt of interlocked metal rings that balances protection with mobility.",
+    "slot": "body",
     "armorCategory": "medium",
     "baseAC": 13
   },
@@ -3034,6 +3100,7 @@ export const items: readonly ItemDefinition[] = [
     "id": "cloth_robe",
     "name": "Cloth Robe",
     "description": "A simple cloth garment that provides minimal protection but allows full dexterity.",
+    "slot": "body",
     "armorCategory": "cloth",
     "baseAC": 10
   },
@@ -3081,8 +3148,36 @@ export const items: readonly ItemDefinition[] = [
     "id": "leather_armor",
     "name": "Leather Armor",
     "description": "Cured animal hide shaped into a flexible, lightweight suit of armor.",
+    "slot": "body",
     "armorCategory": "light",
     "baseAC": 11
+  },
+  {
+    "type": "armor",
+    "id": "leather_boots",
+    "name": "Leather Boots",
+    "description": "Sturdy leather boots that protect the feet and ankles.",
+    "slot": "feet",
+    "armorCategory": "light",
+    "baseAC": 10
+  },
+  {
+    "type": "armor",
+    "id": "leather_cap",
+    "name": "Leather Cap",
+    "description": "A simple cap of cured leather offering light head protection.",
+    "slot": "head",
+    "armorCategory": "light",
+    "baseAC": 11
+  },
+  {
+    "type": "armor",
+    "id": "leather_gloves",
+    "name": "Leather Gloves",
+    "description": "Supple leather gloves that protect the hands without restricting movement.",
+    "slot": "hands",
+    "armorCategory": "light",
+    "baseAC": 10
   },
   {
     "type": "weapon",
@@ -3112,6 +3207,7 @@ export const items: readonly ItemDefinition[] = [
     "id": "plate_armor",
     "name": "Plate Armor",
     "description": "The pinnacle of mundane armour craftsmanship — fitted metal plates covering the entire body.",
+    "slot": "body",
     "armorCategory": "heavy",
     "baseAC": 18,
     "strengthRequirement": 15,
@@ -3141,6 +3237,35 @@ export const items: readonly ItemDefinition[] = [
         "type": "modify_armor_class",
         "amount": 1
       }
+    ]
+  },
+  {
+    "type": "accessory",
+    "id": "ring_of_the_ancients",
+    "name": "Ring of the Ancients",
+    "description": "A ring of unknown origin, etched with runes that pulse with an inner warmth. Grants vitality and fire resistance.",
+    "slot": "ring",
+    "effects": [
+      {
+        "type": "modify_max_hp",
+        "amount": 10
+      },
+      {
+        "type": "add_damage_resistance",
+        "damageType": "fire"
+      }
+    ]
+  },
+  {
+    "type": "weapon",
+    "id": "shadow_blade",
+    "name": "Shadow Blade",
+    "description": "A blade forged from crystallised shadow. Unnervingly light, it strikes with uncanny precision.",
+    "weaponCategory": "sword",
+    "damageDice": "1d10",
+    "damageType": "slashing",
+    "properties": [
+      "finesse"
     ]
   },
   {
@@ -3174,6 +3299,7 @@ export const items: readonly ItemDefinition[] = [
     "id": "studded_leather",
     "name": "Studded Leather",
     "description": "Leather reinforced with metal studs for improved protection without sacrificing agility.",
+    "slot": "body",
     "armorCategory": "light",
     "baseAC": 12
   },
@@ -3189,3 +3315,133 @@ export const items: readonly ItemDefinition[] = [
 const _itemsById: Record<string, ItemDefinition> = {};
 for (const i of items) { _itemsById[i.id] = i; }
 export const itemsById: Record<string, ItemDefinition> = _itemsById;
+
+export const affixIds = ["hardened","heavy","keen","of_fire","of_ice","of_venom","precise","reinforced"] as const;
+export type AffixId = (typeof affixIds)[number];
+
+export const affixes: readonly AffixDefinition[] = [
+  {
+    "id": "hardened",
+    "name": "Hardened",
+    "namePrefix": "Hardened",
+    "namePriority": 20,
+    "eligibleItemTypes": [
+      "armor",
+      "shield"
+    ],
+    "effect": {
+      "type": "modify_armor_class",
+      "amount": 2
+    }
+  },
+  {
+    "id": "heavy",
+    "name": "Heavy",
+    "namePrefix": "Heavy",
+    "namePriority": 5,
+    "eligibleItemTypes": [
+      "weapon"
+    ],
+    "effect": {
+      "type": "add_flat_damage_bonus",
+      "amount": 2,
+      "damageType": "bludgeoning",
+      "appliesTo": "any"
+    }
+  },
+  {
+    "id": "keen",
+    "name": "Keen",
+    "namePrefix": "Keen",
+    "namePriority": 20,
+    "eligibleItemTypes": [
+      "weapon"
+    ],
+    "effect": {
+      "type": "add_attack_roll_bonus",
+      "amount": 1
+    }
+  },
+  {
+    "id": "of_fire",
+    "name": "of Fire",
+    "nameSuffix": "of Fire",
+    "namePriority": 10,
+    "eligibleItemTypes": [
+      "weapon"
+    ],
+    "effect": {
+      "type": "add_damage_dice",
+      "dice": "1d4",
+      "damageType": "fire",
+      "appliesTo": "any",
+      "onCritOnly": false
+    }
+  },
+  {
+    "id": "of_ice",
+    "name": "of Ice",
+    "nameSuffix": "of Ice",
+    "namePriority": 10,
+    "eligibleItemTypes": [
+      "weapon"
+    ],
+    "effect": {
+      "type": "add_damage_dice",
+      "dice": "1d4",
+      "damageType": "cold",
+      "appliesTo": "any",
+      "onCritOnly": false
+    }
+  },
+  {
+    "id": "of_venom",
+    "name": "of Venom",
+    "nameSuffix": "of Venom",
+    "namePriority": 8,
+    "eligibleItemTypes": [
+      "weapon"
+    ],
+    "effect": {
+      "type": "add_damage_dice",
+      "dice": "1d4",
+      "damageType": "poison",
+      "appliesTo": "any",
+      "onCritOnly": false
+    }
+  },
+  {
+    "id": "precise",
+    "name": "Precise",
+    "namePrefix": "Precise",
+    "namePriority": 5,
+    "eligibleItemTypes": [
+      "weapon"
+    ],
+    "effect": {
+      "type": "add_damage_dice",
+      "dice": "1d4",
+      "damageType": "piercing",
+      "appliesTo": "any",
+      "onCritOnly": false
+    }
+  },
+  {
+    "id": "reinforced",
+    "name": "Reinforced",
+    "namePrefix": "Reinforced",
+    "namePriority": 15,
+    "eligibleItemTypes": [
+      "armor",
+      "shield"
+    ],
+    "effect": {
+      "type": "modify_armor_class",
+      "amount": 1
+    }
+  }
+] as readonly AffixDefinition[];
+
+const _affixesById: Record<string, AffixDefinition> = {};
+for (const a of affixes) { _affixesById[a.id] = a; }
+export const affixesById: Record<string, AffixDefinition> = _affixesById;

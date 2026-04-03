@@ -6,7 +6,7 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New NPC
 
-1. Create `packages/content/src/raw/npcs/<name>.json` following the shape defined by `NpcSchema` in `packages/content/src/schemas/npc.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Set `faction` (`"hostile"` or `"player"`) and `role` (`"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`). Set `activeSkills` and `passiveSkills` to arrays of `{ "id": "<skillId>", "rank": 1 }` objects (use `[]` when none). Passives are applied automatically at spawn.
+1. Create `packages/content/src/raw/npcs/<name>.json` following the shape defined by `NpcSchema` in `packages/content/src/schemas/npc.ts`. Use an existing file (e.g. `goblin.json`) as a reference. Set `faction` (`"hostile"` or `"player"`) and `role` (`"grunt"`, `"boss"`, `"mercenary"`, or `"vendor"`). Set `activeSkills` and `passiveSkills` to arrays of `{ "id": "<skillId>", "rank": 1 }` objects (use `[]` when none). Passives are applied automatically at spawn. Optionally add a `lootTable` with `dropChance`, `gold` range, weighted `items`, and `rarityWeights` (see `rat.json` for a minimal example).
 2. Run `pnpm --filter @app/content generate` to regenerate the typed lookup.
 3. Add one or more encounter definitions in `packages/content/src/raw/encounters/` that reference the new NPC via `npcId`.
 4. Update floor encounter tables in `packages/shared/src/config/map.ts` (`FLOOR_CONFIGS`) to include the new encounter IDs.
@@ -31,16 +31,26 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 ## Adding a New Item
 
-> Items are not yet implemented. This workflow describes the intended pattern based on existing content conventions.
+1. Create `packages/content/src/raw/items/<name>.json`. Follow the shape for the relevant type:
+    - **Weapon**: `type`, `weaponCategory`, `damageDice`, `damageType`, `properties` (e.g. `["finesse"]`), optional `versatileDice`.
+    - **Armor**: `type`, `slot` (`"body"` | `"head"` | `"hands"` | `"feet"`), `armorCategory` (`"cloth"` | `"light"` | `"medium"` | `"heavy"`), `baseAC`.
+    - **Shield**: `type`, `acBonus`.
+    - **Accessory**: `type`, `slot` (`"ring"` | `"amulet"`), `effects` array of `PassiveSkillEffectDescriptor`.
+      Use an existing file in the same directory as a reference.
+2. Run `pnpm --filter @app/content generate` to regenerate the typed lookup (`itemsById`).
+3. To make the item droppable, add it to a `lootTable.items` entry in the relevant NPC JSON (`packages/content/src/raw/npcs/`).
+4. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
-1. Create `packages/content/src/raw/items/<name>.json` with the item definition (name, type, slot, stat modifiers).
-2. Define a Zod schema for `ItemDef` following the existing content schema pattern in `packages/content/src/schemas/` (see `npc.ts` or `skill.ts` as examples).
-3. Run `pnpm --filter @app/content generate` to regenerate the typed lookup (`itemsById`).
-4. Add item stat application logic inside `packages/shared` (e.g. a helper that merges equipped item bonuses into an actor's effective stats at combat resolution time).
-5. Add item drop logic to the relevant floor or NPC definition.
-6. Wire up inventory management in the shared engine: add an `equip`/`unequip`/`use` action type if needed (see "Adding a New Action" below).
-7. Connect to the inventory modal stub in `apps/web/src/components/`.
-8. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
+---
+
+## Adding a New Affix
+
+Affixes are randomly attached to procedurally generated items at loot roll time.
+
+1. Create `packages/content/src/raw/affixes/<name>.json`. Required fields: `id`, `name`, `namePriority`, `eligibleItemTypes` (array of `"weapon"` | `"armor"` | `"shield"` | `"accessory"`), and `effect` (a `PassiveSkillEffectDescriptor`). Optionally add `namePrefix` and/or `nameSuffix` for generated item naming.
+   Supported effect types for affixes: `add_damage_dice`, `add_flat_damage_bonus`, `add_attack_roll_bonus`, `modify_armor_class`.
+2. Run `pnpm --filter @app/content generate` to regenerate the typed lookup (`affixesById`).
+3. Verify: `pnpm typecheck && pnpm lint`.
 
 ---
 

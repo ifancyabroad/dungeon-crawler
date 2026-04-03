@@ -1,0 +1,11 @@
+{
+	"id": "reinforced",
+	"name": "Reinforced",
+	"namePrefix": "Reinforced",
+	"namePriority": 15,
+	"eligibleItemTypes": ["armor", "shield"],
+	"effect": {
+		"type": "modify_armor_class",
+		"amount": 1
+	}
+}

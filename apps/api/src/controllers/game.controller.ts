@@ -80,7 +80,7 @@ export const createGame: RequestHandler = async (req, res) => {
 	const heroFloor = state.floors[0];
 	const heroActor = heroFloor?.state.actorsById["hero"];
 	if (heroFloor && heroActor) {
-		const equippedHero = applyEquipment(heroActor, itemsById);
+		const equippedHero = applyEquipment(heroActor, itemsById, {});
 		const newFloors = state.floors.slice();
 		newFloors[0] = {
 			...heroFloor,

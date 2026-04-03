@@ -1,0 +1,10 @@
+{
+	"type": "weapon",
+	"id": "shadow_blade",
+	"name": "Shadow Blade",
+	"description": "A blade forged from crystallised shadow. Unnervingly light, it strikes with uncanny precision.",
+	"weaponCategory": "sword",
+	"damageDice": "1d10",
+	"damageType": "slashing",
+	"properties": ["finesse"]
+}

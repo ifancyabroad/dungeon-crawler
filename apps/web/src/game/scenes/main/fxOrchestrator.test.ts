@@ -24,6 +24,7 @@ describe("dispatchFxAndSync", () => {
 			attackAnimator: null,
 			damageNumbers: null,
 			deathFx: null,
+			goldFx: null,
 			skillAnimController: null,
 			onAfterDispatch,
 		});
@@ -47,6 +48,7 @@ describe("dispatchFxAndSync", () => {
 			attackAnimator: { playEvents: vi.fn() } as never,
 			damageNumbers: { handleEvents } as never,
 			deathFx: { handleEvents: vi.fn() } as never,
+			goldFx: null,
 			skillAnimController: { dispatchNonHero } as never,
 			onAfterDispatch,
 		});

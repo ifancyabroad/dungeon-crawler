@@ -11,19 +11,19 @@ A browser-based, server-authoritative roguelike dungeon crawler. Players explore
 
 ## Terminology
 
-| Term           | Definition                                                                                                                                                                                                                                                 |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Run**        | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                                                                         |
-| **Turn**       | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                                                                    |
-| **Floor**      | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles).                                               |
-| **Actor**      | Any entity that occupies a tile and can act — the hero and all NPCs. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                             |
-| **Action**     | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), `use_skill` (skillId + optional target), `select_skill_choice`, and `reroll_skill_choice`. Actions are the only input the server accepts. |
-| **Event**      | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                                                                          |
-| **Item**       | A piece of equipment the hero can pick up and equip during a run. Items are generated procedurally (or hand-crafted for uniques) and exist only within the run they were found in.                                                                         |
-| **Affix**      | A randomly selected bonus property attached to an item at generation time (e.g. +10 max HP, +5% crit chance, fire resistance). The number of affixes an item can carry is determined by its rarity.                                                        |
-| **Rarity**     | A tier that determines an item's enhancement bonus and affix count: Common, Uncommon, Rare, Epic, or Unique. Higher rarity items are less likely to drop.                                                                                                  |
-| **Loot table** | A per-NPC weighted list of possible drops (items and/or gold). Evaluated deterministically using the run seed at the moment of the monster's death.                                                                                                        |
-| **Gold**       | A currency dropped by enemies and spent in-run on skill rerolls (and eventually at a merchant). Gold does not persist between runs.                                                                                                                        |
+| Term           | Definition                                                                                                                                                                                                                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Run**        | A single hero's attempt at the dungeon, from creation to death or retirement. Each run has its own `gameId`, seed, and action log.                                                                                                                                                                     |
+| **Turn**       | One unit of game time. A turn advances when the server successfully applies a player action (`state.turn` increments by 1). All monsters also act within the same turn.                                                                                                                                |
+| **Floor**      | One level of the dungeon. Floors are identified by zero-based index (`heroFloorIndex`). Each floor has an immutable `FloorConfig` (seed-derived layout) and a mutable `FloorState` (actors, explored tiles).                                                                                           |
+| **Actor**      | Any entity that occupies a tile and can act — the hero and all NPCs. Identified by a unique `ActorId` string. Position is stored as a flat tile index (`idx`).                                                                                                                                         |
+| **Action**     | A player intent sent from the client to the server. Currently `move`, `attack` (each with a cardinal direction), `use_skill` (skillId + optional target), `select_skill_choice`, `reroll_skill_choice`, `pickup_item`, `pickup_gold`, and `leave_loot`. Actions are the only input the server accepts. |
+| **Event**      | A side-effect produced by `applyAction` and broadcast alongside the new state. Used by the client for animations and UI feedback (e.g. `attack`, `death`, `level_up`, `descend`).                                                                                                                      |
+| **Item**       | A piece of equipment the hero can pick up and equip during a run. Items are generated procedurally (or hand-crafted for uniques) and exist only within the run they were found in.                                                                                                                     |
+| **Affix**      | A randomly selected bonus property attached to an item at generation time (e.g. +10 max HP, +5% crit chance, fire resistance). The number of affixes an item can carry is determined by its rarity.                                                                                                    |
+| **Rarity**     | A tier that determines an item's enhancement bonus and affix count: Common, Uncommon, Rare, Epic, or Unique. Higher rarity items are less likely to drop.                                                                                                                                              |
+| **Loot table** | A per-NPC weighted list of possible drops (items and/or gold). Evaluated deterministically using the run seed at the moment of the monster's death.                                                                                                                                                    |
+| **Gold**       | A currency dropped by enemies and spent in-run on skill rerolls (and eventually at a merchant). Gold does not persist between runs.                                                                                                                                                                    |
 
 ---
 
@@ -81,9 +81,18 @@ A boss encounter placeholder is in place on the final floor.
 - Damage numbers, health bars, attack animations, death effects
 - Skill hotbar (cooldown display, click to activate; DCSS-style targeting overlay for tile/actor selection)
 
+### Items & Inventory
+
+- Nine equipment slots (mainHand, offHand, body, head, hands, feet, ring1, ring2, amulet).
+- Procedural item generation: base items + up to 3 affixes depending on rarity (Common–Epic); Unique items are hand-crafted.
+- Affix effects: bonus damage dice, flat damage bonus, attack roll bonus, AC bonus. Definitions in `packages/content/src/raw/affixes/`.
+- NPC loot tables: drop chance, gold range, weighted item list, rarity weights. Evaluated deterministically on death.
+- Gold currency: auto-collected on gold-only tiles; collected via modal on item tiles. Displayed in sidebar. Spent on skill rerolls (15 gold).
+- Loot pickup modal: per-item equip with swap confirmation; leave all.
+- Inventory modal: all 9 slots with rarity colours and stat summaries.
+
 ### UI / UX (stubbed — data model exists, UI shell present)
 
-- Inventory modal
 - Skills modal (full skill list / descriptions)
 
 ---
@@ -94,7 +103,7 @@ Features are listed in priority order. Implementation details below are starting
 
 ---
 
-### 1. Items & Inventory
+### 1. Items & Inventory ✓ Shipped
 
 **Goal:** Give players gear to find and equip, increasing build diversity and strategic choice across runs.
 
@@ -179,7 +188,7 @@ Floor depth influences rarity weights: higher floors bias rolls toward better ra
 
 Gold drops alongside items and accumulates in the hero's run wallet. Current uses:
 
-- **Skill rerolls** — spending gold replaces the current level-up offer with a new set of three choices (currently free; gold cost will be introduced with this system).
+- **Skill rerolls** — costs 15 gold per reroll. The reroll button is disabled if the hero cannot afford it.
 - **Merchant** (planned) — a future vendor NPC will offer items and services in exchange for gold.
 
 Gold does not persist between runs.
@@ -246,7 +255,7 @@ The level-up offer system (pick-from-3, reroll) is the main engine of run varian
 
 - Expand skill pools per class (more active and passive options) — minimum target: ~8–10 distinct skills per class before the pool feels repetitive.
 - Define and document all intended synergy pairs per class so they can be validated in content review.
-- Reroll cost in gold (currently free).
+- Reroll cost in gold (shipped: 15 gold per reroll).
 - Full skills modal (currently stubbed) showing all acquired skills with descriptions.
 
 ---

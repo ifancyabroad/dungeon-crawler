@@ -3,6 +3,7 @@
 	"id": "cloth_robe",
 	"name": "Cloth Robe",
 	"description": "A simple cloth garment that provides minimal protection but allows full dexterity.",
+	"slot": "body",
 	"armorCategory": "cloth",
 	"baseAC": 10
 }

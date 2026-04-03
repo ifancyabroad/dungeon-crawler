@@ -3,6 +3,7 @@
 	"id": "leather_armor",
 	"name": "Leather Armor",
 	"description": "Cured animal hide shaped into a flexible, lightweight suit of armor.",
+	"slot": "body",
 	"armorCategory": "light",
 	"baseAC": 11
 }

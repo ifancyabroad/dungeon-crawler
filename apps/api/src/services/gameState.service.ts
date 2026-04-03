@@ -20,7 +20,7 @@ import {
 	type GameState,
 	type PersistedDynamicState,
 } from "@app/shared";
-import { classes, skillsById, vaults } from "@app/content";
+import { affixesById, classes, itemsById, skillsById, vaults } from "@app/content";
 import type { ClassSkillPools } from "@app/shared";
 import { GameActionLog } from "../models/gameActionLog.model";
 import { GameSession } from "../models/gameSession.model";
@@ -172,7 +172,14 @@ function makeSessionContext(gameId: string, errorContext?: string): ApplyActionC
 				: `missing cached masks for game ${gameId}`,
 		);
 	}
-	return createActionContext(walkable, opacity, skillsById, classSkillPools);
+	return createActionContext(
+		walkable,
+		opacity,
+		skillsById,
+		classSkillPools,
+		itemsById,
+		affixesById,
+	);
 }
 
 /**
@@ -340,7 +347,14 @@ export async function reconstructState(
 	const opacity = baseLayers.map((base) =>
 		computeOpacityMask(base.wall, base.width, base.height),
 	);
-	const applyContext = createActionContext(walkable, opacity, skillsById, classSkillPools);
+	const applyContext = createActionContext(
+		walkable,
+		opacity,
+		skillsById,
+		classSkillPools,
+		itemsById,
+		affixesById,
+	);
 
 	for (const entry of logEntries) {
 		let action;

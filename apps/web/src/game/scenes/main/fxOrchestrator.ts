@@ -4,6 +4,7 @@ import type { FloorState, GameEvent, GameState } from "@app/shared";
 import type { AttackAnimator } from "../../fx/AttackAnimator";
 import type { DamageNumberManager } from "../../fx/DamageNumberManager";
 import type { DeathFxManager } from "../../fx/DeathFxManager";
+import type { GoldFxManager } from "../../fx/GoldFxManager";
 import { HERO_BLOOD_COLOR } from "../../fx/particles";
 import type { SkillAnimationController } from "../../skills/SkillAnimationController";
 
@@ -16,6 +17,7 @@ export interface DispatchFxParams {
 	attackAnimator: AttackAnimator | null;
 	damageNumbers: DamageNumberManager | null;
 	deathFx: DeathFxManager | null;
+	goldFx: GoldFxManager | null;
 	skillAnimController: SkillAnimationController | null;
 	onAfterDispatch: () => void;
 }
@@ -30,6 +32,7 @@ export function dispatchFxAndSync(params: DispatchFxParams): void {
 		attackAnimator,
 		damageNumbers,
 		deathFx,
+		goldFx,
 		skillAnimController,
 		onAfterDispatch,
 	} = params;
@@ -69,6 +72,7 @@ export function dispatchFxAndSync(params: DispatchFxParams): void {
 			claimedEvents.size > 0 ? events.filter((e) => !claimedEvents.has(e)) : events;
 		damageNumbers?.handleEvents(mainPassEvents, getActorIdx);
 		deathFx?.handleEvents(events, gs.heroId, getActorIdx, getBloodColor);
+		goldFx?.handleEvents(events);
 	}
 
 	onAfterDispatch();

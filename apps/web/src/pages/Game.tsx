@@ -6,6 +6,7 @@ import { CombatLog } from "../components/CombatLog";
 import { SkillHotbar } from "../components/SkillHotbar";
 import { DeathModal } from "../components/DeathModal";
 import { LevelUpModal } from "../components/LevelUpModal";
+import { LootPickupModal } from "../components/LootPickupModal";
 import { CharacterSheetModal } from "../components/CharacterSheetModal";
 import { InventoryModal } from "../components/InventoryModal";
 import { SkillsModal } from "../components/SkillsModal";
@@ -84,6 +85,7 @@ export default function Game() {
 
 			<DeathModal />
 			<LevelUpModal />
+			<LootPickupModal />
 			<CharacterSheetModal />
 			<InventoryModal />
 			<SkillsModal />

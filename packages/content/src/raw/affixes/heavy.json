@@ -1,0 +1,13 @@
+{
+	"id": "heavy",
+	"name": "Heavy",
+	"namePrefix": "Heavy",
+	"namePriority": 5,
+	"eligibleItemTypes": ["weapon"],
+	"effect": {
+		"type": "add_flat_damage_bonus",
+		"amount": 2,
+		"damageType": "bludgeoning",
+		"appliesTo": "any"
+	}
+}

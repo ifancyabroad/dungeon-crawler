@@ -73,6 +73,17 @@ export const NpcSchema = z.object({
 			attackStat: z.enum(["strength", "dexterity"]).default("strength"),
 		})
 		.optional(),
+	/** Loot table rolled on death. If absent, the NPC drops nothing. */
+	lootTable: z
+		.object({
+			dropChance: z.number().min(0).max(1),
+			gold: z.object({ min: z.number(), max: z.number() }).optional(),
+			items: z.array(z.object({ baseItemId: z.string(), weight: z.number() })).optional(),
+			rarityWeights: z
+				.record(z.enum(["common", "uncommon", "rare", "epic", "unique"]), z.number())
+				.optional(),
+		})
+		.optional(),
 });
 
 export type NpcDefinition = z.infer<typeof NpcSchema>;

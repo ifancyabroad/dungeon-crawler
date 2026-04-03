@@ -25,6 +25,7 @@ import { TILE_HEIGHT, TILE_WIDTH } from "../tiles/tilesetRegistry";
 import { ActorSpriteSync } from "./main/actorSpriteSync";
 import { createFloorFx, destroyFloorFx } from "./main/mainSceneFxLifecycle";
 import type { FloorFxRefs } from "./main/mainSceneFxLifecycle";
+import { LootLayerManager } from "./main/LootLayerManager";
 import { dispatchFxAndSync as dispatchFxPipeline } from "./main/fxOrchestrator";
 import { FogOfWarRenderer } from "./main/fogOfWarRenderer";
 import { attachKeyboardOnline, attachTargetingEscapeKey } from "./main/inputBindings";
@@ -51,9 +52,11 @@ export default class MainScene extends Phaser.Scene {
 	private healthBars: HealthBarManager | null = null;
 	private deathFx: DeathFxManager | null = null;
 	private damageNumbers: DamageNumberManager | null = null;
+	private goldFx: import("../fx/GoldFxManager").GoldFxManager | null = null;
 	private skillAnimController: SkillAnimationController | null = null;
 	private targetingSystem: TargetingSystem | null = null;
 	private actorEffectVisuals: ActorEffectVisualManager | null = null;
+	private lootLayerManager: LootLayerManager | null = null;
 
 	private fogRenderer = new FogOfWarRenderer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT);
 	private actorSpriteSync = new ActorSpriteSync();
@@ -146,6 +149,8 @@ export default class MainScene extends Phaser.Scene {
 
 		this.destroyFx();
 		this.assignFloorFx(createFloorFx(this, this.mapWidth));
+		this.lootLayerManager?.destroyAll();
+		this.lootLayerManager = new LootLayerManager(this, this.mapWidth, this.fogRenderer);
 
 		const currentState = useGameStore.getState().state;
 		if (currentState) {
@@ -192,6 +197,7 @@ export default class MainScene extends Phaser.Scene {
 			attackAnimator: this.attackAnimator,
 			damageNumbers: this.damageNumbers,
 			deathFx: this.deathFx,
+			goldFx: this.goldFx,
 			skillAnimController: this.skillAnimController,
 			onAfterDispatch: () => this.syncActors(gs),
 		});
@@ -234,6 +240,8 @@ export default class MainScene extends Phaser.Scene {
 			this.player = null;
 		}
 		this.actorSpriteSync.clearAndDestroy();
+		this.lootLayerManager?.destroyAll();
+		this.lootLayerManager = null;
 		this.destroyFx();
 	}
 
@@ -247,6 +255,11 @@ export default class MainScene extends Phaser.Scene {
 			healthBars: this.healthBars,
 			actorEffectVisuals: this.actorEffectVisuals,
 		});
+
+		const floor = gameState.floors[gameState.heroFloorIndex];
+		if (floor && this.lootLayerManager) {
+			this.lootLayerManager.sync(floor.state.lootByIdx);
+		}
 	}
 
 	private syncHeroToStore(idx: number) {
@@ -282,6 +295,7 @@ export default class MainScene extends Phaser.Scene {
 				healthBars: this.healthBars,
 				deathFx: this.deathFx,
 				damageNumbers: this.damageNumbers,
+				goldFx: this.goldFx,
 				skillAnimController: this.skillAnimController,
 				actorEffectVisuals: this.actorEffectVisuals,
 			}),
@@ -294,6 +308,7 @@ export default class MainScene extends Phaser.Scene {
 		this.healthBars = refs.healthBars;
 		this.deathFx = refs.deathFx;
 		this.damageNumbers = refs.damageNumbers;
+		this.goldFx = refs.goldFx;
 		this.skillAnimController = refs.skillAnimController;
 		this.actorEffectVisuals = refs.actorEffectVisuals;
 	}

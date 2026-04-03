@@ -3,6 +3,7 @@
 	"id": "plate_armor",
 	"name": "Plate Armor",
 	"description": "The pinnacle of mundane armour craftsmanship — fitted metal plates covering the entire body.",
+	"slot": "body",
 	"armorCategory": "heavy",
 	"baseAC": 18,
 	"strengthRequirement": 15,

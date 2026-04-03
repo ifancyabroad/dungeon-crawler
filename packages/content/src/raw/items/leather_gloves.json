@@ -1,0 +1,9 @@
+{
+	"type": "armor",
+	"id": "leather_gloves",
+	"name": "Leather Gloves",
+	"description": "Supple leather gloves that protect the hands without restricting movement.",
+	"slot": "hands",
+	"armorCategory": "light",
+	"baseAC": 10
+}

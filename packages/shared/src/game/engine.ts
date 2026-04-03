@@ -5,16 +5,21 @@
  */
 
 import type { Action, Direction } from "./actions";
+import { rollLootDrop } from "../items/lootGeneration";
+import { applyEquipment } from "../items/applyEquipment";
 import type {
 	Actor,
 	ActorId,
+	EquipmentSlots,
 	FloorConfig,
 	FloorState,
 	GameEvent,
 	GameState,
+	LootDrop,
 	PendingInteraction,
 	PersistedDynamicState,
 } from "./types";
+import type { ItemInstance } from "../items/types";
 import { createRngFromState } from "../rng";
 import { computeWalkableMaskForFloor, regenerateBaseMaps } from "../map";
 import { computeOpacityMask, computeVisibility, mergeExplored } from "../map/visibility";
@@ -166,7 +171,11 @@ export function applyAction(
 	// are blocked. Only meta-actions that resolve the interaction may proceed.
 	// -------------------------------------------------------------------------
 	const isInteractionAction =
-		action.type === "select_skill_choice" || action.type === "reroll_skill_choice";
+		action.type === "select_skill_choice" ||
+		action.type === "reroll_skill_choice" ||
+		action.type === "pickup_item" ||
+		action.type === "pickup_gold" ||
+		action.type === "leave_loot";
 	if (state.pendingInteraction !== null && !isInteractionAction) {
 		return { ok: false, reason: "interaction_required" };
 	}
@@ -215,6 +224,57 @@ export function applyAction(
 
 			let newFloorState: FloorState = { ...floor.state, actorsById: newActorsById, explored };
 
+			// Loot tile detection: hero stepped onto a tile that has a loot pile.
+			const moveLoot = newFloorState.lootByIdx[String(newIdx)];
+			let movePendingInteraction: PendingInteraction = null;
+			const moveEvents: GameEvent[] = [];
+			if (moveLoot) {
+				if (moveLoot.items.length === 0 && moveLoot.gold) {
+					// Gold-only pile: auto-collect.
+					const goldAmount = moveLoot.gold;
+					const heroWithGold: Actor = {
+						...updatedHero,
+						gold: updatedHero.gold + goldAmount,
+					};
+					const clearedLootByIdx = { ...newFloorState.lootByIdx };
+					delete clearedLootByIdx[String(newIdx)];
+					const clearedOverrides = { ...newFloorState.tileOverrides };
+					delete clearedOverrides[String(newIdx)];
+					newFloorState = {
+						...newFloorState,
+						actorsById: { ...newFloorState.actorsById, [state.heroId]: heroWithGold },
+						lootByIdx: clearedLootByIdx,
+						tileOverrides: clearedOverrides,
+					};
+					moveEvents.push({
+						type: "gold_collected",
+						actorId: state.heroId,
+						amount: goldAmount,
+						tileIdx: newIdx,
+					});
+				} else {
+					// Multi-item pile (or gold + items): pause for loot pickup modal.
+					movePendingInteraction = {
+						type: "loot_pickup",
+						tileIdx: newIdx,
+						loot: moveLoot,
+					};
+				}
+			}
+
+			// Skip enemy turns and paused processing if hero stepped on a loot pile.
+			if (movePendingInteraction) {
+				const pausedFloors = state.floors.slice();
+				pausedFloors[fi] = { ...floor, state: newFloorState };
+				const pausedState: GameState = {
+					...state,
+					turn: state.turn + 1,
+					floors: pausedFloors,
+					pendingInteraction: movePendingInteraction,
+				};
+				return { ok: true, state: pausedState, events: moveEvents };
+			}
+
 			// Enemy turns on current floor (before potential descend)
 			const { rng, getState: getRngState } = createRngFromState(state.rngState);
 			const enemyResult = processEnemyTurns(
@@ -238,7 +298,7 @@ export function applyAction(
 				floors: newFloors,
 				rngState: getRngState(),
 			};
-			const events: GameEvent[] = [...enemyResult.events];
+			const events: GameEvent[] = [...moveEvents, ...enemyResult.events];
 
 			// Auto-descend: hero stepped onto the exit tile and a next floor exists
 			const heroAfterMove = newFloorState.actorsById[state.heroId];
@@ -371,6 +431,8 @@ export function applyAction(
 			let updatedHero: Actor = activeHero;
 			let updatedDefender: Actor | undefined;
 			let attackPendingInteraction: PendingInteraction = null;
+			let attackLootOverrides: Record<string, number> | undefined;
+			let attackLootByIdx: Record<string, LootDrop> | undefined;
 			if (attackResult.hit) {
 				const { updatedActor, events: damageEvents } = applyDamageToActor(
 					defender,
@@ -388,6 +450,25 @@ export function applyAction(
 					updatedHero = heroWithXp;
 					events.push(...xpEvents);
 					if (xpInteraction) attackPendingInteraction = xpInteraction;
+
+					// Loot generation: roll drop table if context has required data.
+					if (context.itemsById && context.affixesById) {
+						const loot = rollLootDrop(
+							updatedDefender,
+							fi,
+							rng,
+							context.itemsById,
+							context.affixesById,
+						);
+						if (loot) {
+							const npcIdx = updatedDefender.idx;
+							const idxKey = String(npcIdx);
+							const tileId = loot.items.length > 0 ? 827 : 825;
+							attackLootOverrides = { [idxKey]: tileId };
+							attackLootByIdx = { [idxKey]: loot };
+							events.push({ type: "loot_dropped", tileIdx: npcIdx, loot });
+						}
+					}
 				}
 			}
 			const newActorsById = {
@@ -396,7 +477,16 @@ export function applyAction(
 				...(updatedDefender ? { [defender.id]: updatedDefender } : {}),
 			};
 
-			let newFloorState: FloorState = { ...activeFloorState, actorsById: newActorsById };
+			let newFloorState: FloorState = {
+				...activeFloorState,
+				actorsById: newActorsById,
+				...(attackLootOverrides && {
+					tileOverrides: { ...activeFloorState.tileOverrides, ...attackLootOverrides },
+				}),
+				...(attackLootByIdx && {
+					lootByIdx: { ...activeFloorState.lootByIdx, ...attackLootByIdx },
+				}),
+			};
 
 			// Enemy turns after attack (skip if we're about to pause for a skill choice)
 			if (!attackPendingInteraction) {
@@ -505,10 +595,12 @@ export function applyAction(
 				},
 			};
 
-			// Grant XP for any kills caused by the skill
+			// Grant XP and roll loot for any kills caused by the skill
 			let updatedHero = heroAfterSkill;
 			const skillXpEvents: GameEvent[] = [];
 			let skillPendingInteraction: PendingInteraction = null;
+			let skillLootOverrides: Record<string, number> | undefined;
+			let skillLootByIdx: Record<string, LootDrop> | undefined;
 			for (const event of resolution.events) {
 				if (event.type === "death") {
 					const dead = newFloorState.actorsById[event.actorId];
@@ -521,14 +613,39 @@ export function applyAction(
 						updatedHero = heroWithXp;
 						skillXpEvents.push(...xpEvents);
 						if (xpInteraction) skillPendingInteraction = xpInteraction;
+
+						// Loot generation
+						if (context.itemsById && context.affixesById) {
+							const loot = rollLootDrop(
+								dead,
+								fi,
+								rng,
+								context.itemsById,
+								context.affixesById,
+							);
+							if (loot) {
+								const npcIdx = dead.idx;
+								const idxKey = String(npcIdx);
+								const tileId = loot.items.length > 0 ? 827 : 825;
+								skillLootOverrides = { ...skillLootOverrides, [idxKey]: tileId };
+								skillLootByIdx = { ...skillLootByIdx, [idxKey]: loot };
+								skillXpEvents.push({ type: "loot_dropped", tileIdx: npcIdx, loot });
+							}
+						}
 					}
 				}
 			}
 
-			// Re-sync updated hero (XP/level may have changed) and emit XP events
+			// Re-sync updated hero (XP/level may have changed) and merge loot state
 			newFloorState = {
 				...newFloorState,
 				actorsById: { ...newFloorState.actorsById, [state.heroId]: updatedHero },
+				...(skillLootOverrides && {
+					tileOverrides: { ...newFloorState.tileOverrides, ...skillLootOverrides },
+				}),
+				...(skillLootByIdx && {
+					lootByIdx: { ...newFloorState.lootByIdx, ...skillLootByIdx },
+				}),
 			};
 
 			// Enemy turns (skip if we're about to pause for a skill choice)
@@ -643,6 +760,12 @@ export function applyAction(
 
 			const hero = getHero(state);
 			if (!hero) return { ok: false, reason: "no_hero" };
+
+			// Gold cost check.
+			if (hero.gold < pi.rerollCost) {
+				return { ok: false, reason: "insufficient_gold" };
+			}
+
 			const classId = hero.def.type === "hero" ? hero.def.classId : null;
 			const pools = classId ? context.getClassSkillPools(classId) : undefined;
 			if (!pools) return { ok: false, reason: "no_skill_pools" };
@@ -653,10 +776,24 @@ export function applyAction(
 			const currentOfferSkillIds = new Set(pi.offers.map((o) => o.skillId));
 			const newOffers = generateSkillOffers(hero, pools, rng, currentOfferSkillIds);
 
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) return { ok: false, reason: "no_floor" };
+			const heroAfterGold: Actor = { ...hero, gold: hero.gold - pi.rerollCost };
+			const rerolledFloors = state.floors.slice();
+			rerolledFloors[fi] = {
+				...floor,
+				state: {
+					...floor.state,
+					actorsById: { ...floor.state.actorsById, [state.heroId]: heroAfterGold },
+				},
+			};
+
 			const rerolledState: GameState = {
 				...state,
 				turn: state.turn + 1,
 				rngState: getRngState(),
+				floors: rerolledFloors,
 				pendingInteraction: {
 					...pi,
 					offers: newOffers,
@@ -665,6 +802,223 @@ export function applyAction(
 			};
 
 			return { ok: true, state: rerolledState, events: [] };
+		}
+
+		case "pickup_item": {
+			const pi = state.pendingInteraction;
+			if (pi?.type !== "loot_pickup") return { ok: false, reason: "no_pending_loot" };
+			if (pi.tileIdx !== action.tileIdx) return { ok: false, reason: "loot_tile_mismatch" };
+			if (!context.itemsById) return { ok: false, reason: "no_item_defs" };
+
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) return { ok: false, reason: "no_floor" };
+			const hero = getHero(state);
+			if (!hero) return { ok: false, reason: "no_hero" };
+
+			const instanceIdx = pi.loot.items.findIndex((i) => i.instanceId === action.instanceId);
+			if (instanceIdx === -1) return { ok: false, reason: "item_not_in_loot" };
+			const instance = pi.loot.items[instanceIdx]!;
+			const baseDef = context.itemsById[instance.baseItemId];
+			if (!baseDef) return { ok: false, reason: "item_def_not_found" };
+
+			// Determine target slot.
+			let targetSlot: keyof EquipmentSlots | null = null;
+			if (baseDef.type === "weapon") targetSlot = "mainHand";
+			else if (baseDef.type === "shield") targetSlot = "offHand";
+			else if (baseDef.type === "armor") {
+				const s = baseDef.slot;
+				targetSlot =
+					s === "body"
+						? "body"
+						: s === "head"
+							? "head"
+							: s === "hands"
+								? "hands"
+								: "feet";
+			} else if (baseDef.type === "accessory") {
+				if (baseDef.slot === "ring") {
+					targetSlot = !hero.equipment.ring1 ? "ring1" : "ring2";
+				} else {
+					targetSlot = "amulet";
+				}
+			}
+			if (!targetSlot) return { ok: false, reason: "item_slot_unknown" };
+
+			// Update hero's equipment and instance registry.
+			const updatedEquipment: EquipmentSlots = {
+				...hero.equipment,
+				[targetSlot]: instance.instanceId,
+			};
+			const updatedInstances: Record<string, ItemInstance> = {
+				...hero.itemInstances,
+				[instance.instanceId]: instance,
+			};
+			let heroAfterEquip: Actor = {
+				...hero,
+				equipment: updatedEquipment,
+				itemInstances: updatedInstances,
+			};
+			heroAfterEquip = applyEquipment(
+				heroAfterEquip,
+				context.itemsById,
+				heroAfterEquip.itemInstances,
+				context.affixesById ?? {},
+			);
+
+			// Remove taken item from loot pile.
+			const remainingItems = pi.loot.items.filter((_, i) => i !== instanceIdx);
+			const updatedLoot: LootDrop = { ...pi.loot, items: remainingItems };
+			const idxKey = String(pi.tileIdx);
+
+			let updatedLootByIdx: Record<string, LootDrop>;
+			let updatedTileOverrides: Record<string, number>;
+			let newPendingInteraction: PendingInteraction;
+
+			const pileEmpty = remainingItems.length === 0 && !updatedLoot.gold;
+			if (pileEmpty) {
+				updatedLootByIdx = { ...floor.state.lootByIdx };
+				delete updatedLootByIdx[idxKey];
+				updatedTileOverrides = { ...floor.state.tileOverrides };
+				delete updatedTileOverrides[idxKey];
+				newPendingInteraction = null;
+			} else {
+				updatedLootByIdx = { ...floor.state.lootByIdx, [idxKey]: updatedLoot };
+				// Update tile to gold-only if items are all taken but gold remains.
+				const newTileId = remainingItems.length > 0 ? 827 : 825;
+				updatedTileOverrides = { ...floor.state.tileOverrides, [idxKey]: newTileId };
+				newPendingInteraction = { ...pi, loot: updatedLoot };
+			}
+
+			const pickupFloors = state.floors.slice();
+			pickupFloors[fi] = {
+				...floor,
+				state: {
+					...floor.state,
+					actorsById: { ...floor.state.actorsById, [state.heroId]: heroAfterEquip },
+					lootByIdx: updatedLootByIdx,
+					tileOverrides: updatedTileOverrides,
+				},
+			};
+
+			return {
+				ok: true,
+				state: {
+					...state,
+					turn: state.turn + 1,
+					floors: pickupFloors,
+					pendingInteraction: newPendingInteraction,
+				},
+				events: [
+					{
+						type: "item_looted",
+						actorId: state.heroId,
+						item: instance,
+						slot: targetSlot,
+					},
+				],
+			};
+		}
+
+		case "pickup_gold": {
+			const pi = state.pendingInteraction;
+			if (pi?.type !== "loot_pickup") return { ok: false, reason: "no_pending_loot" };
+			if (pi.tileIdx !== action.tileIdx) return { ok: false, reason: "loot_tile_mismatch" };
+			if (!pi.loot.gold) return { ok: false, reason: "no_gold_in_loot" };
+
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) return { ok: false, reason: "no_floor" };
+			const hero = getHero(state);
+			if (!hero) return { ok: false, reason: "no_hero" };
+
+			const goldAmount = pi.loot.gold;
+			const heroWithGold: Actor = { ...hero, gold: hero.gold + goldAmount };
+			const updatedLoot: LootDrop = { ...pi.loot, gold: undefined };
+			const idxKey = String(pi.tileIdx);
+
+			let updatedLootByIdx: Record<string, LootDrop>;
+			let updatedTileOverrides: Record<string, number>;
+			let newPendingInteraction: PendingInteraction;
+
+			const pileEmpty = updatedLoot.items.length === 0;
+			if (pileEmpty) {
+				updatedLootByIdx = { ...floor.state.lootByIdx };
+				delete updatedLootByIdx[idxKey];
+				updatedTileOverrides = { ...floor.state.tileOverrides };
+				delete updatedTileOverrides[idxKey];
+				newPendingInteraction = null;
+			} else {
+				updatedLootByIdx = { ...floor.state.lootByIdx, [idxKey]: updatedLoot };
+				updatedTileOverrides = { ...floor.state.tileOverrides, [idxKey]: 827 };
+				newPendingInteraction = { ...pi, loot: updatedLoot };
+			}
+
+			const goldFloors = state.floors.slice();
+			goldFloors[fi] = {
+				...floor,
+				state: {
+					...floor.state,
+					actorsById: { ...floor.state.actorsById, [state.heroId]: heroWithGold },
+					lootByIdx: updatedLootByIdx,
+					tileOverrides: updatedTileOverrides,
+				},
+			};
+
+			return {
+				ok: true,
+				state: {
+					...state,
+					turn: state.turn + 1,
+					floors: goldFloors,
+					pendingInteraction: newPendingInteraction,
+				},
+				events: [
+					{
+						type: "gold_collected",
+						actorId: state.heroId,
+						amount: goldAmount,
+						tileIdx: pi.tileIdx,
+					},
+				],
+			};
+		}
+
+		case "leave_loot": {
+			const pi = state.pendingInteraction;
+			if (pi?.type !== "loot_pickup") return { ok: false, reason: "no_pending_loot" };
+			if (pi.tileIdx !== action.tileIdx) return { ok: false, reason: "loot_tile_mismatch" };
+
+			const fi = state.heroFloorIndex;
+			const floor = state.floors[fi];
+			if (!floor) return { ok: false, reason: "no_floor" };
+
+			const idxKey = String(pi.tileIdx);
+			const clearedLootByIdx = { ...floor.state.lootByIdx };
+			delete clearedLootByIdx[idxKey];
+			const clearedTileOverrides = { ...floor.state.tileOverrides };
+			delete clearedTileOverrides[idxKey];
+
+			const leaveFloors = state.floors.slice();
+			leaveFloors[fi] = {
+				...floor,
+				state: {
+					...floor.state,
+					lootByIdx: clearedLootByIdx,
+					tileOverrides: clearedTileOverrides,
+				},
+			};
+
+			return {
+				ok: true,
+				state: {
+					...state,
+					turn: state.turn + 1,
+					floors: leaveFloors,
+					pendingInteraction: null,
+				},
+				events: [],
+			};
 		}
 
 		case "unknown":

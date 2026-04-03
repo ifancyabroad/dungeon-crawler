@@ -28,5 +28,21 @@
 	"passiveSkills": [],
 	"startingEquipment": ["dagger"],
 	"weaponProficiencies": ["dagger"],
-	"armorProficiencies": []
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 0.6,
+		"gold": { "min": 2, "max": 6 },
+		"items": [
+			{ "baseItemId": "dagger", "weight": 15 },
+			{ "baseItemId": "shortsword", "weight": 8 },
+			{ "baseItemId": "leather_armor", "weight": 5 }
+		],
+		"rarityWeights": {
+			"common": 65,
+			"uncommon": 25,
+			"rare": 8,
+			"epic": 2,
+			"unique": 0
+		}
+	}
 }

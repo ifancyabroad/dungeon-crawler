@@ -1,0 +1,9 @@
+{
+	"type": "armor",
+	"id": "leather_boots",
+	"name": "Leather Boots",
+	"description": "Sturdy leather boots that protect the feet and ankles.",
+	"slot": "feet",
+	"armorCategory": "light",
+	"baseAC": 10
+}

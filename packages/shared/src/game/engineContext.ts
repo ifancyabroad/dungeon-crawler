@@ -1,5 +1,6 @@
 import type { FloorState, GameEvent, GameState } from "./types";
 import type { SkillDefinition } from "../skills";
+import type { AffixDef, ItemDef } from "../items/types";
 
 /** Class skill pools passed via context for deterministic offer generation. */
 export interface ClassSkillPools {
@@ -9,7 +10,14 @@ export interface ClassSkillPools {
 
 /** Empty floor state. Use when defaulting or building from persisted. spawnIdx and exitIdx are set after map generation. */
 export function createEmptyFloorState(): FloorState {
-	return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx: 0, exitIdx: null };
+	return {
+		tileOverrides: {},
+		actorsById: {},
+		explored: [],
+		spawnIdx: 0,
+		exitIdx: null,
+		lootByIdx: {},
+	};
 }
 
 /** Context required for applyAction: walkability + opacity masks per floor, plus content lookups. */
@@ -30,6 +38,16 @@ export interface ApplyActionContext {
 	 * Returns undefined if the class is not found.
 	 */
 	getClassSkillPools(classId: string): ClassSkillPools | undefined;
+	/**
+	 * All item definitions keyed by id. Used by pickup_item to re-apply equipment.
+	 * Optional; if absent, pickup_item is rejected.
+	 */
+	itemsById?: Record<string, ItemDef>;
+	/**
+	 * All affix definitions keyed by id. Used for loot generation on NPC death.
+	 * Optional; if absent, no loot is generated.
+	 */
+	affixesById?: Record<string, AffixDef>;
 }
 
 /** Build context from precomputed walkability and opacity masks (O(1) per apply). */
@@ -38,6 +56,8 @@ export function createActionContext(
 	opacityMasks: Uint8Array[],
 	skillDefs?: Record<string, SkillDefinition>,
 	classSkillPools?: Record<string, ClassSkillPools>,
+	itemsById?: Record<string, ItemDef>,
+	affixesById?: Record<string, AffixDef>,
 ): ApplyActionContext {
 	return {
 		getWalkableMask(fi: number): Uint8Array {
@@ -60,6 +80,8 @@ export function createActionContext(
 		getClassSkillPools(classId: string): ClassSkillPools | undefined {
 			return classSkillPools?.[classId];
 		},
+		itemsById,
+		affixesById,
 	};
 }
 

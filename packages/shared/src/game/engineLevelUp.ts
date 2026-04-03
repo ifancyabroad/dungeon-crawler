@@ -147,6 +147,7 @@ export function grantXpForKill(
 					levelReached: newLevel,
 					offers,
 					rerollsUsed: 0,
+					rerollCost: 15,
 				};
 			}
 		}

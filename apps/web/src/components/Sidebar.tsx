@@ -167,7 +167,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 							</div>
 							<div className="flex gap-1">
 								<span className="text-text-label w-10 shrink-0">Gold</span>
-								<span className="text-text tabular-nums">0</span>
+								<span className="text-text tabular-nums">{hero.gold}</span>
 							</div>
 						</div>
 

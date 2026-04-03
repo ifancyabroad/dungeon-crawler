@@ -42,10 +42,10 @@ The deterministic game engine. **All authoritative game rules live here** — mo
 
 ### `packages/content`
 
-Static game data as validated JSON. Defines what exists in the game world (classes, npcs, encounters, vaults, skills) but contains no logic.
+Static game data as validated JSON. Defines what exists in the game world (classes, npcs, encounters, vaults, skills, items, affixes) but contains no logic.
 
 - Each content type lives under `src/raw/<type>/` as a JSON file validated by a Zod schema.
-- A build script generates typed lookup objects (`npcsById`, `encountersById`, `skillsById`, etc.) consumed by `apps/api` and `apps/web`.
+- A build script generates typed lookup objects (`npcsById`, `encountersById`, `skillsById`, `itemsById`, `affixesById`, etc.) consumed by `apps/api` and `apps/web`.
 - Never hardcode content values in logic files — always source from `@app/content`.
 
 ### `apps/api`
@@ -168,11 +168,11 @@ All core types are defined in `packages/shared/src/game/types.ts` and `packages/
 
 `GameState` is the top-level serializable snapshot of a run. It holds the turn counter, the hero's current floor index, RNG state, and an array of `Floor` objects — each pairing an immutable `FloorConfig` with a mutable `FloorState`.
 
-When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and `use_skill` actions are rejected by the engine until the interaction is resolved. This is the general mechanism for any future blocking interaction (shrines, NPC dialogue, etc.).
+When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and `use_skill` actions are rejected by the engine until the interaction is resolved. Current interaction types: `skill_choice` (level-up offer) and `loot_pickup` (item pile). This is the general mechanism for any future blocking interaction (shrines, NPC dialogue, etc.).
 
 ### FloorState
 
-`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, and exit position. It changes on every turn; `FloorConfig` does not.
+`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, loot piles (`lootByIdx`), spawn position, and exit position. It changes on every turn; `FloorConfig` does not.
 
 ### Actor
 
@@ -217,7 +217,7 @@ In other words: a vault layout made of walls on its entire boundary may become i
 
 Turn-based melee. After every player action, all living NPCs on the current floor take a turn in deterministic order (sorted by actor ID). Stunned actors (hero or NPC) skip their entire turn.
 
-- **Attack roll**: `d20 + STR modifier + flat attack bonus (passive) + dice bonus/penalty (status effects)` vs. effective target AC (target's base AC ± AC adjustments from active effects). Advantage (roll 2d20, take higher) and disadvantage (take lower) from active status effects are resolved first; they cancel each other out if both apply.
+- **Attack roll**: `d20 + STR modifier + flat attack bonus (passive skills) + flat attack bonus (equipped items) + dice bonus/penalty (status effects)` vs. effective target AC (target's base AC ± AC adjustments from active effects and equipped items). Advantage (roll 2d20, take higher) and disadvantage (take lower) from active status effects are resolved first; they cancel each other out if both apply.
 - **Critical hit**: natural roll ≥ crit threshold (default 20, can be lowered by passive skills) — double damage dice.
 - **Damage**: weapon dice + STR modifier (unarmed = 1d4), minimum 0; then reduced by defender resistances/immunities for each damage type (resistance halves; immunity makes it 0).
 - **Saving throws**: `d20 + save ability modifier (+ proficiency bonus if proficient) + dice bonus/penalty (status effects)`, with natural 20 auto-success and natural 1 auto-fail.

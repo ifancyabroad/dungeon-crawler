@@ -54,6 +54,8 @@ export const ArmorItemSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string().optional(),
+	/** Which equipment slot this piece of armour occupies. */
+	slot: z.enum(["body", "head", "hands", "feet"]),
 	armorCategory: ArmorCategorySchema,
 	/** Base AC before DEX modifier (if applicable per 5E formulas). */
 	baseAC: z.number(),

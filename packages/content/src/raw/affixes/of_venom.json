@@ -1,0 +1,14 @@
+{
+	"id": "of_venom",
+	"name": "of Venom",
+	"nameSuffix": "of Venom",
+	"namePriority": 8,
+	"eligibleItemTypes": ["weapon"],
+	"effect": {
+		"type": "add_damage_dice",
+		"dice": "1d4",
+		"damageType": "poison",
+		"appliesTo": "any",
+		"onCritOnly": false
+	}
+}

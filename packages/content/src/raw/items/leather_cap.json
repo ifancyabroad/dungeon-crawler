@@ -1,0 +1,9 @@
+{
+	"type": "armor",
+	"id": "leather_cap",
+	"name": "Leather Cap",
+	"description": "A simple cap of cured leather offering light head protection.",
+	"slot": "head",
+	"armorCategory": "light",
+	"baseAC": 11
+}

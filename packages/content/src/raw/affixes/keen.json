@@ -1,0 +1,11 @@
+{
+	"id": "keen",
+	"name": "Keen",
+	"namePrefix": "Keen",
+	"namePriority": 20,
+	"eligibleItemTypes": ["weapon"],
+	"effect": {
+		"type": "add_attack_roll_bonus",
+		"amount": 1
+	}
+}

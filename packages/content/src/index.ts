@@ -4,6 +4,9 @@
  */
 
 export {
+	affixIds,
+	affixes,
+	affixesById,
 	characterClassIds,
 	classes,
 	classesById,
@@ -21,6 +24,7 @@ export {
 	skillsById,
 	vaults,
 	vaultsById,
+	type AffixId,
 	type CharacterClassId,
 	type ItemId,
 	type NpcId,
@@ -60,3 +64,4 @@ export {
 	AccessoryItemSchema,
 	type ItemDefinition,
 } from "./schemas/item.js";
+export { AffixSchema, type AffixDefinition } from "./schemas/affix.js";

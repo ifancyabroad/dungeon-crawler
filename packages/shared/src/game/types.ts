@@ -9,10 +9,22 @@ import type { DamageType } from "../config/combat";
 import type { NpcAIState } from "./strategies/types";
 import type { FloorConfig } from "../map/types";
 import type { CombatAdjustments } from "./schemas";
-import type { EquipmentSlots, NaturalWeapon } from "../items/types";
+import type {
+	EquipmentSlots,
+	ItemInstance,
+	LootDrop,
+	LootTable,
+	NaturalWeapon,
+} from "../items/types";
 
 export type { CombatAdjustments } from "./schemas";
-export type { EquipmentSlots, NaturalWeapon } from "../items/types";
+export type {
+	EquipmentSlots,
+	ItemInstance,
+	LootDrop,
+	LootTable,
+	NaturalWeapon,
+} from "../items/types";
 
 export type TileId = number;
 
@@ -55,6 +67,8 @@ export interface PassiveDamageBonus {
 	onCritOnly: boolean;
 	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
 	sourceSkillId?: string;
+	/** Item instance that applied this bonus. Used to remove entries when unequipping an item. */
+	sourceItemInstanceId?: string;
 	/** If set, only fires when the attack's primary damage type matches. */
 	requiredDamageType?: DamageType;
 }
@@ -72,6 +86,8 @@ export interface PassiveFlatDamageBonus {
 	appliesTo: "melee" | "area" | "ranged" | "any";
 	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
 	sourceSkillId?: string;
+	/** Item instance that applied this bonus. Used to remove entries when unequipping an item. */
+	sourceItemInstanceId?: string;
 	/** If set, only fires when the attack's primary damage type matches. */
 	requiredDamageType?: DamageType;
 }
@@ -155,6 +171,8 @@ export interface NpcInit {
 	armorProficiencies: string[];
 	/** Innate attack (bite, claws, etc.) — used when no weapon is equipped. Always proficient. */
 	naturalWeapon?: NaturalWeapon;
+	/** Loot table evaluated on death. Undefined for the hero. */
+	lootTable?: LootTable;
 }
 
 /** Actor: hero or NPC. Use def.type to distinguish ("hero" | "npc"). Position is idx only; floor is implied by which floor's actorsById contains it. */
@@ -260,6 +278,22 @@ export interface Actor {
 	xpReward: number;
 	/** AI behaviour state. Undefined for the hero actor. */
 	aiState?: NpcAIState;
+	/** Gold carried by this actor. Hero only — NPCs drop gold via lootTable, not this field. */
+	gold: number;
+	/** Item instances owned by this actor, keyed by instanceId. Populated when items are looted. */
+	itemInstances: Record<string, ItemInstance>;
+	/**
+	 * Flat attack roll bonus contributed by equipped items (enhancement bonus + attack-roll affixes).
+	 * Overwritten on every applyEquipment call. Distinct from attackBonusFlat (skill-sourced).
+	 */
+	itemAttackBonusFlat: number;
+	/**
+	 * Flat AC bonus contributed by equipped item affixes (e.g. Reinforced affix).
+	 * Overwritten on every applyEquipment call. Added to armorClass after base AC computation.
+	 */
+	itemAcBonus: number;
+	/** Loot table evaluated when this actor dies. Undefined for the hero. */
+	lootTable?: LootTable;
 }
 
 /** Events emitted during a turn for combat log and client feedback. */
@@ -371,7 +405,13 @@ export type GameEvent =
 			casterNewIdx: number;
 			targetNewIdx: number;
 			skillId: string;
-	  };
+	  }
+	/** Emitted when an NPC dies and produces a loot drop on its tile. */
+	| { type: "loot_dropped"; tileIdx: number; loot: LootDrop }
+	/** Emitted when the hero collects gold (auto-collect on gold-only tile, or via pickup_gold action). */
+	| { type: "gold_collected"; actorId: ActorId; amount: number; tileIdx: number }
+	/** Emitted when the hero equips an item from a loot pile. */
+	| { type: "item_looted"; actorId: ActorId; item: ItemInstance; slot: string };
 
 /**
  * The subset of `GameEvent` that represents direct damage output from a skill cast:
@@ -400,6 +440,12 @@ export interface FloorState {
 	spawnIdx: number;
 	/** Flat tile index of the exit to the next floor. null on the final floor. */
 	exitIdx: number | null;
+	/**
+	 * Loot drops on this floor, keyed by flat tile index (as string).
+	 * Populated when an NPC dies with a loot table. Cleared when the hero picks up all items
+	 * or leaves the pile. The corresponding tileOverrides entry (tile 825 or 827) is kept in sync.
+	 */
+	lootByIdx: Record<string, LootDrop>;
 }
 
 /** Single floor: config + dynamic state. No parallel arrays. */
@@ -425,15 +471,26 @@ export interface SkillOffer {
  * move/attack/use_skill actions are rejected until this is resolved.
  * Serialized into PersistedDynamicState so page refreshes correctly restore state.
  */
-export type PendingInteraction = {
-	type: "skill_choice";
-	/** The level just reached. */
-	levelReached: number;
-	/** Mixed active and passive offers. Each entry carries the skill id and rank to grant. */
-	offers: SkillOffer[];
-	/** How many times the player has rerolled this offer set. */
-	rerollsUsed: number;
-} | null;
+export type PendingInteraction =
+	| {
+			type: "skill_choice";
+			/** The level just reached. */
+			levelReached: number;
+			/** Mixed active and passive offers. Each entry carries the skill id and rank to grant. */
+			offers: SkillOffer[];
+			/** How many times the player has rerolled this offer set. */
+			rerollsUsed: number;
+			/** Gold cost to reroll the current offer. Flat 15 per reroll. */
+			rerollCost: number;
+	  }
+	| {
+			type: "loot_pickup";
+			/** Flat tile index of the loot pile. */
+			tileIdx: number;
+			/** Current contents of the pile (updated as items are taken). */
+			loot: LootDrop;
+	  }
+	| null;
 
 /** In-memory game state. No walkableByFloor; engine computes walkability when needed. */
 export interface GameState {

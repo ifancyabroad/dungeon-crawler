@@ -12,7 +12,7 @@ import {
 	type GameEvent,
 	type GameState,
 } from "@app/shared";
-import { classes, skillsById, vaults } from "@app/content";
+import { affixesById, classes, itemsById, skillsById, vaults } from "@app/content";
 import type { ClassSkillPools } from "@app/shared";
 
 /** Pre-built classSkillPools lookup from content data. Static for the session lifetime. */
@@ -292,7 +292,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			// masks haven't been initialised yet (should not happen in practice).
 			const { walkableByFloor: wb, opacityByFloor: ob } = get();
 			const replayCtx =
-				wb && ob ? createActionContext(wb, ob, skillsById, classSkillPools) : null;
+				wb && ob
+					? createActionContext(
+							wb,
+							ob,
+							skillsById,
+							classSkillPools,
+							itemsById,
+							affixesById,
+						)
+					: null;
 			let nextState = payload.state;
 			for (const { action } of pendingActions) {
 				const result = replayCtx
@@ -396,6 +405,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 						opacityByFloor!,
 						skillsById,
 						classSkillPools,
+						itemsById,
+						affixesById,
 					),
 				)
 			: applyActionWithDerivedContext(state, action);

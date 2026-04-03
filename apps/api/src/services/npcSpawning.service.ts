@@ -53,6 +53,7 @@ function npcInitFromDef(def: NpcDefinition): NpcInit {
 		weaponProficiencies: def.weaponProficiencies,
 		armorProficiencies: def.armorProficiencies,
 		naturalWeapon: def.naturalWeapon,
+		lootTable: def.lootTable,
 	};
 }
 
@@ -87,7 +88,7 @@ function spawnNpcWithPassives(
 
 	// Apply equipment after passive skills — weapon dice, AC, and proficiency are
 	// resolved here so combat functions never need to do item lookups at runtime.
-	actor = applyEquipment(actor, itemsById);
+	actor = applyEquipment(actor, itemsById, {});
 
 	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
 	const newFloors = next.floors.slice();

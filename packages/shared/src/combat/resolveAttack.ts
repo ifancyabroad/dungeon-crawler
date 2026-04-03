@@ -45,8 +45,8 @@ export function resolveAttack(
 	}
 	const naturalRoll = rollD20Adjusted(rng, netAdvantage, netDisadvantage);
 
-	// Flat attack roll bonus from passive skills (e.g. add_attack_roll_bonus).
-	const flatBonus = attacker.attackBonusFlat ?? 0;
+	// Flat attack roll bonus from passive skills and equipped items.
+	const flatBonus = (attacker.attackBonusFlat ?? 0) + (attacker.itemAttackBonusFlat ?? 0);
 
 	// Dice bonuses/penalties from active status effects (e.g. bless, bane).
 	let diceBonusTotal = 0;

@@ -1,0 +1,11 @@
+{
+	"type": "accessory",
+	"id": "ring_of_the_ancients",
+	"name": "Ring of the Ancients",
+	"description": "A ring of unknown origin, etched with runes that pulse with an inner warmth. Grants vitality and fire resistance.",
+	"slot": "ring",
+	"effects": [
+		{ "type": "modify_max_hp", "amount": 10 },
+		{ "type": "add_damage_resistance", "damageType": "fire" }
+	]
+}

@@ -31,5 +31,21 @@
 	"passiveSkills": [],
 	"startingEquipment": [],
 	"weaponProficiencies": [],
-	"armorProficiencies": []
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 0.7,
+		"gold": { "min": 4, "max": 10 },
+		"items": [
+			{ "baseItemId": "quarterstaff", "weight": 10 },
+			{ "baseItemId": "cloth_robe", "weight": 8 },
+			{ "baseItemId": "shadow_blade", "weight": 1 }
+		],
+		"rarityWeights": {
+			"common": 65,
+			"uncommon": 25,
+			"rare": 8,
+			"epic": 2,
+			"unique": 0
+		}
+	}
 }

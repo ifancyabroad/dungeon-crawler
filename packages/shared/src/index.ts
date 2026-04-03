@@ -188,7 +188,12 @@ export { createGameBodySchema, type CreateGameBody, type HealthResponse } from "
 export {
 	applyEquipment,
 	buildEquipmentSlots,
+	type AffixDef,
 	type ItemDef,
+	type ItemInstance,
+	type ItemRarity,
+	type LootDrop,
+	type LootTable,
 	type WeaponItemDef,
 	type ArmorItemDef,
 	type ShieldItemDef,

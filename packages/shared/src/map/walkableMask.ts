@@ -7,13 +7,16 @@
 import type { BaseLayerFloor } from "./baseLayers";
 import { isCellWalkable } from "./walkability";
 
+/** Loot pile tile IDs — ground items the hero can walk onto to trigger pickup. */
+const WALKABLE_OVERRIDE_TILES = new Set([825, 827]);
+
 /**
- * Override tile walkability. Currently all override tiles block movement.
- * TODO: when items/traps are placed via tileOverrides, extend this to return true for
- * passable override types (e.g. items on the ground that the hero can walk onto).
+ * Override tile walkability. Loot pile tiles (825 = gold-only, 827 = items) are
+ * passable so the hero can step onto them to trigger the pickup interaction.
+ * All other override tiles (e.g. doors, traps) remain blocked by default.
  */
-function isTileIdWalkable(_tileId: number): boolean {
-	return false;
+function isTileIdWalkable(tileId: number): boolean {
+	return WALKABLE_OVERRIDE_TILES.has(tileId);
 }
 
 /**

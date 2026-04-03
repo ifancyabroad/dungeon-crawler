@@ -1,0 +1,14 @@
+{
+	"id": "of_ice",
+	"name": "of Ice",
+	"nameSuffix": "of Ice",
+	"namePriority": 10,
+	"eligibleItemTypes": ["weapon"],
+	"effect": {
+		"type": "add_damage_dice",
+		"dice": "1d4",
+		"damageType": "cold",
+		"appliesTo": "any",
+		"onCritOnly": false
+	}
+}

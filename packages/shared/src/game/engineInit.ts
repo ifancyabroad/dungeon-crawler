@@ -57,7 +57,14 @@ function buildInitialFloorState(
 	const exitIdx = base.exitIdx === -1 ? null : base.exitIdx;
 
 	if (!heroInit) {
-		return { tileOverrides: {}, actorsById: {}, explored: [], spawnIdx, exitIdx };
+		return {
+			tileOverrides: {},
+			actorsById: {},
+			explored: [],
+			spawnIdx,
+			exitIdx,
+			lootByIdx: {},
+		};
 	}
 
 	const initialSkills: Record<string, { rank: number; cooldownRemaining: number }> = {};
@@ -98,6 +105,10 @@ function buildInitialFloorState(
 		equippedAttackStat: "strength",
 		equippedWeaponFinesse: false,
 		weaponProficient: false,
+		gold: 0,
+		itemInstances: {},
+		itemAttackBonusFlat: 0,
+		itemAcBonus: 0,
 	};
 
 	const { x: spawnX, y: spawnY } = idxToXY(spawnIdx, config.width);
@@ -118,6 +129,7 @@ function buildInitialFloorState(
 		explored,
 		spawnIdx,
 		exitIdx,
+		lootByIdx: {},
 	};
 }
 
@@ -210,6 +222,11 @@ export function spawnNpc(
 		equippedAttackStat: "strength",
 		equippedWeaponFinesse: false,
 		weaponProficient: false,
+		gold: 0,
+		itemInstances: {},
+		itemAttackBonusFlat: 0,
+		itemAcBonus: 0,
+		lootTable: init.lootTable,
 	};
 	const newActorsById = { ...floor.state.actorsById, [actor.id]: actor };
 	const newFloorState: FloorState = { ...floor.state, actorsById: newActorsById };

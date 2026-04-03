@@ -27,7 +27,7 @@ export function LevelUpModal() {
 	// before showing the modal, so it doesn't interrupt the kill animation.
 	if (!pi || pi.type !== "skill_choice" || actionInProgress) return null;
 
-	const { levelReached, offers, rerollsUsed } = pi;
+	const { levelReached, offers, rerollsUsed, rerollCost } = pi;
 
 	// Count the hero's current active and passive skills for cap progress display
 	const heroActor = state ? getHero(state) : undefined;
@@ -135,13 +135,20 @@ export function LevelUpModal() {
 				)}
 
 				<div className="border-t border-border pt-3 flex items-center justify-between">
-					<Button variant="secondary" size="sm" onClick={handleReroll}>
-						Reroll
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={handleReroll}
+						disabled={(heroActor?.gold ?? 0) < rerollCost}
+					>
+						Reroll — {rerollCost} gold
 						{rerollsUsed > 0 && (
 							<span className="ml-1 text-text-muted">(×{rerollsUsed})</span>
 						)}
 					</Button>
-					<p className="text-text-muted">Rerolls are free for now.</p>
+					{(heroActor?.gold ?? 0) < rerollCost && (
+						<p className="text-text-muted">Not enough gold.</p>
+					)}
 				</div>
 			</div>
 		</Modal>

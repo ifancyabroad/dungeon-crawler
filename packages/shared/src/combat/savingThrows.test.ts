@@ -59,6 +59,10 @@ function makeHeroActor(overrides?: Partial<Actor>): Actor {
 		equippedAttackStat: "strength",
 		equippedWeaponFinesse: false,
 		weaponProficient: false,
+		gold: 0,
+		itemInstances: {},
+		itemAttackBonusFlat: 0,
+		itemAcBonus: 0,
 		...overrides,
 	};
 }
@@ -96,6 +100,10 @@ function makeNpcActor(overrides?: Partial<Actor>): Actor {
 		equippedAttackStat: "strength",
 		equippedWeaponFinesse: false,
 		weaponProficient: false,
+		gold: 0,
+		itemInstances: {},
+		itemAttackBonusFlat: 0,
+		itemAcBonus: 0,
 		...overrides,
 	};
 }

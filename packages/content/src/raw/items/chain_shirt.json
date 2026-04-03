@@ -3,6 +3,7 @@
 	"id": "chain_shirt",
 	"name": "Chain Shirt",
 	"description": "A shirt of interlocked metal rings that balances protection with mobility.",
+	"slot": "body",
 	"armorCategory": "medium",
 	"baseAC": 13
 }

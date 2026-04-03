@@ -1,0 +1,11 @@
+{
+	"id": "hardened",
+	"name": "Hardened",
+	"namePrefix": "Hardened",
+	"namePriority": 20,
+	"eligibleItemTypes": ["armor", "shield"],
+	"effect": {
+		"type": "modify_armor_class",
+		"amount": 2
+	}
+}

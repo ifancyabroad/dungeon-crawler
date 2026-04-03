@@ -16,6 +16,7 @@ import { VaultDefSchema, type VaultDefinition } from "../schemas/vault.js";
 import { EncounterDefSchema, type EncounterDefinition } from "../schemas/encounter.js";
 import { SkillDefinitionSchema, type SkillDefinition } from "../schemas/skill.js";
 import { ItemSchema, type ItemDefinition } from "../schemas/item.js";
+import { AffixSchema, type AffixDefinition } from "../schemas/affix.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..", "..");
@@ -25,6 +26,7 @@ const RAW_VAULTS_DIR = join(ROOT, "src", "raw", "vaults");
 const RAW_ENCOUNTERS_DIR = join(ROOT, "src", "raw", "encounters");
 const RAW_SKILLS_DIR = join(ROOT, "src", "raw", "skills");
 const RAW_ITEMS_DIR = join(ROOT, "src", "raw", "items");
+const RAW_AFFIXES_DIR = join(ROOT, "src", "raw", "affixes");
 const OUT_PATH = join(ROOT, "src", "generated", "index.ts");
 
 function getContentVersion(): string {
@@ -142,6 +144,16 @@ function run(): boolean {
 	}
 	const sortedItems = [...items].sort((a, b) => a.id.localeCompare(b.id, "en"));
 
+	const affixes = loadAndValidate<AffixDefinition>(RAW_AFFIXES_DIR, AffixSchema, "affixes");
+	if (!affixes) return false;
+
+	const affixIdValues = [...new Set(affixes.map((a) => a.id))];
+	if (affixIdValues.length !== affixes.length) {
+		console.error("Duplicate affix ids found.");
+		return false;
+	}
+	const sortedAffixes = [...affixes].sort((a, b) => a.id.localeCompare(b.id, "en"));
+
 	const classIdValues = sortedClasses.map((c) => c.id);
 	const npcIdValues = sortedNpcs.map((n) => n.id);
 	mkdirSync(dirname(OUT_PATH), { recursive: true });
@@ -155,6 +167,7 @@ function run(): boolean {
 		'import type { EncounterDefinition } from "../schemas/encounter.js";',
 		'import type { SkillDefinition } from "../schemas/skill.js";',
 		'import type { ItemDefinition } from "../schemas/item.js";',
+		'import type { AffixDefinition } from "../schemas/affix.js";',
 		"",
 		"export const characterClassIds = " + JSON.stringify(classIdValues) + " as const;",
 		"export type CharacterClassId = (typeof characterClassIds)[number];",
@@ -218,6 +231,17 @@ function run(): boolean {
 		"for (const i of items) { _itemsById[i.id] = i; }",
 		"export const itemsById: Record<string, ItemDefinition> = _itemsById;",
 		"",
+		"export const affixIds = " + JSON.stringify(affixIdValues) + " as const;",
+		"export type AffixId = (typeof affixIds)[number];",
+		"",
+		"export const affixes: readonly AffixDefinition[] = " +
+			JSON.stringify(sortedAffixes, null, 2) +
+			" as readonly AffixDefinition[];",
+		"",
+		"const _affixesById: Record<string, AffixDefinition> = {};",
+		"for (const a of affixes) { _affixesById[a.id] = a; }",
+		"export const affixesById: Record<string, AffixDefinition> = _affixesById;",
+		"",
 	];
 	writeFileSync(OUT_PATH, lines.join("\n"), "utf-8");
 	console.log("Wrote", OUT_PATH);
@@ -236,6 +260,7 @@ if (isWatch) {
 	if (existsSync(RAW_ENCOUNTERS_DIR)) watch(RAW_ENCOUNTERS_DIR, () => run());
 	if (existsSync(RAW_SKILLS_DIR)) watch(RAW_SKILLS_DIR, () => run());
 	if (existsSync(RAW_ITEMS_DIR)) watch(RAW_ITEMS_DIR, () => run());
+	if (existsSync(RAW_AFFIXES_DIR)) watch(RAW_AFFIXES_DIR, () => run());
 } else {
 	if (!run()) process.exit(1);
 }

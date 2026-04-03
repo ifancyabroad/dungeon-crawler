@@ -53,8 +53,13 @@ const EquipmentSlotsSchema = new Schema(
 	{
 		mainHand: String,
 		offHand: String,
-		armor: String,
-		ring: String,
+		body: String,
+		head: String,
+		hands: String,
+		feet: String,
+		ring1: String,
+		ring2: String,
+		amulet: String,
 	},
 	{ _id: false },
 );
@@ -129,6 +134,41 @@ const PassiveDamageBonusSchema = new Schema(
 		appliesTo: { type: String, required: true },
 		onCritOnly: { type: Boolean, required: true },
 		sourceSkillId: String,
+		sourceItemInstanceId: String,
+	},
+	{ _id: false },
+);
+
+/** Mirrors PassiveFlatDamageBonusSchema in packages/shared/src/game/schemas.ts. */
+const PassiveFlatDamageBonusSchema = new Schema(
+	{
+		amount: { type: Number, required: true },
+		damageType: { type: String, required: true },
+		appliesTo: { type: String, required: true },
+		sourceSkillId: String,
+		sourceItemInstanceId: String,
+	},
+	{ _id: false },
+);
+
+/** Mirrors ItemInstance in packages/shared/src/items/types.ts. */
+const ItemInstanceSchema = new Schema(
+	{
+		instanceId: { type: String, required: true },
+		baseItemId: { type: String, required: true },
+		rarity: { type: String, required: true },
+		enhancementBonus: { type: Number, required: true },
+		affixIds: [String],
+		generatedName: { type: String, required: true },
+	},
+	{ _id: false },
+);
+
+/** Mirrors LootDrop in packages/shared/src/game/types.ts. */
+const LootDropSchema = new Schema(
+	{
+		gold: Number,
+		items: { type: [ItemInstanceSchema], required: true },
 	},
 	{ _id: false },
 );
@@ -150,6 +190,7 @@ const ActorSchema = new Schema(
 		activeEffects: [ActiveEffectSchema],
 		numericBuffs: { type: Map, of: Number },
 		passiveDamageBonuses: [PassiveDamageBonusSchema],
+		passiveFlatDamageBonuses: [PassiveFlatDamageBonusSchema],
 		statusImmunities: [String],
 		def: ActorDefSchema,
 		level: Number,
@@ -172,6 +213,11 @@ const ActorSchema = new Schema(
 		healingBonusFlat: Number,
 		critThreshold: Number,
 		faction: String,
+		gold: { type: Number, default: 0 },
+		itemInstances: { type: Map, of: ItemInstanceSchema },
+		itemAttackBonusFlat: { type: Number, default: 0 },
+		itemAcBonus: { type: Number, default: 0 },
+		lootTable: { type: Schema.Types.Mixed, default: undefined },
 	},
 	{ _id: false, minimize: false },
 );
@@ -183,6 +229,7 @@ const FloorStateSchema = new Schema(
 		explored: [Number],
 		spawnIdx: { type: Number, required: true },
 		exitIdx: { type: Number, default: null },
+		lootByIdx: { type: Map, of: LootDropSchema },
 	},
 	{ _id: false },
 );
@@ -208,15 +255,20 @@ const SkillOfferSchema = new Schema(
 );
 
 /**
- * Nullable pending skill-choice interaction. Stored as null when no choice is pending.
+ * Nullable pending interaction. Covers skill_choice and loot_pickup shapes.
  * Default null handles snapshots written before this field existed.
  */
 const PendingInteractionSchema = new Schema(
 	{
 		type: { type: String, required: true },
-		levelReached: { type: Number, required: true },
+		// skill_choice fields
+		levelReached: Number,
 		offers: [SkillOfferSchema],
-		rerollsUsed: { type: Number, required: true },
+		rerollsUsed: Number,
+		rerollCost: Number,
+		// loot_pickup fields
+		tileIdx: Number,
+		loot: { type: LootDropSchema, default: undefined },
 	},
 	{ _id: false },
 );
