@@ -11,6 +11,7 @@ import { CharacterSheetModal } from "../components/CharacterSheetModal";
 import { InventoryModal } from "../components/InventoryModal";
 import { SkillsModal } from "../components/SkillsModal";
 import DebugDrawer from "../components/DebugDrawer";
+import { PageLoader } from "../components/PageLoader";
 import { useGameSocket } from "../features/game/useGameSocket";
 import { useGameStore } from "../features/game/gameStore";
 import { Button } from "../components/Button";
@@ -20,6 +21,7 @@ const DEBUG_DRAWER_ENABLED = import.meta.env.VITE_DEBUG_DRAWER_ENABLED === "true
 export default function Game() {
 	const navigate = useNavigate();
 	const gameId = useGameStore((s) => s.gameId);
+	const state = useGameStore((s) => s.state);
 
 	useEffect(() => {
 		const stored = useGameStore.getState().getStoredGameId();
@@ -35,6 +37,8 @@ export default function Game() {
 
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [debugDrawerOpen, setDebugDrawerOpen] = useState(false);
+
+	if (!state) return <PageLoader />;
 
 	return (
 		<div className="h-screen w-screen bg-bg-base text-text overflow-hidden">

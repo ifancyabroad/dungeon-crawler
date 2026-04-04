@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Modal } from "../components/Modal";
 import { Button } from "../components/Button";
 import { PanelBox } from "../components/PanelBox";
+import { PageLoader } from "../components/PageLoader";
 import { useContinueGame, useGameStatus } from "../features/game/useGames";
 import { useGameStore } from "../features/game/gameStore";
 import { useErrorStore } from "../features/error/errorStore";
@@ -47,10 +48,11 @@ export default function Landing() {
 	const continueGame = useContinueGame();
 	const gameStatus = useGameStatus();
 	const [warnOpen, setWarnOpen] = useState(false);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const hasActiveHero = gameStatus.data?.hasActiveHero ?? false;
-	const canContinue = hasActiveHero && !gameStatus.isLoading;
-	const isLoading = continueGame.isPending || gameStatus.isLoading;
+	const canContinue = hasActiveHero && !isSubmitting;
+	const isLoading = isSubmitting;
 
 	useEffect(() => {
 		function onKeyDown(e: KeyboardEvent) {
@@ -72,6 +74,8 @@ export default function Landing() {
 		return () => window.removeEventListener("keydown", onKeyDown);
 	}, [warnOpen, isLoading, canContinue]);
 
+	if (gameStatus.isLoading) return <PageLoader />;
+
 	function handleNewGame() {
 		const existingId = getStoredGameId();
 		if (existingId && hasActiveHero) {
@@ -82,12 +86,14 @@ export default function Landing() {
 	}
 
 	async function handleContinue() {
+		setIsSubmitting(true);
 		try {
 			const data = await continueGame.mutateAsync();
 			setStateFromServer({ gameId: data.gameId, turn: data.state.turn, state: data.state });
 			storeGameId(data.gameId);
 			navigate("/game");
 		} catch (e) {
+			setIsSubmitting(false);
 			showError(getApiErrorMessage(e));
 		}
 	}

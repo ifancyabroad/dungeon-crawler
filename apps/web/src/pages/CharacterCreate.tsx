@@ -23,6 +23,7 @@ export default function CharacterCreate() {
 	const [namingOpen, setNamingOpen] = useState(false);
 	const [heroName, setHeroName] = useState(() => randomHeroName());
 	const [nameError, setNameError] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	const selectedClass = classes.find((c) => c.id === selectedClassId);
 
@@ -55,6 +56,7 @@ export default function CharacterCreate() {
 			return;
 		}
 		setNameError("");
+		setIsSubmitting(true);
 		try {
 			const data = await createGame.mutateAsync({
 				classId: selectedClassId,
@@ -64,6 +66,7 @@ export default function CharacterCreate() {
 			storeGameId(data.gameId);
 			navigate("/game");
 		} catch (e) {
+			setIsSubmitting(false);
 			showError(getApiErrorMessage(e));
 		}
 	}
@@ -138,9 +141,9 @@ export default function CharacterCreate() {
 							variant="primary"
 							size="md"
 							onClick={handleStart}
-							disabled={createGame.isPending}
+							disabled={isSubmitting}
 						>
-							{createGame.isPending ? "Creating…" : "Begin Adventure"}
+							{isSubmitting ? "Creating…" : "Begin Adventure"}
 						</Button>
 					</>
 				}
