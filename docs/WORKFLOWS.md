@@ -33,7 +33,8 @@ Common step-by-step workflows for this repository. For package responsibilities 
 
 1. Create `packages/content/src/raw/items/<name>.json`. Follow the shape for the relevant type:
     - **Weapon**: `type`, `weaponCategory`, `damageDice`, `damageType`, `properties` (e.g. `["finesse"]`), optional `versatileDice`.
-    - **Armor**: `type`, `slot` (`"body"` | `"head"` | `"hands"` | `"feet"`), `armorCategory` (`"cloth"` | `"light"` | `"medium"` | `"heavy"`), `baseAC`.
+    - **Body armor** (`slot: "body"`): `type`, `slot`, `armorCategory` (`"cloth"` | `"light"` | `"medium"` | `"heavy"`), `baseAC`. Optional: `stealthDisadvantage`.
+    - **Extremity armor** (`slot: "head"` | `"hands"` | `"feet"`): `type`, `slot` only — no AC field. Any AC bonus on magic pieces comes from affixes at generation time.
     - **Shield**: `type`, `acBonus`.
     - **Accessory**: `type`, `slot` (`"ring"` | `"amulet"`), `effects` array of `PassiveSkillEffectDescriptor`.
       Use an existing file in the same directory as a reference.

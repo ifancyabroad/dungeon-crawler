@@ -208,6 +208,7 @@ const ActorSchema = new Schema(
 		equippedAttackStat: { type: String, required: true },
 		equippedWeaponFinesse: { type: Boolean, required: true },
 		weaponProficient: { type: Boolean, required: true },
+		armorProficient: { type: Boolean, required: true },
 		dotAmplifyFlat: Number,
 		attackBonusFlat: Number,
 		healingBonusFlat: Number,

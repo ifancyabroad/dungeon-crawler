@@ -6,6 +6,5 @@
 	"slot": "body",
 	"armorCategory": "heavy",
 	"baseAC": 18,
-	"strengthRequirement": 15,
 	"stealthDisadvantage": true
 }

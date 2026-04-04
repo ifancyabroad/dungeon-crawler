@@ -196,6 +196,8 @@ export {
 	type LootTable,
 	type WeaponItemDef,
 	type ArmorItemDef,
+	type BodyArmorItemDef,
+	type ExtremityArmorItemDef,
 	type ShieldItemDef,
 	type AccessoryItemDef,
 	type NaturalWeapon,

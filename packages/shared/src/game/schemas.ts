@@ -251,6 +251,7 @@ export const ActorSchema = z.object({
 	equippedAttackStat: z.enum(["strength", "dexterity"]),
 	equippedWeaponFinesse: z.boolean(),
 	weaponProficient: z.boolean(),
+	armorProficient: z.boolean(),
 	gold: z.number().default(0),
 	itemInstances: z.record(z.string(), ItemInstanceSchema).default({}),
 	itemAttackBonusFlat: z.number().default(0),

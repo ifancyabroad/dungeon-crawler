@@ -13,6 +13,8 @@ export type {
 	ItemDef,
 	WeaponItemDef,
 	ArmorItemDef,
+	BodyArmorItemDef,
+	ExtremityArmorItemDef,
 	ShieldItemDef,
 	AccessoryItemDef,
 } from "@app/shared";
@@ -49,19 +51,27 @@ export const WeaponItemSchema = z.object({
 	versatileDice: z.string().optional(),
 });
 
-export const ArmorItemSchema = z.object({
+export const BodyArmorItemSchema = z.object({
 	type: z.literal("armor"),
+	slot: z.literal("body"),
 	id: z.string(),
 	name: z.string(),
 	description: z.string().optional(),
-	/** Which equipment slot this piece of armour occupies. */
-	slot: z.enum(["body", "head", "hands", "feet"]),
 	armorCategory: ArmorCategorySchema,
 	/** Base AC before DEX modifier (if applicable per 5E formulas). */
 	baseAC: z.number(),
-	strengthRequirement: z.number().optional(),
 	stealthDisadvantage: z.boolean().optional(),
 });
+
+export const ExtremityArmorItemSchema = z.object({
+	type: z.literal("armor"),
+	slot: z.enum(["head", "hands", "feet"]),
+	id: z.string(),
+	name: z.string(),
+	description: z.string().optional(),
+});
+
+export const ArmorItemSchema = z.union([BodyArmorItemSchema, ExtremityArmorItemSchema]);
 
 export const ShieldItemSchema = z.object({
 	type: z.literal("shield"),
@@ -81,9 +91,10 @@ export const AccessoryItemSchema = z.object({
 	effects: z.array(PassiveSkillEffectDescriptorSchema),
 });
 
-export const ItemSchema = z.discriminatedUnion("type", [
+export const ItemSchema = z.union([
 	WeaponItemSchema,
-	ArmorItemSchema,
+	BodyArmorItemSchema,
+	ExtremityArmorItemSchema,
 	ShieldItemSchema,
 	AccessoryItemSchema,
 ]);

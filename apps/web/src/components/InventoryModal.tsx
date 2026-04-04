@@ -48,7 +48,7 @@ function resolveItemDisplay(
 			stat: baseDef
 				? baseDef.type === "weapon"
 					? `${baseDef.damageDice} ${baseDef.damageType}`
-					: baseDef.type === "armor"
+					: baseDef.type === "armor" && baseDef.slot === "body"
 						? `AC ${baseDef.baseAC}${instance.enhancementBonus > 0 ? ` +${instance.enhancementBonus}` : ""}`
 						: baseDef.type === "shield"
 							? `+${baseDef.acBonus} AC`
@@ -66,7 +66,7 @@ function resolveItemDisplay(
 		stat:
 			baseDef.type === "weapon"
 				? `${baseDef.damageDice} ${baseDef.damageType}`
-				: baseDef.type === "armor"
+				: baseDef.type === "armor" && baseDef.slot === "body"
 					? `AC ${baseDef.baseAC}`
 					: baseDef.type === "shield"
 						? `+${baseDef.acBonus} AC`

@@ -3077,30 +3077,29 @@ export const items: readonly ItemDefinition[] = [
   },
   {
     "type": "armor",
+    "slot": "body",
     "id": "chain_mail",
     "name": "Chain Mail",
-    "description": "A full suit of interlocked metal rings providing excellent protection. Requires significant strength to wear effectively.",
-    "slot": "body",
+    "description": "A full suit of interlocked metal rings providing excellent protection.",
     "armorCategory": "heavy",
     "baseAC": 16,
-    "strengthRequirement": 13,
     "stealthDisadvantage": true
   },
   {
     "type": "armor",
+    "slot": "body",
     "id": "chain_shirt",
     "name": "Chain Shirt",
     "description": "A shirt of interlocked metal rings that balances protection with mobility.",
-    "slot": "body",
     "armorCategory": "medium",
     "baseAC": 13
   },
   {
     "type": "armor",
+    "slot": "body",
     "id": "cloth_robe",
     "name": "Cloth Robe",
     "description": "A simple cloth garment that provides minimal protection but allows full dexterity.",
-    "slot": "body",
     "armorCategory": "cloth",
     "baseAC": 10
   },
@@ -3145,39 +3144,33 @@ export const items: readonly ItemDefinition[] = [
   },
   {
     "type": "armor",
+    "slot": "body",
     "id": "leather_armor",
     "name": "Leather Armor",
     "description": "Cured animal hide shaped into a flexible, lightweight suit of armor.",
-    "slot": "body",
     "armorCategory": "light",
     "baseAC": 11
   },
   {
     "type": "armor",
+    "slot": "feet",
     "id": "leather_boots",
     "name": "Leather Boots",
-    "description": "Sturdy leather boots that protect the feet and ankles.",
-    "slot": "feet",
-    "armorCategory": "light",
-    "baseAC": 10
+    "description": "Sturdy leather boots that protect the feet and ankles."
   },
   {
     "type": "armor",
+    "slot": "head",
     "id": "leather_cap",
     "name": "Leather Cap",
-    "description": "A simple cap of cured leather offering light head protection.",
-    "slot": "head",
-    "armorCategory": "light",
-    "baseAC": 11
+    "description": "A simple cap of cured leather offering light head protection."
   },
   {
     "type": "armor",
+    "slot": "hands",
     "id": "leather_gloves",
     "name": "Leather Gloves",
-    "description": "Supple leather gloves that protect the hands without restricting movement.",
-    "slot": "hands",
-    "armorCategory": "light",
-    "baseAC": 10
+    "description": "Supple leather gloves that protect the hands without restricting movement."
   },
   {
     "type": "weapon",
@@ -3204,13 +3197,12 @@ export const items: readonly ItemDefinition[] = [
   },
   {
     "type": "armor",
+    "slot": "body",
     "id": "plate_armor",
     "name": "Plate Armor",
     "description": "The pinnacle of mundane armour craftsmanship — fitted metal plates covering the entire body.",
-    "slot": "body",
     "armorCategory": "heavy",
     "baseAC": 18,
-    "strengthRequirement": 15,
     "stealthDisadvantage": true
   },
   {
@@ -3296,10 +3288,10 @@ export const items: readonly ItemDefinition[] = [
   },
   {
     "type": "armor",
+    "slot": "body",
     "id": "studded_leather",
     "name": "Studded Leather",
     "description": "Leather reinforced with metal studs for improved protection without sacrificing agility.",
-    "slot": "body",
     "armorCategory": "light",
     "baseAC": 12
   },

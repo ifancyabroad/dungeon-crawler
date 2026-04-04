@@ -2,10 +2,9 @@
 	"type": "armor",
 	"id": "chain_mail",
 	"name": "Chain Mail",
-	"description": "A full suit of interlocked metal rings providing excellent protection. Requires significant strength to wear effectively.",
+	"description": "A full suit of interlocked metal rings providing excellent protection.",
 	"slot": "body",
 	"armorCategory": "heavy",
 	"baseAC": 16,
-	"strengthRequirement": 13,
 	"stealthDisadvantage": true
 }

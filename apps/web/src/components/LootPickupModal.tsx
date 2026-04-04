@@ -33,7 +33,7 @@ function itemStatSummary(instance: ItemInstance): string {
 	if (baseDef.type === "weapon") {
 		return `${baseDef.damageDice} ${baseDef.damageType}`;
 	}
-	if (baseDef.type === "armor") {
+	if (baseDef.type === "armor" && baseDef.slot === "body") {
 		const bonus = instance.enhancementBonus > 0 ? ` +${instance.enhancementBonus}` : "";
 		return `AC ${baseDef.baseAC}${bonus}`;
 	}

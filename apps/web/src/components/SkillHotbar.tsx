@@ -112,6 +112,7 @@ export function SkillHotbar() {
 	const floor = state.floors[state.heroFloorIndex];
 	function handleSkillClick(skillId: string) {
 		if (!hero || !floor) return;
+		if (!hero.armorProficient) return;
 		const skillDef = skillsById[skillId as keyof typeof skillsById];
 		if (!skillDef || skillDef.skillType !== "active") return;
 
@@ -188,6 +189,8 @@ export function SkillHotbar() {
 
 	if (skillEntries.length === 0) return null;
 
+	const armorLocked = !hero.armorProficient;
+
 	return (
 		<div
 			className="shrink-0 flex flex-wrap gap-2 justify-start px-3 py-2 border-t border-border bg-bg-base"
@@ -199,11 +202,14 @@ export function SkillHotbar() {
 					| ActiveSkillDefinition
 					| undefined;
 				const onCooldown = skillState.cooldownRemaining > 0;
+				const disabled = onCooldown || armorLocked;
 				const displayName = skillDef?.name ?? skillId;
 				const rankGlyph = rankRoman(skillState.rank);
-				const ariaLabel = onCooldown
-					? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
-					: `${displayName} ${rankGlyph}, ready`;
+				const ariaLabel = armorLocked
+					? `${displayName} ${rankGlyph}, unavailable (not proficient with equipped armor)`
+					: onCooldown
+						? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
+						: `${displayName} ${rankGlyph}, ready`;
 				const infoTooltip = skillDef
 					? `${skillDef.name}\n\n${skillDef.description}`
 					: skillId;
@@ -212,7 +218,7 @@ export function SkillHotbar() {
 					<button
 						key={skillId}
 						type="button"
-						aria-disabled={onCooldown}
+						aria-disabled={disabled}
 						aria-label={ariaLabel}
 						onClick={(e) => {
 							const t = e.target;
@@ -220,12 +226,12 @@ export function SkillHotbar() {
 								// Reserved: open skill detail modal (tooltip via title on [data-skill-info]).
 								return;
 							}
-							if (onCooldown) return;
+							if (disabled) return;
 							handleSkillClick(skillId);
 						}}
 						className={[
 							"relative flex w-56 flex-none items-stretch gap-2 border px-2 py-2 text-left text-base leading-snug transition-colors",
-							onCooldown
+							disabled
 								? "border-border"
 								: "border-border-bright hover:bg-bg-elevated",
 						].join(" ")}
@@ -240,27 +246,27 @@ export function SkillHotbar() {
 						<span
 							className={[
 								"relative flex min-w-0 flex-1 items-stretch gap-2",
-								onCooldown
+								disabled
 									? "cursor-not-allowed text-text-muted"
 									: "cursor-pointer text-text-bright",
 							].join(" ")}
 						>
-							{onCooldown && (
+							{disabled && (
 								<span
 									className="pointer-events-none absolute inset-0 z-10 bg-black/50"
 									aria-hidden
 								/>
 							)}
 							<span className="relative z-0 min-w-0 flex-1 line-clamp-2 wrap-break-word self-center">
-								<span
-									className={onCooldown ? "text-text-muted" : "text-text-bright"}
-								>
+								<span className={disabled ? "text-text-muted" : "text-text-bright"}>
 									{displayName}
 								</span>
 								<span className="text-primary"> {rankGlyph}</span>
 							</span>
 							<span className="relative z-0 flex w-9 shrink-0 flex-col items-center justify-center">
-								{onCooldown ? (
+								{armorLocked ? (
+									<span className="text-base text-text-muted">—</span>
+								) : onCooldown ? (
 									<span className="text-base tabular-nums text-primary">
 										{skillState.cooldownRemaining}
 									</span>

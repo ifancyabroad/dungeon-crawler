@@ -18,7 +18,7 @@
 import type { Actor } from "../game/types";
 import type {
 	AffixDef,
-	ArmorItemDef,
+	BodyArmorItemDef,
 	ItemDef,
 	ItemInstance,
 	ShieldItemDef,
@@ -157,7 +157,7 @@ function applyWeapon(actor: Actor, weapon: WeaponItemDef, instance?: ItemInstanc
 	};
 }
 
-function applyArmor(actor: Actor, armor: ArmorItemDef, instance?: ItemInstance): Actor {
+function applyArmor(actor: Actor, armor: BodyArmorItemDef, instance?: ItemInstance): Actor {
 	const dexMod = abilityModifier(actor.attributes.dexterity);
 	let ac: number;
 	switch (armor.armorCategory) {
@@ -171,6 +171,11 @@ function applyArmor(actor: Actor, armor: ArmorItemDef, instance?: ItemInstance):
 		case "heavy":
 			ac = armor.baseAC;
 			break;
+		default: {
+			const _exhaustive: never = armor.armorCategory;
+			void _exhaustive;
+			ac = armor.baseAC;
+		}
 	}
 	// Enhancement bonus applies to AC for armour.
 	ac += instance?.enhancementBonus ?? 0;
@@ -300,33 +305,16 @@ export function applyEquipment(
 
 	// --- Body armor sets the base armorClass ---
 	const bodySlot = resolveSlot(result.equipment.body, items, instances);
-	if (bodySlot?.baseDef.type === "armor") {
-		result = applyArmor(result, bodySlot.baseDef, bodySlot.instance);
+	const bodyArmor =
+		bodySlot?.baseDef.type === "armor" && bodySlot.baseDef.slot === "body"
+			? bodySlot.baseDef
+			: null;
+	if (bodyArmor) {
+		result = applyArmor(result, bodyArmor, bodySlot!.instance);
 	}
 
-	// --- Extremity armor slots (head, hands, feet) add AC on top ---
-	for (const slotKey of ["head", "hands", "feet"] as const) {
-		const resolved = resolveSlot(result.equipment[slotKey], items, instances);
-		if (resolved?.baseDef.type === "armor") {
-			const armorDef = resolved.baseDef;
-			const dexMod = abilityModifier(result.attributes.dexterity);
-			let slotAc: number;
-			switch (armorDef.armorCategory) {
-				case "cloth":
-				case "light":
-					slotAc = armorDef.baseAC + dexMod;
-					break;
-				case "medium":
-					slotAc = armorDef.baseAC + Math.min(dexMod, 2);
-					break;
-				case "heavy":
-					slotAc = armorDef.baseAC;
-					break;
-			}
-			slotAc += resolved.instance?.enhancementBonus ?? 0;
-			result = { ...result, armorClass: result.armorClass + slotAc };
-		}
-	}
+	// Extremity armor slots (head, hands, feet) grant no inherent AC.
+	// Any bonus on magic extremity items is applied via affixes below.
 
 	// --- Off-hand (shield) ---
 	const offHandSlot = resolveSlot(result.equipment.offHand, items, instances);
@@ -376,6 +364,11 @@ export function applyEquipment(
 
 	// Fold accumulated itemAcBonus into armorClass.
 	result = { ...result, armorClass: result.armorClass + result.itemAcBonus };
+
+	// --- Armor proficiency: determined by body slot only ---
+	const armorProficient =
+		!bodyArmor || result.armorProficiencies.includes(bodyArmor.armorCategory);
+	result = { ...result, armorProficient };
 
 	// --- Accessories (ring1, ring2, amulet) — base effects only, no affixes in this pass ---
 	for (const slotKey of ["ring1", "ring2", "amulet"] as const) {

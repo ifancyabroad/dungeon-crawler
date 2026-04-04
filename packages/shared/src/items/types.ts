@@ -114,21 +114,30 @@ export interface WeaponItemDef {
 	versatileDice?: string;
 }
 
-/** Armor item: body or extremity armour occupying a specific slot. */
-export interface ArmorItemDef {
+/** Body armor: occupies the body slot and sets the base AC via the category formula. */
+export interface BodyArmorItemDef {
 	type: "armor";
+	slot: "body";
 	id: string;
 	name: string;
 	description?: string;
-	/** Which equipment slot this piece of armour occupies. */
-	slot: "body" | "head" | "hands" | "feet";
+	/** Determines the AC formula and proficiency requirement. */
 	armorCategory: ArmorCategory;
 	/** Base AC before DEX modifier (if applicable). */
 	baseAC: number;
-	/** Minimum STR required (for heavy armor). Tracked for future enforcement. */
-	strengthRequirement?: number;
 	stealthDisadvantage?: boolean;
 }
+
+/** Extremity armor occupies a head/hands/feet slot but grants no inherent AC. Bonuses come from affixes only. */
+export interface ExtremityArmorItemDef {
+	type: "armor";
+	slot: "head" | "hands" | "feet";
+	id: string;
+	name: string;
+	description?: string;
+}
+
+export type ArmorItemDef = BodyArmorItemDef | ExtremityArmorItemDef;
 
 /** Shield item: off-hand item that provides a flat AC bonus. */
 export interface ShieldItemDef {

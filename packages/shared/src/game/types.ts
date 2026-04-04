@@ -202,6 +202,8 @@ export interface Actor {
 	equippedWeaponFinesse: boolean;
 	/** True if proficient with equipped weapon — proficiency bonus is added to attack rolls. */
 	weaponProficient: boolean;
+	/** True if proficient with equipped body armor — active skills are blocked if false. */
+	armorProficient: boolean;
 	damageResistances: DamageType[];
 	damageImmunities: DamageType[];
 	/** Damage types this actor takes double damage from. Applied after resistance/immunity checks. */

@@ -550,6 +550,7 @@ export function applyAction(
 			const skillState = hero.skills[action.skillId];
 			if (!skillState) return { ok: false, reason: "skill_not_owned" };
 			if (skillState.cooldownRemaining > 0) return { ok: false, reason: "skill_on_cooldown" };
+			if (!hero.armorProficient) return { ok: false, reason: "skill_armor_not_proficient" };
 
 			const width = floor.config.width;
 			const height = floor.config.height;
