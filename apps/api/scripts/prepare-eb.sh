@@ -1,51 +1,63 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== Packing workspace packages ==="
-mkdir -p /tmp/packs
-(cd packages/shared && npm pack --pack-destination /tmp/packs)
-(cd packages/content && npm pack --pack-destination /tmp/packs)
-echo "Tarballs created:"
-ls -la /tmp/packs/
-
-SHARED_TGZ=$(basename "$(ls /tmp/packs/app-shared-*.tgz)")
-CONTENT_TGZ=$(basename "$(ls /tmp/packs/app-content-*.tgz)")
-echo "shared: $SHARED_TGZ"
-echo "content: $CONTENT_TGZ"
-
 echo "=== Setting up staging directory ==="
-mkdir -p eb-staging
+mkdir -p eb-staging/node_modules/@app
+
+# Pre-populate workspace packages directly from their built dist/.
+# This sidesteps npm needing to resolve workspace:* protocol entirely.
+
+echo "Copying @app/shared..."
+mkdir -p eb-staging/node_modules/@app/shared
+cp -r packages/shared/dist eb-staging/node_modules/@app/shared/
+python3 - <<'PYEOF'
+import json
+with open('packages/shared/package.json') as f:
+    pkg = json.load(f)
+pkg.pop('devDependencies', None)
+# Strip any workspace:* refs from shared's own deps (shouldn't have any, but be safe)
+for dep in list(pkg.get('dependencies', {}).keys()):
+    if pkg['dependencies'][dep].startswith('workspace:'):
+        del pkg['dependencies'][dep]
+with open('eb-staging/node_modules/@app/shared/package.json', 'w') as f:
+    json.dump(pkg, f, indent=2)
+print('  package.json written')
+PYEOF
+
+echo "Copying @app/content..."
+mkdir -p eb-staging/node_modules/@app/content
+cp -r packages/content/dist eb-staging/node_modules/@app/content/
+python3 - <<'PYEOF'
+import json
+with open('packages/content/package.json') as f:
+    pkg = json.load(f)
+pkg.pop('devDependencies', None)
+# Strip workspace:* refs (@app/shared dep uses workspace:* — npm can't resolve this)
+for dep in list(pkg.get('dependencies', {}).keys()):
+    if pkg['dependencies'][dep].startswith('workspace:'):
+        del pkg['dependencies'][dep]
+with open('eb-staging/node_modules/@app/content/package.json', 'w') as f:
+    json.dump(pkg, f, indent=2)
+print('  package.json written')
+PYEOF
+
+echo "Copying API build output..."
 cp -r apps/api/dist eb-staging/
 cp apps/api/Procfile eb-staging/
 cp -r apps/api/.ebextensions eb-staging/
-cp /tmp/packs/*.tgz eb-staging/
 
 echo "=== Generating package.json ==="
-python3 - <<PYEOF
-import json, os, sys
-
+python3 - <<'PYEOF'
+import json
 with open('apps/api/package.json') as f:
     pkg = json.load(f)
-
-tarballs = os.listdir('/tmp/packs')
-shared_tgz = next((t for t in tarballs if t.startswith('app-shared-')), None)
-content_tgz = next((t for t in tarballs if t.startswith('app-content-')), None)
-
-if not shared_tgz:
-    sys.exit('ERROR: could not find app-shared tarball in /tmp/packs')
-if not content_tgz:
-    sys.exit('ERROR: could not find app-content tarball in /tmp/packs')
-
-pkg['dependencies']['@app/shared'] = 'file:./' + shared_tgz
-pkg['dependencies']['@app/content'] = 'file:./' + content_tgz
+# Remove workspace packages — already placed in node_modules above
+pkg['dependencies'].pop('@app/shared', None)
+pkg['dependencies'].pop('@app/content', None)
 pkg.pop('devDependencies', None)
-
 with open('eb-staging/package.json', 'w') as f:
     json.dump(pkg, f, indent=2)
-
-print('Generated eb-staging/package.json with:')
-print('  @app/shared  ->', pkg['dependencies']['@app/shared'])
-print('  @app/content ->', pkg['dependencies']['@app/content'])
+print('External deps to install:', list(pkg.get('dependencies', {}).keys()))
 PYEOF
 
 echo "=== Installing production dependencies ==="
