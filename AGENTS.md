@@ -7,6 +7,7 @@ Before making changes, read the relevant documentation:
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design, authority model, package boundaries, persistence, socket protocol
 - [docs/PRD.md](docs/PRD.md) — product vision, current features, planned work, and domain terminology
 - [docs/WORKFLOWS.md](docs/WORKFLOWS.md) — step-by-step checklists for common implementation tasks
+- [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) — AWS hosting, CI/CD pipelines, environment variables, deployment notes
 
 ---
 
