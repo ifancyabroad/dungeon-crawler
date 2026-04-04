@@ -20,5 +20,6 @@ phases:
             - bash apps/api/scripts/prepare-eb.sh
 
 artifacts:
+    base-directory: eb-staging
     files:
-        - api-bundle.zip
+        - "**/*"

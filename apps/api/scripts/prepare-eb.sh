@@ -65,6 +65,4 @@ cd eb-staging
 npm install --omit=dev
 cd ..
 
-echo "=== Zipping for Elastic Beanstalk ==="
-cd eb-staging && zip -r ../api-bundle.zip . && cd ..
-echo "Done. api-bundle.zip created."
+echo "=== Done. eb-staging/ is ready for deployment. ==="
