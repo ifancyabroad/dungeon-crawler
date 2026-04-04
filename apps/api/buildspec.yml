@@ -31,7 +31,7 @@ phases:
             - cp -r apps/api/.ebextensions eb-staging/
             - cp /tmp/packs/*.tgz eb-staging/
             # Rewrite package.json — replace workspace:* with file: tarball refs, drop devDeps
-            - jq --arg shared "file://$SHARED_TGZ" --arg content "file://$CONTENT_TGZ" '.dependencies["@app/shared"]=$shared | .dependencies["@app/content"]=$content | del(.devDependencies)' apps/api/package.json > eb-staging/package.json
+            - jq --arg shared "file:./$SHARED_TGZ" --arg content "file:./$CONTENT_TGZ" '.dependencies["@app/shared"]=$shared | .dependencies["@app/content"]=$content | del(.devDependencies)' apps/api/package.json > eb-staging/package.json
             # Install production deps using plain npm (no pnpm virtual store / symlinks)
             - cd eb-staging && npm install --omit=dev && cd ..
             # Zip for Elastic Beanstalk
