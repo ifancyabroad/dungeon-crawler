@@ -17,7 +17,10 @@ phases:
 
     post_build:
         commands:
-            - bash apps/api/scripts/prepare-eb.sh
+            - mkdir -p eb-staging
+            - cp -r apps/api/dist eb-staging/
+            - cp apps/api/Procfile eb-staging/
+            - cp -r apps/api/.ebextensions eb-staging/
 
 artifacts:
     base-directory: eb-staging

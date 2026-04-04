@@ -2,11 +2,7 @@
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
 		"outDir": "dist",
-		"noEmit": false,
-		"module": "CommonJS",
-		"moduleResolution": "Node",
-		"esModuleInterop": true
+		"noEmit": false
 	},
-	"include": ["src"],
-	"exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
+	"include": ["src"]
 }
