@@ -1,0 +1,26 @@
+version: 0.2
+
+env:
+    variables:
+        S3_BUCKET: dungeon-crawler-fe
+    # CF_DISTRIBUTION_ID is injected as a CodeBuild environment variable
+
+phases:
+    install:
+        runtime-versions:
+            nodejs: 20
+        commands:
+            - corepack enable
+            - corepack prepare pnpm@10.14.0 --activate
+            - pnpm install --frozen-lockfile
+
+    build:
+        commands:
+            - pnpm --filter @app/shared build
+            - pnpm --filter @app/content build
+            - pnpm --filter web build
+
+    post_build:
+        commands:
+            - aws s3 sync apps/web/dist/ s3://$S3_BUCKET/ --delete
+            - aws cloudfront create-invalidation --distribution-id $CF_DISTRIBUTION_ID --paths "/*"
