@@ -13,13 +13,13 @@ phases:
         commands:
             - pnpm --filter @app/shared build
             - pnpm --filter @app/content build
-            - pnpm --filter api build
+            - pnpm --filter @app/api build
 
     post_build:
         commands:
             # pnpm deploy creates a self-contained directory with production node_modules,
             # resolving workspace packages (@app/shared, @app/content) with their built dist/
-            - pnpm deploy --filter api --prod ./eb-staging
+            - pnpm deploy --filter @app/api --prod ./eb-staging
             # Overlay the compiled dist/ — pnpm deploy copies source files, not the build output
             - cp -r apps/api/dist ./eb-staging/
             - cp apps/api/Procfile ./eb-staging/
