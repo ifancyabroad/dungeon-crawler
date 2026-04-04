@@ -55,6 +55,8 @@ with open('apps/api/package.json') as f:
 pkg['dependencies'].pop('@app/shared', None)
 pkg['dependencies'].pop('@app/content', None)
 pkg.pop('devDependencies', None)
+# Ensure Node.js treats output as CommonJS (tsc compiles to CJS)
+pkg.pop('type', None)
 with open('eb-staging/package.json', 'w') as f:
     json.dump(pkg, f, indent=2)
 print('External deps to install:', list(pkg.get('dependencies', {}).keys()))
