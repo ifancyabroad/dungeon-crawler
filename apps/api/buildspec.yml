@@ -21,30 +21,19 @@ phases:
             - mkdir -p /tmp/packs
             - cd packages/shared && npm pack --pack-destination /tmp/packs && cd ../..
             - cd packages/content && npm pack --pack-destination /tmp/packs && cd ../..
+            # Resolve the exact tarball filenames
+            - SHARED_TGZ=$(basename $(ls /tmp/packs/app-shared-*.tgz))
+            - CONTENT_TGZ=$(basename $(ls /tmp/packs/app-content-*.tgz))
             # Set up the staging directory with compiled output and config
             - mkdir -p eb-staging
             - cp -r apps/api/dist eb-staging/
             - cp apps/api/Procfile eb-staging/
             - cp -r apps/api/.ebextensions eb-staging/
             - cp /tmp/packs/*.tgz eb-staging/
-            # Rewrite package.json to replace workspace:* with file: tarball references
-            - >
-                node -e "
-                  const fs = require('fs');
-                  const pkg = JSON.parse(fs.readFileSync('apps/api/package.json', 'utf8'));
-                  const tarballs = fs.readdirSync('/tmp/packs');
-                  for (const dep of Object.keys(pkg.dependencies || {})) {
-                    if (pkg.dependencies[dep].startsWith('workspace:')) {
-                      const safeName = dep.replace(/^@/, '').replace('/', '-');
-                      const tarball = tarballs.find(t => t.startsWith(safeName));
-                      if (tarball) pkg.dependencies[dep] = 'file:./' + tarball;
-                    }
-                  }
-                  delete pkg.devDependencies;
-                  fs.writeFileSync('eb-staging/package.json', JSON.stringify(pkg, null, 2));
-                "
+            # Rewrite package.json — replace workspace:* with file: tarball refs, drop devDeps
+            - jq --arg shared "file://$SHARED_TGZ" --arg content "file://$CONTENT_TGZ" '.dependencies["@app/shared"]=$shared | .dependencies["@app/content"]=$content | del(.devDependencies)' apps/api/package.json > eb-staging/package.json
             # Install production deps using plain npm (no pnpm virtual store / symlinks)
-            - cd eb-staging && npm install --production && cd ..
+            - cd eb-staging && npm install --omit=dev && cd ..
             # Zip for Elastic Beanstalk
             - cd eb-staging && zip -r ../api-bundle.zip . && cd ..
 
