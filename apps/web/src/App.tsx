@@ -8,13 +8,13 @@ import NotFound from "./pages/NotFound";
 export default function App() {
 	return (
 		<>
-			<ErrorModal />
 			<Routes>
 				<Route index element={<Landing />} />
 				<Route path="character-create" element={<CharacterCreate />} />
 				<Route path="game" element={<Game />} />
 				<Route path="*" element={<NotFound />} />
 			</Routes>
+			<ErrorModal />
 		</>
 	);
 }
