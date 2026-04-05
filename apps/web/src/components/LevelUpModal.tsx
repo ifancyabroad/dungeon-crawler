@@ -14,13 +14,13 @@ import { GAME_CONFIG, getHero } from "@app/shared";
 import { useGameStore } from "../features/game/gameStore";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
-
-const RANK_LABELS = ["I", "II", "III"] as const;
+import { SkillOfferCard } from "./SkillOfferCard";
 
 export function LevelUpModal() {
 	const state = useGameStore((s) => s.state);
 	const sendAction = useGameStore((s) => s.sendAction);
 	const actionInProgress = useGameStore((s) => s.actionInProgress);
+	const levelUpEvents = useGameStore((s) => s.levelUpEvents);
 
 	const pi = state?.pendingInteraction;
 	// Wait for any in-progress animation (attack bump, skill FX, etc.) to finish
@@ -28,6 +28,7 @@ export function LevelUpModal() {
 	if (!pi || pi.type !== "skill_choice" || actionInProgress) return null;
 
 	const { levelReached, offers, rerollsUsed, rerollCost } = pi;
+	const hpGained = levelUpEvents[0]?.hpGained;
 
 	// Count the hero's current active and passive skills for cap progress display
 	const heroActor = state ? getHero(state) : undefined;
@@ -42,6 +43,7 @@ export function LevelUpModal() {
 	}
 
 	const { activeSkillCap, passiveSkillCap } = GAME_CONFIG.leveling;
+	const gold = heroActor?.gold ?? 0;
 
 	function handlePick(skillId: string) {
 		sendAction({ type: "select_skill_choice", skillId });
@@ -58,97 +60,65 @@ export function LevelUpModal() {
 				// No-op: the modal cannot be dismissed while a skill choice is pending.
 				// The player must pick a skill or reroll.
 			}}
-			title={`Level ${levelReached} — Choose a Skill`}
+			title="Level Up!"
 		>
 			<div className="space-y-4">
-				{/* Cap progress */}
-				<div className="flex gap-4 text-sm font-mono">
-					<span className="text-primary">
-						Active {activeCount}/{activeSkillCap}
-					</span>
-					<span className="text-text-muted">·</span>
-					<span className="text-secondary">
-						Passive {passiveCount}/{passiveSkillCap}
-					</span>
+				{/* Compact header: level + HP on one line, caps on the next */}
+				<div className="space-y-1 font-mono">
+					<p className="text-text-bright">
+						You have reached level {levelReached}
+						{hpGained != null && hpGained > 0 && (
+							<>
+								{" "}
+								and gained <span className="text-success">+{hpGained} max HP</span>
+							</>
+						)}
+						.
+					</p>
+					<div className="flex items-center gap-3">
+						<span className="text-primary">
+							Active {activeCount}/{activeSkillCap}
+						</span>
+						<span className="text-text-muted">·</span>
+						<span className="text-secondary">
+							Passive {passiveCount}/{passiveSkillCap}
+						</span>
+					</div>
 				</div>
 
+				{/* Skill offers */}
 				{offers.length === 0 ? (
-					<p className="text-text-muted">
+					<p className="text-text-muted font-mono">
 						No more skills available from your class pool.
 					</p>
 				) : (
-					<div className="space-y-2">
+					<div className="space-y-1">
 						{offers.map(({ skillId, rank }) => {
 							const def = skillsById[skillId as keyof typeof skillsById];
 							if (!def) return null;
-							const isPassive = def.skillType === "passive";
 							const isUpgrade = (heroActor?.skills[skillId]?.rank ?? 0) > 0;
-							const rankLabel = RANK_LABELS[rank - 1];
 							return (
-								<button
+								<SkillOfferCard
 									key={skillId}
+									def={def}
+									rank={rank}
+									isUpgrade={isUpgrade}
 									onClick={() => handlePick(skillId)}
-									className={[
-										"w-full text-left px-3 py-2 border transition-colors",
-										"border-border hover:border-border-bright hover:bg-bg-elevated",
-										"focus:outline-none focus:ring-1 focus:ring-primary",
-									].join(" ")}
-								>
-									<div className="flex items-start justify-between gap-2">
-										<div className="min-w-0">
-											<div className="flex items-center gap-2">
-												<p className="text-text-bright font-mono">
-													{def.name}
-												</p>
-												{isUpgrade && (
-													<span className="text-xs font-mono text-text-muted border border-border px-1 py-px uppercase tracking-wide">
-														Upgrade
-													</span>
-												)}
-											</div>
-											<p className="text-text-muted leading-snug mt-0.5">
-												{def.description}
-											</p>
-										</div>
-										<div className="flex flex-col items-end gap-1 shrink-0">
-											<span
-												className={[
-													"px-1.5 py-0.5 border uppercase tracking-wide font-mono text-xs",
-													isPassive
-														? "border-secondary text-secondary"
-														: "border-primary text-primary",
-												].join(" ")}
-											>
-												{isPassive ? "Passive" : "Active"}
-											</span>
-											{rankLabel && (
-												<span className="text-xs font-mono text-text-muted">
-													Rank {rankLabel}
-												</span>
-											)}
-										</div>
-									</div>
-								</button>
+								/>
 							);
 						})}
 					</div>
 				)}
 
-				<div className="border-t border-border pt-3 flex items-center justify-between">
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={handleReroll}
-						disabled={(heroActor?.gold ?? 0) < rerollCost}
-					>
+				{/* Footer: reroll on the left, current gold on the right */}
+				<div className="border-t border-border pt-3 flex items-center justify-between gap-4">
+					<Button variant="secondary" onClick={handleReroll} disabled={gold < rerollCost}>
 						Reroll — {rerollCost} gold
 						{rerollsUsed > 0 && (
 							<span className="ml-1 text-text-muted">(×{rerollsUsed})</span>
 						)}
 					</Button>
-					{(heroActor?.gold ?? 0) < rerollCost && (
-						<p className="text-text-muted">Not enough gold.</p>
-					)}
+					<span className="font-mono text-text-muted shrink-0">{gold} gold</span>
 				</div>
 			</div>
 		</Modal>

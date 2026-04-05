@@ -44,6 +44,8 @@
 	--color-xp: #8040c0; /* arcane violet — XP bar */
 	--color-kill: #44aa55;
 	--color-death: #e04040;
+	--color-skill-active: #4488cc; /* cool blue — active skills */
+	--color-skill-passive: #50c050; /* phosphor green — passive skills, shares secondary */
 
 	/* Font — IBM VGA 8x16 bitmap, the authentic DOS terminal font */
 	--font-sans: "IBM VGA", monospace;
