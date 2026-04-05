@@ -136,6 +136,12 @@ export const ActiveEffectSchema = z.object({
 	 * ID-driven hooks (poisoned, stealth) leave this undefined.
 	 */
 	adjustments: CombatAdjustmentsSchema.optional(),
+	/**
+	 * The skill that applied this effect. Set for data-driven statuses applied via
+	 * `apply_status` effect descriptors. Undefined for STATUS_HOOKS applied directly
+	 * by the engine (e.g. environmental effects, NPC attacks).
+	 */
+	sourceSkillId: z.string().optional(),
 });
 
 export const PassiveDamageBonusSchema = z.object({

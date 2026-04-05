@@ -113,6 +113,12 @@ export interface ActiveEffect {
 	value?: number;
 	/** Inline numeric combat adjustments consulted at resolution time. Defined in the skill JSON. */
 	adjustments?: CombatAdjustments;
+	/**
+	 * The skill that applied this effect. Set for data-driven statuses applied via
+	 * `apply_status` effect descriptors. Undefined for STATUS_HOOKS applied directly
+	 * by the engine (e.g. environmental effects, NPC attacks).
+	 */
+	sourceSkillId?: string;
 }
 
 /** Definition reference: hero (classId from content) or NPC (npcId from content). */

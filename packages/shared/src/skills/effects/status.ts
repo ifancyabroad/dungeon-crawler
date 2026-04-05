@@ -9,6 +9,7 @@ import type { ApplyStatusEffect } from "../types";
 export function applyStatusEffect(
 	effect: ApplyStatusEffect,
 	caster: Actor,
+	sourceSkillId?: string,
 ): { caster: Actor; events: GameEvent[] } {
 	const filtered = caster.activeEffects.filter((e) => e.id !== effect.statusId);
 	const newEffect = {
@@ -16,6 +17,7 @@ export function applyStatusEffect(
 		remainingTurns: effect.durationTurns,
 		...(effect.value !== undefined && { value: effect.value }),
 		...(effect.adjustments !== undefined && { adjustments: effect.adjustments }),
+		...(sourceSkillId !== undefined && { sourceSkillId }),
 	};
 	const updatedCaster: Actor = {
 		...caster,

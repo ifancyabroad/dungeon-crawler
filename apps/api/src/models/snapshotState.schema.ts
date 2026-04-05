@@ -122,6 +122,7 @@ const ActiveEffectSchema = new Schema(
 		remainingTurns: { type: Number, required: true },
 		value: Number,
 		adjustments: { type: CombatAdjustmentsSchema, default: undefined },
+		sourceSkillId: String,
 	},
 	{ _id: false },
 );

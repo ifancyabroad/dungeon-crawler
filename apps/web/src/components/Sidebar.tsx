@@ -6,6 +6,7 @@ import { useUiStore } from "../features/ui/uiStore";
 import { ABILITY_SHORT_LABELS_ORDERED } from "../lib/abilityLabels";
 import { Button } from "./Button";
 import { SidebarPassiveSkills } from "./SidebarPassiveSkills";
+import { SidebarStatusEffects } from "./SidebarStatusEffects";
 
 type SidebarProps = {
 	open: boolean;
@@ -172,6 +173,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 						</div>
 
 						<SidebarPassiveSkills skills={hero.skills} />
+						<SidebarStatusEffects effects={hero.activeEffects} />
 					</div>
 				) : (
 					<div className="p-3">

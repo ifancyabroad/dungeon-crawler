@@ -111,7 +111,7 @@ export function resolveSkill(
 							effect.value !== undefined
 								? { ...effect, value: effect.value + currentCaster.dotAmplifyFlat }
 								: effect;
-						const result = applyStatusEffect(amplifiedEffect, targetActor);
+						const result = applyStatusEffect(amplifiedEffect, targetActor, skillDef.id);
 						floorState = {
 							...floorState,
 							actorsById: {
@@ -137,7 +137,7 @@ export function resolveSkill(
 							effect.value !== undefined
 								? { ...effect, value: effect.value + currentCaster.dotAmplifyFlat }
 								: effect;
-						const result = applyStatusEffect(amplifiedEffect, actor);
+						const result = applyStatusEffect(amplifiedEffect, actor, skillDef.id);
 						newActorsById = { ...newActorsById, [id]: result.caster };
 						events.push(...result.events);
 					}
@@ -151,7 +151,7 @@ export function resolveSkill(
 					) {
 						break;
 					}
-					const result = applyStatusEffect(effect, currentCaster);
+					const result = applyStatusEffect(effect, currentCaster, skillDef.id);
 					currentCaster = result.caster;
 					events.push(...result.events);
 				}
