@@ -14,8 +14,8 @@ import {
 	type Actor,
 	type UseSkillAction,
 } from "@app/shared";
-import { Info } from "lucide-react";
 import { rankRoman } from "../lib/rankRoman";
+import { SkillIcon } from "./SkillIcon";
 import { useGameStore } from "../features/game/gameStore";
 import { useTargetingStore } from "../features/targeting/targetingStore";
 import { useMapStore } from "../features/map/mapStore";
@@ -201,6 +201,7 @@ export function SkillHotbar() {
 				const skillDef = skillsById[skillId as keyof typeof skillsById] as
 					| ActiveSkillDefinition
 					| undefined;
+				if (!skillDef) return null;
 				const onCooldown = skillState.cooldownRemaining > 0;
 				const disabled = onCooldown || armorLocked;
 				const displayName = skillDef?.name ?? skillId;
@@ -220,60 +221,48 @@ export function SkillHotbar() {
 						type="button"
 						aria-disabled={disabled}
 						aria-label={ariaLabel}
-						onClick={(e) => {
-							const t = e.target;
-							if (t instanceof Element && t.closest("[data-skill-info]")) {
-								// Reserved: open skill detail modal (tooltip via title on [data-skill-info]).
-								return;
-							}
+						title={infoTooltip}
+						onClick={() => {
 							if (disabled) return;
 							handleSkillClick(skillId);
 						}}
 						className={[
-							"relative flex w-56 flex-none items-stretch gap-2 border px-2 py-2 text-left text-base leading-snug transition-colors",
+							"relative flex-none border transition-colors w-14 h-14",
 							disabled
-								? "border-border"
-								: "border-border-bright hover:bg-bg-elevated",
+								? "border-border cursor-not-allowed"
+								: "border-border-bright hover:bg-bg-elevated cursor-pointer",
 						].join(" ")}
 					>
-						<span
-							data-skill-info
-							className="shrink-0 cursor-pointer self-center text-text-muted transition-colors hover:text-text-bright"
-							title={infoTooltip}
-						>
-							<Info className="block" size={16} aria-hidden />
-						</span>
-						<span
+						<SkillIcon
+							def={skillDef}
+							size={48}
 							className={[
-								"relative flex min-w-0 flex-1 items-stretch gap-2",
-								disabled
-									? "cursor-not-allowed text-text-muted"
-									: "cursor-pointer text-text-bright",
+								"absolute inset-0 m-auto",
+								armorLocked ? "opacity-40" : "",
 							].join(" ")}
+						/>
+						{onCooldown && skillDef && skillDef.cooldown > 0 && (
+							<div
+								aria-hidden
+								className="pointer-events-none absolute inset-0 -rotate-90"
+								style={{
+									background: `conic-gradient(rgba(0,0,0,0.72) 0turn, rgba(0,0,0,0.72) ${skillState.cooldownRemaining / skillDef.cooldown}turn, transparent ${skillState.cooldownRemaining / skillDef.cooldown}turn)`,
+								}}
+							/>
+						)}
+						{onCooldown && (
+							<span
+								aria-hidden
+								className="pointer-events-none absolute inset-0 flex items-center justify-center tabular-nums text-text-bright text-base leading-none"
+							>
+								{skillState.cooldownRemaining}
+							</span>
+						)}
+						<span
+							aria-hidden
+							className="pointer-events-none absolute top-0 right-0 px-0.5 text-primary text-xs leading-none bg-bg-base/80"
 						>
-							{disabled && (
-								<span
-									className="pointer-events-none absolute inset-0 z-10 bg-black/50"
-									aria-hidden
-								/>
-							)}
-							<span className="relative z-0 min-w-0 flex-1 line-clamp-2 wrap-break-word self-center">
-								<span className={disabled ? "text-text-muted" : "text-text-bright"}>
-									{displayName}
-								</span>
-								<span className="text-primary"> {rankGlyph}</span>
-							</span>
-							<span className="relative z-0 flex w-9 shrink-0 flex-col items-center justify-center">
-								{armorLocked ? (
-									<span className="text-base text-text-muted">—</span>
-								) : onCooldown ? (
-									<span className="text-base tabular-nums text-primary">
-										{skillState.cooldownRemaining}
-									</span>
-								) : (
-									<span className="text-base text-success">Ready</span>
-								)}
-							</span>
+							{rankGlyph}
 						</span>
 					</button>
 				);

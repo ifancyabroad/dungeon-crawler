@@ -609,6 +609,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "acid_mastery",
     "name": "Acid Mastery",
     "description": "Corrosive technique adds a reliable acid bonus to melee attacks that deal acid damage.",
+    "icon": "Assassinskill_08_nobg.png",
     "school": "shadow",
     "tags": [
       "buff",
@@ -649,6 +650,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "arcane_constitution",
     "name": "Arcane Constitution",
     "description": "Arcane energy reinforces your body. Increases CON and max HP — survival floor for the squishy mage.",
+    "icon": "Aura_AncientMagic_nb.png",
     "school": "arcane",
     "tags": [
       "buff"
@@ -694,6 +696,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "arcane_focus",
     "name": "Arcane Focus",
     "description": "Focused attunement to your arcane conduit adds a flat bonus to all spell attack rolls.",
+    "icon": "Aura_Archimage_nb.png",
     "school": "arcane",
     "tags": [
       "buff"
@@ -724,6 +727,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "arcane_mind",
     "name": "Arcane Mind",
     "description": "Arcane study increases INT, scaling all spell damage, save DCs, and attack rolls.",
+    "icon": "Skill_ArcaneKnowledge_nb.png",
     "school": "arcane",
     "tags": [
       "buff"
@@ -757,6 +761,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "arcane_surge",
     "name": "Arcane Surge",
     "description": "Channel raw arcane energy, empowering your next spells with bonus damage dice and increased spell save DCs.",
+    "icon": "Mageskill_42_nobg.png",
     "school": "arcane",
     "tags": [
       "buff",
@@ -812,6 +817,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "assassinate",
     "name": "Assassinate",
     "description": "Your killer's instinct while hidden reduces your critical hit threshold.",
+    "icon": "Assassinskill_03_nobg.png",
     "school": "shadow",
     "tags": [
       "buff"
@@ -842,6 +848,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "battle_cry",
     "name": "Battle Cry",
     "description": "Let out a fearsome war roar, bolstering your own attacks and sending nearby enemies fleeing in terror.",
+    "icon": "Skill_BattleCry_nb.png",
     "school": "martial",
     "tags": [
       "buff",
@@ -913,6 +920,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "battle_hardened",
     "name": "Battle Hardened",
     "description": "Seasons of battle upgrade your resilience. Increases hit die to d12 and maximum health.",
+    "icon": "Warriorskill_18_nobg.png",
     "school": "martial",
     "tags": [
       "buff"
@@ -955,6 +963,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "berserker_rage",
     "name": "Berserker Rage",
     "description": "Channel primal fury, dealing bonus damage on every strike but leaving yourself exposed to hits.",
+    "icon": "Warriorskill_30_nobg.png",
     "school": "martial",
     "tags": [
       "buff",
@@ -1009,6 +1018,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "bludgeoning_mastery",
     "name": "Bludgeoning Mastery",
     "description": "Crushing force mastery adds a reliable bludgeoning bonus to attacks that deal bludgeoning damage — including leaps and sweeping strikes.",
+    "icon": "Warriorskill_45_nobg.png",
     "school": "martial",
     "tags": [
       "buff",
@@ -1049,6 +1059,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "caltrops",
     "name": "Caltrops",
     "description": "Scatter razor-sharp caltrops around your feet, rooting and bleeding all adjacent enemies.",
+    "icon": "Assassinskill_49_nobg.png",
     "school": "shadow",
     "tags": [
       "control",
@@ -1117,6 +1128,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "charge",
     "name": "Charge",
     "description": "Sprint toward a distant enemy in a straight line and deliver a devastating blow on arrival.",
+    "icon": "Skill_Charge_nb.png",
     "school": "martial",
     "tags": [
       "damage",
@@ -1159,6 +1171,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "cleave",
     "name": "Cleave",
     "description": "Swing your weapon in a wide arc, striking the three tiles directly in front of you.",
+    "icon": "Warriorskill_50_nobg.png",
     "school": "martial",
     "tags": [
       "damage",
@@ -1222,6 +1235,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "cold_mastery",
     "name": "Cold Mastery",
     "description": "Frost mastery adds a reliable bonus to attacks that deal cold damage.",
+    "icon": "Mageskill_36_nobg.png",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1262,6 +1276,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "cone_of_cold",
     "name": "Cone of Cold",
     "description": "Exhale a blast of freezing air in a cone. At higher ranks the chill roots enemies in place.",
+    "icon": "Mageskill_33_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -1339,6 +1354,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "constitution_training",
     "name": "Constitution Training",
     "description": "Endurance training improves CON saving throws and boosts second_wind healing.",
+    "icon": "Warriorskill_49_nobg.png",
     "school": "martial",
     "tags": [
       "buff"
@@ -1379,6 +1395,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "evasion",
     "name": "Evasion",
     "description": "Lightning reflexes let you evade magical effects. Grants DEX save proficiency at rank 1; bonus AC at higher ranks.",
+    "icon": "Archerskill_40_nobg.png",
     "school": "shadow",
     "tags": [
       "buff"
@@ -1417,6 +1434,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "fire_mastery",
     "name": "Fire Mastery",
     "description": "Fire mastery adds a reliable bonus to attacks that deal fire damage.",
+    "icon": "Mageskill_18_nobg.png",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1457,6 +1475,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "fireball",
     "name": "Fireball",
     "description": "Hurl a ball of fire that explodes on impact, scorching all enemies in the blast radius.",
+    "icon": "Mageskill_19_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -1516,6 +1535,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "force_mastery",
     "name": "Force Mastery",
     "description": "Raw arcane force mastery adds a reliable bonus to attacks that deal force damage.",
+    "icon": "Aura_AncientKnowledge_nb.png",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1556,6 +1576,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "frost_nova",
     "name": "Frost Nova",
     "description": "Unleash an explosion of freezing energy from within, damaging and rooting all nearby enemies.",
+    "icon": "Mageskill_28_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -1636,6 +1657,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "garrote",
     "name": "Garrote",
     "description": "Clamp a hand around the enemy's throat, dealing piercing damage and silencing them before they can act.",
+    "icon": "Assassinskill_22_nobg.png",
     "school": "shadow",
     "tags": [
       "damage",
@@ -1701,6 +1723,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "hemorrhage",
     "name": "Hemorrhage",
     "description": "Open a deep wound that bleeds heavily, dealing upfront slashing damage and leaving the target bleeding.",
+    "icon": "Assassinskill_35_nobg.png",
     "school": "shadow",
     "tags": [
       "damage",
@@ -1768,6 +1791,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "iron_skin",
     "name": "Iron Skin",
     "description": "Your skin hardens through relentless training, granting increasing Armour Class.",
+    "icon": "iron_skin_nobg.png",
     "school": "martial",
     "tags": [
       "buff"
@@ -1798,6 +1822,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "lightning_bolt",
     "name": "Lightning Bolt",
     "description": "Hurl a bolt of lightning that arcs in a line from you to the target tile, striking every enemy in its path.",
+    "icon": "Mageskill_41_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -1853,6 +1878,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "lightning_mastery",
     "name": "Lightning Mastery",
     "description": "Storm mastery adds a reliable bonus to attacks that deal lightning damage.",
+    "icon": "Mageskill_43_nobg.png",
     "school": "arcane",
     "tags": [
       "buff",
@@ -1893,6 +1919,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "mage_armor",
     "name": "Mage Armour",
     "description": "An invisible arcane barrier surrounds you, granting increasing Armour Class.",
+    "icon": "Mageskill_48_nobg.png",
     "school": "arcane",
     "tags": [
       "buff"
@@ -1923,6 +1950,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "magic_arrow",
     "name": "Magic Arrow",
     "description": "A bolt of pure arcane force. Cooldown 0 — the mage's at-will cantrip.",
+    "icon": "Mageskill_44_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -1976,6 +2004,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "marked_for_death",
     "name": "Marked for Death",
     "description": "Paint a target with a death mark, causing them to take increased damage from all sources.",
+    "icon": "Archerskill_13_nobg.png",
     "school": "shadow",
     "tags": [
       "debuff",
@@ -2025,6 +2054,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "mighty_leap",
     "name": "Mighty Leap",
     "description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
+    "icon": "Warriorskill_29_nobg.png",
     "school": "martial",
     "tags": [
       "damage",
@@ -2072,6 +2102,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "mind_spike",
     "name": "Mind Spike",
     "description": "Drive a psychic lance through the enemy's mind, dealing psychic damage and silencing them.",
+    "icon": "Mageskill_24_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -2138,6 +2169,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "piercing_mastery",
     "name": "Piercing Mastery",
     "description": "Polearm and spear mastery adds a reliable piercing bonus to melee attacks that deal piercing damage.",
+    "icon": "Assassinskill_34_nobg.png",
     "school": "martial",
     "tags": [
       "buff",
@@ -2178,6 +2210,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "poison_bite",
     "name": "Poison Bite",
     "description": "A venomous bite that deals piercing damage and injects poison, dealing damage over time.",
+    "icon": "Skill_Toxic_nb.png",
     "school": "bestial",
     "tags": [
       "damage",
@@ -2244,6 +2277,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "poison_blade",
     "name": "Poison Blade",
     "description": "A swift slash that coats the wound with venom, dealing damage over time.",
+    "icon": "Assassinskill_24_nobg.png",
     "school": "shadow",
     "tags": [
       "damage",
@@ -2311,6 +2345,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "poison_immunity",
     "name": "Poison Immunity",
     "description": "Years of exposure to toxins harden your body against poison. Full immunity at rank 1; complete damage negation at rank 3.",
+    "icon": "Assassinskill_29_nobg.png",
     "school": "shadow",
     "tags": [
       "buff",
@@ -2350,6 +2385,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "poison_mastery",
     "name": "Poison Mastery",
     "description": "Mastery of toxicology makes every tick of every poison, bleed, or burn more lethal.",
+    "icon": "Assassinskill_13_nobg.png",
     "school": "shadow",
     "tags": [
       "buff",
@@ -2381,6 +2417,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "predators_instinct",
     "name": "Predator's Instinct",
     "description": "Predatory precision adds a flat bonus to all attack rolls, making your strikes harder to dodge.",
+    "icon": "Archerskill_08_nobg.png",
     "school": "shadow",
     "tags": [
       "buff"
@@ -2411,6 +2448,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "quick_reflexes",
     "name": "Quick Reflexes",
     "description": "DEX bonus that scales attack rolls, AC, and DEX saving throws. Foundation of most rogue builds.",
+    "icon": "Archerskill_19_nobg.png",
     "school": "shadow",
     "tags": [
       "buff"
@@ -2444,6 +2482,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "reckless_attack",
     "name": "Reckless Attack",
     "description": "Trade defence for devastating power. Grants advantage on this strike but leaves you exposed.",
+    "icon": "Warriorskill_10_nobg.png",
     "school": "martial",
     "tags": [
       "damage",
@@ -2527,6 +2566,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "relentless",
     "name": "Relentless",
     "description": "Your relentless assaults find gaps in defences, lowering your critical hit threshold.",
+    "icon": "Warriorskill_09_nobg.png",
     "school": "martial",
     "tags": [
       "buff"
@@ -2557,6 +2597,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "second_wind",
     "name": "Second Wind",
     "description": "Draw on reserves of stamina to recover. Roll your hit dice and add your Constitution modifier — that is how much HP you regain.",
+    "icon": "Warriorskill_42_nobg.png",
     "school": "martial",
     "tags": [
       "healing",
@@ -2593,6 +2634,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "shadow_step",
     "name": "Shadow Step",
     "description": "Melt into the darkness and re-emerge at a distant location. At higher ranks you vanish on arrival.",
+    "icon": "Assassinskill_50_nobg.png",
     "school": "shadow",
     "tags": [
       "mobility",
@@ -2637,6 +2679,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "shadow_strike",
     "name": "Shadow Strike",
     "description": "Strikes from the shadows find vital points, adding bonus piercing damage to every melee attack.",
+    "icon": "Assassinskill_01_nobg.png",
     "school": "shadow",
     "tags": [
       "buff",
@@ -2677,6 +2720,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "shield",
     "name": "Shield",
     "description": "Conjure a magical barrier around yourself, absorbing incoming damage before it reaches you.",
+    "icon": "Mageskill_40_nobg.png",
     "school": "arcane",
     "tags": [
       "buff",
@@ -2710,6 +2754,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "shield_bash",
     "name": "Shield Bash",
     "description": "Drive your shield into the enemy with bone-crunching force, stunning them momentarily.",
+    "icon": "Warriorskill_25_nobg.png",
     "school": "martial",
     "tags": [
       "damage",
@@ -2773,6 +2818,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "slashing_mastery",
     "name": "Slashing Mastery",
     "description": "Blade mastery adds a reliable slashing bonus to melee attacks that deal slashing damage.",
+    "icon": "Warriorskill_33_nobg.png",
     "school": "martial",
     "tags": [
       "buff",
@@ -2813,6 +2859,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "smoke_bomb",
     "name": "Smoke Bomb",
     "description": "Hurl a choking smoke bomb that roots enemies caught in the blast.",
+    "icon": "Assassinskill_14_nobg.png",
     "school": "shadow",
     "tags": [
       "control",
@@ -2857,6 +2904,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "sneak_attack",
     "name": "Sneak Attack",
     "description": "Strike a vital spot from the shadows. Requires stealth — the blow is devastating but breaks your concealment.",
+    "icon": "Assassinskill_45_nobg.png",
     "school": "shadow",
     "tags": [
       "damage",
@@ -2898,6 +2946,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "soul_drain",
     "name": "Soul Drain",
     "description": "Drain the life force from an enemy at range, dealing force damage and restoring your own health.",
+    "icon": "Warlock_37_nobg.png",
     "school": "arcane",
     "tags": [
       "damage",
@@ -2940,6 +2989,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "stealth",
     "name": "Stealth",
     "description": "Melt into the shadows. Enemies lose track of you and cannot detect your presence.",
+    "icon": "Assassinskill_11_nobg.png",
     "school": "shadow",
     "tags": [
       "stealth",
@@ -2980,6 +3030,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "warriors_might",
     "name": "Warrior's Might",
     "description": "Years of combat training have strengthened your body. Increases Strength, scaling all melee attack and damage rolls.",
+    "icon": "Warriorskill_44_nobg.png",
     "school": "martial",
     "tags": [
       "buff"
@@ -3013,6 +3064,7 @@ export const skills: readonly SkillDefinition[] = [
     "id": "whirlwind_strike",
     "name": "Whirlwind Strike",
     "description": "Spin with your weapon extended, striking every adjacent enemy simultaneously.",
+    "icon": "Warriorskill_21_nobg.png",
     "school": "martial",
     "tags": [
       "damage",
