@@ -3,6 +3,7 @@
 	"id": "arcane_mind",
 	"name": "Arcane Mind",
 	"description": "Arcane study increases INT, scaling all spell damage, save DCs, and attack rolls.",
+	"icon": "Skill_ArcaneKnowledge_nb.png",
 	"school": "arcane",
 	"tags": ["buff"],
 	"effectsByRank": [

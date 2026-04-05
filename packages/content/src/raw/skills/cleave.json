@@ -3,6 +3,7 @@
 	"id": "cleave",
 	"name": "Cleave",
 	"description": "Swing your weapon in a wide arc, striking the three tiles directly in front of you.",
+	"icon": "Warriorskill_50_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "aoe", "weapon_attack", "melee_attack"],
 	"cooldown": 3,

@@ -3,6 +3,7 @@
 	"id": "arcane_focus",
 	"name": "Arcane Focus",
 	"description": "Focused attunement to your arcane conduit adds a flat bonus to all spell attack rolls.",
+	"icon": "Aura_Archimage_nb.png",
 	"school": "arcane",
 	"tags": ["buff"],
 	"effectsByRank": [

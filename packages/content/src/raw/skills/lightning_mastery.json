@@ -3,6 +3,7 @@
 	"id": "lightning_mastery",
 	"name": "Lightning Mastery",
 	"description": "Storm mastery adds a reliable bonus to attacks that deal lightning damage.",
+	"icon": "Mageskill_43_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

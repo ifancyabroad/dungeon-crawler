@@ -3,6 +3,7 @@
 	"id": "acid_mastery",
 	"name": "Acid Mastery",
 	"description": "Corrosive technique adds a reliable acid bonus to melee attacks that deal acid damage.",
+	"icon": "Assassinskill_08_nobg.png",
 	"school": "shadow",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

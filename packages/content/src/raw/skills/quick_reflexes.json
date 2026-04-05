@@ -3,6 +3,7 @@
 	"id": "quick_reflexes",
 	"name": "Quick Reflexes",
 	"description": "DEX bonus that scales attack rolls, AC, and DEX saving throws. Foundation of most rogue builds.",
+	"icon": "Archerskill_19_nobg.png",
 	"school": "shadow",
 	"tags": ["buff"],
 	"effectsByRank": [

@@ -3,6 +3,7 @@
 	"id": "sneak_attack",
 	"name": "Sneak Attack",
 	"description": "Strike a vital spot from the shadows. Requires stealth — the blow is devastating but breaks your concealment.",
+	"icon": "Assassinskill_45_nobg.png",
 	"school": "shadow",
 	"tags": ["damage", "stealth", "weapon_attack", "finesse", "melee_attack"],
 	"cooldown": 1,

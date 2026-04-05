@@ -3,6 +3,7 @@
 	"id": "lightning_bolt",
 	"name": "Lightning Bolt",
 	"description": "Hurl a bolt of lightning that arcs in a line from you to the target tile, striking every enemy in its path.",
+	"icon": "Mageskill_41_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "spell"],
 	"cooldown": 4,

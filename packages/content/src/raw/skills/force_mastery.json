@@ -3,6 +3,7 @@
 	"id": "force_mastery",
 	"name": "Force Mastery",
 	"description": "Raw arcane force mastery adds a reliable bonus to attacks that deal force damage.",
+	"icon": "Aura_AncientKnowledge_nb.png",
 	"school": "arcane",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

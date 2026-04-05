@@ -3,6 +3,7 @@
 	"id": "relentless",
 	"name": "Relentless",
 	"description": "Your relentless assaults find gaps in defences, lowering your critical hit threshold.",
+	"icon": "Warriorskill_09_nobg.png",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [

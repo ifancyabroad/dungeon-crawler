@@ -3,6 +3,7 @@
 	"id": "arcane_constitution",
 	"name": "Arcane Constitution",
 	"description": "Arcane energy reinforces your body. Increases CON and max HP — survival floor for the squishy mage.",
+	"icon": "Aura_AncientMagic_nb.png",
 	"school": "arcane",
 	"tags": ["buff"],
 	"effectsByRank": [

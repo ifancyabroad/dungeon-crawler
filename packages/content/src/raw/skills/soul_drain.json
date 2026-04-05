@@ -3,6 +3,7 @@
 	"id": "soul_drain",
 	"name": "Soul Drain",
 	"description": "Drain the life force from an enemy at range, dealing force damage and restoring your own health.",
+	"icon": "Warlock_37_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "healing", "spell", "ranged"],
 	"cooldown": 3,

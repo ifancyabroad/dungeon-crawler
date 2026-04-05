@@ -3,6 +3,7 @@
 	"id": "shield",
 	"name": "Shield",
 	"description": "Conjure a magical barrier around yourself, absorbing incoming damage before it reaches you.",
+	"icon": "Mageskill_40_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "spell"],
 	"cooldown": 5,

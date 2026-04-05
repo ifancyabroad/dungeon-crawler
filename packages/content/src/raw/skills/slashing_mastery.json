@@ -3,6 +3,7 @@
 	"id": "slashing_mastery",
 	"name": "Slashing Mastery",
 	"description": "Blade mastery adds a reliable slashing bonus to melee attacks that deal slashing damage.",
+	"icon": "Warriorskill_33_nobg.png",
 	"school": "martial",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

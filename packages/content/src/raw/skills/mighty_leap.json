@@ -3,6 +3,7 @@
 	"id": "mighty_leap",
 	"name": "Mighty Leap",
 	"description": "Leap a great distance, crashing down and sending shockwaves through nearby enemies on landing.",
+	"icon": "Warriorskill_29_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "mobility", "aoe"],
 	"cooldown": 5,

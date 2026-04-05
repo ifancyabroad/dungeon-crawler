@@ -11,9 +11,11 @@ node_modules/
 # typescript artifacts
 **/*.tsbuildinfo
 
-# environment files (keep templates)
-**/.env
-**/.env.*
+# environment files
+apps/api/.env
+apps/api/.env.*
+**/.env.local
+**/.env.*.local
 !**/.env.example
 
 # logs

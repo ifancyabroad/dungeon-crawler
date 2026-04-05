@@ -3,6 +3,7 @@
 	"id": "fireball",
 	"name": "Fireball",
 	"description": "Hurl a ball of fire that explodes on impact, scorching all enemies in the blast radius.",
+	"icon": "Mageskill_19_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "aoe", "spell"],
 	"cooldown": 4,

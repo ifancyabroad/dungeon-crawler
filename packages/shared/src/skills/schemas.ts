@@ -435,6 +435,7 @@ export const ActiveSkillDefinitionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
+	icon: z.string().optional(),
 	school: SkillSchoolSchema,
 	tags: z.array(SkillTagSchema).min(1),
 	cooldown: z.number().int().min(0),
@@ -455,6 +456,7 @@ export const PassiveSkillDefinitionSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
+	icon: z.string().optional(),
 	school: SkillSchoolSchema,
 	tags: z.array(SkillTagSchema).min(1),
 	/** Full effects for each skill rank (index 0 = rank 1, index 1 = rank 2, index 2 = rank 3). */

@@ -3,6 +3,7 @@
 	"id": "mind_spike",
 	"name": "Mind Spike",
 	"description": "Drive a psychic lance through the enemy's mind, dealing psychic damage and silencing them.",
+	"icon": "Mageskill_24_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "debuff", "spell", "ranged"],
 	"cooldown": 3,

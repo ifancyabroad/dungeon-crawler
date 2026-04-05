@@ -3,6 +3,7 @@
 	"id": "assassinate",
 	"name": "Assassinate",
 	"description": "Your killer's instinct while hidden reduces your critical hit threshold.",
+	"icon": "Assassinskill_03_nobg.png",
 	"school": "shadow",
 	"tags": ["buff"],
 	"effectsByRank": [

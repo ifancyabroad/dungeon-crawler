@@ -3,6 +3,7 @@
 	"id": "cone_of_cold",
 	"name": "Cone of Cold",
 	"description": "Exhale a blast of freezing air in a cone. At higher ranks the chill roots enemies in place.",
+	"icon": "Mageskill_33_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "control", "aoe", "spell"],
 	"cooldown": 5,

@@ -3,6 +3,7 @@
 	"id": "predators_instinct",
 	"name": "Predator's Instinct",
 	"description": "Predatory precision adds a flat bonus to all attack rolls, making your strikes harder to dodge.",
+	"icon": "Archerskill_08_nobg.png",
 	"school": "shadow",
 	"tags": ["buff"],
 	"effectsByRank": [

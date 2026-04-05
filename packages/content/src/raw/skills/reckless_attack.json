@@ -3,6 +3,7 @@
 	"id": "reckless_attack",
 	"name": "Reckless Attack",
 	"description": "Trade defence for devastating power. Grants advantage on this strike but leaves you exposed.",
+	"icon": "Warriorskill_10_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "weapon_attack", "melee_attack"],
 	"cooldown": 3,

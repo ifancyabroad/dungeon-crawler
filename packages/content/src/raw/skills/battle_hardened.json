@@ -3,6 +3,7 @@
 	"id": "battle_hardened",
 	"name": "Battle Hardened",
 	"description": "Seasons of battle upgrade your resilience. Increases hit die to d12 and maximum health.",
+	"icon": "Warriorskill_18_nobg.png",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [

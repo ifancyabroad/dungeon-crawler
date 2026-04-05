@@ -3,6 +3,7 @@
 	"id": "bludgeoning_mastery",
 	"name": "Bludgeoning Mastery",
 	"description": "Crushing force mastery adds a reliable bludgeoning bonus to attacks that deal bludgeoning damage — including leaps and sweeping strikes.",
+	"icon": "Warriorskill_45_nobg.png",
 	"school": "martial",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

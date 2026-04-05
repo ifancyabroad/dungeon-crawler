@@ -3,6 +3,7 @@
 	"id": "caltrops",
 	"name": "Caltrops",
 	"description": "Scatter razor-sharp caltrops around your feet, rooting and bleeding all adjacent enemies.",
+	"icon": "Assassinskill_49_nobg.png",
 	"school": "shadow",
 	"tags": ["control", "debuff", "aoe", "utility"],
 	"cooldown": 5,

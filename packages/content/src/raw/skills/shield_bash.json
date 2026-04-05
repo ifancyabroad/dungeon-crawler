@@ -3,6 +3,7 @@
 	"id": "shield_bash",
 	"name": "Shield Bash",
 	"description": "Drive your shield into the enemy with bone-crunching force, stunning them momentarily.",
+	"icon": "Warriorskill_25_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "control", "weapon_attack", "melee_attack"],
 	"cooldown": 4,

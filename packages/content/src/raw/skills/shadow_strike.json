@@ -3,6 +3,7 @@
 	"id": "shadow_strike",
 	"name": "Shadow Strike",
 	"description": "Strikes from the shadows find vital points, adding bonus piercing damage to every melee attack.",
+	"icon": "Assassinskill_01_nobg.png",
 	"school": "shadow",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

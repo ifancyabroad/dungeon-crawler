@@ -3,6 +3,7 @@
 	"id": "whirlwind_strike",
 	"name": "Whirlwind Strike",
 	"description": "Spin with your weapon extended, striking every adjacent enemy simultaneously.",
+	"icon": "Warriorskill_21_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "aoe", "weapon_attack", "melee_attack"],
 	"cooldown": 3,

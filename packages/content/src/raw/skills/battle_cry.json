@@ -3,6 +3,7 @@
 	"id": "battle_cry",
 	"name": "Battle Cry",
 	"description": "Let out a fearsome war roar, bolstering your own attacks and sending nearby enemies fleeing in terror.",
+	"icon": "Skill_BattleCry_nb.png",
 	"school": "martial",
 	"tags": ["buff", "debuff", "control", "utility"],
 	"cooldown": 5,

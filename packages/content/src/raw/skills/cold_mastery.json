@@ -3,6 +3,7 @@
 	"id": "cold_mastery",
 	"name": "Cold Mastery",
 	"description": "Frost mastery adds a reliable bonus to attacks that deal cold damage.",
+	"icon": "Mageskill_36_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

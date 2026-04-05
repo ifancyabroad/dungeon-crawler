@@ -3,6 +3,7 @@
 	"id": "arcane_surge",
 	"name": "Arcane Surge",
 	"description": "Channel raw arcane energy, empowering your next spells with bonus damage dice and increased spell save DCs.",
+	"icon": "Mageskill_42_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "spell", "utility"],
 	"cooldown": 5,

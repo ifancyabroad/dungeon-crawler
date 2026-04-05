@@ -3,6 +3,7 @@
 	"id": "shadow_step",
 	"name": "Shadow Step",
 	"description": "Melt into the darkness and re-emerge at a distant location. At higher ranks you vanish on arrival.",
+	"icon": "Assassinskill_50_nobg.png",
 	"school": "shadow",
 	"tags": ["mobility", "stealth"],
 	"cooldown": 4,

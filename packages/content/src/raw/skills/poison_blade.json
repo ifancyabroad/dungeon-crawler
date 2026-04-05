@@ -3,6 +3,7 @@
 	"id": "poison_blade",
 	"name": "Poison Blade",
 	"description": "A swift slash that coats the wound with venom, dealing damage over time.",
+	"icon": "Assassinskill_24_nobg.png",
 	"school": "shadow",
 	"tags": ["damage", "debuff", "weapon_attack", "finesse", "melee_attack"],
 	"cooldown": 3,

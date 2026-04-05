@@ -3,6 +3,7 @@
 	"id": "mage_armor",
 	"name": "Mage Armour",
 	"description": "An invisible arcane barrier surrounds you, granting increasing Armour Class.",
+	"icon": "Mageskill_48_nobg.png",
 	"school": "arcane",
 	"tags": ["buff"],
 	"effectsByRank": [

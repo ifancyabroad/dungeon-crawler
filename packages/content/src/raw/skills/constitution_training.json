@@ -3,6 +3,7 @@
 	"id": "constitution_training",
 	"name": "Constitution Training",
 	"description": "Endurance training improves CON saving throws and boosts second_wind healing.",
+	"icon": "Warriorskill_49_nobg.png",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [

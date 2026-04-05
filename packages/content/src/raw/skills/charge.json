@@ -3,6 +3,7 @@
 	"id": "charge",
 	"name": "Charge",
 	"description": "Sprint toward a distant enemy in a straight line and deliver a devastating blow on arrival.",
+	"icon": "Skill_Charge_nb.png",
 	"school": "martial",
 	"tags": ["damage", "mobility", "weapon_attack", "melee_attack"],
 	"cooldown": 4,

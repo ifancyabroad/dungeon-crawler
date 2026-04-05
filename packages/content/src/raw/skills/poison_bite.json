@@ -3,6 +3,7 @@
 	"id": "poison_bite",
 	"name": "Poison Bite",
 	"description": "A venomous bite that deals piercing damage and injects poison, dealing damage over time.",
+	"icon": "Skill_Toxic_nb.png",
 	"school": "bestial",
 	"tags": ["damage", "debuff", "weapon_attack", "melee_attack"],
 	"cooldown": 3,

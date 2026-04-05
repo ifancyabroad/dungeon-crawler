@@ -3,6 +3,7 @@
 	"id": "piercing_mastery",
 	"name": "Piercing Mastery",
 	"description": "Polearm and spear mastery adds a reliable piercing bonus to melee attacks that deal piercing damage.",
+	"icon": "Assassinskill_34_nobg.png",
 	"school": "martial",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

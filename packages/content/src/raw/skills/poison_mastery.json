@@ -3,6 +3,7 @@
 	"id": "poison_mastery",
 	"name": "Poison Mastery",
 	"description": "Mastery of toxicology makes every tick of every poison, bleed, or burn more lethal.",
+	"icon": "Assassinskill_13_nobg.png",
 	"school": "shadow",
 	"tags": ["buff", "debuff"],
 	"effectsByRank": [

@@ -3,6 +3,7 @@
 	"id": "frost_nova",
 	"name": "Frost Nova",
 	"description": "Unleash an explosion of freezing energy from within, damaging and rooting all nearby enemies.",
+	"icon": "Mageskill_28_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "control", "spell", "aoe"],
 	"cooldown": 4,

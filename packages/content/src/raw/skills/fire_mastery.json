@@ -3,6 +3,7 @@
 	"id": "fire_mastery",
 	"name": "Fire Mastery",
 	"description": "Fire mastery adds a reliable bonus to attacks that deal fire damage.",
+	"icon": "Mageskill_18_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "damage"],
 	"effectsByRank": [

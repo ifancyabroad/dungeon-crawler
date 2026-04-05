@@ -3,6 +3,7 @@
 	"id": "poison_immunity",
 	"name": "Poison Immunity",
 	"description": "Years of exposure to toxins harden your body against poison. Full immunity at rank 1; complete damage negation at rank 3.",
+	"icon": "Assassinskill_29_nobg.png",
 	"school": "shadow",
 	"tags": ["buff", "utility"],
 	"effectsByRank": [

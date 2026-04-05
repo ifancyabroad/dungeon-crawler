@@ -3,6 +3,7 @@
 	"id": "smoke_bomb",
 	"name": "Smoke Bomb",
 	"description": "Hurl a choking smoke bomb that roots enemies caught in the blast.",
+	"icon": "Assassinskill_14_nobg.png",
 	"school": "shadow",
 	"tags": ["control", "utility", "aoe"],
 	"cooldown": 5,

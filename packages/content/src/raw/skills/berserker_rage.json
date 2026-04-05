@@ -3,6 +3,7 @@
 	"id": "berserker_rage",
 	"name": "Berserker Rage",
 	"description": "Channel primal fury, dealing bonus damage on every strike but leaving yourself exposed to hits.",
+	"icon": "Warriorskill_30_nobg.png",
 	"school": "martial",
 	"tags": ["buff", "utility"],
 	"cooldown": 6,

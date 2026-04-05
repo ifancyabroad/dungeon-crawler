@@ -3,6 +3,7 @@
 	"id": "marked_for_death",
 	"name": "Marked for Death",
 	"description": "Paint a target with a death mark, causing them to take increased damage from all sources.",
+	"icon": "Archerskill_13_nobg.png",
 	"school": "shadow",
 	"tags": ["debuff", "utility"],
 	"cooldown": 4,

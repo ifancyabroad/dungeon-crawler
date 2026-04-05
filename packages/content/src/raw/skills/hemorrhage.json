@@ -3,6 +3,7 @@
 	"id": "hemorrhage",
 	"name": "Hemorrhage",
 	"description": "Open a deep wound that bleeds heavily, dealing upfront slashing damage and leaving the target bleeding.",
+	"icon": "Assassinskill_35_nobg.png",
 	"school": "shadow",
 	"tags": ["damage", "debuff", "weapon_attack", "finesse", "melee_attack"],
 	"cooldown": 3,

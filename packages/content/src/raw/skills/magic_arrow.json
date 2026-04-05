@@ -3,6 +3,7 @@
 	"id": "magic_arrow",
 	"name": "Magic Arrow",
 	"description": "A bolt of pure arcane force. Cooldown 0 — the mage's at-will cantrip.",
+	"icon": "Mageskill_44_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "spell", "ranged"],
 	"cooldown": 0,

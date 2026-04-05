@@ -3,6 +3,7 @@
 	"id": "iron_skin",
 	"name": "Iron Skin",
 	"description": "Your skin hardens through relentless training, granting increasing Armour Class.",
+	"icon": "iron_skin_nobg.png",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [

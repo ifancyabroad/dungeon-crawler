@@ -3,6 +3,7 @@
 	"id": "warriors_might",
 	"name": "Warrior's Might",
 	"description": "Years of combat training have strengthened your body. Increases Strength, scaling all melee attack and damage rolls.",
+	"icon": "Warriorskill_44_nobg.png",
 	"school": "martial",
 	"tags": ["buff"],
 	"effectsByRank": [

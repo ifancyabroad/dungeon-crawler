@@ -3,6 +3,7 @@
 	"id": "evasion",
 	"name": "Evasion",
 	"description": "Lightning reflexes let you evade magical effects. Grants DEX save proficiency at rank 1; bonus AC at higher ranks.",
+	"icon": "Archerskill_40_nobg.png",
 	"school": "shadow",
 	"tags": ["buff"],
 	"effectsByRank": [
