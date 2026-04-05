@@ -16,6 +16,8 @@ import {
 } from "@app/shared";
 import { rankRoman } from "../lib/rankRoman";
 import { SkillIcon } from "./SkillIcon";
+import { Tooltip } from "./Tooltip";
+import { SkillTooltip } from "./SkillTooltip";
 import { useGameStore } from "../features/game/gameStore";
 import { useTargetingStore } from "../features/targeting/targetingStore";
 import { useMapStore } from "../features/map/mapStore";
@@ -211,60 +213,66 @@ export function SkillHotbar() {
 					: onCooldown
 						? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
 						: `${displayName} ${rankGlyph}, ready`;
-				const infoTooltip = skillDef
-					? `${skillDef.name}\n\n${skillDef.description}`
-					: skillId;
-
 				return (
-					<button
+					<Tooltip
 						key={skillId}
-						type="button"
-						aria-disabled={disabled}
-						aria-label={ariaLabel}
-						title={infoTooltip}
-						onClick={() => {
-							if (disabled) return;
-							handleSkillClick(skillId);
-						}}
-						className={[
-							"relative flex-none border transition-colors w-14 h-14",
-							disabled
-								? "border-border cursor-not-allowed"
-								: "border-border-bright hover:bg-bg-elevated cursor-pointer",
-						].join(" ")}
-					>
-						<SkillIcon
-							def={skillDef}
-							size={48}
-							className={[
-								"absolute inset-0 m-auto",
-								armorLocked ? "opacity-40" : "",
-							].join(" ")}
-						/>
-						{onCooldown && skillDef && skillDef.cooldown > 0 && (
-							<div
-								aria-hidden
-								className="pointer-events-none absolute inset-0 -rotate-90"
-								style={{
-									background: `conic-gradient(rgba(0,0,0,0.72) 0turn, rgba(0,0,0,0.72) ${skillState.cooldownRemaining / skillDef.cooldown}turn, transparent ${skillState.cooldownRemaining / skillDef.cooldown}turn)`,
-								}}
+						content={
+							<SkillTooltip
+								def={skillDef}
+								rank={skillState.rank}
+								cooldownRemaining={skillState.cooldownRemaining}
+								armorLocked={armorLocked}
 							/>
-						)}
-						{onCooldown && (
+						}
+					>
+						<button
+							type="button"
+							aria-disabled={disabled}
+							aria-label={ariaLabel}
+							onClick={() => {
+								if (disabled) return;
+								handleSkillClick(skillId);
+							}}
+							className={[
+								"relative flex-none border transition-colors w-14 h-14",
+								disabled
+									? "border-border cursor-not-allowed"
+									: "border-border-bright hover:bg-bg-elevated cursor-pointer",
+							].join(" ")}
+						>
+							<SkillIcon
+								def={skillDef}
+								size={48}
+								className={[
+									"absolute inset-0 m-auto",
+									armorLocked ? "opacity-40" : "",
+								].join(" ")}
+							/>
+							{onCooldown && skillDef && skillDef.cooldown > 0 && (
+								<div
+									aria-hidden
+									className="pointer-events-none absolute inset-0 -rotate-90"
+									style={{
+										background: `conic-gradient(rgba(0,0,0,0.72) 0turn, rgba(0,0,0,0.72) ${skillState.cooldownRemaining / skillDef.cooldown}turn, transparent ${skillState.cooldownRemaining / skillDef.cooldown}turn)`,
+									}}
+								/>
+							)}
+							{onCooldown && (
+								<span
+									aria-hidden
+									className="pointer-events-none absolute inset-0 flex items-center justify-center tabular-nums text-text-bright text-base leading-none"
+								>
+									{skillState.cooldownRemaining}
+								</span>
+							)}
 							<span
 								aria-hidden
-								className="pointer-events-none absolute inset-0 flex items-center justify-center tabular-nums text-text-bright text-base leading-none"
+								className="pointer-events-none absolute top-0 right-0 px-0.5 text-primary text-xs leading-none bg-bg-base/80"
 							>
-								{skillState.cooldownRemaining}
+								{rankGlyph}
 							</span>
-						)}
-						<span
-							aria-hidden
-							className="pointer-events-none absolute top-0 right-0 px-0.5 text-primary text-xs leading-none bg-bg-base/80"
-						>
-							{rankGlyph}
-						</span>
-					</button>
+						</button>
+					</Tooltip>
 				);
 			})}
 		</div>
