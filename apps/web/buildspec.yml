@@ -22,5 +22,5 @@ phases:
 
     post_build:
         commands:
-            - aws s3 sync apps/web/dist/ s3://$S3_BUCKET/ --delete
+            - aws s3 sync apps/web/dist/ s3://$S3_BUCKET/ --delete --exclude "static/*"
             - aws cloudfront create-invalidation --distribution-id $CF_DISTRIBUTION_ID --paths "/*"
