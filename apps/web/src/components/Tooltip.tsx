@@ -1,4 +1,16 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
+import {
+	useFloating,
+	useHover,
+	useFocus,
+	useInteractions,
+	FloatingPortal,
+	offset,
+	flip,
+	shift,
+	autoUpdate,
+	type Placement,
+} from "@floating-ui/react";
 
 // Corner glyph style — matches PanelBox.tsx
 const CORNER: React.CSSProperties = {
@@ -15,36 +27,63 @@ const CORNER: React.CSSProperties = {
 type TooltipProps = {
 	content: ReactNode;
 	children: ReactNode;
+	/** Preferred placement. Floating UI will flip/shift automatically if there is no room. */
+	side?: "top" | "right" | "bottom" | "left";
 };
 
 /**
- * Generic tooltip wrapper. Renders `content` in a styled panel above the
- * trigger on hover, using pure CSS (no JS state, no portal).
+ * Generic tooltip wrapper. Renders `content` in a portal so it escapes any
+ * ancestor overflow clipping. Floating UI handles collision detection and
+ * automatically flips to whichever side has space.
  *
  * The trigger wrapper is a `div` — callers should move any `flex-none` or
  * sizing classes onto the `<Tooltip>` element if they were on the child.
  */
-export function Tooltip({ content, children }: TooltipProps) {
-	return (
-		<div className="relative group/tooltip">
-			{children}
-			<div
-				role="tooltip"
-				className={[
-					"pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50",
-					"w-64 border-2 border-border bg-black text-text",
-					"invisible opacity-0 group-hover/tooltip:visible group-hover/tooltip:opacity-100",
-					"transition-opacity duration-150",
-				].join(" ")}
-			>
-				{/* Corner glyphs */}
-				<span style={{ ...CORNER, top: -2, left: -2 }}>╔</span>
-				<span style={{ ...CORNER, top: -2, right: -2 }}>╗</span>
-				<span style={{ ...CORNER, bottom: -2, left: -2 }}>╚</span>
-				<span style={{ ...CORNER, bottom: -2, right: -2 }}>╝</span>
+export function Tooltip({ content, children, side = "top" }: TooltipProps) {
+	const [open, setOpen] = useState(false);
 
-				{content}
+	const placement: Placement = side;
+
+	const { refs, floatingStyles, context } = useFloating({
+		open,
+		onOpenChange: setOpen,
+		placement,
+		whileElementsMounted: autoUpdate,
+		middleware: [
+			offset(8),
+			flip({ fallbackAxisSideDirection: "start" }),
+			shift({ padding: 8 }),
+		],
+	});
+
+	const hover = useHover(context, { delay: { open: 100, close: 0 } });
+	const focus = useFocus(context);
+	const { getReferenceProps, getFloatingProps } = useInteractions([hover, focus]);
+
+	return (
+		<>
+			<div ref={refs.setReference} {...getReferenceProps()}>
+				{children}
 			</div>
-		</div>
+			{open && (
+				<FloatingPortal>
+					<div
+						ref={refs.setFloating}
+						role="tooltip"
+						style={floatingStyles}
+						{...getFloatingProps()}
+						className="z-50 w-64 border-2 border-border bg-black text-text pointer-events-none"
+					>
+						{/* Corner glyphs */}
+						<span style={{ ...CORNER, top: -2, left: -2 }}>╔</span>
+						<span style={{ ...CORNER, top: -2, right: -2 }}>╗</span>
+						<span style={{ ...CORNER, bottom: -2, left: -2 }}>╚</span>
+						<span style={{ ...CORNER, bottom: -2, right: -2 }}>╝</span>
+
+						{content}
+					</div>
+				</FloatingPortal>
+			)}
+		</>
 	);
 }
