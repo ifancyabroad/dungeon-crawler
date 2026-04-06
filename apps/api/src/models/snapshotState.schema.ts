@@ -265,6 +265,7 @@ const PendingInteractionSchema = new Schema(
 		type: { type: String, required: true },
 		// skill_choice fields
 		levelReached: Number,
+		hpGained: Number,
 		offers: [SkillOfferSchema],
 		rerollsUsed: Number,
 		rerollCost: Number,

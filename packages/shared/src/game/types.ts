@@ -484,6 +484,8 @@ export type PendingInteraction =
 			type: "skill_choice";
 			/** The level just reached. */
 			levelReached: number;
+			/** Max HP gained from the level-up roll. */
+			hpGained: number;
 			/** Mixed active and passive offers. Each entry carries the skill id and rank to grant. */
 			offers: SkillOffer[];
 			/** How many times the player has rerolled this offer set. */

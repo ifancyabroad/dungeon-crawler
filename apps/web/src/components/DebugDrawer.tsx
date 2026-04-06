@@ -80,8 +80,8 @@ export default function DebugDrawer({ open, onClose }: DebugDrawerProps) {
 			return;
 		}
 		try {
-			const { state } = await setXp.mutateAsync(n);
-			if (gameId) setStateFromServer({ gameId, turn: state.turn, state });
+			const { state, events } = await setXp.mutateAsync(n);
+			if (gameId) setStateFromServer({ gameId, turn: state.turn, state, events });
 		} catch (e) {
 			showError(getApiErrorMessage(e));
 		}

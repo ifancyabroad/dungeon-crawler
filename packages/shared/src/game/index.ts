@@ -57,6 +57,7 @@ export {
 	getAdjacentIndices8,
 	getHero,
 	idxToXY,
+	checkForLevelUp,
 	generateSkillOffers,
 	resetNpcCounter,
 	spawnNpc,

@@ -42,7 +42,7 @@ import {
 import type { ApplyActionContext, ApplyActionResult } from "./engineContext";
 import { createActionContext, createEmptyFloorState } from "./engineContext";
 import { processEnemyTurns } from "./engineEnemyTurns";
-import { grantXpForKill, generateSkillOffers } from "./engineLevelUp";
+import { grantXp, checkForLevelUp, generateSkillOffers } from "./engineLevelUp";
 import { VISION_RADIUS } from "../config/game";
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ export {
 	type ClassSkillPools,
 } from "./engineContext";
 export { createInitialState, DEFAULT_HERO_INIT, resetNpcCounter, spawnNpc } from "./engineInit";
-export { generateSkillOffers } from "./engineLevelUp";
+export { generateSkillOffers, checkForLevelUp, grantXp } from "./engineLevelUp";
 
 // ---------------------------------------------------------------------------
 // Private turn helpers
@@ -446,7 +446,13 @@ export function applyAction(
 						actor: heroWithXp,
 						events: xpEvents,
 						pendingInteraction: xpInteraction,
-					} = grantXpForKill(activeHero, state.heroId, defender.xpReward, rng, context);
+					} = grantXp(
+						activeHero,
+						state.heroId,
+						defender.xpReward,
+						rng,
+						context.getClassSkillPools,
+					);
 					updatedHero = heroWithXp;
 					events.push(...xpEvents);
 					if (xpInteraction) attackPendingInteraction = xpInteraction;
@@ -610,7 +616,13 @@ export function applyAction(
 							actor: heroWithXp,
 							events: xpEvents,
 							pendingInteraction: xpInteraction,
-						} = grantXpForKill(updatedHero, state.heroId, dead.xpReward, rng, context);
+						} = grantXp(
+							updatedHero,
+							state.heroId,
+							dead.xpReward,
+							rng,
+							context.getClassSkillPools,
+						);
 						updatedHero = heroWithXp;
 						skillXpEvents.push(...xpEvents);
 						if (xpInteraction) skillPendingInteraction = xpInteraction;
@@ -730,26 +742,44 @@ export function applyAction(
 				heroWithSkill = applyPassiveSkill(heroWithSkill, skillDef, previousRank, newRank);
 			}
 
-			const newFloors = state.floors.slice();
-			newFloors[fi] = {
+			// Check whether the hero's banked XP qualifies them for another level-up.
+			const { rng: cascadeRng, getState: getCascadeRngState } = createRngFromState(
+				state.rngState,
+			);
+			const {
+				actor: heroAfterCascade,
+				events: cascadeEvents,
+				pendingInteraction: cascadeInteraction,
+			} = checkForLevelUp(
+				heroWithSkill,
+				state.heroId,
+				cascadeRng,
+				context.getClassSkillPools,
+			);
+
+			// heroAfterCascade already contains the new skill (spread from heroWithSkill above).
+			const finalFloors = state.floors.slice();
+			finalFloors[fi] = {
 				...floor,
 				state: {
 					...floor.state,
-					actorsById: { ...floor.state.actorsById, [state.heroId]: heroWithSkill },
+					actorsById: { ...floor.state.actorsById, [state.heroId]: heroAfterCascade },
 				},
-			};
-
-			const skillGrantedState: GameState = {
-				...state,
-				turn: state.turn + 1,
-				floors: newFloors,
-				pendingInteraction: null,
 			};
 
 			return {
 				ok: true,
-				state: skillGrantedState,
-				events: [{ type: "skill_granted", actorId: state.heroId, skillId: action.skillId }],
+				state: {
+					...state,
+					turn: state.turn + 1,
+					floors: finalFloors,
+					pendingInteraction: cascadeInteraction,
+					rngState: getCascadeRngState(),
+				},
+				events: [
+					{ type: "skill_granted", actorId: state.heroId, skillId: action.skillId },
+					...cascadeEvents,
+				],
 			};
 		}
 

@@ -95,6 +95,7 @@ export {
 	getHero,
 	computeWalkableMaskForFloor,
 	idxToXY,
+	checkForLevelUp,
 	generateSkillOffers,
 	regenerateBaseMaps,
 	resetNpcCounter,

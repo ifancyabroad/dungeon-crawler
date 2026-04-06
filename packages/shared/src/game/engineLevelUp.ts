@@ -1,6 +1,6 @@
 import type { Actor, ActorId, GameEvent, PendingInteraction, SkillOffer } from "./types";
 import type { Rng } from "../rng";
-import type { ApplyActionContext, ClassSkillPools } from "./engineContext";
+import type { ClassSkillPools } from "./engineContext";
 import { GAME_CONFIG, XP_PER_LEVEL } from "../config";
 
 /**
@@ -105,51 +105,43 @@ export function generateSkillOffers(
 }
 
 /**
- * Award XP to an actor for a kill, levelling them up if the threshold is crossed.
- * Returns the updated actor, any level_up events, and a pendingInteraction to set
- * on the game state if a level-up occurred and skill offers could be generated.
+ * Check whether an actor's current XP crosses the next level threshold and, if so,
+ * apply the level-up (HP roll, level increment, XP deduction, skill offer generation).
+ * Call this after XP has already been added to `actor.xp`.
  */
-export function grantXpForKill(
+export function checkForLevelUp(
 	actor: Actor,
 	actorId: ActorId,
-	xpReward: number,
 	rng: Rng,
-	context: ApplyActionContext,
+	getClassSkillPools: (classId: string) => ClassSkillPools | undefined,
 ): { actor: Actor; events: GameEvent[]; pendingInteraction: PendingInteraction } {
-	if (xpReward <= 0) return { actor, events: [], pendingInteraction: null };
+	const nextLevelXp = XP_PER_LEVEL[actor.level + 1] ?? Infinity;
+	if (actor.xp < nextLevelXp) return { actor, events: [], pendingInteraction: null };
+
 	const events: GameEvent[] = [];
-	let newXp = actor.xp + xpReward;
-	let newLevel = actor.level;
-	let newMaxHp = actor.maxHp;
-	let newCurrentHp = actor.hp;
+	const newXp = actor.xp - nextLevelXp;
+	const newLevel = actor.level + 1;
+	const conMod = Math.floor((actor.attributes.constitution - 10) / 2);
+	const roll = Math.floor(rng() * actor.hitDie) + 1;
+	const hpGained = Math.max(GAME_CONFIG.leveling.minHpGainPerLevel, roll + conMod);
+	const newMaxHp = actor.maxHp + hpGained;
+	const newCurrentHp = actor.hp + hpGained;
+	events.push({ type: "level_up", actorId, newLevel, hpGained });
 
-	const nextLevelXp = XP_PER_LEVEL[newLevel + 1] ?? Infinity;
 	let pendingInteraction: PendingInteraction = null;
-
-	if (newXp >= nextLevelXp) {
-		newXp -= nextLevelXp;
-		newLevel += 1;
-		const conMod = Math.floor((actor.attributes.constitution - 10) / 2);
-		const roll = Math.floor(rng() * actor.hitDie) + 1;
-		const hpGained = Math.max(GAME_CONFIG.leveling.minHpGainPerLevel, roll + conMod);
-		newMaxHp += hpGained;
-		newCurrentHp += hpGained;
-		events.push({ type: "level_up", actorId, newLevel, hpGained });
-
-		// Generate deterministic mixed level-up skill offers
-		const classId = actor.def.type === "hero" ? actor.def.classId : null;
-		const pools = classId ? context.getClassSkillPools(classId) : undefined;
-		if (pools) {
-			const offers = generateSkillOffers(actor, pools, rng);
-			if (offers.length > 0) {
-				pendingInteraction = {
-					type: "skill_choice",
-					levelReached: newLevel,
-					offers,
-					rerollsUsed: 0,
-					rerollCost: 15,
-				};
-			}
+	const classId = actor.def.type === "hero" ? actor.def.classId : null;
+	const pools = classId ? getClassSkillPools(classId) : undefined;
+	if (pools) {
+		const offers = generateSkillOffers(actor, pools, rng);
+		if (offers.length > 0) {
+			pendingInteraction = {
+				type: "skill_choice",
+				levelReached: newLevel,
+				hpGained,
+				offers,
+				rerollsUsed: 0,
+				rerollCost: 15,
+			};
 		}
 	}
 
@@ -158,4 +150,20 @@ export function grantXpForKill(
 		events,
 		pendingInteraction,
 	};
+}
+
+/**
+ * Award XP to an actor, levelling them up if the threshold is crossed.
+ * Returns the updated actor, any level_up events, and a pendingInteraction to set
+ * on the game state if a level-up occurred and skill offers could be generated.
+ */
+export function grantXp(
+	actor: Actor,
+	actorId: ActorId,
+	xpAmount: number,
+	rng: Rng,
+	getClassSkillPools: (classId: string) => ClassSkillPools | undefined,
+): { actor: Actor; events: GameEvent[]; pendingInteraction: PendingInteraction } {
+	if (xpAmount <= 0) return { actor, events: [], pendingInteraction: null };
+	return checkForLevelUp({ ...actor, xp: actor.xp + xpAmount }, actorId, rng, getClassSkillPools);
 }

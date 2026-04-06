@@ -104,11 +104,13 @@ export function makePendingSkillChoiceState() {
 		pendingInteraction: {
 			type: "skill_choice",
 			levelReached: 2,
+			hpGained: 5,
 			offers: [
 				{ skillId: "passive_str", rank: 1 },
 				{ skillId: "passive_ac", rank: 1 },
 			],
 			rerollsUsed: 0,
+			rerollCost: 15,
 		},
 	} as GameState;
 }

@@ -299,6 +299,7 @@ export const PendingInteractionSchema = z
 		z.object({
 			type: z.literal("skill_choice"),
 			levelReached: z.number(),
+			hpGained: z.number(),
 			offers: z.array(SkillOfferSchema),
 			rerollsUsed: z.number(),
 			rerollCost: z.number(),

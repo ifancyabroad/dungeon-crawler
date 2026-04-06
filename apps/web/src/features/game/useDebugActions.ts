@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { GameState } from "@app/shared";
+import type { GameEvent, GameState } from "@app/shared";
 import { api } from "../../lib/api";
 
 const DEBUG_SECRET = import.meta.env.VITE_DEBUG_SECRET as string | undefined;
@@ -61,6 +61,6 @@ export function useDebugSetXp() {
 		mutationFn: (xp: number) =>
 			api
 				.post("debug/set-xp", { json: { xp }, headers: debugHeaders() })
-				.json<{ ok: true; state: GameState }>(),
+				.json<{ ok: true; state: GameState; events: GameEvent[] }>(),
 	});
 }

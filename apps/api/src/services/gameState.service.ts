@@ -8,17 +8,23 @@ import {
 	ActionSchema,
 	applyAction,
 	buildGameStateFromPersisted,
+	checkForLevelUp,
 	computeOpacityMask,
 	computeWalkableMaskForFloor,
 	createActionContext,
 	PersistedDynamicStateSchema,
 	regenerateBaseMaps,
 	type Action,
+	type Actor,
+	type ActorId,
 	type ApplyActionContext,
 	type ApplyActionResult,
 	type BaseLayerFloor,
+	type GameEvent,
 	type GameState,
+	type PendingInteraction,
 	type PersistedDynamicState,
+	type Rng,
 } from "@app/shared";
 import { affixesById, classes, itemsById, skillsById, vaults } from "@app/content";
 import type { ClassSkillPools } from "@app/shared";
@@ -180,6 +186,19 @@ function makeSessionContext(gameId: string, errorContext?: string): ApplyActionC
 		itemsById,
 		affixesById,
 	);
+}
+
+/**
+ * Run a level-up check for a hero using the static class skill pools.
+ * Does not require walkability masks — use this instead of makeSessionContext
+ * when the caller only needs to evaluate XP thresholds and generate skill offers.
+ */
+export function applyLevelUpCheck(
+	actor: Actor,
+	actorId: ActorId,
+	rng: Rng,
+): { actor: Actor; events: GameEvent[]; pendingInteraction: PendingInteraction } {
+	return checkForLevelUp(actor, actorId, rng, (id) => classSkillPools[id]);
 }
 
 /**

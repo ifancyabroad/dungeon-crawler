@@ -20,15 +20,12 @@ export function LevelUpModal() {
 	const state = useGameStore((s) => s.state);
 	const sendAction = useGameStore((s) => s.sendAction);
 	const actionInProgress = useGameStore((s) => s.actionInProgress);
-	const levelUpEvents = useGameStore((s) => s.levelUpEvents);
-
 	const pi = state?.pendingInteraction;
 	// Wait for any in-progress animation (attack bump, skill FX, etc.) to finish
 	// before showing the modal, so it doesn't interrupt the kill animation.
 	if (!pi || pi.type !== "skill_choice" || actionInProgress) return null;
 
-	const { levelReached, offers, rerollsUsed, rerollCost } = pi;
-	const hpGained = levelUpEvents[0]?.hpGained;
+	const { levelReached, hpGained, offers, rerollsUsed, rerollCost } = pi;
 
 	// Count the hero's current active and passive skills for cap progress display
 	const heroActor = state ? getHero(state) : undefined;

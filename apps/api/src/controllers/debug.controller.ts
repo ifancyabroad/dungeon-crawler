@@ -6,9 +6,15 @@
 
 import type { RequestHandler } from "express";
 import { z } from "zod";
-import { gameStateToPersisted, getHero, PersistedDynamicStateSchema } from "@app/shared";
+import {
+	createRngFromState,
+	gameStateToPersisted,
+	getHero,
+	PersistedDynamicStateSchema,
+} from "@app/shared";
 import { skillsById } from "@app/content";
 import {
+	applyLevelUpCheck,
 	getSessionState,
 	setSessionState,
 	setDebugFlags,
@@ -185,19 +191,31 @@ export const setXp: RequestHandler = async (req, res) => {
 		return;
 	}
 
-	const updatedHero = { ...hero, xp: parsed.data.xp };
+	const heroWithXp = { ...hero, xp: parsed.data.xp };
+	const { rng, getState: getRngState } = createRngFromState(state.rngState);
+	const {
+		actor: updatedHero,
+		events,
+		pendingInteraction,
+	} = applyLevelUpCheck(heroWithXp, hero.id, rng);
+
 	const floorState = state.floors[state.heroFloorIndex].state;
 	const updatedActors = { ...floorState.actorsById, [hero.id]: updatedHero };
 	const updatedFloorState = { ...floorState, actorsById: updatedActors };
 	const updatedFloors = state.floors.map((f, i) =>
 		i === state.heroFloorIndex ? { ...f, state: updatedFloorState } : f,
 	);
-	const newState = { ...state, floors: updatedFloors };
+	const newState = {
+		...state,
+		floors: updatedFloors,
+		pendingInteraction,
+		rngState: getRngState(),
+	};
 
 	const persisted = gameStateToPersisted(newState);
 	PersistedDynamicStateSchema.parse(persisted);
 	await persistDebugSnapshot(gameId, newState.turn, persisted);
 	setSessionState(gameId, newState);
 
-	res.json({ ok: true, state: newState });
+	res.json({ ok: true, state: newState, events });
 };
