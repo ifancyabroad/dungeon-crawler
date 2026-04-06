@@ -31,6 +31,15 @@ interface TargetingState {
 	 * Updated on pointer hover in the Phaser scene.
 	 */
 	aoePreviewIndices: number[];
+	/**
+	 * The full spatial footprint of the skill — all tiles the skill could ever reach,
+	 * regardless of whether they currently contain a valid target.
+	 *
+	 * For tile-targeted skills this equals validTileIndices.
+	 * For actor-targeted skills this is the area tiles (e.g. cardinal lines for charge,
+	 * full Chebyshev range for magic arrow). Tiles outside this set are dimmed.
+	 */
+	potentialTileIndices: number[];
 }
 
 interface TargetingActions {
@@ -40,6 +49,7 @@ interface TargetingActions {
 		validTileIndices: number[],
 		validActorIds: string[],
 		skillRank?: number,
+		potentialTileIndices?: number[],
 	) => void;
 	/** Exit targeting mode without firing (e.g. Escape key). */
 	exitTargeting: () => void;
@@ -56,12 +66,19 @@ const emptyState: TargetingState = {
 	validTileIndices: [],
 	validActorIds: [],
 	aoePreviewIndices: [],
+	potentialTileIndices: [],
 };
 
 export const useTargetingStore = create<TargetingStore>((set) => ({
 	...emptyState,
 
-	enterTargeting: (skillDef, validTileIndices, validActorIds, skillRank = 1) =>
+	enterTargeting: (
+		skillDef,
+		validTileIndices,
+		validActorIds,
+		skillRank = 1,
+		potentialTileIndices,
+	) =>
 		set({
 			active: true,
 			skillDef,
@@ -69,6 +86,7 @@ export const useTargetingStore = create<TargetingStore>((set) => ({
 			validTileIndices,
 			validActorIds,
 			aoePreviewIndices: [],
+			potentialTileIndices: potentialTileIndices ?? validTileIndices,
 		}),
 
 	exitTargeting: () => set(emptyState),

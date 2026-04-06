@@ -2,10 +2,13 @@
  * TargetingSystem — encapsulates all targeting-mode UI for MainScene.
  *
  * Responsibilities:
- *   - Pointer-down: confirm target and dispatch the use_skill action.
+ *   - Pointer-down: confirm target and dispatch the use_skill action, or cancel on miss.
  *   - Pointer-move: track hovered tile, compute AoE preview, re-render overlay.
  *   - Store subscription: re-render when targeting store changes.
- *   - Overlay rendering: DCSS-style corner brackets on valid/AoE tiles.
+ *   - Overlay rendering:
+ *       • Dims every tile outside the skill's potential area (potentialTileIndices).
+ *       • Shows valid-hover (orange) or invalid-hover (grey) fills on the hovered tile.
+ *       • Shows AOE preview fills in orange when hovering a valid tile target.
  *
  * Lifecycle (called by MainScene):
  *   1. new TargetingSystem(scene, mapWidth, mapHeight) — created once in create().
@@ -20,6 +23,11 @@ import { useTargetingStore } from "../../features/targeting/targetingStore";
 import type { TargetingStore } from "../../features/targeting/targetingStore";
 import { useGameStore } from "../../features/game/gameStore";
 import { TILE_WIDTH, TILE_HEIGHT } from "../tiles/tilesetRegistry";
+
+// Colours used in the overlay.
+const DIM_COLOR = 0x000000;
+const ORANGE = 0xff8800; // valid hover + AOE preview
+const INORANGE = 0x888888;
 
 export class TargetingSystem {
 	private graphics: Phaser.GameObjects.Graphics | null = null;
@@ -94,7 +102,11 @@ export class TargetingSystem {
 		const tileIdx = tileY * this.mapWidth + tileX;
 
 		if (targeting.skillDef.targetType === "tile") {
-			if (!targeting.validTileIndices.includes(tileIdx)) return;
+			if (!targeting.validTileIndices.includes(tileIdx)) {
+				// Clicking outside a valid tile cancels targeting.
+				targeting.exitTargeting();
+				return;
+			}
 			const action = {
 				type: "use_skill" as const,
 				skillId: targeting.skillDef.id,
@@ -127,7 +139,11 @@ export class TargetingSystem {
 				}
 			}
 
-			if (!clickedActorId) return;
+			if (!clickedActorId) {
+				// Clicking anywhere without a valid actor cancels targeting.
+				targeting.exitTargeting();
+				return;
+			}
 			const action = {
 				type: "use_skill" as const,
 				skillId: targeting.skillDef.id,
@@ -238,9 +254,13 @@ export class TargetingSystem {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Render DCSS-style corner brackets on each valid/AoE tile.
-	 * Rather than filling entire tiles (obscuring the map), we draw 4 small L-shaped
-	 * brackets at each tile's corners. The hovered tile gets an additional faint fill.
+	 * Render the targeting overlay:
+	 *   1. Dim all tiles outside the skill's potential range.
+	 *   2. Draw AOE preview fills (orange) when hovering a valid tile.
+	 *   3. Draw a hover fill (orange = valid, grey = invalid) on the hovered tile.
+	 *
+	 * Tile fills at depth 20 sit above actor sprites (depth 9–10), so out-of-range
+	 * actors are naturally dimmed by the overlay.
 	 */
 	render(ts: TargetingStore): void {
 		if (!ts.active) {
@@ -255,85 +275,66 @@ export class TargetingSystem {
 		const g = this.graphics;
 		g.clear();
 
-		const CORNER_LEN = 5;
-		const CORNER_THICK = 2;
+		const potentialSet = new Set(ts.potentialTileIndices);
+		const heroIdx = this.getHeroIdx();
 
-		const drawCorners = (tileX: number, tileY: number, color: number, alpha: number): void => {
-			const x = tileX * TILE_WIDTH;
-			const y = tileY * TILE_HEIGHT;
-			const w = TILE_WIDTH;
-			const h = TILE_HEIGHT;
-			g.fillStyle(color, alpha);
-			g.fillRect(x, y, CORNER_LEN, CORNER_THICK);
-			g.fillRect(x, y, CORNER_THICK, CORNER_LEN);
-			g.fillRect(x + w - CORNER_LEN, y, CORNER_LEN, CORNER_THICK);
-			g.fillRect(x + w - CORNER_THICK, y, CORNER_THICK, CORNER_LEN);
-			g.fillRect(x, y + h - CORNER_THICK, CORNER_LEN, CORNER_THICK);
-			g.fillRect(x, y + h - CORNER_LEN, CORNER_THICK, CORNER_LEN);
-			g.fillRect(x + w - CORNER_LEN, y + h - CORNER_THICK, CORNER_LEN, CORNER_THICK);
-			g.fillRect(x + w - CORNER_THICK, y + h - CORNER_LEN, CORNER_THICK, CORNER_LEN);
-		};
+		// --- Pass 1: dim all out-of-range tiles (excluding the hero's own tile) ---
+		g.fillStyle(DIM_COLOR, 0.6);
+		for (let idx = 0; idx < this.mapWidth * this.mapHeight; idx++) {
+			if (!potentialSet.has(idx) && idx !== heroIdx) {
+				const tx = idx % this.mapWidth;
+				const ty = Math.floor(idx / this.mapWidth);
+				g.fillRect(tx * TILE_WIDTH, ty * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
+			}
+		}
 
 		const drawFill = (tileX: number, tileY: number, color: number, alpha: number): void => {
 			g.fillStyle(color, alpha);
 			g.fillRect(tileX * TILE_WIDTH, tileY * TILE_HEIGHT, TILE_WIDTH, TILE_HEIGHT);
 		};
 
-		if (ts.skillDef?.targetType === "tile") {
-			const VALID_COLOR = 0x4499ff;
-			const AOE_COLOR = 0xff8800;
+		// --- Pass 2: AOE preview (tile-targeted skills only) ---
+		if (ts.skillDef?.targetType === "tile" && ts.aoePreviewIndices.length > 0) {
 			const hoveredInRange =
 				this.hoveredIdx !== null && ts.validTileIndices.includes(this.hoveredIdx);
 
-			for (const idx of ts.validTileIndices) {
+			for (const idx of ts.aoePreviewIndices) {
 				const tx = idx % this.mapWidth;
 				const ty = Math.floor(idx / this.mapWidth);
-				const isHovered = idx === this.hoveredIdx;
-				drawCorners(tx, ty, VALID_COLOR, isHovered ? 0.95 : 0.55);
+				const isHovered = hoveredInRange && idx === this.hoveredIdx;
+				drawFill(tx, ty, ORANGE, isHovered ? 0.35 : 0.18);
 			}
+		}
 
-			if (hoveredInRange && this.hoveredIdx !== null) {
-				const tx = this.hoveredIdx % this.mapWidth;
-				const ty = Math.floor(this.hoveredIdx / this.mapWidth);
-				drawFill(tx, ty, VALID_COLOR, 0.15);
-			}
+		// --- Pass 3: hover fill ---
+		if (this.hoveredIdx === null) return;
+		if (!potentialSet.has(this.hoveredIdx)) return;
 
-			if (ts.aoePreviewIndices.length > 0) {
-				for (const idx of ts.aoePreviewIndices) {
-					const tx = idx % this.mapWidth;
-					const ty = Math.floor(idx / this.mapWidth);
-					drawFill(tx, ty, AOE_COLOR, 0.12);
-					drawCorners(tx, ty, AOE_COLOR, 0.75);
-				}
-				if (hoveredInRange && this.hoveredIdx !== null) {
-					const tx = this.hoveredIdx % this.mapWidth;
-					const ty = Math.floor(this.hoveredIdx / this.mapWidth);
-					drawFill(tx, ty, AOE_COLOR, 0.25);
-					drawCorners(tx, ty, AOE_COLOR, 1.0);
-				}
+		const tx = this.hoveredIdx % this.mapWidth;
+		const ty = Math.floor(this.hoveredIdx / this.mapWidth);
+
+		if (ts.skillDef?.targetType === "tile") {
+			// Skip hover fill when the AOE preview already covers the hovered tile brightly.
+			if (
+				ts.aoePreviewIndices.length === 0 ||
+				!ts.aoePreviewIndices.includes(this.hoveredIdx)
+			) {
+				const isValid = ts.validTileIndices.includes(this.hoveredIdx);
+				drawFill(tx, ty, isValid ? ORANGE : INORANGE, isValid ? 0.3 : 0.15);
 			}
 			return;
 		}
 
 		if (ts.skillDef?.targetType === "actor") {
-			const ACTOR_COLOR = 0x44ff88;
 			const state = useGameStore.getState().state;
 			const floor = state?.floors[state.heroFloorIndex];
-			if (!floor) return;
-
-			for (const id of ts.validActorIds) {
-				const actor = floor.state.actorsById[id];
-				if (!actor || !actor.alive) continue;
-				const tx = actor.idx % this.mapWidth;
-				const ty = Math.floor(actor.idx / this.mapWidth);
-				const isHovered = actor.idx === this.hoveredIdx;
-				if (isHovered) {
-					drawFill(tx, ty, ACTOR_COLOR, 0.2);
-					drawCorners(tx, ty, ACTOR_COLOR, 1.0);
-				} else {
-					drawCorners(tx, ty, ACTOR_COLOR, 0.6);
-				}
-			}
+			const isValidActorTile =
+				!!floor &&
+				ts.validActorIds.some((id) => {
+					const actor = floor.state.actorsById[id];
+					return actor?.alive && actor.idx === this.hoveredIdx;
+				});
+			drawFill(tx, ty, isValidActorTile ? ORANGE : INORANGE, isValidActorTile ? 0.3 : 0.15);
 		}
 	}
 }

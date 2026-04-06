@@ -2,6 +2,10 @@
  * SkillHotbar — shows the hero's active skills with cooldown overlays.
  * Clicking a skill with targetType "none" fires immediately;
  * "tile" or "actor" skills enter targeting mode in Phaser.
+ *
+ * During targeting mode:
+ *   - The active skill shows a × badge and clicking it cancels targeting.
+ *   - All other skills are disabled and non-interactive.
  */
 
 import { skillsById } from "@app/content";
@@ -38,6 +42,39 @@ function tilesInRange(heroIdx: number, width: number, height: number, range: num
 			if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
 				result.push(ny * width + nx);
 			}
+		}
+	}
+	return result;
+}
+
+/**
+ * All flat tile indices on the 4 cardinal lines from `heroIdx` within `range`.
+ * Each line stops at the first wall tile (inclusive stop — wall tile not included).
+ * Used to compute the potential target area for charge-type skills.
+ */
+function tilesInCardinalLines(
+	heroIdx: number,
+	width: number,
+	height: number,
+	range: number,
+	opacityMask: Uint8Array | null,
+): number[] {
+	const { x: hx, y: hy } = idxToXY(heroIdx, width);
+	const result: number[] = [];
+	const directions = [
+		[0, -1],
+		[0, 1],
+		[-1, 0],
+		[1, 0],
+	] as const;
+	for (const [ddx, ddy] of directions) {
+		for (let dist = 1; dist <= range; dist++) {
+			const nx = hx + ddx * dist;
+			const ny = hy + ddy * dist;
+			if (nx < 0 || nx >= width || ny < 0 || ny >= height) break;
+			const idx = ny * width + nx;
+			if (opacityMask && opacityMask[idx] === 1) break;
+			result.push(idx);
 		}
 	}
 	return result;
@@ -104,6 +141,9 @@ export function SkillHotbar() {
 	const state = useGameStore((s) => s.state);
 	const sendAction = useGameStore((s) => s.sendAction);
 	const enterTargeting = useTargetingStore((s) => s.enterTargeting);
+	const exitTargeting = useTargetingStore((s) => s.exitTargeting);
+	const isTargeting = useTargetingStore((s) => s.active);
+	const activeSkillDef = useTargetingStore((s) => s.skillDef);
 	const opacityMask = useMapStore((s) => s.opacityMask);
 
 	if (!state) return null;
@@ -114,6 +154,13 @@ export function SkillHotbar() {
 	const floor = state.floors[state.heroFloorIndex];
 	function handleSkillClick(skillId: string) {
 		if (!hero || !floor) return;
+
+		// In targeting mode, clicking the active skill cancels; all others are blocked.
+		if (isTargeting) {
+			if (activeSkillDef?.id === skillId) exitTargeting();
+			return;
+		}
+
 		if (!hero.armorProficient) return;
 		const skillDef = skillsById[skillId as keyof typeof skillsById];
 		if (!skillDef || skillDef.skillType !== "active") return;
@@ -159,7 +206,8 @@ export function SkillHotbar() {
 				}
 				return true;
 			});
-			enterTargeting(activeDef, validTileIndices, [], skillState.rank);
+			// For tile skills, potential area equals the valid targets.
+			enterTargeting(activeDef, validTileIndices, [], skillState.rank, validTileIndices);
 			return;
 		}
 
@@ -179,7 +227,18 @@ export function SkillHotbar() {
 						return actor && visibilityMask[actor.idx] === 1;
 					})
 				: allActorIds;
-			enterTargeting(activeDef, [], validActorIds, skillState.rank);
+
+			// Potential area: cardinal lines for charge, full Chebyshev range for others.
+			const rawPotential = hasCharge
+				? tilesInCardinalLines(hero.idx, fw, fh, range, opacityMask ?? null)
+				: tilesInRange(hero.idx, fw, fh, range);
+			const potentialTileIndices = rawPotential.filter((idx) => {
+				if (visibilityMask && visibilityMask[idx] !== 1) return false;
+				if (opacityMask && opacityMask[idx] === 1) return false;
+				return true;
+			});
+
+			enterTargeting(activeDef, [], validActorIds, skillState.rank, potentialTileIndices);
 		}
 	}
 
@@ -204,15 +263,23 @@ export function SkillHotbar() {
 					| ActiveSkillDefinition
 					| undefined;
 				if (!skillDef) return null;
+
+				const isActiveTargetSkill = isTargeting && activeSkillDef?.id === skillId;
+				const isOtherDuringTargeting = isTargeting && !isActiveTargetSkill;
+
 				const onCooldown = skillState.cooldownRemaining > 0;
-				const disabled = onCooldown || armorLocked;
+				// During targeting, only the active skill is interactive.
+				const disabled =
+					isOtherDuringTargeting || (!isTargeting && (onCooldown || armorLocked));
 				const displayName = skillDef?.name ?? skillId;
 				const rankGlyph = rankRoman(skillState.rank);
-				const ariaLabel = armorLocked
-					? `${displayName} ${rankGlyph}, unavailable (not proficient with equipped armor)`
-					: onCooldown
-						? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
-						: `${displayName} ${rankGlyph}, ready`;
+				const ariaLabel = isActiveTargetSkill
+					? `${displayName} ${rankGlyph}, targeting active — click to cancel`
+					: armorLocked
+						? `${displayName} ${rankGlyph}, unavailable (not proficient with equipped armor)`
+						: onCooldown
+							? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
+							: `${displayName} ${rankGlyph}, ready`;
 				return (
 					<Tooltip
 						key={skillId}
@@ -245,10 +312,10 @@ export function SkillHotbar() {
 								size={48}
 								className={[
 									"absolute inset-0 m-auto",
-									armorLocked ? "opacity-40" : "",
+									armorLocked || isOtherDuringTargeting ? "opacity-40" : "",
 								].join(" ")}
 							/>
-							{onCooldown && skillDef && skillDef.cooldown > 0 && (
+							{onCooldown && skillDef && skillDef.cooldown > 0 && !isTargeting && (
 								<div
 									aria-hidden
 									className="pointer-events-none absolute inset-0 -rotate-90"
@@ -257,7 +324,7 @@ export function SkillHotbar() {
 									}}
 								/>
 							)}
-							{onCooldown && (
+							{onCooldown && !isTargeting && (
 								<span
 									aria-hidden
 									className="pointer-events-none absolute inset-0 flex items-center justify-center tabular-nums text-text-bright text-base leading-none"
@@ -265,12 +332,22 @@ export function SkillHotbar() {
 									{skillState.cooldownRemaining}
 								</span>
 							)}
+							{/* Rank glyph — top right */}
 							<span
 								aria-hidden
 								className="pointer-events-none absolute top-0 right-0 px-0.5 text-primary text-xs leading-none bg-bg-base/80"
 							>
 								{rankGlyph}
 							</span>
+							{/* Cancel badge — bottom left, shown only for the active targeting skill */}
+							{isActiveTargetSkill && (
+								<span
+									aria-hidden
+									className="pointer-events-none absolute bottom-0 left-0 px-0.5 text-text-bright text-xs leading-none bg-bg-base/80"
+								>
+									×
+								</span>
+							)}
 						</button>
 					</Tooltip>
 				);
