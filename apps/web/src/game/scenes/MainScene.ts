@@ -29,6 +29,8 @@ import { LootLayerManager } from "./main/LootLayerManager";
 import { dispatchFxAndSync as dispatchFxPipeline } from "./main/fxOrchestrator";
 import { FogOfWarRenderer } from "./main/fogOfWarRenderer";
 import { attachKeyboardOnline, attachTargetingEscapeKey } from "./main/inputBindings";
+import { TileMarker } from "./main/tileMarker";
+import { MouseMovementController } from "./main/mouseMovement";
 import { buildMapVisuals } from "./main/mapBuilder";
 import { onStoreUpdate } from "./main/turnUpdatePipeline";
 import type { SyncState } from "./main/types";
@@ -60,6 +62,8 @@ export default class MainScene extends Phaser.Scene {
 
 	private fogRenderer = new FogOfWarRenderer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT);
 	private actorSpriteSync = new ActorSpriteSync();
+	private tileMarker: TileMarker | null = null;
+	private mouseMovement: MouseMovementController | null = null;
 
 	constructor() {
 		super("Main");
@@ -75,6 +79,10 @@ export default class MainScene extends Phaser.Scene {
 			this.unsubWaitForState = null;
 			this.unsubHeroSync?.();
 			this.unsubHeroSync = null;
+			this.mouseMovement?.destroy();
+			this.mouseMovement = null;
+			this.tileMarker?.destroy();
+			this.tileMarker = null;
 			this.targetingSystem?.destroy();
 			this.targetingSystem = null;
 			this.cleanupMapObjects();
@@ -95,8 +103,19 @@ export default class MainScene extends Phaser.Scene {
 		if (fromState) this.buildMapAndHero(fromState.config, fromState.hero);
 		else this.subscribeUntilStateArrives();
 
-		attachKeyboardOnline(this);
+		attachKeyboardOnline(this, () => this.mouseMovement?.cancelTravel());
 		attachTargetingEscapeKey(this);
+
+		// MouseMovement must attach before TargetingSystem so its POINTER_DOWN handler fires
+		// first. TargetingSystem.onPointerDown calls exitTargeting() synchronously, which sets
+		// active=false before our handler runs — causing false negatives on the targeting guard.
+		this.tileMarker = new TileMarker(this);
+		this.mouseMovement = new MouseMovementController(
+			this,
+			fromState?.config.width ?? DEFAULT_MAP_WIDTH,
+			fromState?.config.height ?? DEFAULT_MAP_HEIGHT,
+		);
+		this.mouseMovement.attach(this.tileMarker);
 
 		this.targetingSystem = new TargetingSystem(
 			this,
@@ -146,6 +165,7 @@ export default class MainScene extends Phaser.Scene {
 
 		this.cameras.main.startFollow(this.player, true, 1, 1);
 		this.targetingSystem?.updateDimensions(this.mapWidth, this.mapHeight);
+		this.mouseMovement?.updateDimensions(this.mapWidth, this.mapHeight);
 
 		this.destroyFx();
 		this.assignFloorFx(createFloorFx(this, this.mapWidth));

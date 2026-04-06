@@ -60,6 +60,7 @@ export {
 	type RoomTag,
 	type VaultDef,
 	type VaultPlacement,
+	bfsNextStep,
 	computeOpacityMask,
 	computeVisibility,
 	mergeExplored,

@@ -11,8 +11,9 @@ import {
 import { useGameStore } from "../../../features/game/gameStore";
 import { useTargetingStore } from "../../../features/targeting/targetingStore";
 
-export function attachKeyboardOnline(scene: Phaser.Scene): void {
+export function attachKeyboardOnline(scene: Phaser.Scene, onDirectionKey?: () => void): void {
 	const directionAction = (direction: Direction) => {
+		onDirectionKey?.();
 		// Moving cancels targeting mode without sending a move action.
 		if (useTargetingStore.getState().active) {
 			useTargetingStore.getState().exitTargeting();
