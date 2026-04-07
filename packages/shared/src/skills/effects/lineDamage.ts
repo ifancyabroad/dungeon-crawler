@@ -57,9 +57,16 @@ export function applyLineDamage(
 			{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
 		];
 
-		// Apply passive area/any damage bonuses from the caster.
+		// Apply passive bonuses whose appliesTo matches the effect's attack category.
 		rawPackets.push(
-			...collectPassiveBonusPackets(caster, rng, "area", false, false, effect.damageType),
+			...collectPassiveBonusPackets(
+				caster,
+				rng,
+				effect.attackCategory,
+				false,
+				false,
+				effect.damageType,
+			),
 		);
 
 		// Data-driven area damage adjustments from active effects.

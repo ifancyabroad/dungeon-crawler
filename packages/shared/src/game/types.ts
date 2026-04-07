@@ -5,7 +5,7 @@
 
 import type { Action } from "./actions";
 import type { AttackResult, DamagePacket, WeaponDice } from "../combat/types";
-import type { DamageType } from "../config/combat";
+import type { AttackCategory, DamageType } from "../config/combat";
 import type { NpcAIState } from "./strategies/types";
 import type { FloorConfig } from "../map/types";
 import type { CombatAdjustments } from "./schemas";
@@ -61,8 +61,8 @@ export interface PassiveDamageBonus {
 	/** Dice expression, e.g. "1d6". */
 	dice: string;
 	damageType: DamageType;
-	/** Which attack types this bonus applies to. "ranged" covers single-target skill attacks. */
-	appliesTo: "melee" | "area" | "ranged" | "any";
+	/** Which attack category this bonus applies to. Matched against the effect's attackCategory. "any" fires on all attacks. */
+	appliesTo: AttackCategory;
 	/** If true, only fires on a critical hit (melee only). */
 	onCritOnly: boolean;
 	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
@@ -82,8 +82,8 @@ export interface PassiveFlatDamageBonus {
 	amount: number;
 	/** The damage type this bonus adds. */
 	damageType: DamageType;
-	/** Which attack types this bonus applies to. "ranged" covers single-target skill attacks. */
-	appliesTo: "melee" | "area" | "ranged" | "any";
+	/** Which attack category this bonus applies to. Matched against the effect's attackCategory. "any" fires on all attacks. */
+	appliesTo: AttackCategory;
 	/** Skill that applied this bonus. Used to replace entries when upgrading a passive skill. */
 	sourceSkillId?: string;
 	/** Item instance that applied this bonus. Used to remove entries when unequipping an item. */

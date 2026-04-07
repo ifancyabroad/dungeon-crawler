@@ -157,6 +157,7 @@ describe("area_damage save scaling", () => {
 			[
 				{
 					type: "area_damage",
+					attackCategory: "spell",
 					dice: "2d6",
 					radiusTiles: 1,
 					damageType: "fire",
@@ -170,6 +171,7 @@ describe("area_damage save scaling", () => {
 			[
 				{
 					type: "area_damage",
+					attackCategory: "spell",
 					dice: "2d6",
 					radiusTiles: 1,
 					damageType: "fire",
@@ -183,6 +185,7 @@ describe("area_damage save scaling", () => {
 			[
 				{
 					type: "area_damage",
+					attackCategory: "spell",
 					dice: "2d6",
 					radiusTiles: 1,
 					damageType: "fire",

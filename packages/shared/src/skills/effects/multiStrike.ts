@@ -1,9 +1,13 @@
 /**
  * Multi-strike effect: makes strikeCount separate attack rolls against a single target.
  *
+ * When weaponDice: true, uses the caster's equipped weapon dice for each strike.
+ * bonusDice (if set) adds rank-scaling damage on top of each hit.
+ *
  * Each strike is an independent d20 roll + STR modifier vs the target's AC. Crits
- * double the damage dice for that strike. Passive melee and "any" bonuses apply to
- * every strike. Active meleeDamageFlat adjustments are included per strike.
+ * double the damage dice for that strike. Passive bonuses matching the effect's
+ * attackCategory apply to every strike. Active melee damage adjustments are included
+ * per strike.
  *
  * Emits one skill_hit event per strike (so the combat log and client animations
  * can react individually). Processing stops early if the target dies mid-combo.
@@ -28,6 +32,10 @@ export function applyMultiStrike(
 ): { floorState: FloorState; events: GameEvent[] } | { error: string } {
 	const initialTarget = floorState.actorsById[targetActorId];
 	if (!initialTarget || !initialTarget.alive) return { error: "multi_strike_no_target" };
+
+	const isWeaponDice = effect.weaponDice === true;
+	const dice = isWeaponDice ? caster.equippedWeaponDice.dice : effect.dice!;
+	const damageType = isWeaponDice ? caster.equippedWeaponDice.damageType : effect.damageType!;
 
 	const events: GameEvent[] = [];
 	let actorsById = { ...floorState.actorsById };
@@ -78,29 +86,36 @@ export function applyMultiStrike(
 
 		if (hit) {
 			const critMultiplier = isCritical ? 2 : 1;
-			const rawDamage = rollDiceExpr(rng, effect.dice, critMultiplier);
+			const rawDamage = rollDiceExpr(rng, dice, critMultiplier);
 			const rawAmount = Math.max(0, rawDamage + strMod);
 
 			const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
-				{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
+				{ damageType, rawAmount, effectiveAmount: 0 },
 			];
 
-			// Passive melee / any bonuses.
+			// Bonus dice for higher ranks.
+			if (effect.bonusDice) {
+				rawPackets.push({
+					damageType: effect.bonusDamageType ?? damageType,
+					rawAmount: rollDiceExpr(rng, effect.bonusDice, critMultiplier),
+					effectiveAmount: 0,
+				});
+			}
+
+			// Passive bonuses whose appliesTo matches the effect's attack category.
 			rawPackets.push(
 				...collectPassiveBonusPackets(
 					caster,
 					rng,
-					"melee",
+					effect.attackCategory,
 					isCritical,
 					true,
-					effect.damageType,
+					damageType,
 				),
 			);
 
 			// Data-driven melee damage adjustments.
-			rawPackets.push(
-				...collectActiveEffectDamagePackets(caster, rng, "melee", effect.damageType),
-			);
+			rawPackets.push(...collectActiveEffectDamagePackets(caster, rng, "melee", damageType));
 
 			const resolved = resolveDamagePackets(rawPackets, currentTarget);
 			damage = resolved.totalEffectiveDamage;

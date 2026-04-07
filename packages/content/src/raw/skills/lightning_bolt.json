@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "line_damage",
+				"attackCategory": "spell",
 				"dice": "3d6",
 				"damageType": "lightning",
 				"scalingStat": "intelligence",
@@ -26,6 +27,7 @@
 		[
 			{
 				"type": "line_damage",
+				"attackCategory": "spell",
 				"dice": "5d6",
 				"damageType": "lightning",
 				"scalingStat": "intelligence",
@@ -39,6 +41,7 @@
 		[
 			{
 				"type": "line_damage",
+				"attackCategory": "spell",
 				"dice": "7d6",
 				"damageType": "lightning",
 				"scalingStat": "intelligence",

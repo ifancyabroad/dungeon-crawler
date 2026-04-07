@@ -23,8 +23,8 @@
 			},
 			{
 				"type": "single_target_damage",
-				"dice": "2d8",
-				"damageType": "slashing",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
 				"scalingStat": "strength",
 				"attackRoll": {
 					"modifierStat": "strength",
@@ -45,8 +45,9 @@
 			},
 			{
 				"type": "single_target_damage",
-				"dice": "3d8",
-				"damageType": "slashing",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"bonusDice": "1d8",
 				"scalingStat": "strength",
 				"attackRoll": {
 					"modifierStat": "strength",
@@ -67,8 +68,9 @@
 			},
 			{
 				"type": "single_target_damage",
-				"dice": "4d8",
-				"damageType": "slashing",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"bonusDice": "2d8",
 				"scalingStat": "strength",
 				"attackRoll": {
 					"modifierStat": "strength",

@@ -12,7 +12,7 @@
 				"type": "add_damage_dice",
 				"dice": "1d4",
 				"damageType": "piercing",
-				"appliesTo": "melee",
+				"appliesTo": "weapon_attack",
 				"onCritOnly": false
 			}
 		],
@@ -21,7 +21,7 @@
 				"type": "add_damage_dice",
 				"dice": "1d6",
 				"damageType": "piercing",
-				"appliesTo": "melee",
+				"appliesTo": "weapon_attack",
 				"onCritOnly": false
 			}
 		],
@@ -30,7 +30,7 @@
 				"type": "add_damage_dice",
 				"dice": "1d8",
 				"damageType": "piercing",
-				"appliesTo": "melee",
+				"appliesTo": "weapon_attack",
 				"onCritOnly": false
 			}
 		]

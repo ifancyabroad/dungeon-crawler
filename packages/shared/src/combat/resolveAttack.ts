@@ -100,12 +100,14 @@ export function resolveAttack(
 			},
 		];
 
-		// Apply passive damage bonuses from the attacker
+		// Apply passive damage bonuses from the attacker.
+		// WASD melee weapon attacks use "weapon_attack" category.
+		// (When ranged weapons are added, this still passes "weapon_attack".)
 		rawPackets.push(
 			...collectPassiveBonusPackets(
 				attacker,
 				rng,
-				"melee",
+				"weapon_attack",
 				critical,
 				true,
 				weapon.damageType,

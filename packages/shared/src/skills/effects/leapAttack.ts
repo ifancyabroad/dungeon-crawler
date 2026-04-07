@@ -3,6 +3,8 @@
  * Chebyshev range — no clear path required), then deals AoE damage to all actors
  * within `landingRadiusTiles` of the landing tile.
  *
+ * When weaponDice: true, uses the caster's equipped weapon dice for the landing AoE.
+ * bonusDice (if set) adds rank-scaling damage on top.
  * The caster is excluded from AoE damage. Wall tiles (opacityMask === 1) and
  * occupied tiles (another living actor already there) are rejected as landing spots.
  */
@@ -53,6 +55,12 @@ export function applyLeapAttack(
 	const movedCaster: Actor = { ...caster, idx: targetTileIdx };
 	const events: GameEvent[] = [];
 
+	const isWeaponDice = effect.weaponDice === true;
+	const dice = isWeaponDice ? movedCaster.equippedWeaponDice.dice : effect.dice!;
+	const damageType = isWeaponDice
+		? movedCaster.equippedWeaponDice.damageType
+		: effect.damageType!;
+
 	const statMod =
 		effect.scalingStat !== undefined
 			? abilityModifier(movedCaster.attributes[effect.scalingStat])
@@ -70,29 +78,36 @@ export function applyLeapAttack(
 		const { x: ax, y: ay } = idxToXY(actor.idx, width);
 		if (chebyshevDistance(ax, ay, tx, ty) > effect.landingRadiusTiles) continue;
 
-		const rawDamage = rollDiceExpr(rng, effect.dice);
+		const rawDamage = rollDiceExpr(rng, dice);
 		const rawAmount = Math.max(0, rawDamage + statMod);
 
 		const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
-			{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
+			{ damageType, rawAmount, effectiveAmount: 0 },
 		];
 
-		// Apply passive area/any damage bonuses.
+		// Bonus dice for higher ranks.
+		if (effect.bonusDice) {
+			rawPackets.push({
+				damageType: effect.bonusDamageType ?? damageType,
+				rawAmount: rollDiceExpr(rng, effect.bonusDice),
+				effectiveAmount: 0,
+			});
+		}
+
+		// Apply passive bonuses whose appliesTo matches the effect's attack category.
 		rawPackets.push(
 			...collectPassiveBonusPackets(
 				movedCaster,
 				rng,
-				"area",
+				effect.attackCategory,
 				false,
 				false,
-				effect.damageType,
+				damageType,
 			),
 		);
 
 		// Data-driven area damage adjustments from active effects.
-		rawPackets.push(
-			...collectActiveEffectDamagePackets(movedCaster, rng, "area", effect.damageType),
-		);
+		rawPackets.push(...collectActiveEffectDamagePackets(movedCaster, rng, "area", damageType));
 
 		const resolved = resolveDamagePackets(rawPackets, actor);
 		const effectiveDamage = resolved.totalEffectiveDamage;

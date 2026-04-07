@@ -1,12 +1,15 @@
 /**
  * Single target damage effect: deals damage to one selected actor.
  *
+ * When weaponDice: true, uses the caster's equipped weapon dice for the base roll.
+ * bonusDice (if set) adds rank-scaling damage on top.
+ *
  * Resolution order:
  *  1. If attackRoll is configured, roll D20 + modifier (+ proficiency) vs target AC.
  *     On a miss emit skill_miss and return — no damage, no saving throw.
  *  2. Roll damage dice (doubled on a crit when attackRoll was used).
  *  3. If savingThrow is configured (and no attackRoll miss), apply it.
- *  4. Apply passive "any" bonuses from the caster, then resolve resistances.
+ *  4. Apply passive bonuses matching the effect's attackCategory, then resolve resistances.
  *  5. Emit skill_hit (with real AttackResult) when an attack roll was made,
  *     or area_hit (no roll) when the effect always hits.
  */
@@ -36,6 +39,10 @@ export function applySingleTargetDamage(
 ): { floorState: FloorState; events: GameEvent[] } | { error: string } {
 	const target = floorState.actorsById[targetActorId];
 	if (!target || !target.alive) return { error: "single_target_no_target" };
+
+	const isWeaponDice = effect.weaponDice === true;
+	const dice = isWeaponDice ? caster.equippedWeaponDice.dice : effect.dice!;
+	const damageType = isWeaponDice ? caster.equippedWeaponDice.damageType : effect.damageType!;
 
 	const events: GameEvent[] = [];
 
@@ -107,21 +114,38 @@ export function applySingleTargetDamage(
 			: 0;
 
 	const critMultiplier = isCritical ? 2 : 1;
-	const rawDamage = rollDiceExpr(rng, effect.dice, critMultiplier);
+	const rawDamage = rollDiceExpr(rng, dice, critMultiplier);
 	const rawAmount = Math.max(0, rawDamage + statMod);
 
 	const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
-		{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
+		{ damageType, rawAmount, effectiveAmount: 0 },
 	];
 
-	// Apply passive "ranged" and "any" bonuses.
-	// "melee" and "area" bonuses are excluded since this is a targeted skill attack.
+	// Bonus dice for higher ranks (e.g. reckless_attack rank 2+).
+	if (effect.bonusDice) {
+		rawPackets.push({
+			damageType: effect.bonusDamageType ?? damageType,
+			rawAmount: rollDiceExpr(rng, effect.bonusDice, critMultiplier),
+			effectiveAmount: 0,
+		});
+	}
+
+	// Apply passive bonuses whose appliesTo matches the effect's attack category.
 	rawPackets.push(
-		...collectPassiveBonusPackets(caster, rng, "ranged", isCritical, true, effect.damageType),
+		...collectPassiveBonusPackets(
+			caster,
+			rng,
+			effect.attackCategory,
+			isCritical,
+			true,
+			damageType,
+		),
 	);
 
-	// Data-driven ranged damage adjustments from active effects (e.g. a "focused_shot" buff).
-	rawPackets.push(...collectActiveEffectDamagePackets(caster, rng, "ranged", effect.damageType));
+	// Data-driven damage adjustments from active effects.
+	// Weapon attacks use "melee"; spell single-target attacks use "ranged" (arcane_surge etc.).
+	const activeEffectMode = effect.attackCategory === "weapon_attack" ? "melee" : "ranged";
+	rawPackets.push(...collectActiveEffectDamagePackets(caster, rng, activeEffectMode, damageType));
 
 	// --- Saving throw (optional, only when no attackRoll miss already occurred) ---
 	let packetsToResolve = rawPackets;

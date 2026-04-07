@@ -2,6 +2,9 @@
  * Combat rules literals — single place to tune DCs, proficiency, damage types, defaults.
  */
 
+export const ATTACK_CATEGORIES = ["weapon_attack", "spell", "impact", "any"] as const;
+export type AttackCategory = (typeof ATTACK_CATEGORIES)[number];
+
 export const DAMAGE_TYPES = [
 	"acid",
 	"bludgeoning",

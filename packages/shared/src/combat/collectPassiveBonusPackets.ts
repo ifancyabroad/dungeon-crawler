@@ -6,14 +6,14 @@
  *
  * @param actor                  The attacking actor.
  * @param rng                    RNG for dice rolls (flat bonuses do not consume RNG).
- * @param attackMode             Category to match against bonus.appliesTo.
+ * @param attackCategory         The attack category of the current effect. Matched against bonus.appliesTo.
  * @param isCritical             True when the attack is a critical hit.
  * @param applyOnCritMultiplier  True for melee/ranged (doubles onCritOnly dice). False for area.
  * @param primaryDamageType      Primary damage type of the attack — synergy filter for both types.
  */
 
 import type { Actor } from "../game/types";
-import type { DamageType } from "../config/combat";
+import type { AttackCategory, DamageType } from "../config/combat";
 import type { DamagePacket } from "./types";
 import type { Rng } from "../rng";
 import { rollDiceExpr } from "./dice";
@@ -21,7 +21,7 @@ import { rollDiceExpr } from "./dice";
 export function collectPassiveBonusPackets(
 	actor: Actor,
 	rng: Rng,
-	attackMode: "melee" | "area" | "ranged",
+	attackCategory: AttackCategory,
 	isCritical: boolean,
 	applyOnCritMultiplier: boolean,
 	primaryDamageType: DamageType,
@@ -29,7 +29,7 @@ export function collectPassiveBonusPackets(
 	const packets: DamagePacket[] = [];
 
 	for (const bonus of actor.passiveDamageBonuses) {
-		if (bonus.appliesTo !== attackMode && bonus.appliesTo !== "any") continue;
+		if (bonus.appliesTo !== "any" && bonus.appliesTo !== attackCategory) continue;
 		if (bonus.onCritOnly && !isCritical) continue;
 		if (
 			bonus.requiredDamageType !== undefined &&
@@ -45,7 +45,7 @@ export function collectPassiveBonusPackets(
 	}
 
 	for (const bonus of actor.passiveFlatDamageBonuses) {
-		if (bonus.appliesTo !== attackMode && bonus.appliesTo !== "any") continue;
+		if (bonus.appliesTo !== "any" && bonus.appliesTo !== attackCategory) continue;
 		if (
 			bonus.requiredDamageType !== undefined &&
 			bonus.requiredDamageType !== primaryDamageType

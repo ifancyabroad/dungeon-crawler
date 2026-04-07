@@ -1,7 +1,7 @@
 /**
  * Area damage effect: deals damage to every living actor within radiusTiles of a target tile.
- * Dice expression is parsed (e.g. "2d6"), optionally scaled by a stat modifier.
- * Passive damage bonuses from the caster that apply to "area" or "any" are also added.
+ * When weaponDice: true, uses the caster's equipped weapon dice instead of a fixed expression.
+ * Passive damage bonuses whose appliesTo matches the effect's attackCategory are also added.
  */
 
 import type { Actor, FloorState, GameEvent } from "../../game/types";
@@ -33,6 +33,10 @@ export function applyAreaDamage(
 	const { x: tx, y: ty } = idxToXY(targetTileIdx, width);
 	const events: GameEvent[] = [];
 
+	const isWeaponDice = effect.weaponDice === true;
+	const dice = isWeaponDice ? caster.equippedWeaponDice.dice : effect.dice!;
+	const damageType = isWeaponDice ? caster.equippedWeaponDice.damageType : effect.damageType!;
+
 	const statMod =
 		effect.scalingStat !== undefined
 			? abilityModifier(caster.attributes[effect.scalingStat])
@@ -51,26 +55,36 @@ export function applyAreaDamage(
 		const { x: ax, y: ay } = idxToXY(actor.idx, width);
 		if (chebyshevDistance(ax, ay, tx, ty) > effect.radiusTiles) continue;
 
-		const rawDamage = rollDiceExpr(rng, effect.dice);
+		const rawDamage = rollDiceExpr(rng, dice);
 		const rawAmount = Math.max(0, rawDamage + statMod);
 
 		const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
-			{
-				damageType: effect.damageType,
-				rawAmount,
-				effectiveAmount: 0,
-			},
+			{ damageType, rawAmount, effectiveAmount: 0 },
 		];
 
-		// Apply passive area/any damage bonuses from the caster.
+		// Bonus dice for higher ranks (e.g. whirlwind rank 2+).
+		if (effect.bonusDice) {
+			rawPackets.push({
+				damageType: effect.bonusDamageType ?? damageType,
+				rawAmount: rollDiceExpr(rng, effect.bonusDice),
+				effectiveAmount: 0,
+			});
+		}
+
+		// Apply passive bonuses whose appliesTo matches the effect's attack category.
 		rawPackets.push(
-			...collectPassiveBonusPackets(caster, rng, "area", false, false, effect.damageType),
+			...collectPassiveBonusPackets(
+				caster,
+				rng,
+				effect.attackCategory,
+				false,
+				false,
+				damageType,
+			),
 		);
 
 		// Data-driven areaDamageFlat adjustments from active effects (e.g. empower_spell).
-		rawPackets.push(
-			...collectActiveEffectDamagePackets(caster, rng, "area", effect.damageType),
-		);
+		rawPackets.push(...collectActiveEffectDamagePackets(caster, rng, "area", damageType));
 
 		let packetsToResolve = rawPackets;
 		if (effect.savingThrow !== undefined) {

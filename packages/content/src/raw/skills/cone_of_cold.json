@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "cone_damage",
+				"attackCategory": "spell",
 				"dice": "2d8",
 				"damageType": "cold",
 				"rangeTiles": 3,
@@ -28,6 +29,7 @@
 		[
 			{
 				"type": "cone_damage",
+				"attackCategory": "spell",
 				"dice": "3d8",
 				"damageType": "cold",
 				"rangeTiles": 3,
@@ -50,6 +52,7 @@
 		[
 			{
 				"type": "cone_damage",
+				"attackCategory": "spell",
 				"dice": "4d8",
 				"damageType": "cold",
 				"rangeTiles": 3,

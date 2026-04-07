@@ -9,8 +9,8 @@
 
 import { z } from "zod";
 import { AbilityNameSchema, CombatAdjustmentsSchema } from "../game/schemas";
-import { DAMAGE_TYPES } from "../config/combat";
-import { SKILL_TAGS, SKILL_SCHOOLS } from "../config/skills";
+import { ATTACK_CATEGORIES, DAMAGE_TYPES } from "../config/combat";
+import { SKILL_SCHOOLS, SKILL_TAGS } from "../config/skills";
 export type { SkillTag, SkillSchool } from "../config/skills";
 
 type DamageType = (typeof DAMAGE_TYPES)[number];
@@ -38,14 +38,23 @@ export type AttackRollConfig = z.infer<typeof AttackRollConfigSchema>;
 // Active skill effect descriptor schemas
 // ---------------------------------------------------------------------------
 
-export const AreaDamageEffectSchema = z.object({
-	type: z.literal("area_damage"),
-	dice: z.string(),
-	radiusTiles: z.number().int().min(0),
-	scalingStat: AbilityNameSchema.optional(),
-	damageType: DamageTypeSchema,
-	savingThrow: SavingThrowConfigSchema.optional(),
-});
+export const AreaDamageEffectSchema = z
+	.object({
+		type: z.literal("area_damage"),
+		attackCategory: z.enum(ATTACK_CATEGORIES),
+		weaponDice: z.literal(true).optional(),
+		dice: z.string().optional(),
+		damageType: DamageTypeSchema.optional(),
+		bonusDice: z.string().optional(),
+		bonusDamageType: DamageTypeSchema.optional(),
+		radiusTiles: z.number().int().min(0),
+		scalingStat: AbilityNameSchema.optional(),
+		savingThrow: SavingThrowConfigSchema.optional(),
+	})
+	.refine(
+		(d) => d.weaponDice === true || (d.dice !== undefined && d.damageType !== undefined),
+		"area_damage requires either weaponDice: true or both dice and damageType",
+	);
 
 export const ApplyStatusEffectSchema = z.object({
 	type: z.literal("apply_status"),
@@ -87,22 +96,32 @@ export const ChargeAttackEffectSchema = z.object({
 
 export const LineDamageEffectSchema = z.object({
 	type: z.literal("line_damage"),
+	attackCategory: z.enum(ATTACK_CATEGORIES),
 	dice: z.string(),
 	damageType: DamageTypeSchema,
 	scalingStat: AbilityNameSchema.optional(),
 	savingThrow: SavingThrowConfigSchema.optional(),
 });
 
-export const ConeDamageEffectSchema = z.object({
-	type: z.literal("cone_damage"),
-	dice: z.string(),
-	damageType: DamageTypeSchema,
-	rangeTiles: z.number().int().min(1),
-	/** Total arc in degrees (engine defaults to 90 when absent). */
-	angleDegrees: z.number().min(1).max(360).optional(),
-	scalingStat: AbilityNameSchema.optional(),
-	savingThrow: SavingThrowConfigSchema.optional(),
-});
+export const ConeDamageEffectSchema = z
+	.object({
+		type: z.literal("cone_damage"),
+		attackCategory: z.enum(ATTACK_CATEGORIES),
+		weaponDice: z.literal(true).optional(),
+		dice: z.string().optional(),
+		damageType: DamageTypeSchema.optional(),
+		bonusDice: z.string().optional(),
+		bonusDamageType: DamageTypeSchema.optional(),
+		rangeTiles: z.number().int().min(1),
+		/** Total arc in degrees (engine defaults to 90 when absent). */
+		angleDegrees: z.number().min(1).max(360).optional(),
+		scalingStat: AbilityNameSchema.optional(),
+		savingThrow: SavingThrowConfigSchema.optional(),
+	})
+	.refine(
+		(d) => d.weaponDice === true || (d.dice !== undefined && d.damageType !== undefined),
+		"cone_damage requires either weaponDice: true or both dice and damageType",
+	);
 
 const OnHitStatusSchema = z.object({
 	statusId: z.string(),
@@ -111,30 +130,50 @@ const OnHitStatusSchema = z.object({
 	value: z.number().optional(),
 });
 
-export const SingleTargetDamageEffectSchema = z.object({
-	type: z.literal("single_target_damage"),
-	dice: z.string(),
-	damageType: DamageTypeSchema,
-	scalingStat: AbilityNameSchema.optional(),
-	savingThrow: SavingThrowConfigSchema.optional(),
-	attackRoll: AttackRollConfigSchema.optional(),
-	/** If set, applies this status to the target on a successful hit. */
-	onHitStatus: OnHitStatusSchema.optional(),
-});
+export const SingleTargetDamageEffectSchema = z
+	.object({
+		type: z.literal("single_target_damage"),
+		attackCategory: z.enum(ATTACK_CATEGORIES),
+		weaponDice: z.literal(true).optional(),
+		dice: z.string().optional(),
+		damageType: DamageTypeSchema.optional(),
+		bonusDice: z.string().optional(),
+		bonusDamageType: DamageTypeSchema.optional(),
+		scalingStat: AbilityNameSchema.optional(),
+		savingThrow: SavingThrowConfigSchema.optional(),
+		attackRoll: AttackRollConfigSchema.optional(),
+		/** If set, applies this status to the target on a successful hit. */
+		onHitStatus: OnHitStatusSchema.optional(),
+	})
+	.refine(
+		(d) => d.weaponDice === true || (d.dice !== undefined && d.damageType !== undefined),
+		"single_target_damage requires either weaponDice: true or both dice and damageType",
+	);
 
-export const LeapAttackEffectSchema = z.object({
-	type: z.literal("leap_attack"),
-	maxRangeTiles: z.number().int().min(1),
-	landingRadiusTiles: z.number().int().min(0),
-	dice: z.string(),
-	damageType: DamageTypeSchema,
-	scalingStat: AbilityNameSchema.optional(),
-});
+export const LeapAttackEffectSchema = z
+	.object({
+		type: z.literal("leap_attack"),
+		attackCategory: z.enum(ATTACK_CATEGORIES),
+		weaponDice: z.literal(true).optional(),
+		dice: z.string().optional(),
+		damageType: DamageTypeSchema.optional(),
+		bonusDice: z.string().optional(),
+		bonusDamageType: DamageTypeSchema.optional(),
+		maxRangeTiles: z.number().int().min(1),
+		landingRadiusTiles: z.number().int().min(0),
+		scalingStat: AbilityNameSchema.optional(),
+	})
+	.refine(
+		(d) => d.weaponDice === true || (d.dice !== undefined && d.damageType !== undefined),
+		"leap_attack requires either weaponDice: true or both dice and damageType",
+	);
 
 export const SneakAttackEffectSchema = z.object({
 	type: z.literal("sneak_attack"),
+	attackCategory: z.enum(ATTACK_CATEGORIES),
+	weaponDice: z.literal(true).optional(),
+	/** Sneak attack bonus dice — always rolled on top of weapon base. */
 	dice: z.string(),
-	damageType: DamageTypeSchema,
 });
 
 export const ShadowStepEffectSchema = z.object({
@@ -169,24 +208,34 @@ export const PushActorEffectSchema = z.object({
 
 export const DrainLifeEffectSchema = z.object({
 	type: z.literal("drain_life"),
+	attackCategory: z.enum(ATTACK_CATEGORIES),
 	dice: z.string(),
 	damageType: DamageTypeSchema,
 	/** Dice rolled independently to determine how much HP the caster recovers. */
 	healDice: z.string(),
 });
 
-export const MultiStrikeEffectSchema = z.object({
-	type: z.literal("multi_strike"),
-	/** How many separate attack rolls to make against the target. */
-	strikeCount: z.number().int().min(2).max(10),
-	/** Damage dice per strike (e.g. "1d6"). */
-	dice: z.string(),
-	damageType: DamageTypeSchema,
-	/** Optional ability modifier added to each strike's damage (defaults to STR modifier). */
-	scalingStat: AbilityNameSchema.optional(),
-	/** If set, applies this status to the target on each successful strike. */
-	onHitStatus: OnHitStatusSchema.optional(),
-});
+export const MultiStrikeEffectSchema = z
+	.object({
+		type: z.literal("multi_strike"),
+		attackCategory: z.enum(ATTACK_CATEGORIES),
+		weaponDice: z.literal(true).optional(),
+		/** Damage dice per strike (e.g. "1d6"). Required when weaponDice not set. */
+		dice: z.string().optional(),
+		damageType: DamageTypeSchema.optional(),
+		bonusDice: z.string().optional(),
+		bonusDamageType: DamageTypeSchema.optional(),
+		/** How many separate attack rolls to make against the target. */
+		strikeCount: z.number().int().min(2).max(10),
+		/** Optional ability modifier added to each strike's damage (defaults to STR modifier). */
+		scalingStat: AbilityNameSchema.optional(),
+		/** If set, applies this status to the target on each successful strike. */
+		onHitStatus: OnHitStatusSchema.optional(),
+	})
+	.refine(
+		(d) => d.weaponDice === true || (d.dice !== undefined && d.damageType !== undefined),
+		"multi_strike requires either weaponDice: true or both dice and damageType",
+	);
 
 export const TeleportSwapEffectSchema = z.object({
 	type: z.literal("teleport_swap"),
@@ -309,7 +358,8 @@ export const AddDamageDiceEffectSchema = z.object({
 	type: z.literal("add_damage_dice"),
 	dice: z.string(),
 	damageType: DamageTypeSchema,
-	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
+	/** Matched against the current effect's attackCategory. "any" fires on all attacks. */
+	appliesTo: z.enum(ATTACK_CATEGORIES),
 	onCritOnly: z.boolean(),
 	/** If set, only fires when the attack's primary damage type matches. */
 	requiredDamageType: DamageTypeSchema.optional(),
@@ -372,7 +422,8 @@ export const AddFlatDamageBonusEffectSchema = z.object({
 	amount: z.number().int().min(1),
 	/** The damage type this bonus adds. */
 	damageType: DamageTypeSchema,
-	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
+	/** Matched against the current effect's attackCategory. "any" fires on all attacks. */
+	appliesTo: z.enum(ATTACK_CATEGORIES),
 	/** If set, only fires when the attack's primary damage type matches. */
 	requiredDamageType: DamageTypeSchema.optional(),
 });

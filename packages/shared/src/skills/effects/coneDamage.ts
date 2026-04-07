@@ -1,6 +1,7 @@
 /**
  * Cone damage effect: deals damage to every living actor within a cone
  * emanating from the caster toward a target tile direction.
+ * When weaponDice: true, uses the caster's equipped weapon dice instead of a fixed expression.
  * No wall stopping — the cone fills the entire arc.
  */
 
@@ -41,6 +42,10 @@ export function applyConeDamage(
 
 	const coneTileSet = new Set(coneTiles);
 
+	const isWeaponDice = effect.weaponDice === true;
+	const dice = isWeaponDice ? caster.equippedWeaponDice.dice : effect.dice!;
+	const damageType = isWeaponDice ? caster.equippedWeaponDice.damageType : effect.damageType!;
+
 	const statMod =
 		effect.scalingStat !== undefined
 			? abilityModifier(caster.attributes[effect.scalingStat])
@@ -57,22 +62,36 @@ export function applyConeDamage(
 		if (!actor.alive || id === caster.id) continue;
 		if (!coneTileSet.has(actor.idx)) continue;
 
-		const rawDamage = rollDiceExpr(rng, effect.dice);
+		const rawDamage = rollDiceExpr(rng, dice);
 		const rawAmount = Math.max(0, rawDamage + statMod);
 
 		const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
-			{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
+			{ damageType, rawAmount, effectiveAmount: 0 },
 		];
 
-		// Apply passive area/any damage bonuses from the caster.
+		// Bonus dice for higher ranks (e.g. cleave rank 2+).
+		if (effect.bonusDice) {
+			rawPackets.push({
+				damageType: effect.bonusDamageType ?? damageType,
+				rawAmount: rollDiceExpr(rng, effect.bonusDice),
+				effectiveAmount: 0,
+			});
+		}
+
+		// Apply passive bonuses whose appliesTo matches the effect's attack category.
 		rawPackets.push(
-			...collectPassiveBonusPackets(caster, rng, "area", false, false, effect.damageType),
+			...collectPassiveBonusPackets(
+				caster,
+				rng,
+				effect.attackCategory,
+				false,
+				false,
+				damageType,
+			),
 		);
 
 		// Data-driven area damage adjustments from active effects.
-		rawPackets.push(
-			...collectActiveEffectDamagePackets(caster, rng, "area", effect.damageType),
-		);
+		rawPackets.push(...collectActiveEffectDamagePackets(caster, rng, "area", damageType));
 
 		let packetsToResolve = rawPackets;
 		if (effect.savingThrow !== undefined) {

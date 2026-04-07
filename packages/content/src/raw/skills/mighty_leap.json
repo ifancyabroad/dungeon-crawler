@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "leap_attack",
+				"attackCategory": "impact",
 				"maxRangeTiles": 4,
 				"landingRadiusTiles": 1,
 				"dice": "1d8",
@@ -23,6 +24,7 @@
 		[
 			{
 				"type": "leap_attack",
+				"attackCategory": "impact",
 				"maxRangeTiles": 4,
 				"landingRadiusTiles": 1,
 				"dice": "2d8",
@@ -33,6 +35,7 @@
 		[
 			{
 				"type": "leap_attack",
+				"attackCategory": "impact",
 				"maxRangeTiles": 4,
 				"landingRadiusTiles": 1,
 				"dice": "3d8",

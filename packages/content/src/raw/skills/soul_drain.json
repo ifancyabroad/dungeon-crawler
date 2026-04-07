@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "drain_life",
+				"attackCategory": "spell",
 				"dice": "1d8",
 				"damageType": "force",
 				"healDice": "1d4"
@@ -21,6 +22,7 @@
 		[
 			{
 				"type": "drain_life",
+				"attackCategory": "spell",
 				"dice": "2d6",
 				"damageType": "force",
 				"healDice": "1d6"
@@ -29,6 +31,7 @@
 		[
 			{
 				"type": "drain_life",
+				"attackCategory": "spell",
 				"dice": "2d8",
 				"damageType": "force",
 				"healDice": "1d8"

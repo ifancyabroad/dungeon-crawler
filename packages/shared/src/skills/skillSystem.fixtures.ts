@@ -55,7 +55,7 @@ export const mockPassiveDamageDice: PassiveSkillDefinition = {
 			type: "add_damage_dice",
 			dice: "1d6",
 			damageType: "bludgeoning",
-			appliesTo: "melee",
+			appliesTo: "weapon_attack",
 			onCritOnly: false,
 		},
 	]),

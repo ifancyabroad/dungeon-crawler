@@ -8,6 +8,6 @@
 		"type": "add_flat_damage_bonus",
 		"amount": 2,
 		"damageType": "bludgeoning",
-		"appliesTo": "any"
+		"appliesTo": "weapon_attack"
 	}
 }

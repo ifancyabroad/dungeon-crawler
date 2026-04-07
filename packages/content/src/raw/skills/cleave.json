@@ -13,8 +13,8 @@
 		[
 			{
 				"type": "cone_damage",
-				"dice": "1d8",
-				"damageType": "slashing",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
 				"rangeTiles": 1,
 				"angleDegrees": 135,
 				"scalingStat": "strength",
@@ -28,8 +28,10 @@
 		[
 			{
 				"type": "cone_damage",
-				"dice": "2d8",
-				"damageType": "slashing",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"bonusDice": "1d6",
+				"bonusDamageType": "bludgeoning",
 				"rangeTiles": 1,
 				"angleDegrees": 135,
 				"scalingStat": "strength",
@@ -43,8 +45,10 @@
 		[
 			{
 				"type": "cone_damage",
-				"dice": "3d8",
-				"damageType": "slashing",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"bonusDice": "2d6",
+				"bonusDamageType": "bludgeoning",
 				"rangeTiles": 1,
 				"angleDegrees": 135,
 				"scalingStat": "strength",

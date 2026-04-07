@@ -4,7 +4,7 @@
  */
 
 import { z } from "zod";
-import { DAMAGE_TYPES } from "../config/combat";
+import { ATTACK_CATEGORIES, DAMAGE_TYPES } from "../config/combat";
 
 const DamageTypeSchema = z.enum(DAMAGE_TYPES);
 
@@ -147,8 +147,8 @@ export const ActiveEffectSchema = z.object({
 export const PassiveDamageBonusSchema = z.object({
 	dice: z.string(),
 	damageType: DamageTypeSchema,
-	/** "melee" = weapon attacks; "area" = AoE skills; "ranged" = single-target skill attacks; "any" = all. */
-	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
+	/** Matched against the current effect's attackCategory. "any" fires on all attacks. */
+	appliesTo: z.enum(ATTACK_CATEGORIES),
 	onCritOnly: z.boolean(),
 	sourceSkillId: z.string().optional(),
 	sourceItemInstanceId: z.string().optional(),
@@ -160,8 +160,8 @@ export const PassiveFlatDamageBonusSchema = z.object({
 	amount: z.number().int().min(1),
 	/** The damage type this bonus adds. */
 	damageType: DamageTypeSchema,
-	/** "melee" = weapon attacks; "area" = AoE skills; "ranged" = single-target skill attacks; "any" = all. */
-	appliesTo: z.enum(["melee", "area", "ranged", "any"]),
+	/** Matched against the current effect's attackCategory. "any" fires on all attacks. */
+	appliesTo: z.enum(ATTACK_CATEGORIES),
 	sourceSkillId: z.string().optional(),
 	sourceItemInstanceId: z.string().optional(),
 	/** If set, only fires when the attack's primary damage type matches. */

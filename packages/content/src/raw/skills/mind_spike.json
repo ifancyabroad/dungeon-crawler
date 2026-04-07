@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "spell",
 				"dice": "1d8",
 				"damageType": "psychic",
 				"scalingStat": "intelligence",
@@ -29,6 +30,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "spell",
 				"dice": "2d6",
 				"damageType": "psychic",
 				"scalingStat": "intelligence",
@@ -45,6 +47,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "spell",
 				"dice": "2d8",
 				"damageType": "psychic",
 				"scalingStat": "intelligence",

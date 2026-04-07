@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "spell",
 				"dice": "1d6",
 				"damageType": "force",
 				"scalingStat": "intelligence",
@@ -25,6 +26,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "spell",
 				"dice": "2d6",
 				"damageType": "force",
 				"scalingStat": "intelligence",
@@ -37,6 +39,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "spell",
 				"dice": "3d6",
 				"damageType": "force",
 				"scalingStat": "intelligence",

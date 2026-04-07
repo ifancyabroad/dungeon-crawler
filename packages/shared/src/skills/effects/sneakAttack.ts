@@ -2,6 +2,8 @@
  * Sneak attack effect: a high-damage DEX-based melee attack that can only be used
  * while the caster has the "stealth" status active. Using this skill breaks stealth.
  *
+ * When weaponDice: true, rolls the equipped weapon's dice as the base hit plus the
+ * sneak attack bonus dice (effect.dice) on top — matching 5E mechanics.
  * Uses DEX modifier for both the attack roll and damage scaling.
  */
 
@@ -11,6 +13,7 @@ import type { SneakAttackEffect } from "../types";
 import { abilityModifier, rollD20, rollDiceExpr } from "../../combat/dice";
 import { getActorProficiencyBonus } from "../../combat/savingThrows";
 import { resolveDamagePackets } from "../../combat/resolveDamage";
+import { collectPassiveBonusPackets } from "../../combat/collectPassiveBonusPackets";
 import { applyDamageToActor } from "../../combat/applyDamageToActor";
 import { hasActiveEffect } from "../activeEffects";
 import { STATUS_HOOKS } from "../../config/skills";
@@ -70,14 +73,32 @@ export function applySneakAttack(
 		return { floorState, caster: casterAfterMiss, events };
 	}
 
-	// Damage roll (DEX scaled, crit doubles dice).
+	const isWeaponDice = effect.weaponDice === true;
+	const damageType = isWeaponDice ? caster.equippedWeaponDice.damageType : "piercing";
 	const critMultiplier = isCritical ? 2 : 1;
-	const rawDamage = rollDiceExpr(rng, effect.dice, critMultiplier);
-	const rawAmount = Math.max(0, rawDamage + dexMod);
+
+	// Base weapon hit + sneak attack bonus dice.
+	const weaponRaw = isWeaponDice
+		? rollDiceExpr(rng, caster.equippedWeaponDice.dice, critMultiplier)
+		: 0;
+	const sneakRaw = rollDiceExpr(rng, effect.dice, critMultiplier);
+	const rawAmount = Math.max(0, weaponRaw + sneakRaw + dexMod);
 
 	const rawPackets: Parameters<typeof resolveDamagePackets>[0] = [
-		{ damageType: effect.damageType, rawAmount, effectiveAmount: 0 },
+		{ damageType, rawAmount, effectiveAmount: 0 },
 	];
+
+	// Apply passive bonuses whose appliesTo matches the effect's attack category.
+	rawPackets.push(
+		...collectPassiveBonusPackets(
+			caster,
+			rng,
+			effect.attackCategory,
+			isCritical,
+			true,
+			damageType,
+		),
+	);
 
 	const resolved = resolveDamagePackets(rawPackets, target);
 	const effectiveDamage = resolved.totalEffectiveDamage;

@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "weapon_attack",
 				"dice": "1d6",
 				"damageType": "piercing",
 				"attackRoll": {
@@ -28,6 +29,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "weapon_attack",
 				"dice": "2d4",
 				"damageType": "piercing",
 				"attackRoll": {
@@ -43,6 +45,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "weapon_attack",
 				"dice": "2d6",
 				"damageType": "piercing",
 				"attackRoll": {

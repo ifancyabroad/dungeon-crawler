@@ -14,22 +14,25 @@
 		[
 			{
 				"type": "sneak_attack",
-				"dice": "3d6",
-				"damageType": "piercing"
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"dice": "3d6"
 			}
 		],
 		[
 			{
 				"type": "sneak_attack",
-				"dice": "5d6",
-				"damageType": "piercing"
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"dice": "5d6"
 			}
 		],
 		[
 			{
 				"type": "sneak_attack",
-				"dice": "7d6",
-				"damageType": "piercing"
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"dice": "7d6"
 			}
 		]
 	]

@@ -12,27 +12,31 @@
 		[
 			{
 				"type": "area_damage",
-				"dice": "1d8",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
 				"radiusTiles": 1,
-				"damageType": "slashing",
 				"scalingStat": "strength"
 			}
 		],
 		[
 			{
 				"type": "area_damage",
-				"dice": "2d8",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"bonusDice": "1d6",
+				"bonusDamageType": "bludgeoning",
 				"radiusTiles": 1,
-				"damageType": "slashing",
 				"scalingStat": "strength"
 			}
 		],
 		[
 			{
 				"type": "area_damage",
-				"dice": "3d8",
+				"attackCategory": "weapon_attack",
+				"weaponDice": true,
+				"bonusDice": "2d6",
+				"bonusDamageType": "bludgeoning",
 				"radiusTiles": 1,
-				"damageType": "slashing",
 				"scalingStat": "strength"
 			}
 		]

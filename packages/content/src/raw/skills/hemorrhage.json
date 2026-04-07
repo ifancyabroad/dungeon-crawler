@@ -13,6 +13,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "weapon_attack",
 				"dice": "1d8",
 				"damageType": "slashing",
 				"attackRoll": {
@@ -29,6 +30,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "weapon_attack",
 				"dice": "1d10",
 				"damageType": "slashing",
 				"attackRoll": {
@@ -45,6 +47,7 @@
 		[
 			{
 				"type": "single_target_damage",
+				"attackCategory": "weapon_attack",
 				"dice": "2d6",
 				"damageType": "slashing",
 				"attackRoll": {

@@ -12,7 +12,7 @@
 				"type": "add_flat_damage_bonus",
 				"amount": 2,
 				"damageType": "acid",
-				"appliesTo": "melee",
+				"appliesTo": "weapon_attack",
 				"requiredDamageType": "acid"
 			}
 		],
@@ -21,7 +21,7 @@
 				"type": "add_flat_damage_bonus",
 				"amount": 3,
 				"damageType": "acid",
-				"appliesTo": "melee",
+				"appliesTo": "weapon_attack",
 				"requiredDamageType": "acid"
 			}
 		],
@@ -30,7 +30,7 @@
 				"type": "add_flat_damage_bonus",
 				"amount": 5,
 				"damageType": "acid",
-				"appliesTo": "melee",
+				"appliesTo": "weapon_attack",
 				"requiredDamageType": "acid"
 			}
 		]
