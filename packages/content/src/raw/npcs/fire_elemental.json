@@ -1,0 +1,53 @@
+{
+	"id": "fire_elemental",
+	"name": "Fire Elemental",
+	"description": "A living column of flame that burns with intense heat. Its touch ignites flesh and armour alike, and it can unleash a searing cone of fire that incinerates everything ahead of it.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 16,
+		"dexterity": 14,
+		"constitution": 14,
+		"intelligence": 6,
+		"wisdom": 10,
+		"charisma": 6
+	},
+	"hp": 38,
+	"armorClass": 13,
+	"damageResistances": ["bludgeoning", "slashing", "piercing"],
+	"damageImmunities": ["fire", "poison"],
+	"damageVulnerabilities": ["cold"],
+	"tileId": 727,
+	"xpReward": 140,
+	"combatStrategy": "melee",
+	"idleStrategy": "roam",
+	"challengeRating": 5,
+	"savingThrowProficiencies": ["constitution"],
+	"bloodColor": "#ff6600",
+	"activeSkills": [
+		{ "id": "whirlwind_strike", "rank": 2 },
+		{ "id": "fire_cone", "rank": 1 }
+	],
+	"passiveSkills": [],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Fire Touch",
+		"damageDice": "1d8",
+		"damageType": "fire",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 0.35,
+		"gold": { "min": 6, "max": 14 },
+		"items": [],
+		"rarityWeights": {
+			"common": 45,
+			"uncommon": 30,
+			"rare": 18,
+			"epic": 7,
+			"unique": 0
+		}
+	}
+}

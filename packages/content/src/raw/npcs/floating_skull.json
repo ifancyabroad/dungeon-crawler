@@ -1,0 +1,48 @@
+{
+	"id": "floating_skull",
+	"name": "Floating Skull",
+	"description": "A disembodied skull wreathed in sickly green flame. It assails the living with bolts of necrotic energy and psychic shrieks that leave the mind reeling.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 4,
+		"dexterity": 14,
+		"constitution": 10,
+		"intelligence": 14,
+		"wisdom": 12,
+		"charisma": 8
+	},
+	"hp": 14,
+	"armorClass": 13,
+	"damageResistances": [],
+	"damageImmunities": ["poison"],
+	"damageVulnerabilities": [],
+	"tileId": 726,
+	"xpReward": 75,
+	"combatStrategy": "ranged",
+	"idleStrategy": "roam",
+	"challengeRating": 3,
+	"savingThrowProficiencies": ["intelligence"],
+	"bloodColor": "#888888",
+	"activeSkills": [
+		{ "id": "magic_arrow", "rank": 2 },
+		{ "id": "mind_spike", "rank": 1 },
+		{ "id": "death_bolt", "rank": 1 }
+	],
+	"passiveSkills": [],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 0.3,
+		"gold": { "min": 4, "max": 10 },
+		"items": [],
+		"rarityWeights": {
+			"common": 60,
+			"uncommon": 28,
+			"rare": 10,
+			"epic": 2,
+			"unique": 0
+		}
+	}
+}

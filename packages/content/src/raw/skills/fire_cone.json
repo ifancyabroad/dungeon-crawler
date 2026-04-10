@@ -1,0 +1,62 @@
+{
+	"skillType": "active",
+	"id": "fire_cone",
+	"name": "Fire Cone",
+	"description": "A torrent of flame erupts in a cone, scorching everything in its path.",
+	"icon": "Mageskill_22_nobg.png",
+	"school": "nature",
+	"tags": ["damage", "aoe", "spell"],
+	"cooldown": 4,
+	"targetType": "tile",
+	"range": 3,
+	"effectsByRank": [
+		[
+			{
+				"type": "cone_damage",
+				"attackCategory": "spell",
+				"dice": "2d6",
+				"damageType": "fire",
+				"rangeTiles": 3,
+				"angleDegrees": 90,
+				"scalingStat": "constitution",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "constitution",
+					"successDamageMultiplier": 0.5
+				}
+			}
+		],
+		[
+			{
+				"type": "cone_damage",
+				"attackCategory": "spell",
+				"dice": "3d6",
+				"damageType": "fire",
+				"rangeTiles": 3,
+				"angleDegrees": 90,
+				"scalingStat": "constitution",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "constitution",
+					"successDamageMultiplier": 0.5
+				}
+			}
+		],
+		[
+			{
+				"type": "cone_damage",
+				"attackCategory": "spell",
+				"dice": "4d6",
+				"damageType": "fire",
+				"rangeTiles": 4,
+				"angleDegrees": 90,
+				"scalingStat": "constitution",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "constitution",
+					"successDamageMultiplier": 0.5
+				}
+			}
+		]
+	]
+}

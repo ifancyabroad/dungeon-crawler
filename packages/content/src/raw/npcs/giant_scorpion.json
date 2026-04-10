@@ -1,0 +1,50 @@
+{
+	"id": "giant_scorpion",
+	"name": "Giant Scorpion",
+	"description": "A deadly arachnid that lies in wait for prey. Its venomous stinger delivers a crippling poison that worsens with each passing moment.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 12,
+		"dexterity": 12,
+		"constitution": 12,
+		"intelligence": 2,
+		"wisdom": 8,
+		"charisma": 2
+	},
+	"hp": 10,
+	"armorClass": 12,
+	"damageResistances": [],
+	"damageImmunities": ["poison"],
+	"damageVulnerabilities": [],
+	"tileId": 661,
+	"xpReward": 50,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 2,
+	"savingThrowProficiencies": ["constitution"],
+	"bloodColor": "#2a5000",
+	"activeSkills": [{ "id": "poison_bite", "rank": 2 }],
+	"passiveSkills": [],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Stinger",
+		"damageDice": "1d6",
+		"damageType": "piercing",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 0.4,
+		"gold": { "min": 2, "max": 5 },
+		"items": [],
+		"rarityWeights": {
+			"common": 65,
+			"uncommon": 25,
+			"rare": 8,
+			"epic": 2,
+			"unique": 0
+		}
+	}
+}

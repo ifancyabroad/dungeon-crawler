@@ -1,0 +1,8 @@
+{
+	"id": "bat_colony",
+	"minDepth": 1,
+	"entries": [
+		{ "npcId": "giant_bat", "count": 3, "weight": 2 },
+		{ "npcId": "giant_bat", "count": 4, "weight": 1 }
+	]
+}

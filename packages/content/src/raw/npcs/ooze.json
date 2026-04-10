@@ -1,0 +1,50 @@
+{
+	"id": "ooze",
+	"name": "Ooze",
+	"description": "A formless mass of corrosive slime that dissolves organic matter on contact. Weapons pass through it harmlessly, and its acid touch eats through even metal armour.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 14,
+		"dexterity": 4,
+		"constitution": 18,
+		"intelligence": 1,
+		"wisdom": 6,
+		"charisma": 1
+	},
+	"hp": 18,
+	"armorClass": 8,
+	"damageResistances": ["bludgeoning", "slashing", "piercing"],
+	"damageImmunities": ["acid", "poison"],
+	"damageVulnerabilities": ["fire", "cold"],
+	"tileId": 676,
+	"xpReward": 65,
+	"combatStrategy": "melee",
+	"idleStrategy": "roam",
+	"challengeRating": 3,
+	"savingThrowProficiencies": ["constitution"],
+	"bloodColor": "#00aa44",
+	"activeSkills": [{ "id": "cleave", "rank": 1 }],
+	"passiveSkills": [],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Pseudopod",
+		"damageDice": "1d6",
+		"damageType": "acid",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 0.15,
+		"gold": { "min": 0, "max": 2 },
+		"items": [],
+		"rarityWeights": {
+			"common": 80,
+			"uncommon": 15,
+			"rare": 4,
+			"epic": 1,
+			"unique": 0
+		}
+	}
+}

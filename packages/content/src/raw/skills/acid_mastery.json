@@ -12,7 +12,7 @@
 				"type": "add_flat_damage_bonus",
 				"amount": 2,
 				"damageType": "acid",
-				"appliesTo": "weapon_attack",
+				"appliesTo": "any",
 				"requiredDamageType": "acid"
 			}
 		],
@@ -21,7 +21,7 @@
 				"type": "add_flat_damage_bonus",
 				"amount": 3,
 				"damageType": "acid",
-				"appliesTo": "weapon_attack",
+				"appliesTo": "any",
 				"requiredDamageType": "acid"
 			}
 		],
@@ -30,7 +30,7 @@
 				"type": "add_flat_damage_bonus",
 				"amount": 5,
 				"damageType": "acid",
-				"appliesTo": "weapon_attack",
+				"appliesTo": "any",
 				"requiredDamageType": "acid"
 			}
 		]

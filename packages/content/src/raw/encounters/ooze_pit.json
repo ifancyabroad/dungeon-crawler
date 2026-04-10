@@ -1,0 +1,8 @@
+{
+	"id": "ooze_pit",
+	"minDepth": 2,
+	"entries": [
+		{ "npcId": "ooze", "count": 1, "weight": 3 },
+		{ "npcId": "ooze", "count": 2, "weight": 1 }
+	]
+}

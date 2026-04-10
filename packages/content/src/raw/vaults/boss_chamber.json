@@ -20,5 +20,5 @@
 		".": { "tile": "floor" },
 		"B": { "tile": "floor", "marker": "boss_spawn" }
 	},
-	"spawns": [{ "marker": "boss_spawn", "encounterId": "boss_encounter" }]
+	"spawns": []
 }

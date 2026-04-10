@@ -1,0 +1,47 @@
+{
+	"id": "imp",
+	"name": "Imp",
+	"description": "A wiry infernal creature that delights in causing pain. Nimble and resistant to elemental damage, it hurls blasts of hellfire from a safe distance.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 6,
+		"dexterity": 17,
+		"constitution": 10,
+		"intelligence": 11,
+		"wisdom": 10,
+		"charisma": 12
+	},
+	"hp": 18,
+	"armorClass": 13,
+	"damageResistances": ["fire", "cold", "lightning"],
+	"damageImmunities": ["poison"],
+	"damageVulnerabilities": [],
+	"tileId": 706,
+	"xpReward": 100,
+	"combatStrategy": "ranged",
+	"idleStrategy": "roam",
+	"challengeRating": 4,
+	"savingThrowProficiencies": ["dexterity"],
+	"bloodColor": "#ff2200",
+	"activeSkills": [
+		{ "id": "fireball", "rank": 2 },
+		{ "id": "hellfire_bolt", "rank": 1 }
+	],
+	"passiveSkills": [{ "id": "evasion", "rank": 2 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 0.4,
+		"gold": { "min": 8, "max": 16 },
+		"items": [],
+		"rarityWeights": {
+			"common": 50,
+			"uncommon": 30,
+			"rare": 15,
+			"epic": 5,
+			"unique": 0
+		}
+	}
+}

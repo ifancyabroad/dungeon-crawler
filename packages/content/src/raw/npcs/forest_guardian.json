@@ -1,0 +1,54 @@
+{
+	"id": "forest_guardian",
+	"name": "Forest Guardian",
+	"description": "An ancient air elemental bound to the forest's heart. It manifests as a swirling vortex of wind and leaves, capable of devastating those who disturb its domain.",
+	"faction": "hostile",
+	"role": "boss",
+	"baseAttributes": {
+		"strength": 16,
+		"dexterity": 14,
+		"constitution": 16,
+		"intelligence": 8,
+		"wisdom": 12,
+		"charisma": 8
+	},
+	"hp": 55,
+	"armorClass": 14,
+	"damageResistances": ["piercing", "slashing"],
+	"damageImmunities": [],
+	"damageVulnerabilities": ["fire"],
+	"tileId": 681,
+	"xpReward": 250,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 5,
+	"savingThrowProficiencies": ["strength", "constitution"],
+	"bloodColor": "#88aaaa",
+	"activeSkills": [
+		{ "id": "whirlwind_strike", "rank": 2 },
+		{ "id": "gust_slam", "rank": 1 },
+		{ "id": "battle_cry", "rank": 1 }
+	],
+	"passiveSkills": [{ "id": "battle_hardened", "rank": 1 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Slam",
+		"damageDice": "1d8",
+		"damageType": "bludgeoning",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 1.0,
+		"gold": { "min": 20, "max": 35 },
+		"items": [],
+		"rarityWeights": {
+			"common": 40,
+			"uncommon": 35,
+			"rare": 20,
+			"epic": 5,
+			"unique": 0
+		}
+	}
+}

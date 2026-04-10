@@ -1,0 +1,50 @@
+{
+	"id": "giant_beetle",
+	"name": "Giant Beetle",
+	"description": "A hulking insect armoured in thick chitinous plating. It guards its territory aggressively, clamping down with crushing mandibles.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 14,
+		"dexterity": 8,
+		"constitution": 14,
+		"intelligence": 2,
+		"wisdom": 6,
+		"charisma": 2
+	},
+	"hp": 12,
+	"armorClass": 14,
+	"damageResistances": ["bludgeoning"],
+	"damageImmunities": [],
+	"damageVulnerabilities": [],
+	"tileId": 636,
+	"xpReward": 35,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 1,
+	"savingThrowProficiencies": ["constitution"],
+	"bloodColor": "#5a7a00",
+	"activeSkills": [{ "id": "shield_bash", "rank": 1 }],
+	"passiveSkills": [{ "id": "iron_skin", "rank": 1 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Mandible Crush",
+		"damageDice": "1d6",
+		"damageType": "piercing",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 0.3,
+		"gold": { "min": 1, "max": 4 },
+		"items": [],
+		"rarityWeights": {
+			"common": 70,
+			"uncommon": 20,
+			"rare": 8,
+			"epic": 2,
+			"unique": 0
+		}
+	}
+}

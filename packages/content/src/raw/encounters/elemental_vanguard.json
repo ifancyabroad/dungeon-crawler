@@ -1,0 +1,9 @@
+{
+	"id": "elemental_vanguard",
+	"minDepth": 4,
+	"entries": [
+		{ "npcId": "fire_elemental", "count": 2, "weight": 2 },
+		{ "npcId": "imp", "count": 2, "weight": 2 },
+		{ "npcId": "fire_elemental", "count": 1, "weight": 1 }
+	]
+}

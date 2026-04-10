@@ -1,0 +1,55 @@
+{
+	"id": "red_dragon",
+	"name": "Red Dragon",
+	"description": "An ancient wyrm whose scales burn like embers and whose breath can reduce stone to slag. It towers over the battlefield, immune to fire and merciless in combat.",
+	"faction": "hostile",
+	"role": "boss",
+	"baseAttributes": {
+		"strength": 22,
+		"dexterity": 10,
+		"constitution": 20,
+		"intelligence": 14,
+		"wisdom": 12,
+		"charisma": 16
+	},
+	"hp": 150,
+	"armorClass": 18,
+	"damageResistances": ["bludgeoning", "slashing", "piercing"],
+	"damageImmunities": ["fire", "poison"],
+	"damageVulnerabilities": ["cold"],
+	"tileId": 698,
+	"xpReward": 600,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 9,
+	"savingThrowProficiencies": ["strength", "constitution", "wisdom"],
+	"bloodColor": "#cc3300",
+	"activeSkills": [
+		{ "id": "fire_breath", "rank": 1 },
+		{ "id": "whirlwind_strike", "rank": 3 },
+		{ "id": "reckless_attack", "rank": 3 },
+		{ "id": "mighty_leap", "rank": 3 }
+	],
+	"passiveSkills": [{ "id": "battle_hardened", "rank": 3 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Dragon Bite",
+		"damageDice": "2d10",
+		"damageType": "piercing",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 1.0,
+		"gold": { "min": 100, "max": 180 },
+		"items": [],
+		"rarityWeights": {
+			"common": 10,
+			"uncommon": 20,
+			"rare": 35,
+			"epic": 28,
+			"unique": 7
+		}
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"id": "insect_nest",
+	"minDepth": 1,
+	"entries": [
+		{ "npcId": "giant_beetle", "count": 2, "weight": 2 },
+		{ "npcId": "giant_scorpion", "count": 1, "weight": 3 },
+		{ "npcId": "giant_bat", "count": 2, "weight": 2 }
+	]
+}

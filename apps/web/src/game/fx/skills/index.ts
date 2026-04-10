@@ -34,6 +34,15 @@ import { playGarrote } from "./garrote";
 import { playHemorrhage } from "./hemorrhage";
 import { playMarkedForDeath } from "./markedForDeath";
 import { playCaltrops } from "./caltrops";
+import { playGustSlam } from "./gustSlam";
+import { playGore } from "./gore";
+import { playEntangle } from "./entangle";
+import { playDeathBolt } from "./deathBolt";
+import { playDeathMark } from "./deathMark";
+import { playHellfireBolt } from "./hellfireBolt";
+import { playPetrifyRay } from "./petrifyRay";
+import { playFireCone } from "./fireCone";
+import { playFireBreath } from "./fireBreath";
 import { idxToXY, getTilesInLine } from "@app/shared";
 import { TILE_WIDTH, TILE_HEIGHT } from "../../tiles/tilesetRegistry";
 import { useMapStore } from "../../../features/map/mapStore";
@@ -259,6 +268,82 @@ const caltropsHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
 	return { handled: true, fxDeferred: false };
 };
 
+const gustSlamHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playGustSlam(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const goreHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playGore(scene, ctx.casterSprite, ctx.targetWorldPos.px, ctx.targetWorldPos.py, ctx.onImpact);
+	return { handled: true, fxDeferred: true };
+};
+
+const entangleHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	playEntangle(scene, ctx.casterSprite, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const deathBoltHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playDeathBolt(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
+	return { handled: true, fxDeferred: true };
+};
+
+const deathMarkHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playDeathMark(scene, ctx.targetWorldPos.px, ctx.targetWorldPos.py, ctx.onImpact);
+	return { handled: true, fxDeferred: false };
+};
+
+const hellfireBoltHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playHellfireBolt(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
+	return { handled: true, fxDeferred: true };
+};
+
+const petrifyRayHandler: SkillAnimHandlerFn = (ctx, scene, _mapWidth) => {
+	if (!ctx.targetWorldPos) return DEFAULT_ANIM_RESULT;
+	playPetrifyRay(
+		scene,
+		ctx.casterSprite,
+		ctx.targetWorldPos.px,
+		ctx.targetWorldPos.py,
+		ctx.onImpact,
+	);
+	return { handled: true, fxDeferred: true };
+};
+
+const fireConeHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
+	if (ctx.event.targetTileIdx === undefined) return DEFAULT_ANIM_RESULT;
+	const { x: cx, y: cy } = idxToXY(ctx.casterIdxAfter, mapWidth);
+	const { x: tx, y: ty } = idxToXY(ctx.event.targetTileIdx, mapWidth);
+	const dirAngle = Math.atan2(ty - cy, tx - cx);
+	playFireCone(scene, ctx.casterSprite, dirAngle, ctx.onImpact);
+	return { handled: true, fxDeferred: true };
+};
+
+const fireBreathHandler: SkillAnimHandlerFn = (ctx, scene, mapWidth) => {
+	if (ctx.event.targetTileIdx === undefined) return DEFAULT_ANIM_RESULT;
+	const { x: cx, y: cy } = idxToXY(ctx.casterIdxAfter, mapWidth);
+	const { x: tx, y: ty } = idxToXY(ctx.event.targetTileIdx, mapWidth);
+	const dirAngle = Math.atan2(ty - cy, tx - cx);
+	playFireBreath(scene, ctx.casterSprite, dirAngle, ctx.onImpact);
+	return { handled: true, fxDeferred: true };
+};
+
 /** Map skill ID → animation handler. Add entries here to support new skill animations. */
 export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	fireball: fireballHandler,
@@ -289,6 +374,15 @@ export const SKILL_ANIM_REGISTRY: Record<string, SkillAnimHandlerFn> = {
 	hemorrhage: hemorrhageHandler,
 	marked_for_death: markedForDeathHandler,
 	caltrops: caltropsHandler,
+	gust_slam: gustSlamHandler,
+	gore: goreHandler,
+	entangle: entangleHandler,
+	death_bolt: deathBoltHandler,
+	death_mark: deathMarkHandler,
+	hellfire_bolt: hellfireBoltHandler,
+	petrify_ray: petrifyRayHandler,
+	fire_cone: fireConeHandler,
+	fire_breath: fireBreathHandler,
 };
 
 export { DEFAULT_ANIM_RESULT } from "./types";

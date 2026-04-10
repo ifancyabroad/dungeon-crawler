@@ -1,0 +1,62 @@
+{
+	"skillType": "active",
+	"id": "petrify_ray",
+	"name": "Petrify Ray",
+	"description": "A focused eye-ray that blasts the target with psychic force, stunning them in place.",
+	"icon": "Mageskill_44_nobg.png",
+	"school": "arcane",
+	"tags": ["damage", "control", "spell", "ranged"],
+	"cooldown": 4,
+	"targetType": "actor",
+	"range": 5,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "1d8",
+				"damageType": "psychic",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "stunned",
+					"durationTurns": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "2d6",
+				"damageType": "psychic",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "stunned",
+					"durationTurns": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "2d8",
+				"damageType": "psychic",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "stunned",
+					"durationTurns": 2
+				}
+			}
+		]
+	]
+}

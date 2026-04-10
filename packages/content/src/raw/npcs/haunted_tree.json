@@ -1,0 +1,53 @@
+{
+	"id": "haunted_tree",
+	"name": "Haunted Tree",
+	"description": "An ancient tree infused with dark necromantic energy. Its grasping branches drain the life force of those it seizes, and its roots can erupt from the earth to immobilise prey.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 16,
+		"dexterity": 6,
+		"constitution": 16,
+		"intelligence": 4,
+		"wisdom": 8,
+		"charisma": 4
+	},
+	"hp": 28,
+	"armorClass": 12,
+	"damageResistances": ["bludgeoning", "piercing"],
+	"damageImmunities": ["poison"],
+	"damageVulnerabilities": ["fire"],
+	"tileId": 683,
+	"xpReward": 90,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 4,
+	"savingThrowProficiencies": ["constitution"],
+	"bloodColor": "#3a2000",
+	"activeSkills": [
+		{ "id": "soul_drain", "rank": 1 },
+		{ "id": "entangle", "rank": 1 }
+	],
+	"passiveSkills": [{ "id": "iron_skin", "rank": 2 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Grasping Branch",
+		"damageDice": "1d8",
+		"damageType": "bludgeoning",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 0.25,
+		"gold": { "min": 2, "max": 6 },
+		"items": [],
+		"rarityWeights": {
+			"common": 65,
+			"uncommon": 25,
+			"rare": 8,
+			"epic": 2,
+			"unique": 0
+		}
+	}
+}

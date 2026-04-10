@@ -1,0 +1,9 @@
+{
+	"id": "beholder_watch",
+	"minDepth": 4,
+	"entries": [
+		{ "npcId": "beholder", "count": 1, "weight": 3 },
+		{ "npcId": "imp", "count": 2, "weight": 2 },
+		{ "npcId": "beholder", "count": 2, "weight": 1 }
+	]
+}

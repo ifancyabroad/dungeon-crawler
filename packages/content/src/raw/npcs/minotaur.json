@@ -1,0 +1,49 @@
+{
+	"id": "minotaur",
+	"name": "Minotaur",
+	"description": "A towering bull-headed warrior of immense strength. Its thunderous charges shatter stone and bone alike, and its greataxe leaves wounds that refuse to close.",
+	"faction": "hostile",
+	"role": "boss",
+	"baseAttributes": {
+		"strength": 20,
+		"dexterity": 10,
+		"constitution": 18,
+		"intelligence": 6,
+		"wisdom": 10,
+		"charisma": 8
+	},
+	"hp": 80,
+	"armorClass": 14,
+	"damageResistances": [],
+	"damageImmunities": [],
+	"damageVulnerabilities": [],
+	"tileId": 719,
+	"xpReward": 320,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 6,
+	"savingThrowProficiencies": ["strength", "constitution"],
+	"bloodColor": "#8b0000",
+	"activeSkills": [
+		{ "id": "charge", "rank": 2 },
+		{ "id": "reckless_attack", "rank": 2 },
+		{ "id": "whirlwind_strike", "rank": 2 },
+		{ "id": "gore", "rank": 1 }
+	],
+	"passiveSkills": [{ "id": "battle_hardened", "rank": 2 }],
+	"startingEquipment": ["greataxe"],
+	"weaponProficiencies": ["greataxe"],
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 1.0,
+		"gold": { "min": 30, "max": 50 },
+		"items": [{ "baseItemId": "greataxe", "weight": 15 }],
+		"rarityWeights": {
+			"common": 35,
+			"uncommon": 35,
+			"rare": 22,
+			"epic": 7,
+			"unique": 1
+		}
+	}
+}

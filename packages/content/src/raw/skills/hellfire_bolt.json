@@ -1,0 +1,65 @@
+{
+	"skillType": "active",
+	"id": "hellfire_bolt",
+	"name": "Hellfire Bolt",
+	"description": "A searing bolt of infernal fire that ignites the target, dealing damage over time.",
+	"icon": "Mageskill_22_nobg.png",
+	"school": "arcane",
+	"tags": ["damage", "debuff", "spell", "ranged"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 6,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "1d6",
+				"damageType": "fire",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "burning",
+					"durationTurns": 3,
+					"value": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "2d6",
+				"damageType": "fire",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "burning",
+					"durationTurns": 3,
+					"value": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "3d6",
+				"damageType": "fire",
+				"attackRoll": {
+					"modifierStat": "dexterity",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "burning",
+					"durationTurns": 4,
+					"value": 3
+				}
+			}
+		]
+	]
+}

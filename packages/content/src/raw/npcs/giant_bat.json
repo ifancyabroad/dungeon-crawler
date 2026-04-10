@@ -1,0 +1,50 @@
+{
+	"id": "giant_bat",
+	"name": "Giant Bat",
+	"description": "A large winged predator that hunts by echolocation. It swoops down on prey from above, striking with surprising force.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 6,
+		"dexterity": 16,
+		"constitution": 8,
+		"intelligence": 2,
+		"wisdom": 10,
+		"charisma": 4
+	},
+	"hp": 8,
+	"armorClass": 13,
+	"damageResistances": [],
+	"damageImmunities": [],
+	"damageVulnerabilities": [],
+	"tileId": 658,
+	"xpReward": 30,
+	"combatStrategy": "melee",
+	"idleStrategy": "roam",
+	"challengeRating": 1,
+	"savingThrowProficiencies": ["dexterity"],
+	"bloodColor": "#4a0000",
+	"activeSkills": [{ "id": "mighty_leap", "rank": 1 }],
+	"passiveSkills": [{ "id": "evasion", "rank": 1 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Bite",
+		"damageDice": "1d4",
+		"damageType": "piercing",
+		"attackStat": "dexterity"
+	},
+	"lootTable": {
+		"dropChance": 0.2,
+		"gold": { "min": 1, "max": 3 },
+		"items": [],
+		"rarityWeights": {
+			"common": 75,
+			"uncommon": 18,
+			"rare": 6,
+			"epic": 1,
+			"unique": 0
+		}
+	}
+}

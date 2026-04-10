@@ -1,0 +1,48 @@
+{
+	"id": "beholder",
+	"name": "Beholder",
+	"description": "A floating sphere of alien malevolence covered in writhing eye-stalks. Each eye projects a different ray — force blasts, psychic lances, and a petrifying gaze that turns flesh to stone.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 10,
+		"dexterity": 14,
+		"constitution": 14,
+		"intelligence": 17,
+		"wisdom": 14,
+		"charisma": 10
+	},
+	"hp": 30,
+	"armorClass": 15,
+	"damageResistances": [],
+	"damageImmunities": [],
+	"damageVulnerabilities": [],
+	"tileId": 704,
+	"xpReward": 160,
+	"combatStrategy": "ranged",
+	"idleStrategy": "roam",
+	"challengeRating": 6,
+	"savingThrowProficiencies": ["intelligence", "wisdom"],
+	"bloodColor": "#550055",
+	"activeSkills": [
+		{ "id": "magic_arrow", "rank": 3 },
+		{ "id": "mind_spike", "rank": 2 },
+		{ "id": "petrify_ray", "rank": 1 }
+	],
+	"passiveSkills": [],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 0.5,
+		"gold": { "min": 10, "max": 20 },
+		"items": [],
+		"rarityWeights": {
+			"common": 40,
+			"uncommon": 35,
+			"rare": 20,
+			"epic": 5,
+			"unique": 0
+		}
+	}
+}

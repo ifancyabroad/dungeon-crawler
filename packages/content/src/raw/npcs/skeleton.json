@@ -1,0 +1,50 @@
+{
+	"id": "skeleton",
+	"name": "Skeleton",
+	"description": "The animated remains of a fallen warrior, driven by dark magic. It fights without thought or fear, hacking relentlessly at the living.",
+	"faction": "hostile",
+	"role": "grunt",
+	"baseAttributes": {
+		"strength": 14,
+		"dexterity": 14,
+		"constitution": 10,
+		"intelligence": 6,
+		"wisdom": 8,
+		"charisma": 4
+	},
+	"hp": 18,
+	"armorClass": 13,
+	"damageResistances": [],
+	"damageImmunities": ["poison"],
+	"damageVulnerabilities": ["bludgeoning"],
+	"tileId": 700,
+	"xpReward": 70,
+	"combatStrategy": "melee",
+	"idleStrategy": "roam",
+	"challengeRating": 3,
+	"savingThrowProficiencies": ["dexterity"],
+	"bloodColor": "#cccccc",
+	"activeSkills": [
+		{ "id": "reckless_attack", "rank": 1 },
+		{ "id": "cleave", "rank": 1 }
+	],
+	"passiveSkills": [],
+	"startingEquipment": ["shortsword"],
+	"weaponProficiencies": ["shortsword"],
+	"armorProficiencies": [],
+	"lootTable": {
+		"dropChance": 0.35,
+		"gold": { "min": 3, "max": 8 },
+		"items": [
+			{ "baseItemId": "shortsword", "weight": 10 },
+			{ "baseItemId": "dagger", "weight": 8 }
+		],
+		"rarityWeights": {
+			"common": 65,
+			"uncommon": 25,
+			"rare": 8,
+			"epic": 2,
+			"unique": 0
+		}
+	}
+}

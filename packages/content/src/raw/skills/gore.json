@@ -1,11 +1,11 @@
 {
 	"skillType": "active",
-	"id": "poison_blade",
-	"name": "Poison Blade",
-	"description": "A swift slash that coats the wound with venom, dealing damage over time.",
-	"icon": "Assassinskill_24_nobg.png",
-	"school": "shadow",
-	"tags": ["damage", "debuff", "weapon_attack", "finesse", "melee_attack"],
+	"id": "gore",
+	"name": "Gore",
+	"description": "A savage horn impalement that drives through armour and leaves a deep bleeding wound.",
+	"icon": "Skill_Physical_nb.png",
+	"school": "bestial",
+	"tags": ["damage", "debuff", "weapon_attack", "melee_attack"],
 	"cooldown": 3,
 	"targetType": "actor",
 	"range": 1,
@@ -14,14 +14,14 @@
 			{
 				"type": "single_target_damage",
 				"attackCategory": "weapon_attack",
-				"dice": "1d6",
+				"dice": "1d8",
 				"damageType": "piercing",
 				"attackRoll": {
-					"modifierStat": "dexterity",
+					"modifierStat": "strength",
 					"useProficiency": true
 				},
 				"onHitStatus": {
-					"statusId": "poisoned",
+					"statusId": "bleeding",
 					"durationTurns": 3,
 					"value": 2
 				}
@@ -34,11 +34,11 @@
 				"dice": "2d6",
 				"damageType": "piercing",
 				"attackRoll": {
-					"modifierStat": "dexterity",
+					"modifierStat": "strength",
 					"useProficiency": true
 				},
 				"onHitStatus": {
-					"statusId": "poisoned",
+					"statusId": "bleeding",
 					"durationTurns": 4,
 					"value": 3
 				}
@@ -48,14 +48,14 @@
 			{
 				"type": "single_target_damage",
 				"attackCategory": "weapon_attack",
-				"dice": "2d6",
+				"dice": "2d8",
 				"damageType": "piercing",
 				"attackRoll": {
-					"modifierStat": "dexterity",
+					"modifierStat": "strength",
 					"useProficiency": true
 				},
 				"onHitStatus": {
-					"statusId": "poisoned",
+					"statusId": "bleeding",
 					"durationTurns": 5,
 					"value": 4
 				}

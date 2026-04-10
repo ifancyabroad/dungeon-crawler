@@ -11,7 +11,7 @@ import type { AffixDefinition } from "../schemas/affix.js";
 export const characterClassIds = ["mage","rogue","warrior"] as const;
 export type CharacterClassId = (typeof characterClassIds)[number];
 
-export const npcIds = ["goblin","goblin_mage","rat"] as const;
+export const npcIds = ["beholder","fire_elemental","floating_skull","forest_guardian","giant_bat","giant_beetle","giant_scorpion","goblin","goblin_mage","haunted_tree","imp","minotaur","ooze","rat","reaper","red_dragon","skeleton"] as const;
 export type NpcId = (typeof npcIds)[number];
 
 export const contentVersion: string = "0.1.0";
@@ -197,6 +197,479 @@ export const classesById: Record<CharacterClassId, CharacterClassDefinition> = _
 
 export const npcs: readonly NpcDefinition[] = [
   {
+    "id": "beholder",
+    "name": "Beholder",
+    "description": "A floating sphere of alien malevolence covered in writhing eye-stalks. Each eye projects a different ray — force blasts, psychic lances, and a petrifying gaze that turns flesh to stone.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 10,
+      "dexterity": 14,
+      "constitution": 14,
+      "intelligence": 17,
+      "wisdom": 14,
+      "charisma": 10
+    },
+    "hp": 30,
+    "armorClass": 15,
+    "tileId": 704,
+    "xpReward": 160,
+    "combatStrategy": "ranged",
+    "idleStrategy": "roam",
+    "challengeRating": 6,
+    "savingThrowProficiencies": [
+      "intelligence",
+      "wisdom"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "damageVulnerabilities": [],
+    "bloodColor": "#550055",
+    "activeSkills": [
+      {
+        "id": "magic_arrow",
+        "rank": 3
+      },
+      {
+        "id": "mind_spike",
+        "rank": 2
+      },
+      {
+        "id": "petrify_ray",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 0.5,
+      "gold": {
+        "min": 10,
+        "max": 20
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 40,
+        "uncommon": 35,
+        "rare": 20,
+        "epic": 5,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "fire_elemental",
+    "name": "Fire Elemental",
+    "description": "A living column of flame that burns with intense heat. Its touch ignites flesh and armour alike, and it can unleash a searing cone of fire that incinerates everything ahead of it.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 16,
+      "dexterity": 14,
+      "constitution": 14,
+      "intelligence": 6,
+      "wisdom": 10,
+      "charisma": 6
+    },
+    "hp": 38,
+    "armorClass": 13,
+    "tileId": 727,
+    "xpReward": 140,
+    "combatStrategy": "melee",
+    "idleStrategy": "roam",
+    "challengeRating": 5,
+    "savingThrowProficiencies": [
+      "constitution"
+    ],
+    "damageResistances": [
+      "bludgeoning",
+      "slashing",
+      "piercing"
+    ],
+    "damageImmunities": [
+      "fire",
+      "poison"
+    ],
+    "damageVulnerabilities": [
+      "cold"
+    ],
+    "bloodColor": "#ff6600",
+    "activeSkills": [
+      {
+        "id": "whirlwind_strike",
+        "rank": 2
+      },
+      {
+        "id": "fire_cone",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Fire Touch",
+      "damageDice": "1d8",
+      "damageType": "fire",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 0.35,
+      "gold": {
+        "min": 6,
+        "max": 14
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 45,
+        "uncommon": 30,
+        "rare": 18,
+        "epic": 7,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "floating_skull",
+    "name": "Floating Skull",
+    "description": "A disembodied skull wreathed in sickly green flame. It assails the living with bolts of necrotic energy and psychic shrieks that leave the mind reeling.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 4,
+      "dexterity": 14,
+      "constitution": 10,
+      "intelligence": 14,
+      "wisdom": 12,
+      "charisma": 8
+    },
+    "hp": 14,
+    "armorClass": 13,
+    "tileId": 726,
+    "xpReward": 75,
+    "combatStrategy": "ranged",
+    "idleStrategy": "roam",
+    "challengeRating": 3,
+    "savingThrowProficiencies": [
+      "intelligence"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "damageVulnerabilities": [],
+    "bloodColor": "#888888",
+    "activeSkills": [
+      {
+        "id": "magic_arrow",
+        "rank": 2
+      },
+      {
+        "id": "mind_spike",
+        "rank": 1
+      },
+      {
+        "id": "death_bolt",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 0.3,
+      "gold": {
+        "min": 4,
+        "max": 10
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 60,
+        "uncommon": 28,
+        "rare": 10,
+        "epic": 2,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "forest_guardian",
+    "name": "Forest Guardian",
+    "description": "An ancient air elemental bound to the forest's heart. It manifests as a swirling vortex of wind and leaves, capable of devastating those who disturb its domain.",
+    "faction": "hostile",
+    "role": "boss",
+    "baseAttributes": {
+      "strength": 16,
+      "dexterity": 14,
+      "constitution": 16,
+      "intelligence": 8,
+      "wisdom": 12,
+      "charisma": 8
+    },
+    "hp": 55,
+    "armorClass": 14,
+    "tileId": 681,
+    "xpReward": 250,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 5,
+    "savingThrowProficiencies": [
+      "strength",
+      "constitution"
+    ],
+    "damageResistances": [
+      "piercing",
+      "slashing"
+    ],
+    "damageImmunities": [],
+    "damageVulnerabilities": [
+      "fire"
+    ],
+    "bloodColor": "#88aaaa",
+    "activeSkills": [
+      {
+        "id": "whirlwind_strike",
+        "rank": 2
+      },
+      {
+        "id": "gust_slam",
+        "rank": 1
+      },
+      {
+        "id": "battle_cry",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "battle_hardened",
+        "rank": 1
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Slam",
+      "damageDice": "1d8",
+      "damageType": "bludgeoning",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 1,
+      "gold": {
+        "min": 20,
+        "max": 35
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 40,
+        "uncommon": 35,
+        "rare": 20,
+        "epic": 5,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "giant_bat",
+    "name": "Giant Bat",
+    "description": "A large winged predator that hunts by echolocation. It swoops down on prey from above, striking with surprising force.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 6,
+      "dexterity": 16,
+      "constitution": 8,
+      "intelligence": 2,
+      "wisdom": 10,
+      "charisma": 4
+    },
+    "hp": 8,
+    "armorClass": 13,
+    "tileId": 658,
+    "xpReward": 30,
+    "combatStrategy": "melee",
+    "idleStrategy": "roam",
+    "challengeRating": 1,
+    "savingThrowProficiencies": [
+      "dexterity"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "damageVulnerabilities": [],
+    "bloodColor": "#4a0000",
+    "activeSkills": [
+      {
+        "id": "mighty_leap",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "evasion",
+        "rank": 1
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Bite",
+      "damageDice": "1d4",
+      "damageType": "piercing",
+      "attackStat": "dexterity"
+    },
+    "lootTable": {
+      "dropChance": 0.2,
+      "gold": {
+        "min": 1,
+        "max": 3
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 75,
+        "uncommon": 18,
+        "rare": 6,
+        "epic": 1,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "giant_beetle",
+    "name": "Giant Beetle",
+    "description": "A hulking insect armoured in thick chitinous plating. It guards its territory aggressively, clamping down with crushing mandibles.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 14,
+      "dexterity": 8,
+      "constitution": 14,
+      "intelligence": 2,
+      "wisdom": 6,
+      "charisma": 2
+    },
+    "hp": 12,
+    "armorClass": 14,
+    "tileId": 636,
+    "xpReward": 35,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 1,
+    "savingThrowProficiencies": [
+      "constitution"
+    ],
+    "damageResistances": [
+      "bludgeoning"
+    ],
+    "damageImmunities": [],
+    "damageVulnerabilities": [],
+    "bloodColor": "#5a7a00",
+    "activeSkills": [
+      {
+        "id": "shield_bash",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "iron_skin",
+        "rank": 1
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Mandible Crush",
+      "damageDice": "1d6",
+      "damageType": "piercing",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 0.3,
+      "gold": {
+        "min": 1,
+        "max": 4
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 70,
+        "uncommon": 20,
+        "rare": 8,
+        "epic": 2,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "giant_scorpion",
+    "name": "Giant Scorpion",
+    "description": "A deadly arachnid that lies in wait for prey. Its venomous stinger delivers a crippling poison that worsens with each passing moment.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 12,
+      "dexterity": 12,
+      "constitution": 12,
+      "intelligence": 2,
+      "wisdom": 8,
+      "charisma": 2
+    },
+    "hp": 10,
+    "armorClass": 12,
+    "tileId": 661,
+    "xpReward": 50,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 2,
+    "savingThrowProficiencies": [
+      "constitution"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "damageVulnerabilities": [],
+    "bloodColor": "#2a5000",
+    "activeSkills": [
+      {
+        "id": "poison_bite",
+        "rank": 2
+      }
+    ],
+    "passiveSkills": [],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Stinger",
+      "damageDice": "1d6",
+      "damageType": "piercing",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 0.4,
+      "gold": {
+        "min": 2,
+        "max": 5
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 65,
+        "uncommon": 25,
+        "rare": 8,
+        "epic": 2,
+        "unique": 0
+      }
+    }
+  },
+  {
     "id": "goblin",
     "name": "Goblin",
     "description": "A small, cunning creature with quick reflexes but poor strength.",
@@ -336,6 +809,302 @@ export const npcs: readonly NpcDefinition[] = [
     }
   },
   {
+    "id": "haunted_tree",
+    "name": "Haunted Tree",
+    "description": "An ancient tree infused with dark necromantic energy. Its grasping branches drain the life force of those it seizes, and its roots can erupt from the earth to immobilise prey.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 16,
+      "dexterity": 6,
+      "constitution": 16,
+      "intelligence": 4,
+      "wisdom": 8,
+      "charisma": 4
+    },
+    "hp": 28,
+    "armorClass": 12,
+    "tileId": 683,
+    "xpReward": 90,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 4,
+    "savingThrowProficiencies": [
+      "constitution"
+    ],
+    "damageResistances": [
+      "bludgeoning",
+      "piercing"
+    ],
+    "damageImmunities": [
+      "poison"
+    ],
+    "damageVulnerabilities": [
+      "fire"
+    ],
+    "bloodColor": "#3a2000",
+    "activeSkills": [
+      {
+        "id": "soul_drain",
+        "rank": 1
+      },
+      {
+        "id": "entangle",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "iron_skin",
+        "rank": 2
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Grasping Branch",
+      "damageDice": "1d8",
+      "damageType": "bludgeoning",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 0.25,
+      "gold": {
+        "min": 2,
+        "max": 6
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 65,
+        "uncommon": 25,
+        "rare": 8,
+        "epic": 2,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "imp",
+    "name": "Imp",
+    "description": "A wiry infernal creature that delights in causing pain. Nimble and resistant to elemental damage, it hurls blasts of hellfire from a safe distance.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 6,
+      "dexterity": 17,
+      "constitution": 10,
+      "intelligence": 11,
+      "wisdom": 10,
+      "charisma": 12
+    },
+    "hp": 18,
+    "armorClass": 13,
+    "tileId": 706,
+    "xpReward": 100,
+    "combatStrategy": "ranged",
+    "idleStrategy": "roam",
+    "challengeRating": 4,
+    "savingThrowProficiencies": [
+      "dexterity"
+    ],
+    "damageResistances": [
+      "fire",
+      "cold",
+      "lightning"
+    ],
+    "damageImmunities": [
+      "poison"
+    ],
+    "damageVulnerabilities": [],
+    "bloodColor": "#ff2200",
+    "activeSkills": [
+      {
+        "id": "fireball",
+        "rank": 2
+      },
+      {
+        "id": "hellfire_bolt",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "evasion",
+        "rank": 2
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 0.4,
+      "gold": {
+        "min": 8,
+        "max": 16
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 50,
+        "uncommon": 30,
+        "rare": 15,
+        "epic": 5,
+        "unique": 0
+      }
+    }
+  },
+  {
+    "id": "minotaur",
+    "name": "Minotaur",
+    "description": "A towering bull-headed warrior of immense strength. Its thunderous charges shatter stone and bone alike, and its greataxe leaves wounds that refuse to close.",
+    "faction": "hostile",
+    "role": "boss",
+    "baseAttributes": {
+      "strength": 20,
+      "dexterity": 10,
+      "constitution": 18,
+      "intelligence": 6,
+      "wisdom": 10,
+      "charisma": 8
+    },
+    "hp": 80,
+    "armorClass": 14,
+    "tileId": 719,
+    "xpReward": 320,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 6,
+    "savingThrowProficiencies": [
+      "strength",
+      "constitution"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [],
+    "damageVulnerabilities": [],
+    "bloodColor": "#8b0000",
+    "activeSkills": [
+      {
+        "id": "charge",
+        "rank": 2
+      },
+      {
+        "id": "reckless_attack",
+        "rank": 2
+      },
+      {
+        "id": "whirlwind_strike",
+        "rank": 2
+      },
+      {
+        "id": "gore",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "battle_hardened",
+        "rank": 2
+      }
+    ],
+    "startingEquipment": [
+      "greataxe"
+    ],
+    "weaponProficiencies": [
+      "greataxe"
+    ],
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 1,
+      "gold": {
+        "min": 30,
+        "max": 50
+      },
+      "items": [
+        {
+          "baseItemId": "greataxe",
+          "weight": 15
+        }
+      ],
+      "rarityWeights": {
+        "common": 35,
+        "uncommon": 35,
+        "rare": 22,
+        "epic": 7,
+        "unique": 1
+      }
+    }
+  },
+  {
+    "id": "ooze",
+    "name": "Ooze",
+    "description": "A formless mass of corrosive slime that dissolves organic matter on contact. Weapons pass through it harmlessly, and its acid touch eats through even metal armour.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 14,
+      "dexterity": 4,
+      "constitution": 18,
+      "intelligence": 1,
+      "wisdom": 6,
+      "charisma": 1
+    },
+    "hp": 18,
+    "armorClass": 8,
+    "tileId": 676,
+    "xpReward": 65,
+    "combatStrategy": "melee",
+    "idleStrategy": "roam",
+    "challengeRating": 3,
+    "savingThrowProficiencies": [
+      "constitution"
+    ],
+    "damageResistances": [
+      "bludgeoning",
+      "slashing",
+      "piercing"
+    ],
+    "damageImmunities": [
+      "acid",
+      "poison"
+    ],
+    "damageVulnerabilities": [
+      "fire",
+      "cold"
+    ],
+    "bloodColor": "#00aa44",
+    "activeSkills": [
+      {
+        "id": "cleave",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Pseudopod",
+      "damageDice": "1d6",
+      "damageType": "acid",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 0.15,
+      "gold": {
+        "min": 0,
+        "max": 2
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 80,
+        "uncommon": 15,
+        "rare": 4,
+        "epic": 1,
+        "unique": 0
+      }
+    }
+  },
+  {
     "id": "rat",
     "name": "Rat",
     "description": "A large, diseased rodent with a venomous bite that can infect wounds with poison.",
@@ -384,6 +1153,254 @@ export const npcs: readonly NpcDefinition[] = [
         "max": 3
       }
     }
+  },
+  {
+    "id": "reaper",
+    "name": "Reaper",
+    "description": "Death made manifest. The Reaper moves with terrible purpose, draining life with every touch and cursing its prey with an inescapable mark before delivering the killing blow.",
+    "faction": "hostile",
+    "role": "boss",
+    "baseAttributes": {
+      "strength": 18,
+      "dexterity": 16,
+      "constitution": 16,
+      "intelligence": 14,
+      "wisdom": 14,
+      "charisma": 12
+    },
+    "hp": 100,
+    "armorClass": 15,
+    "tileId": 684,
+    "xpReward": 450,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 8,
+    "savingThrowProficiencies": [
+      "constitution",
+      "wisdom"
+    ],
+    "damageResistances": [
+      "necrotic",
+      "cold"
+    ],
+    "damageImmunities": [
+      "poison"
+    ],
+    "damageVulnerabilities": [
+      "radiant"
+    ],
+    "bloodColor": "#220022",
+    "activeSkills": [
+      {
+        "id": "soul_drain",
+        "rank": 3
+      },
+      {
+        "id": "whirlwind_strike",
+        "rank": 3
+      },
+      {
+        "id": "mind_spike",
+        "rank": 2
+      },
+      {
+        "id": "death_mark",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "battle_hardened",
+        "rank": 3
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Scythe Slash",
+      "damageDice": "2d6",
+      "damageType": "slashing",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 1,
+      "gold": {
+        "min": 50,
+        "max": 80
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 20,
+        "uncommon": 35,
+        "rare": 30,
+        "epic": 13,
+        "unique": 2
+      }
+    }
+  },
+  {
+    "id": "red_dragon",
+    "name": "Red Dragon",
+    "description": "An ancient wyrm whose scales burn like embers and whose breath can reduce stone to slag. It towers over the battlefield, immune to fire and merciless in combat.",
+    "faction": "hostile",
+    "role": "boss",
+    "baseAttributes": {
+      "strength": 22,
+      "dexterity": 10,
+      "constitution": 20,
+      "intelligence": 14,
+      "wisdom": 12,
+      "charisma": 16
+    },
+    "hp": 150,
+    "armorClass": 18,
+    "tileId": 698,
+    "xpReward": 600,
+    "combatStrategy": "melee",
+    "idleStrategy": "stationary",
+    "challengeRating": 9,
+    "savingThrowProficiencies": [
+      "strength",
+      "constitution",
+      "wisdom"
+    ],
+    "damageResistances": [
+      "bludgeoning",
+      "slashing",
+      "piercing"
+    ],
+    "damageImmunities": [
+      "fire",
+      "poison"
+    ],
+    "damageVulnerabilities": [
+      "cold"
+    ],
+    "bloodColor": "#cc3300",
+    "activeSkills": [
+      {
+        "id": "fire_breath",
+        "rank": 1
+      },
+      {
+        "id": "whirlwind_strike",
+        "rank": 3
+      },
+      {
+        "id": "reckless_attack",
+        "rank": 3
+      },
+      {
+        "id": "mighty_leap",
+        "rank": 3
+      }
+    ],
+    "passiveSkills": [
+      {
+        "id": "battle_hardened",
+        "rank": 3
+      }
+    ],
+    "startingEquipment": [],
+    "weaponProficiencies": [],
+    "armorProficiencies": [],
+    "naturalWeapon": {
+      "name": "Dragon Bite",
+      "damageDice": "2d10",
+      "damageType": "piercing",
+      "attackStat": "strength"
+    },
+    "lootTable": {
+      "dropChance": 1,
+      "gold": {
+        "min": 100,
+        "max": 180
+      },
+      "items": [],
+      "rarityWeights": {
+        "common": 10,
+        "uncommon": 20,
+        "rare": 35,
+        "epic": 28,
+        "unique": 7
+      }
+    }
+  },
+  {
+    "id": "skeleton",
+    "name": "Skeleton",
+    "description": "The animated remains of a fallen warrior, driven by dark magic. It fights without thought or fear, hacking relentlessly at the living.",
+    "faction": "hostile",
+    "role": "grunt",
+    "baseAttributes": {
+      "strength": 14,
+      "dexterity": 14,
+      "constitution": 10,
+      "intelligence": 6,
+      "wisdom": 8,
+      "charisma": 4
+    },
+    "hp": 18,
+    "armorClass": 13,
+    "tileId": 700,
+    "xpReward": 70,
+    "combatStrategy": "melee",
+    "idleStrategy": "roam",
+    "challengeRating": 3,
+    "savingThrowProficiencies": [
+      "dexterity"
+    ],
+    "damageResistances": [],
+    "damageImmunities": [
+      "poison"
+    ],
+    "damageVulnerabilities": [
+      "bludgeoning"
+    ],
+    "bloodColor": "#cccccc",
+    "activeSkills": [
+      {
+        "id": "reckless_attack",
+        "rank": 1
+      },
+      {
+        "id": "cleave",
+        "rank": 1
+      }
+    ],
+    "passiveSkills": [],
+    "startingEquipment": [
+      "shortsword"
+    ],
+    "weaponProficiencies": [
+      "shortsword"
+    ],
+    "armorProficiencies": [],
+    "lootTable": {
+      "dropChance": 0.35,
+      "gold": {
+        "min": 3,
+        "max": 8
+      },
+      "items": [
+        {
+          "baseItemId": "shortsword",
+          "weight": 10
+        },
+        {
+          "baseItemId": "dagger",
+          "weight": 8
+        }
+      ],
+      "rarityWeights": {
+        "common": 65,
+        "uncommon": 25,
+        "rare": 8,
+        "epic": 2,
+        "unique": 0
+      }
+    }
   }
 ] as readonly NpcDefinition[];
 
@@ -424,12 +1441,7 @@ export const vaults: readonly VaultDefinition[] = [
         "marker": "boss_spawn"
       }
     },
-    "spawns": [
-      {
-        "marker": "boss_spawn",
-        "encounterId": "boss_encounter"
-      }
-    ]
+    "spawns": []
   },
   {
     "id": "goblin_shrine",
@@ -499,11 +1511,85 @@ export const vaultsById: Record<string, VaultDefinition> = _vaultsById;
 
 export const encounters: readonly EncounterDefinition[] = [
   {
+    "id": "bat_colony",
+    "minDepth": 1,
+    "entries": [
+      {
+        "npcId": "giant_bat",
+        "count": 3,
+        "weight": 2
+      },
+      {
+        "npcId": "giant_bat",
+        "count": 4,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "beetle_swarm",
+    "minDepth": 1,
+    "entries": [
+      {
+        "npcId": "giant_beetle",
+        "count": 2,
+        "weight": 3
+      },
+      {
+        "npcId": "giant_beetle",
+        "count": 3,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "beholder_watch",
+    "minDepth": 4,
+    "entries": [
+      {
+        "npcId": "beholder",
+        "count": 1,
+        "weight": 3
+      },
+      {
+        "npcId": "imp",
+        "count": 2,
+        "weight": 2
+      },
+      {
+        "npcId": "beholder",
+        "count": 2,
+        "weight": 1
+      }
+    ]
+  },
+  {
     "id": "boss_encounter",
     "minDepth": 3,
     "entries": [
       {
         "npcId": "goblin",
+        "count": 1,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "elemental_vanguard",
+    "minDepth": 4,
+    "entries": [
+      {
+        "npcId": "fire_elemental",
+        "count": 2,
+        "weight": 2
+      },
+      {
+        "npcId": "imp",
+        "count": 2,
+        "weight": 2
+      },
+      {
+        "npcId": "fire_elemental",
         "count": 1,
         "weight": 1
       }
@@ -568,6 +1654,122 @@ export const encounters: readonly EncounterDefinition[] = [
     ]
   },
   {
+    "id": "goblin_war_party",
+    "minDepth": 2,
+    "entries": [
+      {
+        "npcId": "goblin",
+        "count": 3,
+        "weight": 2
+      },
+      {
+        "npcId": "goblin_mage",
+        "count": 1,
+        "weight": 2
+      },
+      {
+        "npcId": "goblin_mage",
+        "count": 2,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "haunted_grove",
+    "minDepth": 3,
+    "entries": [
+      {
+        "npcId": "haunted_tree",
+        "count": 1,
+        "weight": 2
+      },
+      {
+        "npcId": "floating_skull",
+        "count": 2,
+        "weight": 2
+      },
+      {
+        "npcId": "haunted_tree",
+        "count": 2,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "imp_swarm",
+    "minDepth": 4,
+    "entries": [
+      {
+        "npcId": "imp",
+        "count": 3,
+        "weight": 2
+      },
+      {
+        "npcId": "imp",
+        "count": 4,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "insect_nest",
+    "minDepth": 1,
+    "entries": [
+      {
+        "npcId": "giant_beetle",
+        "count": 2,
+        "weight": 2
+      },
+      {
+        "npcId": "giant_scorpion",
+        "count": 1,
+        "weight": 3
+      },
+      {
+        "npcId": "giant_bat",
+        "count": 2,
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "mixed_depths",
+    "minDepth": 2,
+    "entries": [
+      {
+        "npcId": "goblin",
+        "count": 2,
+        "weight": 3
+      },
+      {
+        "npcId": "goblin_mage",
+        "count": 1,
+        "weight": 2
+      },
+      {
+        "npcId": "ooze",
+        "count": 1,
+        "weight": 2
+      }
+    ]
+  },
+  {
+    "id": "ooze_pit",
+    "minDepth": 2,
+    "entries": [
+      {
+        "npcId": "ooze",
+        "count": 1,
+        "weight": 3
+      },
+      {
+        "npcId": "ooze",
+        "count": 2,
+        "weight": 1
+      }
+    ]
+  },
+  {
     "id": "rat_pack",
     "minDepth": 1,
     "entries": [
@@ -593,6 +1795,43 @@ export const encounters: readonly EncounterDefinition[] = [
         "weight": 1
       }
     ]
+  },
+  {
+    "id": "skeleton_patrol",
+    "minDepth": 3,
+    "entries": [
+      {
+        "npcId": "skeleton",
+        "count": 2,
+        "weight": 3
+      },
+      {
+        "npcId": "skeleton",
+        "count": 3,
+        "weight": 1
+      }
+    ]
+  },
+  {
+    "id": "undead_horde",
+    "minDepth": 3,
+    "entries": [
+      {
+        "npcId": "skeleton",
+        "count": 3,
+        "weight": 2
+      },
+      {
+        "npcId": "floating_skull",
+        "count": 2,
+        "weight": 2
+      },
+      {
+        "npcId": "skeleton",
+        "count": 4,
+        "weight": 1
+      }
+    ]
   }
 ] as readonly EncounterDefinition[];
 
@@ -600,7 +1839,7 @@ const _encountersById: Record<string, EncounterDefinition> = {};
 for (const e of encounters) { _encountersById[e.id] = e; }
 export const encountersById: Record<string, EncounterDefinition> = _encountersById;
 
-export const skillIds = ["acid_mastery","arcane_constitution","arcane_focus","arcane_mind","arcane_surge","assassinate","battle_cry","battle_hardened","berserker_rage","bludgeoning_mastery","caltrops","charge","cleave","cold_mastery","cone_of_cold","constitution_training","evasion","fire_mastery","fireball","force_mastery","frost_nova","garrote","hemorrhage","iron_skin","lightning_bolt","lightning_mastery","mage_armor","magic_arrow","marked_for_death","mighty_leap","mind_spike","piercing_mastery","poison_bite","poison_blade","poison_immunity","poison_mastery","predators_instinct","quick_reflexes","reckless_attack","relentless","second_wind","shadow_step","shadow_strike","shield","shield_bash","slashing_mastery","smoke_bomb","sneak_attack","soul_drain","stealth","warriors_might","whirlwind_strike"] as const;
+export const skillIds = ["acid_mastery","arcane_constitution","arcane_focus","arcane_mind","arcane_surge","assassinate","battle_cry","battle_hardened","berserker_rage","bludgeoning_mastery","caltrops","charge","cleave","cold_mastery","cone_of_cold","constitution_training","death_bolt","death_mark","entangle","evasion","fire_breath","fire_cone","fire_mastery","fireball","force_mastery","frost_nova","garrote","gore","gust_slam","hellfire_bolt","hemorrhage","iron_skin","lightning_bolt","lightning_mastery","mage_armor","magic_arrow","marked_for_death","mighty_leap","mind_spike","petrify_ray","piercing_mastery","poison_bite","poison_blade","poison_immunity","poison_mastery","predators_instinct","quick_reflexes","reckless_attack","relentless","second_wind","shadow_step","shadow_strike","shield","shield_bash","slashing_mastery","smoke_bomb","sneak_attack","soul_drain","stealth","warriors_might","whirlwind_strike"] as const;
 export type SkillId = (typeof skillIds)[number];
 
 export const skills: readonly SkillDefinition[] = [
@@ -621,7 +1860,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 2,
           "damageType": "acid",
-          "appliesTo": "melee",
+          "appliesTo": "any",
           "requiredDamageType": "acid"
         }
       ],
@@ -630,7 +1869,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 3,
           "damageType": "acid",
-          "appliesTo": "melee",
+          "appliesTo": "any",
           "requiredDamageType": "acid"
         }
       ],
@@ -639,7 +1878,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 5,
           "damageType": "acid",
-          "appliesTo": "melee",
+          "appliesTo": "any",
           "requiredDamageType": "acid"
         }
       ]
@@ -1186,8 +2425,8 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
-          "dice": "1d8",
-          "damageType": "slashing",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
           "rangeTiles": 1,
           "angleDegrees": 135,
           "scalingStat": "strength",
@@ -1201,8 +2440,10 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
-          "dice": "2d8",
-          "damageType": "slashing",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "bonusDice": "1d6",
+          "bonusDamageType": "bludgeoning",
           "rangeTiles": 1,
           "angleDegrees": 135,
           "scalingStat": "strength",
@@ -1216,8 +2457,10 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
-          "dice": "3d8",
-          "damageType": "slashing",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "bonusDice": "2d6",
+          "bonusDamageType": "bludgeoning",
           "rangeTiles": 1,
           "angleDegrees": 135,
           "scalingStat": "strength",
@@ -1291,6 +2534,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
+          "attackCategory": "spell",
           "dice": "2d8",
           "damageType": "cold",
           "rangeTiles": 3,
@@ -1306,6 +2550,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
+          "attackCategory": "spell",
           "dice": "3d8",
           "damageType": "cold",
           "rangeTiles": 3,
@@ -1328,6 +2573,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "cone_damage",
+          "attackCategory": "spell",
           "dice": "4d8",
           "damageType": "cold",
           "rangeTiles": 3,
@@ -1391,6 +2637,184 @@ export const skills: readonly SkillDefinition[] = [
     ]
   },
   {
+    "skillType": "active",
+    "id": "death_bolt",
+    "name": "Death Bolt",
+    "description": "A bolt of necrotic energy that tears through the target, leaving a haemorrhaging wound.",
+    "icon": "Mageskill_44_nobg.png",
+    "school": "arcane",
+    "tags": [
+      "damage",
+      "debuff",
+      "spell",
+      "ranged"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 5,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "1d8",
+          "damageType": "necrotic",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 2,
+            "value": 1
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "2d6",
+          "damageType": "necrotic",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 3,
+            "value": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "2d8",
+          "damageType": "necrotic",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 3,
+            "value": 3
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "death_mark",
+    "name": "Death Mark",
+    "description": "The Reaper places a curse of inevitable doom upon a target, filling them with dread and opening wounds that will not close.",
+    "icon": "Mageskill_44_nobg.png",
+    "school": "arcane",
+    "tags": [
+      "debuff",
+      "control",
+      "spell",
+      "ranged"
+    ],
+    "cooldown": 5,
+    "targetType": "actor",
+    "range": 5,
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "frightened",
+          "durationTurns": 3,
+          "target": "target"
+        },
+        {
+          "type": "apply_status",
+          "statusId": "bleeding",
+          "durationTurns": 3,
+          "value": 2,
+          "target": "target"
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "frightened",
+          "durationTurns": 3,
+          "target": "target"
+        },
+        {
+          "type": "apply_status",
+          "statusId": "bleeding",
+          "durationTurns": 4,
+          "value": 3,
+          "target": "target"
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "frightened",
+          "durationTurns": 4,
+          "target": "target"
+        },
+        {
+          "type": "apply_status",
+          "statusId": "bleeding",
+          "durationTurns": 5,
+          "value": 4,
+          "target": "target"
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "entangle",
+    "name": "Entangle",
+    "description": "Grasping roots erupt from the ground around the caster, rooting everything nearby in place.",
+    "icon": "Skill_Toxic_nb.png",
+    "school": "nature",
+    "tags": [
+      "control",
+      "aoe",
+      "spell"
+    ],
+    "cooldown": 4,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 1
+        }
+      ],
+      [
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ]
+    ]
+  },
+  {
     "skillType": "passive",
     "id": "evasion",
     "name": "Evasion",
@@ -1425,6 +2849,162 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "modify_armor_class",
           "amount": 2
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "fire_breath",
+    "name": "Fire Breath",
+    "description": "The dragon unleashes a devastating torrent of dragonfire in a wide cone, incinerating everything in its path.",
+    "icon": "Mageskill_22_nobg.png",
+    "school": "nature",
+    "tags": [
+      "damage",
+      "aoe",
+      "spell"
+    ],
+    "cooldown": 5,
+    "targetType": "tile",
+    "range": 4,
+    "effectsByRank": [
+      [
+        {
+          "type": "cone_damage",
+          "attackCategory": "spell",
+          "dice": "4d8",
+          "damageType": "fire",
+          "rangeTiles": 4,
+          "angleDegrees": 120,
+          "scalingStat": "constitution",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "constitution",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "burning",
+          "durationTurns": 3,
+          "value": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ],
+      [
+        {
+          "type": "cone_damage",
+          "attackCategory": "spell",
+          "dice": "5d8",
+          "damageType": "fire",
+          "rangeTiles": 5,
+          "angleDegrees": 120,
+          "scalingStat": "constitution",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "constitution",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "burning",
+          "durationTurns": 3,
+          "value": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ],
+      [
+        {
+          "type": "cone_damage",
+          "attackCategory": "spell",
+          "dice": "6d8",
+          "damageType": "fire",
+          "rangeTiles": 5,
+          "angleDegrees": 120,
+          "scalingStat": "constitution",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "constitution",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "burning",
+          "durationTurns": 4,
+          "value": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "fire_cone",
+    "name": "Fire Cone",
+    "description": "A torrent of flame erupts in a cone, scorching everything in its path.",
+    "icon": "Mageskill_22_nobg.png",
+    "school": "nature",
+    "tags": [
+      "damage",
+      "aoe",
+      "spell"
+    ],
+    "cooldown": 4,
+    "targetType": "tile",
+    "range": 3,
+    "effectsByRank": [
+      [
+        {
+          "type": "cone_damage",
+          "attackCategory": "spell",
+          "dice": "2d6",
+          "damageType": "fire",
+          "rangeTiles": 3,
+          "angleDegrees": 90,
+          "scalingStat": "constitution",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "constitution",
+            "successDamageMultiplier": 0.5
+          }
+        }
+      ],
+      [
+        {
+          "type": "cone_damage",
+          "attackCategory": "spell",
+          "dice": "3d6",
+          "damageType": "fire",
+          "rangeTiles": 3,
+          "angleDegrees": 90,
+          "scalingStat": "constitution",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "constitution",
+            "successDamageMultiplier": 0.5
+          }
+        }
+      ],
+      [
+        {
+          "type": "cone_damage",
+          "attackCategory": "spell",
+          "dice": "4d6",
+          "damageType": "fire",
+          "rangeTiles": 4,
+          "angleDegrees": 90,
+          "scalingStat": "constitution",
+          "savingThrow": {
+            "saveAbility": "dexterity",
+            "dcStat": "constitution",
+            "successDamageMultiplier": 0.5
+          }
         }
       ]
     ]
@@ -1489,10 +3069,11 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
+          "attackCategory": "spell",
           "dice": "2d6",
+          "damageType": "fire",
           "radiusTiles": 1,
           "scalingStat": "intelligence",
-          "damageType": "fire",
           "savingThrow": {
             "saveAbility": "dexterity",
             "dcStat": "intelligence",
@@ -1503,10 +3084,11 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
+          "attackCategory": "spell",
           "dice": "4d6",
+          "damageType": "fire",
           "radiusTiles": 1,
           "scalingStat": "intelligence",
-          "damageType": "fire",
           "savingThrow": {
             "saveAbility": "dexterity",
             "dcStat": "intelligence",
@@ -1517,10 +3099,11 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
+          "attackCategory": "spell",
           "dice": "4d6",
+          "damageType": "fire",
           "radiusTiles": 2,
           "scalingStat": "intelligence",
-          "damageType": "fire",
           "savingThrow": {
             "saveAbility": "dexterity",
             "dcStat": "intelligence",
@@ -1590,10 +3173,11 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
+          "attackCategory": "spell",
           "dice": "1d6",
+          "damageType": "cold",
           "radiusTiles": 1,
           "scalingStat": "intelligence",
-          "damageType": "cold",
           "savingThrow": {
             "saveAbility": "constitution",
             "dcStat": "intelligence",
@@ -1611,10 +3195,11 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
+          "attackCategory": "spell",
           "dice": "2d6",
+          "damageType": "cold",
           "radiusTiles": 1,
           "scalingStat": "intelligence",
-          "damageType": "cold",
           "savingThrow": {
             "saveAbility": "constitution",
             "dcStat": "intelligence",
@@ -1632,10 +3217,11 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
+          "attackCategory": "spell",
           "dice": "2d8",
+          "damageType": "cold",
           "radiusTiles": 2,
           "scalingStat": "intelligence",
-          "damageType": "cold",
           "savingThrow": {
             "saveAbility": "constitution",
             "dcStat": "intelligence",
@@ -1674,6 +3260,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d6",
           "damageType": "piercing",
           "attackRoll": {
@@ -1689,6 +3276,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "2d4",
           "damageType": "piercing",
           "attackRoll": {
@@ -1704,6 +3292,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "2d6",
           "damageType": "piercing",
           "attackRoll": {
@@ -1713,6 +3302,230 @@ export const skills: readonly SkillDefinition[] = [
           "onHitStatus": {
             "statusId": "silenced",
             "durationTurns": 3
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "gore",
+    "name": "Gore",
+    "description": "A savage horn impalement that drives through armour and leaves a deep bleeding wound.",
+    "icon": "Skill_Physical_nb.png",
+    "school": "bestial",
+    "tags": [
+      "damage",
+      "debuff",
+      "weapon_attack",
+      "melee_attack"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 1,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
+          "dice": "1d8",
+          "damageType": "piercing",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 3,
+            "value": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
+          "dice": "2d6",
+          "damageType": "piercing",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 4,
+            "value": 3
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
+          "dice": "2d8",
+          "damageType": "piercing",
+          "attackRoll": {
+            "modifierStat": "strength",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "bleeding",
+            "durationTurns": 5,
+            "value": 4
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "gust_slam",
+    "name": "Gust Slam",
+    "description": "The Guardian releases a violent burst of wind in all directions, dealing thunder damage and pinning nearby enemies to the ground.",
+    "icon": "Skill_Physical_nb.png",
+    "school": "nature",
+    "tags": [
+      "damage",
+      "control",
+      "aoe",
+      "spell"
+    ],
+    "cooldown": 4,
+    "targetType": "none",
+    "effectsByRank": [
+      [
+        {
+          "type": "area_damage",
+          "attackCategory": "spell",
+          "dice": "2d6",
+          "damageType": "thunder",
+          "radiusTiles": 2,
+          "scalingStat": "strength",
+          "savingThrow": {
+            "saveAbility": "constitution",
+            "dcStat": "strength",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ],
+      [
+        {
+          "type": "area_damage",
+          "attackCategory": "spell",
+          "dice": "3d6",
+          "damageType": "thunder",
+          "radiusTiles": 2,
+          "scalingStat": "strength",
+          "savingThrow": {
+            "saveAbility": "constitution",
+            "dcStat": "strength",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 2,
+          "target": "aoe",
+          "aoeRadiusTiles": 2
+        }
+      ],
+      [
+        {
+          "type": "area_damage",
+          "attackCategory": "spell",
+          "dice": "4d6",
+          "damageType": "thunder",
+          "radiusTiles": 3,
+          "scalingStat": "strength",
+          "savingThrow": {
+            "saveAbility": "constitution",
+            "dcStat": "strength",
+            "successDamageMultiplier": 0.5
+          }
+        },
+        {
+          "type": "apply_status",
+          "statusId": "rooted",
+          "durationTurns": 3,
+          "target": "aoe",
+          "aoeRadiusTiles": 3
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "hellfire_bolt",
+    "name": "Hellfire Bolt",
+    "description": "A searing bolt of infernal fire that ignites the target, dealing damage over time.",
+    "icon": "Mageskill_22_nobg.png",
+    "school": "arcane",
+    "tags": [
+      "damage",
+      "debuff",
+      "spell",
+      "ranged"
+    ],
+    "cooldown": 3,
+    "targetType": "actor",
+    "range": 6,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "1d6",
+          "damageType": "fire",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "burning",
+            "durationTurns": 3,
+            "value": 1
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "2d6",
+          "damageType": "fire",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "burning",
+            "durationTurns": 3,
+            "value": 2
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "3d6",
+          "damageType": "fire",
+          "attackRoll": {
+            "modifierStat": "dexterity",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "burning",
+            "durationTurns": 4,
+            "value": 3
           }
         }
       ]
@@ -1739,6 +3552,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d8",
           "damageType": "slashing",
           "attackRoll": {
@@ -1755,6 +3569,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d10",
           "damageType": "slashing",
           "attackRoll": {
@@ -1771,6 +3586,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "2d6",
           "damageType": "slashing",
           "attackRoll": {
@@ -1835,6 +3651,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "line_damage",
+          "attackCategory": "spell",
           "dice": "3d6",
           "damageType": "lightning",
           "scalingStat": "intelligence",
@@ -1848,6 +3665,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "line_damage",
+          "attackCategory": "spell",
           "dice": "5d6",
           "damageType": "lightning",
           "scalingStat": "intelligence",
@@ -1861,6 +3679,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "line_damage",
+          "attackCategory": "spell",
           "dice": "7d6",
           "damageType": "lightning",
           "scalingStat": "intelligence",
@@ -1964,6 +3783,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "spell",
           "dice": "1d6",
           "damageType": "force",
           "scalingStat": "intelligence",
@@ -1976,6 +3796,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "spell",
           "dice": "2d6",
           "damageType": "force",
           "scalingStat": "intelligence",
@@ -1988,6 +3809,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "spell",
           "dice": "3d6",
           "damageType": "force",
           "scalingStat": "intelligence",
@@ -2068,30 +3890,33 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "leap_attack",
-          "maxRangeTiles": 4,
-          "landingRadiusTiles": 1,
+          "attackCategory": "impact",
           "dice": "1d8",
           "damageType": "bludgeoning",
+          "maxRangeTiles": 4,
+          "landingRadiusTiles": 1,
           "scalingStat": "strength"
         }
       ],
       [
         {
           "type": "leap_attack",
-          "maxRangeTiles": 4,
-          "landingRadiusTiles": 1,
+          "attackCategory": "impact",
           "dice": "2d8",
           "damageType": "bludgeoning",
+          "maxRangeTiles": 4,
+          "landingRadiusTiles": 1,
           "scalingStat": "strength"
         }
       ],
       [
         {
           "type": "leap_attack",
-          "maxRangeTiles": 4,
-          "landingRadiusTiles": 1,
+          "attackCategory": "impact",
           "dice": "3d8",
           "damageType": "bludgeoning",
+          "maxRangeTiles": 4,
+          "landingRadiusTiles": 1,
           "scalingStat": "strength"
         }
       ]
@@ -2117,6 +3942,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "spell",
           "dice": "1d8",
           "damageType": "psychic",
           "scalingStat": "intelligence",
@@ -2133,6 +3959,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "spell",
           "dice": "2d6",
           "damageType": "psychic",
           "scalingStat": "intelligence",
@@ -2149,6 +3976,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "spell",
           "dice": "2d8",
           "damageType": "psychic",
           "scalingStat": "intelligence",
@@ -2159,6 +3987,73 @@ export const skills: readonly SkillDefinition[] = [
           "onHitStatus": {
             "statusId": "silenced",
             "durationTurns": 3
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "skillType": "active",
+    "id": "petrify_ray",
+    "name": "Petrify Ray",
+    "description": "A focused eye-ray that blasts the target with psychic force, stunning them in place.",
+    "icon": "Mageskill_44_nobg.png",
+    "school": "arcane",
+    "tags": [
+      "damage",
+      "control",
+      "spell",
+      "ranged"
+    ],
+    "cooldown": 4,
+    "targetType": "actor",
+    "range": 5,
+    "effectsByRank": [
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "1d8",
+          "damageType": "psychic",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "stunned",
+            "durationTurns": 1
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "2d6",
+          "damageType": "psychic",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "stunned",
+            "durationTurns": 1
+          }
+        }
+      ],
+      [
+        {
+          "type": "single_target_damage",
+          "attackCategory": "spell",
+          "dice": "2d8",
+          "damageType": "psychic",
+          "attackRoll": {
+            "modifierStat": "intelligence",
+            "useProficiency": true
+          },
+          "onHitStatus": {
+            "statusId": "stunned",
+            "durationTurns": 2
           }
         }
       ]
@@ -2181,7 +4076,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 2,
           "damageType": "piercing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "requiredDamageType": "piercing"
         }
       ],
@@ -2190,7 +4085,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 3,
           "damageType": "piercing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "requiredDamageType": "piercing"
         }
       ],
@@ -2199,7 +4094,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 5,
           "damageType": "piercing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "requiredDamageType": "piercing"
         }
       ]
@@ -2225,6 +4120,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d4",
           "damageType": "piercing",
           "attackRoll": {
@@ -2241,6 +4137,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d6",
           "damageType": "piercing",
           "attackRoll": {
@@ -2257,6 +4154,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d8",
           "damageType": "piercing",
           "attackRoll": {
@@ -2293,6 +4191,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d6",
           "damageType": "piercing",
           "attackRoll": {
@@ -2309,6 +4208,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "2d6",
           "damageType": "piercing",
           "attackRoll": {
@@ -2325,6 +4225,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "2d6",
           "damageType": "piercing",
           "attackRoll": {
@@ -2506,8 +4407,8 @@ export const skills: readonly SkillDefinition[] = [
         },
         {
           "type": "single_target_damage",
-          "dice": "2d8",
-          "damageType": "slashing",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
           "scalingStat": "strength",
           "attackRoll": {
             "modifierStat": "strength",
@@ -2528,8 +4429,9 @@ export const skills: readonly SkillDefinition[] = [
         },
         {
           "type": "single_target_damage",
-          "dice": "3d8",
-          "damageType": "slashing",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "bonusDice": "1d8",
           "scalingStat": "strength",
           "attackRoll": {
             "modifierStat": "strength",
@@ -2550,8 +4452,9 @@ export const skills: readonly SkillDefinition[] = [
         },
         {
           "type": "single_target_damage",
-          "dice": "4d8",
-          "damageType": "slashing",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "bonusDice": "2d8",
           "scalingStat": "strength",
           "attackRoll": {
             "modifierStat": "strength",
@@ -2691,7 +4594,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_damage_dice",
           "dice": "1d4",
           "damageType": "piercing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "onCritOnly": false
         }
       ],
@@ -2700,7 +4603,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_damage_dice",
           "dice": "1d6",
           "damageType": "piercing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "onCritOnly": false
         }
       ],
@@ -2709,7 +4612,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_damage_dice",
           "dice": "1d8",
           "damageType": "piercing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "onCritOnly": false
         }
       ]
@@ -2769,6 +4672,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d6",
           "damageType": "bludgeoning",
           "attackRoll": {
@@ -2784,6 +4688,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "1d8",
           "damageType": "bludgeoning",
           "attackRoll": {
@@ -2799,6 +4704,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "single_target_damage",
+          "attackCategory": "weapon_attack",
           "dice": "2d6",
           "damageType": "bludgeoning",
           "attackRoll": {
@@ -2830,7 +4736,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 2,
           "damageType": "slashing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "requiredDamageType": "slashing"
         }
       ],
@@ -2839,7 +4745,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 3,
           "damageType": "slashing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "requiredDamageType": "slashing"
         }
       ],
@@ -2848,7 +4754,7 @@ export const skills: readonly SkillDefinition[] = [
           "type": "add_flat_damage_bonus",
           "amount": 5,
           "damageType": "slashing",
-          "appliesTo": "melee",
+          "appliesTo": "weapon_attack",
           "requiredDamageType": "slashing"
         }
       ]
@@ -2921,22 +4827,25 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "sneak_attack",
-          "dice": "3d6",
-          "damageType": "piercing"
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "dice": "3d6"
         }
       ],
       [
         {
           "type": "sneak_attack",
-          "dice": "5d6",
-          "damageType": "piercing"
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "dice": "5d6"
         }
       ],
       [
         {
           "type": "sneak_attack",
-          "dice": "7d6",
-          "damageType": "piercing"
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "dice": "7d6"
         }
       ]
     ]
@@ -2961,6 +4870,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "drain_life",
+          "attackCategory": "spell",
           "dice": "1d8",
           "damageType": "force",
           "healDice": "1d4"
@@ -2969,6 +4879,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "drain_life",
+          "attackCategory": "spell",
           "dice": "2d6",
           "damageType": "force",
           "healDice": "1d6"
@@ -2977,6 +4888,7 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "drain_life",
+          "attackCategory": "spell",
           "dice": "2d8",
           "damageType": "force",
           "healDice": "1d8"
@@ -3078,28 +4990,32 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "area_damage",
-          "dice": "1d8",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
           "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "slashing"
+          "scalingStat": "strength"
         }
       ],
       [
         {
           "type": "area_damage",
-          "dice": "2d8",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "bonusDice": "1d6",
+          "bonusDamageType": "bludgeoning",
           "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "slashing"
+          "scalingStat": "strength"
         }
       ],
       [
         {
           "type": "area_damage",
-          "dice": "3d8",
+          "attackCategory": "weapon_attack",
+          "weaponDice": true,
+          "bonusDice": "2d6",
+          "bonusDamageType": "bludgeoning",
           "radiusTiles": 1,
-          "scalingStat": "strength",
-          "damageType": "slashing"
+          "scalingStat": "strength"
         }
       ]
     ]
@@ -3390,7 +5306,7 @@ export const affixes: readonly AffixDefinition[] = [
       "type": "add_flat_damage_bonus",
       "amount": 2,
       "damageType": "bludgeoning",
-      "appliesTo": "any"
+      "appliesTo": "weapon_attack"
     }
   },
   {
@@ -3418,7 +5334,7 @@ export const affixes: readonly AffixDefinition[] = [
       "type": "add_damage_dice",
       "dice": "1d4",
       "damageType": "fire",
-      "appliesTo": "any",
+      "appliesTo": "weapon_attack",
       "onCritOnly": false
     }
   },
@@ -3434,7 +5350,7 @@ export const affixes: readonly AffixDefinition[] = [
       "type": "add_damage_dice",
       "dice": "1d4",
       "damageType": "cold",
-      "appliesTo": "any",
+      "appliesTo": "weapon_attack",
       "onCritOnly": false
     }
   },
@@ -3450,7 +5366,7 @@ export const affixes: readonly AffixDefinition[] = [
       "type": "add_damage_dice",
       "dice": "1d4",
       "damageType": "poison",
-      "appliesTo": "any",
+      "appliesTo": "weapon_attack",
       "onCritOnly": false
     }
   },
@@ -3466,7 +5382,7 @@ export const affixes: readonly AffixDefinition[] = [
       "type": "add_damage_dice",
       "dice": "1d4",
       "damageType": "piercing",
-      "appliesTo": "any",
+      "appliesTo": "weapon_attack",
       "onCritOnly": false
     }
   },

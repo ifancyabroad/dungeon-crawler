@@ -1,0 +1,65 @@
+{
+	"skillType": "active",
+	"id": "death_bolt",
+	"name": "Death Bolt",
+	"description": "A bolt of necrotic energy that tears through the target, leaving a haemorrhaging wound.",
+	"icon": "Mageskill_44_nobg.png",
+	"school": "arcane",
+	"tags": ["damage", "debuff", "spell", "ranged"],
+	"cooldown": 3,
+	"targetType": "actor",
+	"range": 5,
+	"effectsByRank": [
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "1d8",
+				"damageType": "necrotic",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "bleeding",
+					"durationTurns": 2,
+					"value": 1
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "2d6",
+				"damageType": "necrotic",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "bleeding",
+					"durationTurns": 3,
+					"value": 2
+				}
+			}
+		],
+		[
+			{
+				"type": "single_target_damage",
+				"attackCategory": "spell",
+				"dice": "2d8",
+				"damageType": "necrotic",
+				"attackRoll": {
+					"modifierStat": "intelligence",
+					"useProficiency": true
+				},
+				"onHitStatus": {
+					"statusId": "bleeding",
+					"durationTurns": 3,
+					"value": 3
+				}
+			}
+		]
+	]
+}

@@ -1,0 +1,9 @@
+{
+	"id": "goblin_war_party",
+	"minDepth": 2,
+	"entries": [
+		{ "npcId": "goblin", "count": 3, "weight": 2 },
+		{ "npcId": "goblin_mage", "count": 1, "weight": 2 },
+		{ "npcId": "goblin_mage", "count": 2, "weight": 1 }
+	]
+}

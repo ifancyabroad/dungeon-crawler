@@ -1,0 +1,9 @@
+{
+	"id": "haunted_grove",
+	"minDepth": 3,
+	"entries": [
+		{ "npcId": "haunted_tree", "count": 1, "weight": 2 },
+		{ "npcId": "floating_skull", "count": 2, "weight": 2 },
+		{ "npcId": "haunted_tree", "count": 2, "weight": 1 }
+	]
+}

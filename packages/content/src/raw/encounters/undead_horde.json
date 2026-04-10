@@ -1,0 +1,9 @@
+{
+	"id": "undead_horde",
+	"minDepth": 3,
+	"entries": [
+		{ "npcId": "skeleton", "count": 3, "weight": 2 },
+		{ "npcId": "floating_skull", "count": 2, "weight": 2 },
+		{ "npcId": "skeleton", "count": 4, "weight": 1 }
+	]
+}

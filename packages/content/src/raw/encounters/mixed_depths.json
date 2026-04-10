@@ -1,0 +1,9 @@
+{
+	"id": "mixed_depths",
+	"minDepth": 2,
+	"entries": [
+		{ "npcId": "goblin", "count": 2, "weight": 3 },
+		{ "npcId": "goblin_mage", "count": 1, "weight": 2 },
+		{ "npcId": "ooze", "count": 1, "weight": 2 }
+	]
+}

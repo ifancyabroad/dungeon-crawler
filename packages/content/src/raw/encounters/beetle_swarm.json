@@ -1,0 +1,8 @@
+{
+	"id": "beetle_swarm",
+	"minDepth": 1,
+	"entries": [
+		{ "npcId": "giant_beetle", "count": 2, "weight": 3 },
+		{ "npcId": "giant_beetle", "count": 3, "weight": 1 }
+	]
+}

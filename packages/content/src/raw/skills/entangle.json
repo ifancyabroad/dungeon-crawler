@@ -1,0 +1,40 @@
+{
+	"skillType": "active",
+	"id": "entangle",
+	"name": "Entangle",
+	"description": "Grasping roots erupt from the ground around the caster, rooting everything nearby in place.",
+	"icon": "Skill_Toxic_nb.png",
+	"school": "nature",
+	"tags": ["control", "aoe", "spell"],
+	"cooldown": 4,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 2
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 1,
+				"durationTurns": 3
+			}
+		],
+		[
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 3
+			}
+		]
+	]
+}

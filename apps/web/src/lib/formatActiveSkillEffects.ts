@@ -21,23 +21,28 @@ function scalingSuffix(stat?: string): string {
  * Single-line summary of one active skill effect descriptor.
  */
 export function formatActiveSkillEffectLine(effect: ActiveSkillEffectDescriptor): string {
+	function dmg(dice?: string, damageType?: string): string {
+		if (dice && damageType) return `${dice} ${titleCaseWord(damageType)}`;
+		if (dice) return `${dice} weapon`;
+		return "weapon";
+	}
 	switch (effect.type) {
 		case "single_target_damage":
-			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage${scalingSuffix(effect.scalingStat)}`;
+			return `${dmg(effect.dice, effect.damageType)} damage${scalingSuffix(effect.scalingStat)}`;
 		case "area_damage":
-			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage (radius ${effect.radiusTiles})${scalingSuffix(effect.scalingStat)}`;
+			return `${dmg(effect.dice, effect.damageType)} damage (radius ${effect.radiusTiles})${scalingSuffix(effect.scalingStat)}`;
 		case "cone_damage":
-			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage in a cone${scalingSuffix(effect.scalingStat)}`;
+			return `${dmg(effect.dice, effect.damageType)} damage in a cone${scalingSuffix(effect.scalingStat)}`;
 		case "line_damage":
 			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage in a line${scalingSuffix(effect.scalingStat)}`;
 		case "leap_attack":
-			return `Leap up to ${effect.maxRangeTiles} tiles — ${effect.dice} ${titleCaseWord(effect.damageType)} on landing${scalingSuffix(effect.scalingStat)}`;
+			return `Leap up to ${effect.maxRangeTiles} tiles — ${dmg(effect.dice, effect.damageType)} on landing${scalingSuffix(effect.scalingStat)}`;
 		case "charge_attack":
 			return `Charge up to ${effect.maxRangeTiles} tiles — +${effect.bonusDice} ${titleCaseWord(effect.bonusDamageType)} bonus damage`;
 		case "sneak_attack":
-			return `${effect.dice} ${titleCaseWord(effect.damageType)} bonus damage`;
+			return `${effect.dice} bonus weapon damage`;
 		case "multi_strike":
-			return `${effect.strikeCount}\u00d7 ${effect.dice} ${titleCaseWord(effect.damageType)} damage${scalingSuffix(effect.scalingStat)}`;
+			return `${effect.strikeCount}\u00d7 ${dmg(effect.dice, effect.damageType)} damage${scalingSuffix(effect.scalingStat)}`;
 		case "drain_life":
 			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage, heal ${effect.healDice}`;
 		case "heal_self":

@@ -1,0 +1,86 @@
+{
+	"skillType": "active",
+	"id": "fire_breath",
+	"name": "Fire Breath",
+	"description": "The dragon unleashes a devastating torrent of dragonfire in a wide cone, incinerating everything in its path.",
+	"icon": "Mageskill_22_nobg.png",
+	"school": "nature",
+	"tags": ["damage", "aoe", "spell"],
+	"cooldown": 5,
+	"targetType": "tile",
+	"range": 4,
+	"effectsByRank": [
+		[
+			{
+				"type": "cone_damage",
+				"attackCategory": "spell",
+				"dice": "4d8",
+				"damageType": "fire",
+				"rangeTiles": 4,
+				"angleDegrees": 120,
+				"scalingStat": "constitution",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "constitution",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "burning",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 3,
+				"value": 2
+			}
+		],
+		[
+			{
+				"type": "cone_damage",
+				"attackCategory": "spell",
+				"dice": "5d8",
+				"damageType": "fire",
+				"rangeTiles": 5,
+				"angleDegrees": 120,
+				"scalingStat": "constitution",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "constitution",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "burning",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 3,
+				"value": 2
+			}
+		],
+		[
+			{
+				"type": "cone_damage",
+				"attackCategory": "spell",
+				"dice": "6d8",
+				"damageType": "fire",
+				"rangeTiles": 5,
+				"angleDegrees": 120,
+				"scalingStat": "constitution",
+				"savingThrow": {
+					"saveAbility": "dexterity",
+					"dcStat": "constitution",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "burning",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 4,
+				"value": 3
+			}
+		]
+	]
+}

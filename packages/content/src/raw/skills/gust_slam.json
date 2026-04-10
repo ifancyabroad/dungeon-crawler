@@ -1,0 +1,79 @@
+{
+	"skillType": "active",
+	"id": "gust_slam",
+	"name": "Gust Slam",
+	"description": "The Guardian releases a violent burst of wind in all directions, dealing thunder damage and pinning nearby enemies to the ground.",
+	"icon": "Skill_Physical_nb.png",
+	"school": "nature",
+	"tags": ["damage", "control", "aoe", "spell"],
+	"cooldown": 4,
+	"targetType": "none",
+	"effectsByRank": [
+		[
+			{
+				"type": "area_damage",
+				"attackCategory": "spell",
+				"dice": "2d6",
+				"damageType": "thunder",
+				"radiusTiles": 2,
+				"scalingStat": "strength",
+				"savingThrow": {
+					"saveAbility": "constitution",
+					"dcStat": "strength",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 2
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"attackCategory": "spell",
+				"dice": "3d6",
+				"damageType": "thunder",
+				"radiusTiles": 2,
+				"scalingStat": "strength",
+				"savingThrow": {
+					"saveAbility": "constitution",
+					"dcStat": "strength",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 2,
+				"durationTurns": 2
+			}
+		],
+		[
+			{
+				"type": "area_damage",
+				"attackCategory": "spell",
+				"dice": "4d6",
+				"damageType": "thunder",
+				"radiusTiles": 3,
+				"scalingStat": "strength",
+				"savingThrow": {
+					"saveAbility": "constitution",
+					"dcStat": "strength",
+					"successDamageMultiplier": 0.5
+				}
+			},
+			{
+				"type": "apply_status",
+				"statusId": "rooted",
+				"target": "aoe",
+				"aoeRadiusTiles": 3,
+				"durationTurns": 3
+			}
+		]
+	]
+}

@@ -1,0 +1,8 @@
+{
+	"id": "skeleton_patrol",
+	"minDepth": 3,
+	"entries": [
+		{ "npcId": "skeleton", "count": 2, "weight": 3 },
+		{ "npcId": "skeleton", "count": 3, "weight": 1 }
+	]
+}

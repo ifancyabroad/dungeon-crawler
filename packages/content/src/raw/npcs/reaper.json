@@ -1,0 +1,55 @@
+{
+	"id": "reaper",
+	"name": "Reaper",
+	"description": "Death made manifest. The Reaper moves with terrible purpose, draining life with every touch and cursing its prey with an inescapable mark before delivering the killing blow.",
+	"faction": "hostile",
+	"role": "boss",
+	"baseAttributes": {
+		"strength": 18,
+		"dexterity": 16,
+		"constitution": 16,
+		"intelligence": 14,
+		"wisdom": 14,
+		"charisma": 12
+	},
+	"hp": 100,
+	"armorClass": 15,
+	"damageResistances": ["necrotic", "cold"],
+	"damageImmunities": ["poison"],
+	"damageVulnerabilities": ["radiant"],
+	"tileId": 684,
+	"xpReward": 450,
+	"combatStrategy": "melee",
+	"idleStrategy": "stationary",
+	"challengeRating": 8,
+	"savingThrowProficiencies": ["constitution", "wisdom"],
+	"bloodColor": "#220022",
+	"activeSkills": [
+		{ "id": "soul_drain", "rank": 3 },
+		{ "id": "whirlwind_strike", "rank": 3 },
+		{ "id": "mind_spike", "rank": 2 },
+		{ "id": "death_mark", "rank": 1 }
+	],
+	"passiveSkills": [{ "id": "battle_hardened", "rank": 3 }],
+	"startingEquipment": [],
+	"weaponProficiencies": [],
+	"armorProficiencies": [],
+	"naturalWeapon": {
+		"name": "Scythe Slash",
+		"damageDice": "2d6",
+		"damageType": "slashing",
+		"attackStat": "strength"
+	},
+	"lootTable": {
+		"dropChance": 1.0,
+		"gold": { "min": 50, "max": 80 },
+		"items": [],
+		"rarityWeights": {
+			"common": 20,
+			"uncommon": 35,
+			"rare": 30,
+			"epic": 13,
+			"unique": 2
+		}
+	}
+}
