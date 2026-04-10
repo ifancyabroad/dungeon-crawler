@@ -14,7 +14,7 @@
  */
 
 import type { AIContext, AITurnResult, NpcAIState } from "./types";
-import { getAdjacentIndices8 } from "../engine";
+import { getAdjacentIndices8 } from "../engineUtils";
 import { bfsNextStep } from "../../map/pathfinding";
 
 export function runMeleeAI(ctx: AIContext): AITurnResult {

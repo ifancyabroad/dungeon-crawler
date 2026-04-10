@@ -6,7 +6,7 @@
  */
 
 import type { AIContext, AIResult } from "./types";
-import { getActorAtIdx, getAdjacentIndices8, idxToXY, isSqueezeBlocked } from "../engine";
+import { getActorAtIdx, getAdjacentIndices8, idxToXY, isSqueezeBlocked } from "../engineUtils";
 
 export function runRoamAI(ctx: AIContext): AIResult {
 	const { npc, walkableMask, floorState, width, height, rng } = ctx;

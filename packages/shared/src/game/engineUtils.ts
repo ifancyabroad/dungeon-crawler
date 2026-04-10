@@ -1,10 +1,12 @@
 import type { Direction } from "./actions";
-import type { Actor, FloorState, GameState } from "./types";
+import type { Actor, ActorId, FloorState, GameState } from "./types";
 import { abilityModifier } from "../combat/dice";
 import {
 	proficiencyBonusFromChallengeRating,
 	proficiencyBonusFromLevel,
 } from "../combat/savingThrows";
+import { hasActiveEffect } from "../skills";
+import { STATUS_HOOKS } from "../config/skills";
 
 export const DIRECTION_DELTA: Record<Direction, { dx: number; dy: number }> = {
 	up: { dx: 0, dy: -1 },
@@ -119,6 +121,87 @@ export function computeWeaponProficiencyBonus(actor: Actor): number {
 	return actor.def.type === "hero"
 		? proficiencyBonusFromLevel(actor.level)
 		: proficiencyBonusFromChallengeRating(actor.challengeRating ?? 0);
+}
+
+/**
+ * Compute the target cell for a directional action (move or attack).
+ * Returns null if the target is out of bounds.
+ */
+export function computeTargetCell(
+	heroIdx: number,
+	direction: Direction,
+	width: number,
+	height: number,
+): { nx: number; ny: number; newIdx: number } | null {
+	const { x, y } = idxToXY(heroIdx, width);
+	const { dx, dy } = DIRECTION_DELTA[direction];
+	const nx = x + dx;
+	const ny = y + dy;
+	if (nx < 0 || nx >= width || ny < 0 || ny >= height) return null;
+	return { nx, ny, newIdx: xyToIdx(nx, ny, width) };
+}
+
+/**
+ * If the hero is stealthed, remove the stealth effect and alert all living NPCs
+ * to the hero's current position. Called before enemy turns on attack and skill use,
+ * so enemies can retaliate immediately after the hero reveals themselves.
+ */
+export function breakStealth(
+	hero: Actor,
+	heroId: ActorId,
+	floorState: FloorState,
+): { hero: Actor; floorState: FloorState } {
+	if (!hasActiveEffect(hero, STATUS_HOOKS.STEALTH)) return { hero, floorState };
+
+	const updatedHero: Actor = {
+		...hero,
+		activeEffects: hero.activeEffects.filter((e) => e.id !== "stealth"),
+	};
+
+	let actorsById: Record<string, Actor> = {
+		...floorState.actorsById,
+		[heroId]: updatedHero,
+	};
+
+	for (const [id, actor] of Object.entries(actorsById)) {
+		if (id === heroId || !actor.alive || actor.def.type !== "npc" || !actor.aiState) continue;
+		actorsById = {
+			...actorsById,
+			[id]: { ...actor, aiState: { ...actor.aiState!, lastKnownEnemyIdx: hero.idx } },
+		};
+	}
+
+	return { hero: updatedHero, floorState: { ...floorState, actorsById } };
+}
+
+/**
+ * Decrement cooldownRemaining by 1 for every skill on every living actor on the hero's floor.
+ * Called at the end of every player turn so cooldowns count down with each action.
+ */
+export function tickSkillCooldowns(state: GameState): GameState {
+	const fi = state.heroFloorIndex;
+	const floor = state.floors[fi];
+	if (!floor) return state;
+
+	let actorsById = floor.state.actorsById;
+	for (const [actorId, actor] of Object.entries(actorsById)) {
+		if (!actor.alive || Object.keys(actor.skills).length === 0) continue;
+		const updatedSkills: Record<string, { rank: number; cooldownRemaining: number }> = {};
+		for (const [id, s] of Object.entries(actor.skills)) {
+			updatedSkills[id] = {
+				...s,
+				cooldownRemaining: Math.max(0, s.cooldownRemaining - 1),
+			};
+		}
+		actorsById = { ...actorsById, [actorId]: { ...actor, skills: updatedSkills } };
+	}
+
+	const newFloors = state.floors.slice();
+	newFloors[fi] = {
+		...floor,
+		state: { ...floor.state, actorsById },
+	};
+	return { ...state, floors: newFloors };
 }
 
 /**

@@ -1,7 +1,9 @@
-import type { Actor, ActorId, GameEvent, PendingInteraction, SkillOffer } from "./types";
+import type { Actor, ActorId, GameEvent, LootDrop, PendingInteraction, SkillOffer } from "./types";
 import type { Rng } from "../rng";
 import type { ClassSkillPools } from "./engineContext";
+import type { AffixDef, ItemDef } from "../items/types";
 import { GAME_CONFIG, XP_PER_LEVEL } from "../config";
+import { rollLootDrop } from "../items/lootGeneration";
 
 /**
  * Build the list of skill offers a player can choose from at level-up.
@@ -166,4 +168,55 @@ export function grantXp(
 ): { actor: Actor; events: GameEvent[]; pendingInteraction: PendingInteraction } {
 	if (xpAmount <= 0) return { actor, events: [], pendingInteraction: null };
 	return checkForLevelUp({ ...actor, xp: actor.xp + xpAmount }, actorId, rng, getClassSkillPools);
+}
+
+/**
+ * Process all rewards for a set of killed actors in a single turn:
+ * grants XP for each kill and rolls loot drops when item/affix data is available.
+ * Shared by the attack and use_skill handlers which both produce kills the same way.
+ */
+export function applyKillRewards(
+	hero: Actor,
+	heroId: ActorId,
+	killedActors: Actor[],
+	floorIndex: number,
+	rng: Rng,
+	getClassSkillPools: (classId: string) => ClassSkillPools | undefined,
+	itemsById?: Record<string, ItemDef>,
+	affixesById?: Record<string, AffixDef>,
+): {
+	hero: Actor;
+	lootOverrides: Record<string, number>;
+	lootByIdx: Record<string, LootDrop>;
+	events: GameEvent[];
+	pendingInteraction: PendingInteraction;
+} {
+	let updatedHero = hero;
+	let pendingInteraction: PendingInteraction = null;
+	const events: GameEvent[] = [];
+	const lootOverrides: Record<string, number> = {};
+	const lootByIdx: Record<string, LootDrop> = {};
+
+	for (const dead of killedActors) {
+		const {
+			actor: heroWithXp,
+			events: xpEvents,
+			pendingInteraction: xpInteraction,
+		} = grantXp(updatedHero, heroId, dead.xpReward, rng, getClassSkillPools);
+		updatedHero = heroWithXp;
+		events.push(...xpEvents);
+		if (xpInteraction) pendingInteraction = xpInteraction;
+
+		if (itemsById && affixesById) {
+			const loot = rollLootDrop(dead, floorIndex, rng, itemsById, affixesById);
+			if (loot) {
+				const idxKey = String(dead.idx);
+				lootOverrides[idxKey] = loot.items.length > 0 ? 827 : 825;
+				lootByIdx[idxKey] = loot;
+				events.push({ type: "loot_dropped", tileIdx: dead.idx, loot });
+			}
+		}
+	}
+
+	return { hero: updatedHero, lootOverrides, lootByIdx, events, pendingInteraction };
 }
