@@ -37,7 +37,7 @@ export const DEFAULT_DECORATION_WEIGHTS: Record<string, number> = {
 	rock: 2,
 };
 
-export const DEFAULT_SCATTER_CHANCE = 0.28;
+export const DEFAULT_SCATTER_CHANCE = 0.08;
 export const DEFAULT_SHAPE_VOID_TARGET = 0.2;
 
 export const DEFAULT_BSP_PARAMS: BspParams = {
@@ -65,7 +65,7 @@ export const DEFAULT_FLOOR_CONFIG: FloorConfig = {
 	algorithmParams: { floorChance: 0.45, caIterations: 5, birthThreshold: 4 },
 	shapeVoidTarget: 0.2,
 	decorationWeights: { grass: 10, plant: 5, bush: 3, rock: 2 },
-	scatterChance: 0.28,
+	scatterChance: 0.08,
 	waterEnabled: true,
 	encounterTable: [],
 	enemyDensity: 0.3,
@@ -133,7 +133,7 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 			roomInset: 2,
 		},
 		decorationWeights: { ...DEFAULT_DECORATION_WEIGHTS, plant: 7, bush: 5 },
-		scatterChance: 0.32,
+		scatterChance: 0.1,
 		waterEnabled: true,
 		encounterTable: [
 			{ encounterId: "skeleton_patrol", weight: 3 },
@@ -155,7 +155,7 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		algorithm: "bsp",
 		algorithmParams: { ...DEFAULT_BSP_PARAMS, roomInset: 3, minRoomSize: 6, maxRoomSize: 18 },
 		decorationWeights: { ...DEFAULT_DECORATION_WEIGHTS, rock: 5, bush: 4 },
-		scatterChance: 0.3,
+		scatterChance: 0.09,
 		waterEnabled: false,
 		encounterTable: [
 			{ encounterId: "imp_swarm", weight: 3 },

@@ -1,4 +1,4 @@
-import type { UseSkillAction } from "../actions";
+import type { UseSkillAction } from "./schemas";
 import type { Actor, FloorState, GameState } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
 import type { ActiveSkillDefinition } from "../../skills";

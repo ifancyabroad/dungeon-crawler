@@ -1,4 +1,4 @@
-import type { MoveAction } from "../actions";
+import type { MoveAction } from "./schemas";
 import type { Actor, FloorState, GameEvent, GameState, PendingInteraction } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
 import { createRngFromState } from "../../rng";

@@ -1,4 +1,4 @@
-import type { PickupGoldAction } from "../actions";
+import type { PickupGoldAction } from "./schemas";
 import type { Actor, GameState, LootDrop, PendingInteraction } from "../types";
 import type { ApplyActionResult } from "../engineContext";
 import { getHero } from "../engineUtils";

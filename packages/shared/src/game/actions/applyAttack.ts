@@ -1,4 +1,4 @@
-import type { AttackAction } from "../actions";
+import type { AttackAction } from "./schemas";
 import type { Actor, FloorState, GameEvent, GameState, LootDrop } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
 import { createRngFromState } from "../../rng";

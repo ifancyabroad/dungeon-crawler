@@ -1,4 +1,4 @@
-import type { LeaveLootAction } from "../actions";
+import type { LeaveLootAction } from "./schemas";
 import type { GameState } from "../types";
 import type { ApplyActionResult } from "../engineContext";
 

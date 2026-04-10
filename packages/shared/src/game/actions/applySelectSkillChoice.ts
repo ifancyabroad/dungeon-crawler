@@ -1,4 +1,4 @@
-import type { SelectSkillChoiceAction } from "../actions";
+import type { SelectSkillChoiceAction } from "./schemas";
 import type { Actor, GameState } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
 import { createRngFromState } from "../../rng";

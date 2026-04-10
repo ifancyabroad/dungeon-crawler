@@ -1,4 +1,4 @@
-import type { RerollSkillChoiceAction } from "../actions";
+import type { RerollSkillChoiceAction } from "./schemas";
 import type { Actor, GameState } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
 import { createRngFromState } from "../../rng";

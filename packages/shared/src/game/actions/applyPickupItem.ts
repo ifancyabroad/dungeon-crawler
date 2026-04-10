@@ -1,4 +1,4 @@
-import type { PickupItemAction } from "../actions";
+import type { PickupItemAction } from "./schemas";
 import type { Actor, EquipmentSlots, GameState, LootDrop, PendingInteraction } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
 import type { ItemInstance } from "../../items/types";
