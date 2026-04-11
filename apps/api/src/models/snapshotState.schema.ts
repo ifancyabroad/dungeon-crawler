@@ -272,6 +272,7 @@ const PendingInteractionSchema = new Schema(
 		// loot_pickup fields
 		tileIdx: Number,
 		loot: { type: LootDropSchema, default: undefined },
+		collectedGold: Number,
 	},
 	{ _id: false },
 );

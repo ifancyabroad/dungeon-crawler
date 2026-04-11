@@ -15,7 +15,6 @@ import {
 	applyAttack,
 	applyLeaveLoot,
 	applyMove,
-	applyPickupGold,
 	applyPickupItem,
 	applyRerollSkillChoice,
 	applySelectSkillChoice,
@@ -70,7 +69,6 @@ export function applyAction(
 		action.type === "select_skill_choice" ||
 		action.type === "reroll_skill_choice" ||
 		action.type === "pickup_item" ||
-		action.type === "pickup_gold" ||
 		action.type === "leave_loot";
 	if (state.pendingInteraction !== null && !isInteractionAction) {
 		return { ok: false, reason: "interaction_required" };
@@ -89,8 +87,6 @@ export function applyAction(
 			return applyRerollSkillChoice(action, state, context);
 		case "pickup_item":
 			return applyPickupItem(action, state, context);
-		case "pickup_gold":
-			return applyPickupGold(action, state);
 		case "leave_loot":
 			return applyLeaveLoot(action, state);
 		case "unknown":

@@ -63,10 +63,6 @@ export function LootPickupModal() {
 		return hero.itemInstances[slotId] ?? null;
 	}
 
-	function handleTakeGold() {
-		sendAction({ type: "pickup_gold", tileIdx });
-	}
-
 	function handleEquip(instance: ItemInstance) {
 		const equipped = getEquippedInSlot(instance);
 		if (equipped) {
@@ -110,23 +106,16 @@ export function LootPickupModal() {
 			<Modal open onClose={() => {}} title="Loot Found">
 				<div className="space-y-4">
 					<p className="text-text-bright leading-snug font-mono">
-						You search the area and find the following:
+						{pi.collectedGold ? (
+							<>
+								You collected{" "}
+								<span className="text-yellow-400">{pi.collectedGold} gold</span> and
+								found the following:
+							</>
+						) : (
+							"You search the area and find the following:"
+						)}
 					</p>
-
-					{/* Gold */}
-					{loot.gold !== undefined && loot.gold > 0 && (
-						<div className="flex items-center justify-between border border-border px-3 py-2">
-							<span className="text-yellow-400 font-mono">{loot.gold} gold</span>
-							<Button
-								variant="secondary"
-								size="sm"
-								onClick={handleTakeGold}
-								disabled={actionInProgress}
-							>
-								Take
-							</Button>
-						</div>
-					)}
 
 					{/* Items */}
 					{loot.items.length > 0 && (

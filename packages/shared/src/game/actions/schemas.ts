@@ -5,7 +5,6 @@
  * SelectSkillChoice = pick a skill from a level-up offer (resolves pendingInteraction).
  * RerollSkillChoice = re-sample the level-up offer set.
  * PickupItem = equip a specific item instance from a loot pile (resolves loot_pickup interaction).
- * PickupGold = collect gold from a loot pile (resolves loot_pickup interaction for gold).
  * LeaveLoot = discard remaining loot and clear the pile (resolves loot_pickup interaction).
  */
 
@@ -73,14 +72,6 @@ export const PickupItemActionSchema = z.object({
 
 export type PickupItemAction = z.infer<typeof PickupItemActionSchema>;
 
-export const PickupGoldActionSchema = z.object({
-	type: z.literal("pickup_gold"),
-	/** Flat tile index of the loot pile. Must match pendingInteraction.tileIdx. */
-	tileIdx: z.number().int().min(0),
-});
-
-export type PickupGoldAction = z.infer<typeof PickupGoldActionSchema>;
-
 export const LeaveLootActionSchema = z.object({
 	type: z.literal("leave_loot"),
 	/** Flat tile index of the loot pile. Must match pendingInteraction.tileIdx. */
@@ -99,7 +90,6 @@ export const ActionSchema = z.discriminatedUnion("type", [
 	SelectSkillChoiceActionSchema,
 	RerollSkillChoiceActionSchema,
 	PickupItemActionSchema,
-	PickupGoldActionSchema,
 	LeaveLootActionSchema,
 	UnknownActionSchema,
 ]);

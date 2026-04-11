@@ -308,6 +308,7 @@ export const PendingInteractionSchema = z
 			type: z.literal("loot_pickup"),
 			tileIdx: z.number().int().min(0),
 			loot: LootDropSchema,
+			collectedGold: z.number().optional(),
 		}),
 	])
 	.nullable();

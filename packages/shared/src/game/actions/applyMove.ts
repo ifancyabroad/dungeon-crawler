@@ -93,11 +93,39 @@ export function applyMove(
 				tileIdx: newIdx,
 			});
 		} else {
-			// Multi-item pile (or gold + items): pause for loot pickup modal.
+			// Items present: pause for loot pickup modal.
+			// Auto-collect any gold in the pile immediately (same as gold-only case).
+			let collectedGold: number | undefined;
+			let lootForModal = moveLoot;
+			if (moveLoot.gold) {
+				const goldAmount = moveLoot.gold;
+				collectedGold = goldAmount;
+				const heroWithGold: Actor = {
+					...updatedHero,
+					gold: updatedHero.gold + goldAmount,
+				};
+				lootForModal = { ...moveLoot, gold: undefined };
+				const updatedLootByIdx = {
+					...newFloorState.lootByIdx,
+					[String(newIdx)]: lootForModal,
+				};
+				newFloorState = {
+					...newFloorState,
+					actorsById: { ...newFloorState.actorsById, [state.heroId]: heroWithGold },
+					lootByIdx: updatedLootByIdx,
+				};
+				moveEvents.push({
+					type: "gold_collected",
+					actorId: state.heroId,
+					amount: goldAmount,
+					tileIdx: newIdx,
+				});
+			}
 			movePendingInteraction = {
 				type: "loot_pickup",
 				tileIdx: newIdx,
-				loot: moveLoot,
+				loot: lootForModal,
+				collectedGold,
 			};
 		}
 	}

@@ -416,7 +416,7 @@ export type GameEvent =
 	  }
 	/** Emitted when an NPC dies and produces a loot drop on its tile. */
 	| { type: "loot_dropped"; tileIdx: number; loot: LootDrop }
-	/** Emitted when the hero collects gold (auto-collect on gold-only tile, or via pickup_gold action). */
+	/** Emitted when the hero collects gold (auto-collected whenever the hero steps onto a tile with gold). */
 	| { type: "gold_collected"; actorId: ActorId; amount: number; tileIdx: number }
 	/** Emitted when the hero equips an item from a loot pile. */
 	| { type: "item_looted"; actorId: ActorId; item: ItemInstance; slot: string };
@@ -497,8 +497,10 @@ export type PendingInteraction =
 			type: "loot_pickup";
 			/** Flat tile index of the loot pile. */
 			tileIdx: number;
-			/** Current contents of the pile (updated as items are taken). */
+			/** Current contents of the pile (updated as items are taken). Gold is always undefined — collected on arrival. */
 			loot: LootDrop;
+			/** Gold auto-collected when the hero stepped onto this tile, if any. */
+			collectedGold?: number;
 	  }
 	| null;
 
