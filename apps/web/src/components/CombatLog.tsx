@@ -1,154 +1,122 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { skillsById } from "@app/content";
 import { useGameStore } from "../features/game/gameStore";
 import type { GameEvent } from "@app/shared";
 
-function formatEvent(event: GameEvent): string {
+const SKILL_NAMES: Record<string, string> = Object.fromEntries(
+	Object.values(skillsById).map((s) => [s.id, s.name]),
+);
+
+function damageBreakdown(packets: { damageType: string; effectiveAmount: number }[]): string {
+	if (packets.length <= 1) return "";
+	return ` (${packets.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`).join(", ")})`;
+}
+
+function formatEvent(event: GameEvent, actorNames: Record<string, string>): string {
+	// subject: nominative ("You" / "Giant Beetle"), target: objective ("you" / "Giant Beetle")
+	const subject = (id: string) => (id === "hero" ? "You" : (actorNames[id] ?? id));
+	const target = (id: string) => (id === "hero" ? "you" : (actorNames[id] ?? id));
+	const skill = (id: string) => SKILL_NAMES[id] ?? id;
+
 	if (event.type === "attack") {
 		const { attackerId, defenderId, result } = event;
-		const attacker =
-			attackerId === "hero" ? "You" : capitalize(attackerId.replace(/_\d+$/, ""));
-		const defender =
-			defenderId === "hero" ? "you" : capitalize(defenderId.replace(/_\d+$/, ""));
-
+		const crit = result.critical ? "[CRIT] " : "";
+		const breakdown = damageBreakdown(result.damagePackets);
 		if (!result.hit) {
-			if (attackerId === "hero") {
-				return `You missed ${defender}. (${result.naturalRoll}+${result.totalAttackRoll - result.naturalRoll}=${result.totalAttackRoll} vs AC ${result.targetAc})`;
-			}
-			return `${attacker} missed ${defender}. (Rolled ${result.naturalRoll})`;
+			if (attackerId === "hero")
+				return `You missed ${target(defenderId)}. (${result.naturalRoll}+${result.totalAttackRoll - result.naturalRoll}=${result.totalAttackRoll} vs AC ${result.targetAc})`;
+			return `${subject(attackerId)} missed ${target(defenderId)}. (Rolled ${result.naturalRoll})`;
 		}
-		const critLabel = result.critical ? "[CRIT] " : "";
-		const breakdown =
-			result.damagePackets.length > 1
-				? ` (${result.damagePackets
-						.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`)
-						.join(", ")})`
-				: "";
-		if (attackerId === "hero") {
-			return `${critLabel}You hit ${defender} for ${result.damage} dmg.${breakdown} (Rolled ${result.naturalRoll})`;
-		}
-		return `${critLabel}${attacker} hit ${defender} for ${result.damage} dmg.${breakdown} (Rolled ${result.naturalRoll})`;
+		if (attackerId === "hero")
+			return `${crit}You hit ${target(defenderId)} for ${result.damage} dmg.${breakdown} (Rolled ${result.naturalRoll})`;
+		return `${crit}${subject(attackerId)} hit ${target(defenderId)} for ${result.damage} dmg.${breakdown} (Rolled ${result.naturalRoll})`;
 	}
 
 	if (event.type === "death") {
-		const actor =
-			event.actorId === "hero" ? "You" : capitalize(event.actorId.replace(/_\d+$/, ""));
-		if (event.actorId === "hero") return `${actor} have been slain!`;
-		return `${actor} has been slain!`;
+		if (event.actorId === "hero") return "You have been slain!";
+		return `${subject(event.actorId)} has been slain!`;
 	}
 
 	if (event.type === "skill_miss") {
-		const skillName = formatSkillId(event.skillId);
-		const attacker =
-			event.attackerId === "hero"
-				? "Your"
-				: `${capitalize(event.attackerId.replace(/_\d+$/, ""))}'s`;
-		const defender =
-			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
+		const attacker = event.attackerId === "hero" ? "Your" : `${subject(event.attackerId)}'s`;
 		const rollBreakdown =
 			event.attackerId === "hero"
 				? ` (${event.naturalRoll}+${event.totalRoll - event.naturalRoll}=${event.totalRoll} vs AC ${event.targetAc})`
 				: ` (Rolled ${event.naturalRoll})`;
-		return `${attacker} ${skillName} misses ${defender}.${rollBreakdown}`;
+		return `${attacker} ${skill(event.skillId)} misses ${target(event.defenderId)}.${rollBreakdown}`;
 	}
 
 	if (event.type === "skill_hit") {
-		const skillName = formatSkillId(event.skillId);
-		const defender =
-			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
-		const critLabel = event.result.critical ? "[CRIT] " : "";
-		const breakdown =
-			event.result.damagePackets.length > 1
-				? ` (${event.result.damagePackets
-						.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`)
-						.join(", ")})`
-				: "";
-		return `${critLabel}${skillName} hits ${defender} for ${event.result.damage} dmg${breakdown}.`;
+		const crit = event.result.critical ? "[CRIT] " : "";
+		const breakdown = damageBreakdown(event.result.damagePackets);
+		return `${crit}${skill(event.skillId)} hits ${target(event.defenderId)} for ${event.result.damage} dmg${breakdown}.`;
 	}
 
 	if (event.type === "area_hit") {
-		const skillName = formatSkillId(event.skillId);
-		const defender =
-			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
-		const breakdown =
-			event.damagePackets.length > 1
-				? ` (${event.damagePackets
-						.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`)
-						.join(", ")})`
-				: "";
-		return `${skillName} hits ${defender} for ${event.damage} dmg${breakdown}.`;
+		const breakdown = damageBreakdown(event.damagePackets);
+		return `${skill(event.skillId)} hits ${target(event.defenderId)} for ${event.damage} dmg${breakdown}.`;
 	}
 
 	if (event.type === "skill_used") {
-		if (event.actorId === "hero") return `You use ${formatSkillId(event.skillId)}!`;
-		const caster = capitalize(event.actorId.replace(/_\d+$/, ""));
-		return `${caster} uses ${formatSkillId(event.skillId)}!`;
+		if (event.actorId === "hero") return `You use ${skill(event.skillId)}!`;
+		return `${subject(event.actorId)} uses ${skill(event.skillId)}!`;
 	}
 
 	if (event.type === "status_applied") {
-		const name = formatSkillId(event.statusId);
+		// Status IDs (e.g. "poisoned", "berserk") have no content name entry — format the ID.
+		const statusName = formatIdAsWords(event.statusId);
 		if (event.actorId === "hero") {
 			return event.durationTurns > 0
-				? `You gain ${name} for ${event.durationTurns} turns.`
-				: `You gain ${name}.`;
+				? `You gain ${statusName} for ${event.durationTurns} turns.`
+				: `You gain ${statusName}.`;
 		}
-		const actor = capitalize(event.actorId.replace(/_\d+$/, ""));
 		return event.durationTurns > 0
-			? `${actor} is afflicted with ${name} for ${event.durationTurns} turns.`
-			: `${actor} is afflicted with ${name}.`;
+			? `${subject(event.actorId)} is afflicted with ${statusName} for ${event.durationTurns} turns.`
+			: `${subject(event.actorId)} is afflicted with ${statusName}.`;
 	}
 
 	if (event.type === "shield_absorbed") {
-		if (event.actorId === "hero") {
-			return `Shield absorbs ${event.absorbed} damage. (${event.shieldHpRemaining} remaining)`;
-		}
-		return "";
+		if (event.actorId !== "hero") return "";
+		return `Shield absorbs ${event.absorbed} damage. (${event.shieldHpRemaining} remaining)`;
 	}
 
 	if (event.type === "dot_damage") {
-		const statusName = formatSkillId(event.statusId);
-		if (event.actorId === "hero") {
-			return `${statusName} deals ${event.damage} damage to you.`;
-		}
-		const actor = capitalize(event.actorId.replace(/_\d+$/, ""));
-		return `${actor} takes ${event.damage} ${statusName.toLowerCase()} damage.`;
+		const statusName = formatIdAsWords(event.statusId);
+		if (event.actorId === "hero") return `${statusName} deals ${event.damage} damage to you.`;
+		return `${subject(event.actorId)} takes ${event.damage} ${statusName.toLowerCase()} damage.`;
 	}
 
 	if (event.type === "saving_throw") {
-		const defender =
-			event.defenderId === "hero" ? "you" : capitalize(event.defenderId.replace(/_\d+$/, ""));
 		const autoPrefix =
 			event.auto === "auto_success"
 				? "[AUTO20] "
 				: event.auto === "auto_fail"
 					? "[AUTO1] "
 					: "";
-
 		const outcome = event.success ? "succeeded" : "failed";
-		const dcLabel = `(${event.totalRoll} vs DC ${event.dc})`;
-		return event.defenderId === "hero"
-			? `${autoPrefix}Your ${capitalize(event.saveAbility)} save ${outcome} ${dcLabel}.`
-			: `${autoPrefix}${defender}'s ${capitalize(event.saveAbility)} save ${outcome} ${dcLabel}.`;
+		const dc = `(${event.totalRoll} vs DC ${event.dc})`;
+		if (event.defenderId === "hero")
+			return `${autoPrefix}Your ${capitalize(event.saveAbility)} save ${outcome} ${dc}.`;
+		return `${autoPrefix}${subject(event.defenderId)}'s ${capitalize(event.saveAbility)} save ${outcome} ${dc}.`;
 	}
 
 	return "";
 }
 
-function capitalize(s: string): string {
-	return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-/** "lightning_bolt" → "Lightning Bolt" */
-function formatSkillId(id: string): string {
+/** "arcane_surge" → "Arcane Surge". Used for status IDs which have no content name entry. */
+function formatIdAsWords(id: string): string {
 	return id
 		.split("_")
 		.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
 		.join(" ");
 }
 
+function capitalize(s: string): string {
+	return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 function eventColorClass(event: GameEvent): string {
-	if (event.type === "death") {
-		return event.actorId === "hero" ? "text-death" : "text-kill";
-	}
+	if (event.type === "death") return event.actorId === "hero" ? "text-death" : "text-kill";
 	if (event.type === "attack" && event.result.critical) return "text-primary";
 	if (event.type === "attack" && event.attackerId === "hero") return "text-text-bright";
 	if (event.type === "skill_miss") return "text-text-muted";
@@ -170,7 +138,19 @@ const LOG_HEIGHT = LINE_HEIGHT * VISIBLE_LINES;
 
 export function CombatLog() {
 	const combatLog = useGameStore((s) => s.combatLog);
+	const state = useGameStore((s) => s.state);
 	const scrollRef = useRef<HTMLDivElement>(null);
+
+	const actorNames = useMemo(() => {
+		if (!state) return {} as Record<string, string>;
+		const map: Record<string, string> = {};
+		for (const floor of state.floors) {
+			for (const actor of Object.values(floor.state.actorsById)) {
+				map[actor.id] = actor.name;
+			}
+		}
+		return map;
+	}, [state]);
 
 	useEffect(() => {
 		if (scrollRef.current) {
@@ -196,7 +176,7 @@ export function CombatLog() {
 					</>
 				)}
 				{combatLog.map((event, i) => {
-					const text = formatEvent(event);
+					const text = formatEvent(event, actorNames);
 					if (!text) return null;
 					return (
 						<p
