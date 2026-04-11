@@ -60,7 +60,23 @@ export function LootPickupModal() {
 		}
 
 		if (!slotId) return null;
-		return hero.itemInstances[slotId] ?? null;
+
+		// Looted items are stored as instance IDs in the slot.
+		const equippedInstance = hero.itemInstances[slotId];
+		if (equippedInstance) return equippedInstance;
+
+		// Starting equipment stores the base item ID directly in the slot (no ItemInstance created).
+		// Synthesise a minimal instance for display, matching the pattern in InventoryModal.
+		const equippedBaseDef = itemsById[slotId as keyof typeof itemsById];
+		if (!equippedBaseDef) return null;
+		return {
+			instanceId: slotId,
+			baseItemId: slotId,
+			rarity: "common",
+			enhancementBonus: 0,
+			affixIds: [],
+			generatedName: equippedBaseDef.name,
+		};
 	}
 
 	function handleEquip(instance: ItemInstance) {
