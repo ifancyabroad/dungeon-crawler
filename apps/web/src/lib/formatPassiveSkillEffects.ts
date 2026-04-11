@@ -57,6 +57,9 @@ export function formatPassiveSkillEffectLine(effect: PassiveSkillEffectDescripto
 			return `+${effect.amount} to DoT damage you apply`;
 		case "add_flat_damage_bonus": {
 			const scope = effect.appliesTo;
+			if (effect.requiredDamageType) {
+				return `+${effect.amount} ${titleCaseWord(effect.damageType)} damage to ${titleCaseWord(effect.requiredDamageType)} attacks`;
+			}
 			return `+${effect.amount} ${titleCaseWord(effect.damageType)} on ${scope} attacks`;
 		}
 	}
