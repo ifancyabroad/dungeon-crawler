@@ -6,51 +6,36 @@
  */
 
 import { useState } from "react";
-import { itemsById } from "@app/content";
+import { affixesById, itemsById } from "@app/content";
+import type { AffixDefinition, ItemDefinition } from "@app/content";
 import { getHero } from "@app/shared";
 import type { ItemInstance } from "@app/shared";
 import { useGameStore } from "../features/game/gameStore";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
+import { LootItemCard } from "./LootItemCard";
+import { ConfirmReplaceModal } from "./ConfirmReplaceModal";
 
-type ItemRarity = "common" | "uncommon" | "rare" | "epic" | "unique";
-
-const RARITY_COLOR: Record<ItemRarity, string> = {
-	common: "text-white",
-	uncommon: "text-green-400",
-	rare: "text-blue-400",
-	epic: "text-purple-400",
-	unique: "text-yellow-400",
+type PendingEquip = {
+	incomingInstance: ItemInstance;
+	incomingDef: ItemDefinition;
+	incomingAffixDefs: AffixDefinition[];
+	equippedInstance: ItemInstance;
+	equippedDef: ItemDefinition;
+	equippedAffixDefs: AffixDefinition[];
 };
 
-function rarityColor(rarity: ItemRarity): string {
-	return RARITY_COLOR[rarity] ?? "text-white";
-}
-
-function itemStatSummary(instance: ItemInstance): string {
-	const baseDef = itemsById[instance.baseItemId as keyof typeof itemsById];
-	if (!baseDef) return "";
-	if (baseDef.type === "weapon") {
-		return `${baseDef.damageDice} ${baseDef.damageType}`;
-	}
-	if (baseDef.type === "armor" && baseDef.slot === "body") {
-		const bonus = instance.enhancementBonus > 0 ? ` +${instance.enhancementBonus}` : "";
-		return `AC ${baseDef.baseAC}${bonus}`;
-	}
-	if (baseDef.type === "shield") {
-		return `+${baseDef.acBonus} AC`;
-	}
-	if (baseDef.type === "accessory") {
-		return baseDef.effects.map((e) => e.type.replace(/_/g, " ")).join(", ");
-	}
-	return "";
+function resolveAffixes(instance: ItemInstance): AffixDefinition[] {
+	return instance.affixIds
+		.map((id) => affixesById[id as keyof typeof affixesById])
+		.filter((a): a is AffixDefinition => a != null);
 }
 
 export function LootPickupModal() {
 	const state = useGameStore((s) => s.state);
 	const sendAction = useGameStore((s) => s.sendAction);
 	const actionInProgress = useGameStore((s) => s.actionInProgress);
-	const [confirmItemId, setConfirmItemId] = useState<string | null>(null);
+	const [pendingEquip, setPendingEquip] = useState<PendingEquip | null>(null);
 
 	const pi = state?.pendingInteraction;
 	if (!pi || pi.type !== "loot_pickup") return null;
@@ -58,115 +43,134 @@ export function LootPickupModal() {
 	const { tileIdx, loot } = pi;
 	const hero = state ? getHero(state) : undefined;
 
+	function getEquippedInSlot(instance: ItemInstance): ItemInstance | null {
+		const baseDef = itemsById[instance.baseItemId as keyof typeof itemsById];
+		if (!baseDef || !hero) return null;
+
+		let slotId: string | null | undefined;
+		if (baseDef.type === "weapon") slotId = hero.equipment.mainHand;
+		else if (baseDef.type === "shield") slotId = hero.equipment.offHand;
+		else if (baseDef.type === "armor") {
+			slotId = hero.equipment[baseDef.slot as "body" | "head" | "hands" | "feet"];
+		} else if (baseDef.type === "accessory") {
+			slotId =
+				baseDef.slot === "ring"
+					? (hero.equipment.ring1 ?? hero.equipment.ring2)
+					: hero.equipment.amulet;
+		}
+
+		if (!slotId) return null;
+		return hero.itemInstances[slotId] ?? null;
+	}
+
 	function handleTakeGold() {
 		sendAction({ type: "pickup_gold", tileIdx });
 	}
 
 	function handleEquip(instance: ItemInstance) {
-		if (confirmItemId === instance.instanceId) {
-			sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
-			setConfirmItemId(null);
-		} else {
-			// Check if the target slot is occupied — if so require confirmation.
-			const baseDef = itemsById[instance.baseItemId as keyof typeof itemsById];
-			if (!baseDef || !hero) {
+		const equipped = getEquippedInSlot(instance);
+		if (equipped) {
+			const incomingDef = itemsById[instance.baseItemId as keyof typeof itemsById];
+			const equippedDef = itemsById[equipped.baseItemId as keyof typeof itemsById];
+			if (!incomingDef || !equippedDef) {
 				sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
 				return;
 			}
+			setPendingEquip({
+				incomingInstance: instance,
+				incomingDef,
+				incomingAffixDefs: resolveAffixes(instance),
+				equippedInstance: equipped,
+				equippedDef,
+				equippedAffixDefs: resolveAffixes(equipped),
+			});
+		} else {
+			sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
+		}
+	}
 
-			let currentSlot: string | undefined;
-			if (baseDef.type === "weapon") currentSlot = hero.equipment.mainHand;
-			else if (baseDef.type === "shield") currentSlot = hero.equipment.offHand;
-			else if (baseDef.type === "armor") {
-				const slot = baseDef.slot as "body" | "head" | "hands" | "feet";
-				currentSlot = hero.equipment[slot];
-			} else if (baseDef.type === "accessory") {
-				if (baseDef.slot === "ring") {
-					currentSlot = hero.equipment.ring1 ?? hero.equipment.ring2;
-				} else {
-					currentSlot = hero.equipment.amulet;
-				}
-			}
-
-			if (currentSlot) {
-				setConfirmItemId(instance.instanceId);
-			} else {
-				sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
-			}
+	function handleConfirmReplace() {
+		if (pendingEquip) {
+			sendAction({
+				type: "pickup_item",
+				tileIdx,
+				instanceId: pendingEquip.incomingInstance.instanceId,
+			});
+			setPendingEquip(null);
 		}
 	}
 
 	function handleLeaveAll() {
-		setConfirmItemId(null);
+		setPendingEquip(null);
 		sendAction({ type: "leave_loot", tileIdx });
 	}
 
 	return (
-		<Modal open onClose={() => {}} title="Loot Found">
-			<div className="space-y-3">
-				{/* Gold */}
-				{loot.gold !== undefined && loot.gold > 0 && (
-					<div className="flex items-center justify-between border border-border px-3 py-2">
-						<span className="text-yellow-400 font-mono">{loot.gold} Gold</span>
+		<>
+			<Modal open onClose={() => {}} title="Loot Found">
+				<div className="space-y-4">
+					<p className="text-text-bright leading-snug font-mono">
+						You search the area and find the following:
+					</p>
+
+					{/* Gold */}
+					{loot.gold !== undefined && loot.gold > 0 && (
+						<div className="flex items-center justify-between border border-border px-3 py-2">
+							<span className="text-yellow-400 font-mono">{loot.gold} gold</span>
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={handleTakeGold}
+								disabled={actionInProgress}
+							>
+								Take
+							</Button>
+						</div>
+					)}
+
+					{/* Items */}
+					{loot.items.length > 0 && (
+						<div className="space-y-1">
+							{loot.items.map((instance) => {
+								const baseDef =
+									itemsById[instance.baseItemId as keyof typeof itemsById];
+								if (!baseDef) return null;
+								return (
+									<LootItemCard
+										key={instance.instanceId}
+										instance={instance}
+										def={baseDef}
+										affixDefs={resolveAffixes(instance)}
+										equippedInSlot={getEquippedInSlot(instance)}
+										onEquip={() => handleEquip(instance)}
+										disabled={actionInProgress}
+									/>
+								);
+							})}
+						</div>
+					)}
+
+					{/* Leave all */}
+					<div className="border-t border-border pt-3">
 						<Button
 							variant="secondary"
 							size="sm"
-							onClick={handleTakeGold}
+							onClick={handleLeaveAll}
 							disabled={actionInProgress}
 						>
-							Take
+							Leave all
 						</Button>
 					</div>
-				)}
-
-				{/* Items */}
-				{loot.items.map((instance) => {
-					const rarity = instance.rarity as ItemRarity;
-					const isConfirming = confirmItemId === instance.instanceId;
-					return (
-						<div
-							key={instance.instanceId}
-							className="border border-border px-3 py-2 space-y-1"
-						>
-							<div className="flex items-start justify-between gap-2">
-								<div className="min-w-0">
-									<p className={`font-mono ${rarityColor(rarity)}`}>
-										{instance.generatedName}
-									</p>
-									<p className="text-text-muted text-sm">
-										{itemStatSummary(instance)}
-									</p>
-									{isConfirming && (
-										<p className="text-amber-400 text-sm mt-0.5">
-											Replaces equipped item. Confirm?
-										</p>
-									)}
-								</div>
-								<Button
-									variant={isConfirming ? "primary" : "secondary"}
-									size="sm"
-									onClick={() => handleEquip(instance)}
-									disabled={actionInProgress}
-								>
-									{isConfirming ? "Confirm" : "Equip"}
-								</Button>
-							</div>
-						</div>
-					);
-				})}
-
-				{/* Leave all */}
-				<div className="border-t border-border pt-3">
-					<Button
-						variant="secondary"
-						size="sm"
-						onClick={handleLeaveAll}
-						disabled={actionInProgress}
-					>
-						Leave all
-					</Button>
 				</div>
-			</div>
-		</Modal>
+			</Modal>
+
+			{pendingEquip && (
+				<ConfirmReplaceModal
+					{...pendingEquip}
+					onConfirm={handleConfirmReplace}
+					onCancel={() => setPendingEquip(null)}
+				/>
+			)}
+		</>
 	);
 }

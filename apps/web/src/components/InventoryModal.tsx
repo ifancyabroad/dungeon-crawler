@@ -1,19 +1,10 @@
 import { itemsById } from "@app/content";
 import { getHero } from "@app/shared";
-import type { EquipmentSlots, ItemInstance } from "@app/shared";
+import type { EquipmentSlots, ItemInstance, ItemRarity } from "@app/shared";
 import { useGameStore } from "../features/game/gameStore";
 import { useUiStore } from "../features/ui/uiStore";
 import { Modal } from "./Modal";
-
-type ItemRarity = "common" | "uncommon" | "rare" | "epic" | "unique";
-
-const RARITY_COLOR: Record<ItemRarity, string> = {
-	common: "text-white",
-	uncommon: "text-green-400",
-	rare: "text-blue-400",
-	epic: "text-purple-400",
-	unique: "text-yellow-400",
-};
+import { rarityTextClass } from "../lib/rarityColors";
 
 interface SlotDef {
 	key: keyof EquipmentSlots;
@@ -90,9 +81,7 @@ export function InventoryModal() {
 					{SLOT_LAYOUT.map(({ key, label }) => {
 						const slotId = hero.equipment[key];
 						const item = resolveItemDisplay(slotId, hero.itemInstances);
-						const color = item
-							? (RARITY_COLOR[item.rarity] ?? "text-white")
-							: "text-text-muted";
+						const color = item ? rarityTextClass(item.rarity) : "text-text-muted";
 						return (
 							<div
 								key={key}
