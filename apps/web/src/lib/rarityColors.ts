@@ -9,5 +9,5 @@ export const RARITY_TEXT: Record<ItemRarity, string> = {
 };
 
 export function rarityTextClass(rarity: ItemRarity): string {
-	return RARITY_TEXT[rarity] ?? "text-white";
+	return RARITY_TEXT[rarity];
 }

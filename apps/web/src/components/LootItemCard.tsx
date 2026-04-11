@@ -10,6 +10,8 @@ type LootItemCardProps = {
 	def: ItemDefinition;
 	affixDefs: AffixDefinition[];
 	equippedInSlot?: ItemInstance | null;
+	equippedDef?: ItemDefinition | null;
+	equippedAffixDefs?: AffixDefinition[];
 	onEquip: () => void;
 	disabled?: boolean;
 };
@@ -26,20 +28,21 @@ export function LootItemCard({
 	def,
 	affixDefs,
 	equippedInSlot,
+	equippedDef,
+	equippedAffixDefs = [],
 	onEquip,
 	disabled,
 }: LootItemCardProps) {
-	const rarityText = RARITY_TEXT[instance.rarity] ?? "text-white";
+	const rarityText = RARITY_TEXT[instance.rarity];
 	const slotLabel = getSlotLabel(def);
 
 	const incomingTooltip = <ItemTooltip instance={instance} def={def} affixDefs={affixDefs} />;
 
 	return (
-		<Tooltip content={incomingTooltip} side="right">
-			<div className="w-full px-3 py-2 border transition-colors border-border hover:border-border-bright hover:bg-bg-elevated">
-				<div className="flex items-start justify-between gap-2">
-					<div className="flex-1 min-w-0 space-y-0.5">
-						{/* Row 1: name + slot badge */}
+		<>
+			<Tooltip content={incomingTooltip} side="right">
+				<div className="w-full px-3 py-2 border transition-colors border-border hover:border-border-bright hover:bg-bg-elevated">
+					<div className="flex items-center justify-between gap-2">
 						<div className="flex items-center gap-2 min-w-0">
 							<span className={`font-mono truncate ${rarityText}`}>
 								{instance.generatedName}
@@ -48,23 +51,31 @@ export function LootItemCard({
 								{slotLabel}
 							</span>
 						</div>
-						{/* Row 2: currently equipped item */}
-						{equippedInSlot && (
-							<p className="font-mono">
-								<span className="text-text-label">Equipped:</span>{" "}
-								<span
-									className={RARITY_TEXT[equippedInSlot.rarity] ?? "text-white"}
-								>
-									{equippedInSlot.generatedName}
-								</span>
-							</p>
-						)}
+						<Button variant="secondary" size="sm" disabled={disabled} onClick={onEquip}>
+							Equip
+						</Button>
 					</div>
-					<Button variant="secondary" size="sm" disabled={disabled} onClick={onEquip}>
-						Equip
-					</Button>
 				</div>
-			</div>
-		</Tooltip>
+			</Tooltip>
+			{equippedInSlot && equippedDef && (
+				<Tooltip
+					content={
+						<ItemTooltip
+							instance={equippedInSlot}
+							def={equippedDef}
+							affixDefs={equippedAffixDefs}
+						/>
+					}
+					side="right"
+				>
+					<p className="font-mono text-sm px-3 py-0.5 cursor-default">
+						<span className="text-text-label">Equipped: </span>
+						<span className={RARITY_TEXT[equippedInSlot.rarity]}>
+							{equippedInSlot.generatedName}
+						</span>
+					</p>
+				</Tooltip>
+			)}
+		</>
 	);
 }

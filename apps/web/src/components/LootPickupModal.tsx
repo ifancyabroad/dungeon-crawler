@@ -124,13 +124,21 @@ export function LootPickupModal() {
 								const baseDef =
 									itemsById[instance.baseItemId as keyof typeof itemsById];
 								if (!baseDef) return null;
+								const equipped = getEquippedInSlot(instance);
+								const equippedDef = equipped
+									? itemsById[equipped.baseItemId as keyof typeof itemsById]
+									: null;
 								return (
 									<LootItemCard
 										key={instance.instanceId}
 										instance={instance}
 										def={baseDef}
 										affixDefs={resolveAffixes(instance)}
-										equippedInSlot={getEquippedInSlot(instance)}
+										equippedInSlot={equipped}
+										equippedDef={equippedDef}
+										equippedAffixDefs={
+											equipped ? resolveAffixes(equipped) : undefined
+										}
 										onEquip={() => handleEquip(instance)}
 										disabled={actionInProgress}
 									/>

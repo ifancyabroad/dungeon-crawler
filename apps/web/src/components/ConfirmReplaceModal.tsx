@@ -2,7 +2,9 @@ import type { ItemInstance } from "@app/shared";
 import type { ItemDefinition, AffixDefinition } from "@app/content";
 import { Modal } from "./Modal";
 import { Button } from "./Button";
+import { Tooltip } from "./Tooltip";
 import { ItemTooltip } from "./ItemTooltip";
+import { RARITY_TEXT } from "../lib/rarityColors";
 
 type ConfirmReplaceModalProps = {
 	incomingInstance: ItemInstance;
@@ -14,27 +16,6 @@ type ConfirmReplaceModalProps = {
 	onConfirm: () => void;
 	onCancel: () => void;
 };
-
-function ItemPanel({
-	label,
-	instance,
-	def,
-	affixDefs,
-}: {
-	label: string;
-	instance: ItemInstance;
-	def: ItemDefinition;
-	affixDefs: AffixDefinition[];
-}) {
-	return (
-		<div className="space-y-1">
-			<p className="font-mono text-text-label uppercase tracking-wide">{label}</p>
-			<div className="border border-border">
-				<ItemTooltip instance={instance} def={def} affixDefs={affixDefs} />
-			</div>
-		</div>
-	);
-}
 
 export function ConfirmReplaceModal({
 	incomingInstance,
@@ -62,20 +43,45 @@ export function ConfirmReplaceModal({
 				</>
 			}
 		>
-			<div className="space-y-4">
-				<ItemPanel
-					label="Currently Equipped"
-					instance={equippedInstance}
-					def={equippedDef}
-					affixDefs={equippedAffixDefs}
-				/>
-				<ItemPanel
-					label="Replacing With"
-					instance={incomingInstance}
-					def={incomingDef}
-					affixDefs={incomingAffixDefs}
-				/>
-			</div>
+			<p className="font-mono leading-relaxed">
+				Replace{" "}
+				<Tooltip
+					content={
+						<ItemTooltip
+							instance={equippedInstance}
+							def={equippedDef}
+							affixDefs={equippedAffixDefs}
+						/>
+					}
+					side="top"
+					inline
+				>
+					<span
+						className={`${RARITY_TEXT[equippedInstance.rarity]} cursor-default underline decoration-dotted`}
+					>
+						{equippedInstance.generatedName}
+					</span>
+				</Tooltip>{" "}
+				with{" "}
+				<Tooltip
+					content={
+						<ItemTooltip
+							instance={incomingInstance}
+							def={incomingDef}
+							affixDefs={incomingAffixDefs}
+						/>
+					}
+					side="top"
+					inline
+				>
+					<span
+						className={`${RARITY_TEXT[incomingInstance.rarity]} cursor-default underline decoration-dotted`}
+					>
+						{incomingInstance.generatedName}
+					</span>
+				</Tooltip>
+				?
+			</p>
 		</Modal>
 	);
 }

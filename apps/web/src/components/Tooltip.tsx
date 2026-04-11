@@ -29,6 +29,8 @@ type TooltipProps = {
 	children: ReactNode;
 	/** Preferred placement. Floating UI will flip/shift automatically if there is no room. */
 	side?: "top" | "right" | "bottom" | "left";
+	/** Render the trigger as an inline element instead of a block div. */
+	inline?: boolean;
 };
 
 /**
@@ -36,10 +38,10 @@ type TooltipProps = {
  * ancestor overflow clipping. Floating UI handles collision detection and
  * automatically flips to whichever side has space.
  *
- * The trigger wrapper is a `div` — callers should move any `flex-none` or
- * sizing classes onto the `<Tooltip>` element if they were on the child.
+ * The trigger wrapper is a `div` by default; pass `inline` to use a `span`
+ * instead (needed when the tooltip sits inside inline/paragraph text).
  */
-export function Tooltip({ content, children, side = "top" }: TooltipProps) {
+export function Tooltip({ content, children, side = "top", inline = false }: TooltipProps) {
 	const [open, setOpen] = useState(false);
 
 	const placement: Placement = side;
@@ -62,9 +64,15 @@ export function Tooltip({ content, children, side = "top" }: TooltipProps) {
 
 	return (
 		<>
-			<div ref={refs.setReference} {...getReferenceProps()}>
-				{children}
-			</div>
+			{inline ? (
+				<span ref={refs.setReference} {...getReferenceProps()}>
+					{children}
+				</span>
+			) : (
+				<div ref={refs.setReference} {...getReferenceProps()}>
+					{children}
+				</div>
+			)}
 			{open && (
 				<FloatingPortal>
 					<div
