@@ -1,11 +1,5 @@
 import Phaser from "phaser";
-import {
-	hasActiveEffect,
-	idxToXY,
-	STATUS_HOOKS,
-	type FloorState,
-	type GameEvent,
-} from "@app/shared";
+import { idxToXY, type FloorState, type GameEvent } from "@app/shared";
 import type { GameStore } from "../../../features/game/gameStore";
 import { TILE_HEIGHT, TILE_WIDTH } from "../../tiles/tilesetRegistry";
 import { MOVE_DURATION_MS } from "../../fx/MoveTweenManager";
@@ -106,14 +100,6 @@ export function onStoreUpdate(storeState: GameStore, sync: SyncState, deps: Turn
 
 		const heroPos = deps.getPlayerTilePos();
 		deps.applyFogOfWar(explored, heroPos.x, heroPos.y);
-
-		// Apply stealth alpha to hero sprite.
-		if (deps.player && floor) {
-			const heroActor = floor.state.actorsById[gs.heroId];
-			if (heroActor) {
-				deps.player.setAlpha(hasActiveEffect(heroActor, STATUS_HOOKS.STEALTH) ? 0.4 : 1.0);
-			}
-		}
 
 		if (!fxDeferred) {
 			deps.dispatchFxAndSync(events, gs, floor?.state ?? null);

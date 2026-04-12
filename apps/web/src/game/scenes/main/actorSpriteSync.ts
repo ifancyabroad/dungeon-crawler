@@ -1,10 +1,17 @@
 import Phaser from "phaser";
-import { idxToXY, type GameState } from "@app/shared";
+import { idxToXY, type Actor, type GameState } from "@app/shared";
 import { ENTITY_TILES, TILE_HEIGHT, TILE_WIDTH, TILESET_KEY } from "../../tiles/tilesetRegistry";
 import type { MoveTweenManager } from "../../fx/MoveTweenManager";
 import type { HealthBarManager } from "../../fx/HealthBarManager";
-import { resolveActorTint } from "../../fx/buffVisuals";
-import type { ActorEffectVisualManager } from "../../fx/ActorEffectVisualManager";
+import {
+	resolveActorTint,
+	resolveActorAlpha,
+	ALL_ACTOR_OVERLAY_EFFECTS,
+} from "../../fx/actorOverlays";
+import type {
+	ActorEffectVisualManager,
+	ActorOverlayHandle,
+} from "../../fx/ActorEffectVisualManager";
 
 export interface ActorSpriteSyncDeps {
 	scene: Phaser.Scene;
@@ -18,6 +25,7 @@ export interface ActorSpriteSyncDeps {
 
 export class ActorSpriteSync {
 	private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
+	private npcEffectHandles = new Map<string, Map<string, ActorOverlayHandle>>();
 
 	getNpcSprites(): Map<string, Phaser.GameObjects.Sprite> {
 		return this.npcSprites;
@@ -28,6 +36,53 @@ export class ActorSpriteSync {
 			sprite.destroy();
 		}
 		this.npcSprites.clear();
+		this.destroyAllNpcEffects();
+	}
+
+	private destroyAllNpcEffects(): void {
+		for (const handles of this.npcEffectHandles.values()) {
+			for (const handle of handles.values()) {
+				handle.destroy();
+			}
+		}
+		this.npcEffectHandles.clear();
+	}
+
+	private destroyNpcEffects(actorId: string): void {
+		const handles = this.npcEffectHandles.get(actorId);
+		if (!handles) return;
+		for (const handle of handles.values()) {
+			handle.destroy();
+		}
+		this.npcEffectHandles.delete(actorId);
+	}
+
+	private syncNpcEffects(
+		actorId: string,
+		actor: Actor,
+		sprite: Phaser.GameObjects.Sprite,
+		scene: Phaser.Scene,
+	): void {
+		if (!this.npcEffectHandles.has(actorId)) {
+			this.npcEffectHandles.set(actorId, new Map());
+		}
+		const handles = this.npcEffectHandles.get(actorId)!;
+
+		for (const effect of ALL_ACTOR_OVERLAY_EFFECTS) {
+			const shouldBeActive = effect.isActive(actor) && sprite.visible;
+			const isCurrentlyActive = handles.has(effect.id);
+
+			if (shouldBeActive && !isCurrentlyActive) {
+				const handle = effect.build(scene);
+				handle.reposition(sprite.x, sprite.y);
+				handles.set(effect.id, handle);
+			} else if (!shouldBeActive && isCurrentlyActive) {
+				handles.get(effect.id)!.destroy();
+				handles.delete(effect.id);
+			} else if (isCurrentlyActive) {
+				handles.get(effect.id)!.reposition(sprite.x, sprite.y);
+			}
+		}
 	}
 
 	sync(gameState: GameState, deps: ActorSpriteSyncDeps): void {
@@ -45,6 +100,7 @@ export class ActorSpriteSync {
 					existing.destroy();
 					this.npcSprites.delete(id);
 					deps.healthBars?.remove(id);
+					this.destroyNpcEffects(id);
 				}
 				continue;
 			}
@@ -57,6 +113,7 @@ export class ActorSpriteSync {
 
 			const isVisible = deps.visibleMask?.[actor.idx] === 1;
 
+			let npcSprite: Phaser.GameObjects.Sprite;
 			if (existing) {
 				const prevTileX = Math.round((existing.x - TILE_WIDTH / 2) / TILE_WIDTH);
 				const prevTileY = Math.round((existing.y - TILE_HEIGHT / 2) / TILE_HEIGHT);
@@ -64,19 +121,26 @@ export class ActorSpriteSync {
 				deps.moveTweens?.moveNpc(id, existing, px, py, diagonal);
 				existing.setFrame(tileFrame);
 				existing.setVisible(isVisible);
+				existing.setTint(resolveActorTint(actor));
+				existing.setAlpha(resolveActorAlpha(actor));
 				if (isVisible) {
 					deps.healthBars?.update(id, actor.hp, actor.maxHp, existing);
 				}
+				npcSprite = existing;
 			} else {
-				const sprite = deps.scene.add.sprite(px, py, TILESET_KEY, tileFrame);
-				sprite.setOrigin(0.5, 0.5);
-				sprite.setDepth(9);
-				sprite.setVisible(isVisible);
-				this.npcSprites.set(id, sprite);
+				npcSprite = deps.scene.add.sprite(px, py, TILESET_KEY, tileFrame);
+				npcSprite.setOrigin(0.5, 0.5);
+				npcSprite.setDepth(9);
+				npcSprite.setVisible(isVisible);
+				npcSprite.setTint(resolveActorTint(actor));
+				npcSprite.setAlpha(resolveActorAlpha(actor));
+				this.npcSprites.set(id, npcSprite);
 				if (isVisible) {
-					deps.healthBars?.update(id, actor.hp, actor.maxHp, sprite);
+					deps.healthBars?.update(id, actor.hp, actor.maxHp, npcSprite);
 				}
 			}
+
+			this.syncNpcEffects(id, actor, npcSprite, deps.scene);
 		}
 
 		for (const [id, sprite] of this.npcSprites) {
@@ -84,6 +148,7 @@ export class ActorSpriteSync {
 				sprite.destroy();
 				this.npcSprites.delete(id);
 				deps.healthBars?.remove(id);
+				this.destroyNpcEffects(id);
 			}
 		}
 
@@ -92,6 +157,7 @@ export class ActorSpriteSync {
 			const shieldHp = hero.numericBuffs?.shieldHp ?? 0;
 			deps.healthBars?.update(gameState.heroId, hero.hp, hero.maxHp, deps.player, shieldHp);
 			deps.player.setTint(resolveActorTint(hero));
+			deps.player.setAlpha(resolveActorAlpha(hero));
 			deps.actorEffectVisuals?.sync(hero, deps.player);
 		}
 	}

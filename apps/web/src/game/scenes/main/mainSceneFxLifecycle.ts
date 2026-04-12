@@ -7,7 +7,7 @@ import { DamageNumberManager } from "../../fx/DamageNumberManager";
 import { GoldFxManager } from "../../fx/GoldFxManager";
 import { SkillAnimationController } from "../../skills/SkillAnimationController";
 import { ActorEffectVisualManager } from "../../fx/ActorEffectVisualManager";
-import { ALL_ACTOR_OVERLAY_EFFECTS } from "../../fx/buffVisuals";
+import { ALL_ACTOR_OVERLAY_EFFECTS } from "../../fx/actorOverlays";
 
 export interface FloorFxRefs {
 	moveTweens: MoveTweenManager | null;

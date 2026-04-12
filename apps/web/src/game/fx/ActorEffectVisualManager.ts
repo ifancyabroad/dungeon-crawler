@@ -10,7 +10,7 @@
  *   4. Call `destroy()` on scene shutdown.
  *
  * Adding a new persistent visual requires only a new `ActorOverlayEffect`
- * in fx/buffVisuals/ — no changes to this class or MainScene are needed.
+ * in fx/actorOverlays/ — no changes to this class or MainScene are needed.
  */
 
 import type { Actor } from "@app/shared";
