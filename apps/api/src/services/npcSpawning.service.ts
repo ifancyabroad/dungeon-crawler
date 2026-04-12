@@ -229,6 +229,60 @@ export function spawnNpcsForFloor(
 		}
 	}
 
+	// --- Part 3: boss rules ---
+	// Spawn the floor's designated boss at the "boss_spawn" vault marker if one was
+	// placed, otherwise fall back to the room tagged "boss" by baseLayers.
+	if (base && config.bossRules) {
+		const bossDef = npcsById[config.bossRules.npcId];
+		if (bossDef) {
+			let bossSpawnIdx: number | undefined;
+
+			// Primary: find the boss_spawn marker in any vault placement
+			for (const placement of base.vaultPlacements) {
+				const markerIndices = placement.markerCells["boss_spawn"];
+				if (markerIndices?.length) {
+					bossSpawnIdx = resolveSpawnNear(
+						markerIndices[0],
+						base.width,
+						base.height,
+						walkMask,
+						current.floors[floorIndex].state,
+						floor.state.spawnIdx,
+						1,
+					);
+					break;
+				}
+			}
+
+			// Fallback: spawn in the boss-tagged room (covers floors where the vault
+			// didn't place due to minDepth or no fitting room)
+			if (bossSpawnIdx === undefined) {
+				const bossRoom = base.rooms.find((r) => r.tag === "boss");
+				if (bossRoom?.cells.length) {
+					const midCell = bossRoom.cells[Math.floor(bossRoom.cells.length / 2)];
+					bossSpawnIdx = resolveSpawnNear(
+						midCell,
+						base.width,
+						base.height,
+						walkMask,
+						current.floors[floorIndex].state,
+						floor.state.spawnIdx,
+						1,
+					);
+				}
+			}
+
+			if (bossSpawnIdx !== undefined) {
+				current = spawnNpcWithPassives(
+					current,
+					floorIndex,
+					npcInitFromDef(bossDef),
+					bossSpawnIdx,
+				);
+			}
+		}
+	}
+
 	return current;
 }
 
