@@ -6,7 +6,7 @@
 	"icon": "Assassinskill_22_nobg.png",
 	"school": "shadow",
 	"tags": ["damage", "debuff", "control", "weapon_attack", "finesse", "melee_attack"],
-	"cooldown": 3,
+	"cooldown": 6,
 	"targetType": "actor",
 	"range": 1,
 	"effectsByRank": [

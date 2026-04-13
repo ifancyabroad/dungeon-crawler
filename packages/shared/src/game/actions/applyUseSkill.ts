@@ -36,6 +36,8 @@ export function applyUseSkill(
 	const skillState = hero.skills[action.skillId];
 	if (!skillState) return { ok: false, reason: "skill_not_owned" };
 	if (skillState.cooldownRemaining > 0) return { ok: false, reason: "skill_on_cooldown" };
+	if (skillState.floorUsesRemaining !== undefined && skillState.floorUsesRemaining <= 0)
+		return { ok: false, reason: "skill_floor_uses_exhausted" };
 	if (!hero.armorProficient) return { ok: false, reason: "skill_armor_not_proficient" };
 
 	const width = floor.config.width;
@@ -64,12 +66,18 @@ export function applyUseSkill(
 
 	if ("error" in resolution) return { ok: false, reason: resolution.error };
 
-	// Set cooldown on the caster (hero)
+	// Set cooldown on the caster (hero) and decrement per-floor uses if applicable.
 	const heroAfterSkill: Actor = {
 		...resolution.caster,
 		skills: {
 			...resolution.caster.skills,
-			[action.skillId]: { ...skillState, cooldownRemaining: skillDef.cooldown },
+			[action.skillId]: {
+				...skillState,
+				cooldownRemaining: skillDef.cooldown + 1,
+				...(skillState.floorUsesRemaining !== undefined && {
+					floorUsesRemaining: skillState.floorUsesRemaining - 1,
+				}),
+			},
 		},
 	};
 

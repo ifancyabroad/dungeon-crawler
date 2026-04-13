@@ -6,7 +6,7 @@
 	"icon": "Warriorskill_29_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "mobility", "aoe"],
-	"cooldown": 5,
+	"cooldown": 8,
 	"targetType": "tile",
 	"range": 4,
 	"effectsByRank": [

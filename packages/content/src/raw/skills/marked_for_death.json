@@ -6,7 +6,7 @@
 	"icon": "Archerskill_13_nobg.png",
 	"school": "shadow",
 	"tags": ["debuff", "utility"],
-	"cooldown": 4,
+	"cooldown": 8,
 	"targetType": "actor",
 	"range": 4,
 	"effectsByRank": [
@@ -15,7 +15,7 @@
 				"type": "apply_status",
 				"statusId": "marked",
 				"target": "target",
-				"durationTurns": 3,
+				"durationTurns": 6,
 				"adjustments": {
 					"incomingDamageFlat": 4
 				}
@@ -26,7 +26,7 @@
 				"type": "apply_status",
 				"statusId": "marked",
 				"target": "target",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"adjustments": {
 					"incomingDamageFlat": 5
 				}
@@ -37,7 +37,7 @@
 				"type": "apply_status",
 				"statusId": "marked",
 				"target": "target",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"adjustments": {
 					"incomingDamageFlat": 6
 				}

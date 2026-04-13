@@ -26,6 +26,7 @@ const ActorSkillStateSchema = new Schema(
 	{
 		rank: { type: Number, required: true },
 		cooldownRemaining: { type: Number, required: true },
+		floorUsesRemaining: Number,
 	},
 	{ _id: false },
 );
@@ -137,6 +138,7 @@ const PassiveDamageBonusSchema = new Schema(
 		onCritOnly: { type: Boolean, required: true },
 		sourceSkillId: String,
 		sourceItemInstanceId: String,
+		requiredDamageType: String,
 	},
 	{ _id: false },
 );
@@ -149,6 +151,7 @@ const PassiveFlatDamageBonusSchema = new Schema(
 		appliesTo: { type: String, required: true },
 		sourceSkillId: String,
 		sourceItemInstanceId: String,
+		requiredDamageType: String,
 	},
 	{ _id: false },
 );

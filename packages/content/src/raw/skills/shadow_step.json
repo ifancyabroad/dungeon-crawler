@@ -6,7 +6,7 @@
 	"icon": "Assassinskill_50_nobg.png",
 	"school": "shadow",
 	"tags": ["mobility", "stealth"],
-	"cooldown": 4,
+	"cooldown": 8,
 	"targetType": "tile",
 	"range": 4,
 	"maintainsStealth": true,
@@ -23,7 +23,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "stealth",
-				"durationTurns": 1,
+				"durationTurns": 3,
 				"target": "self"
 			}
 		],
@@ -34,7 +34,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "stealth",
-				"durationTurns": 2,
+				"durationTurns": 5,
 				"target": "self"
 			}
 		]

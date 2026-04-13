@@ -6,7 +6,7 @@
 	"icon": "Skill_Charge_nb.png",
 	"school": "martial",
 	"tags": ["damage", "mobility", "weapon_attack", "melee_attack"],
-	"cooldown": 4,
+	"cooldown": 7,
 	"targetType": "actor",
 	"range": 4,
 	"effectsByRank": [

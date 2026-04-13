@@ -6,7 +6,7 @@
 	"icon": "Assassinskill_49_nobg.png",
 	"school": "shadow",
 	"tags": ["control", "debuff", "aoe", "utility"],
-	"cooldown": 5,
+	"cooldown": 8,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -22,7 +22,7 @@
 				"statusId": "bleeding",
 				"target": "aoe",
 				"aoeRadiusTiles": 1,
-				"durationTurns": 3,
+				"durationTurns": 5,
 				"value": 2
 			}
 		],
@@ -39,7 +39,7 @@
 				"statusId": "bleeding",
 				"target": "aoe",
 				"aoeRadiusTiles": 1,
-				"durationTurns": 4,
+				"durationTurns": 7,
 				"value": 2
 			}
 		],
@@ -56,7 +56,7 @@
 				"statusId": "bleeding",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"value": 3
 			}
 		]

@@ -490,6 +490,8 @@ export const ActiveSkillDefinitionSchema = z.object({
 	school: SkillSchoolSchema,
 	tags: z.array(SkillTagSchema).min(1),
 	cooldown: z.number().int().min(0),
+	/** If set, the skill can only be used this many times per floor. Resets on descent. */
+	maxUsesPerFloor: z.number().int().min(1).optional(),
 	targetType: z.enum(["none", "tile", "actor"]),
 	range: z.number().int().min(1).optional(),
 	maintainsStealth: z.boolean().optional(),

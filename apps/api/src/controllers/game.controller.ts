@@ -18,6 +18,7 @@ import {
 	encountersById,
 	itemsById,
 	npcsById,
+	skillsById,
 	vaults,
 	type CharacterClassId,
 } from "@app/content";
@@ -66,7 +67,14 @@ export const createGame: RequestHandler = async (req, res) => {
 		xp: 0,
 		hitDie: classDef.hitDie,
 		savingThrowProficiencies: classDef.savingThrowProficiencies,
-		skills: classDef.startingSkills.map((id) => ({ id, rank: 1 })),
+		skills: classDef.startingSkills.map((id) => {
+			const def = skillsById[id as keyof typeof skillsById];
+			return {
+				id,
+				rank: 1,
+				floorUsesRemaining: def?.skillType === "active" ? def.maxUsesPerFloor : undefined,
+			};
+		}),
 		equipment: buildEquipmentSlots(classDef.startingEquipment, itemsById),
 		weaponProficiencies: classDef.weaponProficiencies,
 		armorProficiencies: classDef.armorProficiencies,

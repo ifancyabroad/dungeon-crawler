@@ -6,7 +6,7 @@
 	"icon": "Warriorskill_30_nobg.png",
 	"school": "martial",
 	"tags": ["buff", "utility"],
-	"cooldown": 6,
+	"cooldown": 12,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -14,7 +14,7 @@
 				"type": "apply_status",
 				"statusId": "berserk",
 				"target": "self",
-				"durationTurns": 3,
+				"durationTurns": 6,
 				"adjustments": {
 					"meleeDamageDiceBonus": "1d6",
 					"areaDamageDiceBonus": "1d6",
@@ -27,7 +27,7 @@
 				"type": "apply_status",
 				"statusId": "berserk",
 				"target": "self",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"adjustments": {
 					"meleeDamageDiceBonus": "1d8",
 					"areaDamageDiceBonus": "1d8",
@@ -40,7 +40,7 @@
 				"type": "apply_status",
 				"statusId": "berserk",
 				"target": "self",
-				"durationTurns": 5,
+				"durationTurns": 10,
 				"adjustments": {
 					"meleeDamageDiceBonus": "1d10",
 					"areaDamageDiceBonus": "1d10",

@@ -40,6 +40,7 @@ export const AbilityNameSchema = z.enum([
 export const ActorSkillStateSchema = z.object({
 	rank: z.number().int().min(1),
 	cooldownRemaining: z.number(),
+	floorUsesRemaining: z.number().int().optional(),
 });
 
 export const CombatAdjustmentsSchema = z.object({

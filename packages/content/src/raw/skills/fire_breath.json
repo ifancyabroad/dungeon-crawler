@@ -6,7 +6,7 @@
 	"icon": "Mageskill_22_nobg.png",
 	"school": "nature",
 	"tags": ["damage", "aoe", "spell"],
-	"cooldown": 5,
+	"cooldown": 8,
 	"targetType": "tile",
 	"range": 4,
 	"effectsByRank": [
@@ -30,7 +30,7 @@
 				"statusId": "burning",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 3,
+				"durationTurns": 5,
 				"value": 2
 			}
 		],
@@ -54,7 +54,7 @@
 				"statusId": "burning",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 3,
+				"durationTurns": 6,
 				"value": 2
 			}
 		],
@@ -78,7 +78,7 @@
 				"statusId": "burning",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 4,
+				"durationTurns": 7,
 				"value": 3
 			}
 		]

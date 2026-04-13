@@ -67,9 +67,16 @@ function buildInitialFloorState(
 		};
 	}
 
-	const initialSkills: Record<string, { rank: number; cooldownRemaining: number }> = {};
+	const initialSkills: Record<
+		string,
+		{ rank: number; cooldownRemaining: number; floorUsesRemaining?: number }
+	> = {};
 	for (const skill of heroInit.skills ?? []) {
-		initialSkills[skill.id] = { rank: skill.rank, cooldownRemaining: 0 };
+		initialSkills[skill.id] = {
+			rank: skill.rank,
+			cooldownRemaining: 0,
+			floorUsesRemaining: skill.floorUsesRemaining,
+		};
 	}
 
 	const heroActor: Actor = {
@@ -198,7 +205,10 @@ export function spawnNpc(
 		damageImmunities: [...init.damageImmunities],
 		damageVulnerabilities: [...init.damageVulnerabilities],
 		skills: Object.fromEntries(
-			init.activeSkills.map((s) => [s.id, { rank: s.rank, cooldownRemaining: 0 }]),
+			init.activeSkills.map((s) => [
+				s.id,
+				{ rank: s.rank, cooldownRemaining: 0, floorUsesRemaining: s.floorUsesRemaining },
+			]),
 		),
 		activeEffects: [],
 		numericBuffs: {},

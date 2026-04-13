@@ -6,7 +6,7 @@
 	"icon": "Mageskill_42_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "spell", "utility"],
-	"cooldown": 5,
+	"cooldown": 10,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -14,7 +14,7 @@
 				"type": "apply_status",
 				"statusId": "arcane_surge",
 				"target": "self",
-				"durationTurns": 3,
+				"durationTurns": 6,
 				"adjustments": {
 					"areaDamageDiceBonus": "1d6",
 					"rangedDamageDiceBonus": "1d6",
@@ -27,7 +27,7 @@
 				"type": "apply_status",
 				"statusId": "arcane_surge",
 				"target": "self",
-				"durationTurns": 3,
+				"durationTurns": 7,
 				"adjustments": {
 					"areaDamageDiceBonus": "2d6",
 					"rangedDamageDiceBonus": "2d6",
@@ -40,7 +40,7 @@
 				"type": "apply_status",
 				"statusId": "arcane_surge",
 				"target": "self",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"adjustments": {
 					"areaDamageDiceBonus": "2d6",
 					"rangedDamageDiceBonus": "2d6",

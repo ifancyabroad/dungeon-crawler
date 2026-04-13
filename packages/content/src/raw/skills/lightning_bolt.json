@@ -6,7 +6,7 @@
 	"icon": "Mageskill_41_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "spell"],
-	"cooldown": 4,
+	"cooldown": 7,
 	"targetType": "tile",
 	"range": 6,
 	"effectsByRank": [

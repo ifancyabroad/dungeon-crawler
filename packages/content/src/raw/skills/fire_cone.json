@@ -6,7 +6,7 @@
 	"icon": "Mageskill_22_nobg.png",
 	"school": "nature",
 	"tags": ["damage", "aoe", "spell"],
-	"cooldown": 4,
+	"cooldown": 7,
 	"targetType": "tile",
 	"range": 3,
 	"effectsByRank": [

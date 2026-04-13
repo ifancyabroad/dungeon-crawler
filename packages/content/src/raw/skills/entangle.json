@@ -6,7 +6,7 @@
 	"icon": "Skill_Toxic_nb.png",
 	"school": "nature",
 	"tags": ["control", "aoe", "spell"],
-	"cooldown": 4,
+	"cooldown": 7,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -15,7 +15,7 @@
 				"statusId": "rooted",
 				"target": "aoe",
 				"aoeRadiusTiles": 1,
-				"durationTurns": 2
+				"durationTurns": 4
 			}
 		],
 		[
@@ -24,7 +24,7 @@
 				"statusId": "rooted",
 				"target": "aoe",
 				"aoeRadiusTiles": 1,
-				"durationTurns": 3
+				"durationTurns": 6
 			}
 		],
 		[
@@ -33,7 +33,7 @@
 				"statusId": "rooted",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 3
+				"durationTurns": 7
 			}
 		]
 	]

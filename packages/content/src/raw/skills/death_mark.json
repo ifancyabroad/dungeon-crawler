@@ -6,7 +6,7 @@
 	"icon": "Mageskill_44_nobg.png",
 	"school": "arcane",
 	"tags": ["debuff", "control", "spell", "ranged"],
-	"cooldown": 5,
+	"cooldown": 9,
 	"targetType": "actor",
 	"range": 5,
 	"effectsByRank": [
@@ -15,13 +15,13 @@
 				"type": "apply_status",
 				"statusId": "frightened",
 				"target": "target",
-				"durationTurns": 3
+				"durationTurns": 5
 			},
 			{
 				"type": "apply_status",
 				"statusId": "bleeding",
 				"target": "target",
-				"durationTurns": 3,
+				"durationTurns": 6,
 				"value": 2
 			}
 		],
@@ -30,13 +30,13 @@
 				"type": "apply_status",
 				"statusId": "frightened",
 				"target": "target",
-				"durationTurns": 3
+				"durationTurns": 6
 			},
 			{
 				"type": "apply_status",
 				"statusId": "bleeding",
 				"target": "target",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"value": 3
 			}
 		],
@@ -45,13 +45,13 @@
 				"type": "apply_status",
 				"statusId": "frightened",
 				"target": "target",
-				"durationTurns": 4
+				"durationTurns": 7
 			},
 			{
 				"type": "apply_status",
 				"statusId": "bleeding",
 				"target": "target",
-				"durationTurns": 5,
+				"durationTurns": 9,
 				"value": 4
 			}
 		]

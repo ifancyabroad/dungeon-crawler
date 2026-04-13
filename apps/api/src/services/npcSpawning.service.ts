@@ -47,7 +47,14 @@ function npcInitFromDef(def: NpcDefinition): NpcInit {
 		savingThrowProficiencies: def.savingThrowProficiencies,
 		combatStrategy: def.combatStrategy,
 		idleStrategy: def.idleStrategy,
-		activeSkills: def.activeSkills,
+		activeSkills: def.activeSkills.map((s) => {
+			const skillDef = skillsById[s.id as keyof typeof skillsById];
+			return {
+				...s,
+				floorUsesRemaining:
+					skillDef?.skillType === "active" ? skillDef.maxUsesPerFloor : undefined,
+			};
+		}),
 		passiveSkills: def.passiveSkills,
 		equipment: buildEquipmentSlots(def.startingEquipment, itemsById),
 		weaponProficiencies: def.weaponProficiencies,

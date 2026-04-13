@@ -6,7 +6,7 @@
 	"icon": "Mageskill_28_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "control", "spell", "aoe"],
-	"cooldown": 4,
+	"cooldown": 7,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -28,7 +28,7 @@
 				"statusId": "rooted",
 				"target": "aoe",
 				"aoeRadiusTiles": 1,
-				"durationTurns": 2
+				"durationTurns": 4
 			}
 		],
 		[
@@ -50,7 +50,7 @@
 				"statusId": "rooted",
 				"target": "aoe",
 				"aoeRadiusTiles": 1,
-				"durationTurns": 2
+				"durationTurns": 5
 			}
 		],
 		[
@@ -72,7 +72,7 @@
 				"statusId": "rooted",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 2
+				"durationTurns": 6
 			}
 		]
 	]

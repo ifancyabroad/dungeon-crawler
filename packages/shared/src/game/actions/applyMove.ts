@@ -1,6 +1,7 @@
 import type { MoveAction } from "./schemas";
 import type { Actor, FloorState, GameEvent, GameState, PendingInteraction } from "../types";
 import type { ApplyActionContext, ApplyActionResult } from "../engineContext";
+import type { ActiveSkillDefinition } from "../../skills";
 import { createRngFromState } from "../../rng";
 import { computeVisibility, mergeExplored } from "../../map/visibility";
 import { tickActiveEffects, hasActiveEffect } from "../../skills";
@@ -206,9 +207,20 @@ export function applyMove(
 					Object.entries(newFloorState.actorsById).filter(([id]) => id !== state.heroId),
 				),
 			};
+			// Reset per-floor skill uses on descent.
+			const resetSkills = Object.fromEntries(
+				Object.entries(heroAfterMove.skills).map(([id, s]) => {
+					const def = context.getSkillDef(id) as ActiveSkillDefinition | undefined;
+					if (def?.maxUsesPerFloor !== undefined) {
+						return [id, { ...s, floorUsesRemaining: def.maxUsesPerFloor }];
+					}
+					return [id, s];
+				}),
+			);
 			const descendingHero: Actor = {
 				...heroAfterMove,
 				idx: nextFloor.state.spawnIdx,
+				skills: resetSkills,
 			};
 
 			// Compute initial visibility on next floor

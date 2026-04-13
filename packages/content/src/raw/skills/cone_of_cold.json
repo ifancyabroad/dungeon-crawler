@@ -6,7 +6,7 @@
 	"icon": "Mageskill_33_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "control", "aoe", "spell"],
-	"cooldown": 5,
+	"cooldown": 8,
 	"targetType": "tile",
 	"range": 3,
 	"effectsByRank": [
@@ -44,7 +44,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "rooted",
-				"durationTurns": 1,
+				"durationTurns": 3,
 				"target": "aoe",
 				"aoeRadiusTiles": 1
 			}
@@ -67,7 +67,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "rooted",
-				"durationTurns": 2,
+				"durationTurns": 5,
 				"target": "aoe",
 				"aoeRadiusTiles": 1
 			}

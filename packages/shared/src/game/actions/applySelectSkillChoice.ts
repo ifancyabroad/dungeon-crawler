@@ -33,12 +33,21 @@ export function applySelectSkillChoice(
 	const previousRank = hero.skills[action.skillId]?.rank ?? 0;
 	const newRank = offer.rank;
 
-	// Grant (new) or upgrade (existing) the skill
+	// Grant (new) or upgrade (existing) the skill.
+	// Preserve floorUsesRemaining when upgrading so mid-floor uses aren't reset.
 	let heroWithSkill: Actor = {
 		...hero,
 		skills: {
 			...hero.skills,
-			[action.skillId]: { rank: newRank, cooldownRemaining: 0 },
+			[action.skillId]: {
+				rank: newRank,
+				cooldownRemaining: 0,
+				floorUsesRemaining:
+					skillDef.skillType === "active"
+						? (hero.skills[action.skillId]?.floorUsesRemaining ??
+							skillDef.maxUsesPerFloor)
+						: undefined,
+			},
 		},
 	};
 

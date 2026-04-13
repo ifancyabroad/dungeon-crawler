@@ -6,10 +6,17 @@ type SkillTooltipProps = {
 	def: ActiveSkillDefinition;
 	rank: number;
 	cooldownRemaining: number;
+	floorUsesRemaining?: number;
 	armorLocked: boolean;
 };
 
-export function SkillTooltip({ def, rank, cooldownRemaining, armorLocked }: SkillTooltipProps) {
+export function SkillTooltip({
+	def,
+	rank,
+	cooldownRemaining,
+	floorUsesRemaining,
+	armorLocked,
+}: SkillTooltipProps) {
 	const effects = formatActiveEffectsAtRank(def, rank);
 	const rankGlyph = rankRoman(rank);
 
@@ -46,6 +53,12 @@ export function SkillTooltip({ def, rank, cooldownRemaining, armorLocked }: Skil
 			<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
 				<dt className="text-text-label">Cooldown</dt>
 				<dd className="text-text">{def.cooldown > 0 ? `${def.cooldown} turns` : "None"}</dd>
+				{def.maxUsesPerFloor != null && (
+					<>
+						<dt className="text-text-label">Uses/floor</dt>
+						<dd className="text-text">{def.maxUsesPerFloor}</dd>
+					</>
+				)}
 				{def.targetType !== "none" && def.range != null && (
 					<>
 						<dt className="text-text-label">Range</dt>
@@ -61,6 +74,8 @@ export function SkillTooltip({ def, rank, cooldownRemaining, armorLocked }: Skil
 				<p className="text-primary-dim">
 					{cooldownRemaining} turn{cooldownRemaining !== 1 ? "s" : ""} remaining
 				</p>
+			) : floorUsesRemaining === 0 ? (
+				<p className="text-text-muted">Used this floor — resets on descent</p>
 			) : (
 				<p className="text-secondary">Ready</p>
 			)}

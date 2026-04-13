@@ -6,7 +6,7 @@
 	"icon": "Assassinskill_11_nobg.png",
 	"school": "shadow",
 	"tags": ["stealth", "utility"],
-	"cooldown": 5,
+	"cooldown": 10,
 	"targetType": "none",
 	"maintainsStealth": true,
 	"effectsByRank": [

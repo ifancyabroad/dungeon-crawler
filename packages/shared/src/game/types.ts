@@ -47,10 +47,12 @@ export interface ActorAttributes {
 /** Standard ability names for mapping saves. */
 export type AbilityName = keyof ActorAttributes;
 
-/** Per-skill state: rank (1–3) and cooldown remaining. */
+/** Per-skill state: rank (1–3), cooldown remaining, and optional per-floor use limit. */
 export interface ActorSkillState {
 	rank: number;
 	cooldownRemaining: number;
+	/** Remaining uses this floor. Undefined means no per-floor limit. Resets on descent. */
+	floorUsesRemaining?: number;
 }
 
 /**
@@ -144,7 +146,7 @@ export interface HeroInit {
 	/** Ability names this hero is proficient in for saving throws. */
 	savingThrowProficiencies: AbilityName[];
 	/** Skills to initialise on the hero (each gets cooldownRemaining: 0). */
-	skills?: { id: string; rank: number }[];
+	skills?: { id: string; rank: number; floorUsesRemaining?: number }[];
 	/** Starting equipment slot assignments (item IDs). Applied by the API layer after actor creation. */
 	equipment: EquipmentSlots;
 	weaponProficiencies: string[];
@@ -174,7 +176,7 @@ export interface NpcInit {
 	combatStrategy: NpcAIState["combatStrategy"];
 	idleStrategy: NpcAIState["idleStrategy"];
 	/** Active skills this NPC spawns with. Each starts with cooldownRemaining: 0. */
-	activeSkills: { id: string; rank: number }[];
+	activeSkills: { id: string; rank: number; floorUsesRemaining?: number }[];
 	/** Passive skills this NPC spawns with. Applied by the caller via applyPassiveEffect before the actor enters the floor. */
 	passiveSkills: { id: string; rank: number }[];
 	/** Starting equipment slot assignments (item IDs). Applied by the API layer after actor creation. */

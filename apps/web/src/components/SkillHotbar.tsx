@@ -169,6 +169,8 @@ export function SkillHotbar() {
 
 		const skillState = hero.skills[skillId];
 		if (!skillState || skillState.cooldownRemaining > 0) return;
+		if (skillState.floorUsesRemaining !== undefined && skillState.floorUsesRemaining <= 0)
+			return;
 
 		if (activeDef.targetType === "none") {
 			const action: UseSkillAction = { type: "use_skill", skillId };
@@ -268,9 +270,13 @@ export function SkillHotbar() {
 				const isOtherDuringTargeting = isTargeting && !isActiveTargetSkill;
 
 				const onCooldown = skillState.cooldownRemaining > 0;
+				const floorExhausted =
+					skillState.floorUsesRemaining !== undefined &&
+					skillState.floorUsesRemaining <= 0;
 				// During targeting, only the active skill is interactive.
 				const disabled =
-					isOtherDuringTargeting || (!isTargeting && (onCooldown || armorLocked));
+					isOtherDuringTargeting ||
+					(!isTargeting && (onCooldown || floorExhausted || armorLocked));
 				const displayName = skillDef?.name ?? skillId;
 				const rankGlyph = rankRoman(skillState.rank);
 				const ariaLabel = isActiveTargetSkill
@@ -279,7 +285,9 @@ export function SkillHotbar() {
 						? `${displayName} ${rankGlyph}, unavailable (not proficient with equipped armor)`
 						: onCooldown
 							? `${displayName} ${rankGlyph}, ${skillState.cooldownRemaining} turns cooldown`
-							: `${displayName} ${rankGlyph}, ready`;
+							: floorExhausted
+								? `${displayName} ${rankGlyph}, used this floor`
+								: `${displayName} ${rankGlyph}, ready`;
 				return (
 					<Tooltip
 						key={skillId}
@@ -288,6 +296,7 @@ export function SkillHotbar() {
 								def={skillDef}
 								rank={skillState.rank}
 								cooldownRemaining={skillState.cooldownRemaining}
+								floorUsesRemaining={skillState.floorUsesRemaining}
 								armorLocked={armorLocked}
 							/>
 						}
@@ -312,7 +321,9 @@ export function SkillHotbar() {
 								size={48}
 								className={[
 									"absolute inset-0 m-auto",
-									armorLocked || isOtherDuringTargeting ? "opacity-40" : "",
+									armorLocked || isOtherDuringTargeting || floorExhausted
+										? "opacity-40"
+										: "",
 								].join(" ")}
 							/>
 							{onCooldown && skillDef && skillDef.cooldown > 0 && !isTargeting && (

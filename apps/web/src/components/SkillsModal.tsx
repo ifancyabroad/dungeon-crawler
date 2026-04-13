@@ -14,10 +14,17 @@ type SkillRowProps = {
 	def: ActiveSkillDefinition | PassiveSkillDefinition;
 	rank: number;
 	cooldownRemaining?: number;
+	floorUsesRemaining?: number;
 	armorLocked?: boolean;
 };
 
-function SkillRow({ def, rank, cooldownRemaining = 0, armorLocked = false }: SkillRowProps) {
+function SkillRow({
+	def,
+	rank,
+	cooldownRemaining = 0,
+	floorUsesRemaining,
+	armorLocked = false,
+}: SkillRowProps) {
 	const isPassive = def.skillType === "passive";
 
 	const tooltipContent = isPassive ? (
@@ -27,6 +34,7 @@ function SkillRow({ def, rank, cooldownRemaining = 0, armorLocked = false }: Ski
 			def={def as ActiveSkillDefinition}
 			rank={rank}
 			cooldownRemaining={cooldownRemaining}
+			floorUsesRemaining={floorUsesRemaining}
 			armorLocked={armorLocked}
 		/>
 	);
@@ -86,6 +94,7 @@ export function SkillsModal() {
 									def={def}
 									rank={rank}
 									cooldownRemaining={heroSkills[skillId]?.cooldownRemaining ?? 0}
+									floorUsesRemaining={heroSkills[skillId]?.floorUsesRemaining}
 									armorLocked={armorLocked}
 								/>
 							))}

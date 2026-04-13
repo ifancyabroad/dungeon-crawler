@@ -221,8 +221,12 @@ export function processEnemyTurns(
 									skills: {
 										...npcAfterSkill.skills,
 										[result.skillId]: {
-											rank: skillState.rank,
-											cooldownRemaining: skillDef.cooldown,
+											...skillState,
+											cooldownRemaining: skillDef.cooldown + 1,
+											floorUsesRemaining:
+												skillState.floorUsesRemaining !== undefined
+													? skillState.floorUsesRemaining - 1
+													: undefined,
 										},
 									},
 								},

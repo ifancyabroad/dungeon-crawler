@@ -6,7 +6,7 @@
 	"icon": "Assassinskill_14_nobg.png",
 	"school": "shadow",
 	"tags": ["control", "utility", "aoe"],
-	"cooldown": 5,
+	"cooldown": 8,
 	"targetType": "tile",
 	"range": 4,
 	"effectsByRank": [
@@ -14,7 +14,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "rooted",
-				"durationTurns": 2,
+				"durationTurns": 4,
 				"target": "aoe",
 				"aoeRadiusTiles": 1
 			}
@@ -23,7 +23,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "rooted",
-				"durationTurns": 3,
+				"durationTurns": 5,
 				"target": "aoe",
 				"aoeRadiusTiles": 1
 			}
@@ -32,7 +32,7 @@
 			{
 				"type": "apply_status",
 				"statusId": "rooted",
-				"durationTurns": 3,
+				"durationTurns": 5,
 				"target": "aoe",
 				"aoeRadiusTiles": 2
 			}

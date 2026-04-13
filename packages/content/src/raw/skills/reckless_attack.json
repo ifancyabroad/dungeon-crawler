@@ -6,7 +6,7 @@
 	"icon": "Warriorskill_10_nobg.png",
 	"school": "martial",
 	"tags": ["damage", "weapon_attack", "melee_attack"],
-	"cooldown": 3,
+	"cooldown": 6,
 	"targetType": "actor",
 	"range": 1,
 	"effectsByRank": [
@@ -15,7 +15,7 @@
 				"type": "apply_status",
 				"statusId": "reckless",
 				"target": "self",
-				"durationTurns": 2,
+				"durationTurns": 3,
 				"adjustments": {
 					"hasAdvantage": true,
 					"acBonus": -2
@@ -37,7 +37,7 @@
 				"type": "apply_status",
 				"statusId": "reckless",
 				"target": "self",
-				"durationTurns": 2,
+				"durationTurns": 4,
 				"adjustments": {
 					"hasAdvantage": true,
 					"acBonus": -2
@@ -60,7 +60,7 @@
 				"type": "apply_status",
 				"statusId": "reckless",
 				"target": "self",
-				"durationTurns": 2,
+				"durationTurns": 5,
 				"adjustments": {
 					"hasAdvantage": true,
 					"acBonus": -2

@@ -6,15 +6,10 @@
 	"icon": "Mageskill_40_nobg.png",
 	"school": "arcane",
 	"tags": ["buff", "spell"],
-	"cooldown": 5,
+	"cooldown": 0,
+	"maxUsesPerFloor": 1,
 	"targetType": "none",
 	"effectsByRank": [
-		[
-			{
-				"type": "apply_shield",
-				"amount": 10
-			}
-		],
 		[
 			{
 				"type": "apply_shield",
@@ -24,7 +19,13 @@
 		[
 			{
 				"type": "apply_shield",
-				"amount": 20
+				"amount": 25
+			}
+		],
+		[
+			{
+				"type": "apply_shield",
+				"amount": 35
 			}
 		]
 	]

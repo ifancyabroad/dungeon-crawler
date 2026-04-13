@@ -6,7 +6,8 @@
 	"icon": "Warriorskill_42_nobg.png",
 	"school": "martial",
 	"tags": ["healing", "utility"],
-	"cooldown": 5,
+	"cooldown": 0,
+	"maxUsesPerFloor": 1,
 	"targetType": "none",
 	"effectsByRank": [
 		[

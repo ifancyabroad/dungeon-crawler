@@ -2007,14 +2007,14 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "utility"
     ],
-    "cooldown": 5,
+    "cooldown": 10,
     "targetType": "none",
     "effectsByRank": [
       [
         {
           "type": "apply_status",
           "statusId": "arcane_surge",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "self",
           "adjustments": {
             "rangedDamageDiceBonus": "1d6",
@@ -2027,7 +2027,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "arcane_surge",
-          "durationTurns": 3,
+          "durationTurns": 7,
           "target": "self",
           "adjustments": {
             "rangedDamageDiceBonus": "2d6",
@@ -2040,7 +2040,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "arcane_surge",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "target": "self",
           "adjustments": {
             "rangedDamageDiceBonus": "2d6",
@@ -2095,14 +2095,14 @@ export const skills: readonly SkillDefinition[] = [
       "control",
       "utility"
     ],
-    "cooldown": 5,
+    "cooldown": 10,
     "targetType": "none",
     "effectsByRank": [
       [
         {
           "type": "apply_status",
           "statusId": "rallied",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "self",
           "adjustments": {
             "attackRollDiceBonus": "1d4"
@@ -2111,7 +2111,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "frightened",
-          "durationTurns": 2,
+          "durationTurns": 5,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -2120,7 +2120,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rallied",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "target": "self",
           "adjustments": {
             "attackRollDiceBonus": "1d4"
@@ -2129,7 +2129,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "frightened",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -2138,7 +2138,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rallied",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "target": "self",
           "adjustments": {
             "attackRollDiceBonus": "1d6"
@@ -2147,7 +2147,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "frightened",
-          "durationTurns": 3,
+          "durationTurns": 7,
           "target": "aoe",
           "aoeRadiusTiles": 3
         }
@@ -2208,14 +2208,14 @@ export const skills: readonly SkillDefinition[] = [
       "buff",
       "utility"
     ],
-    "cooldown": 6,
+    "cooldown": 12,
     "targetType": "none",
     "effectsByRank": [
       [
         {
           "type": "apply_status",
           "statusId": "berserk",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "self",
           "adjustments": {
             "incomingDamageFlat": 2,
@@ -2228,7 +2228,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "berserk",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "target": "self",
           "adjustments": {
             "incomingDamageFlat": 2,
@@ -2241,7 +2241,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "berserk",
-          "durationTurns": 5,
+          "durationTurns": 10,
           "target": "self",
           "adjustments": {
             "incomingDamageFlat": 2,
@@ -2306,7 +2306,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "utility"
     ],
-    "cooldown": 5,
+    "cooldown": 8,
     "targetType": "none",
     "effectsByRank": [
       [
@@ -2320,7 +2320,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "bleeding",
-          "durationTurns": 3,
+          "durationTurns": 5,
           "value": 2,
           "target": "aoe",
           "aoeRadiusTiles": 1
@@ -2337,7 +2337,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "bleeding",
-          "durationTurns": 4,
+          "durationTurns": 7,
           "value": 2,
           "target": "aoe",
           "aoeRadiusTiles": 1
@@ -2354,7 +2354,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "bleeding",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "value": 3,
           "target": "aoe",
           "aoeRadiusTiles": 2
@@ -2375,7 +2375,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "actor",
     "range": 4,
     "effectsByRank": [
@@ -2418,7 +2418,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 5,
     "targetType": "tile",
     "range": 1,
     "effectsByRank": [
@@ -2527,7 +2527,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 5,
+    "cooldown": 8,
     "targetType": "tile",
     "range": 3,
     "effectsByRank": [
@@ -2565,7 +2565,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 1,
+          "durationTurns": 3,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -2588,7 +2588,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 5,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -2649,7 +2649,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "ranged"
     ],
-    "cooldown": 3,
+    "cooldown": 5,
     "targetType": "actor",
     "range": 5,
     "effectsByRank": [
@@ -2719,7 +2719,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "ranged"
     ],
-    "cooldown": 5,
+    "cooldown": 9,
     "targetType": "actor",
     "range": 5,
     "effectsByRank": [
@@ -2727,13 +2727,13 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "frightened",
-          "durationTurns": 3,
+          "durationTurns": 5,
           "target": "target"
         },
         {
           "type": "apply_status",
           "statusId": "bleeding",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "value": 2,
           "target": "target"
         }
@@ -2742,13 +2742,13 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "frightened",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "target"
         },
         {
           "type": "apply_status",
           "statusId": "bleeding",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "value": 3,
           "target": "target"
         }
@@ -2757,13 +2757,13 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "frightened",
-          "durationTurns": 4,
+          "durationTurns": 7,
           "target": "target"
         },
         {
           "type": "apply_status",
           "statusId": "bleeding",
-          "durationTurns": 5,
+          "durationTurns": 9,
           "value": 4,
           "target": "target"
         }
@@ -2782,14 +2782,14 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "none",
     "effectsByRank": [
       [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 4,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -2798,7 +2798,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -2807,7 +2807,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 3,
+          "durationTurns": 7,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -2865,7 +2865,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 5,
+    "cooldown": 8,
     "targetType": "tile",
     "range": 4,
     "effectsByRank": [
@@ -2887,7 +2887,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "burning",
-          "durationTurns": 3,
+          "durationTurns": 5,
           "value": 2,
           "target": "aoe",
           "aoeRadiusTiles": 2
@@ -2911,7 +2911,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "burning",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "value": 2,
           "target": "aoe",
           "aoeRadiusTiles": 2
@@ -2935,7 +2935,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "burning",
-          "durationTurns": 4,
+          "durationTurns": 7,
           "value": 3,
           "target": "aoe",
           "aoeRadiusTiles": 2
@@ -2955,7 +2955,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "tile",
     "range": 3,
     "effectsByRank": [
@@ -3062,7 +3062,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "tile",
     "range": 5,
     "effectsByRank": [
@@ -3167,7 +3167,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "aoe"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "none",
     "effectsByRank": [
       [
@@ -3187,7 +3187,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 4,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -3209,7 +3209,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 5,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -3231,7 +3231,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 6,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -3253,7 +3253,7 @@ export const skills: readonly SkillDefinition[] = [
       "finesse",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 6,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -3320,7 +3320,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 5,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -3390,7 +3390,7 @@ export const skills: readonly SkillDefinition[] = [
       "aoe",
       "spell"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "none",
     "effectsByRank": [
       [
@@ -3410,7 +3410,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 4,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -3432,7 +3432,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 4,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -3454,7 +3454,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "aoe",
           "aoeRadiusTiles": 3
         }
@@ -3474,7 +3474,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "ranged"
     ],
-    "cooldown": 3,
+    "cooldown": 5,
     "targetType": "actor",
     "range": 6,
     "effectsByRank": [
@@ -3545,7 +3545,7 @@ export const skills: readonly SkillDefinition[] = [
       "finesse",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 6,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -3644,7 +3644,7 @@ export const skills: readonly SkillDefinition[] = [
       "damage",
       "spell"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "tile",
     "range": 6,
     "effectsByRank": [
@@ -3832,7 +3832,7 @@ export const skills: readonly SkillDefinition[] = [
       "debuff",
       "utility"
     ],
-    "cooldown": 4,
+    "cooldown": 8,
     "targetType": "actor",
     "range": 4,
     "effectsByRank": [
@@ -3840,7 +3840,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "marked",
-          "durationTurns": 3,
+          "durationTurns": 6,
           "target": "target",
           "adjustments": {
             "incomingDamageFlat": 4
@@ -3851,7 +3851,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "marked",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "target": "target",
           "adjustments": {
             "incomingDamageFlat": 5
@@ -3862,7 +3862,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "marked",
-          "durationTurns": 4,
+          "durationTurns": 8,
           "target": "target",
           "adjustments": {
             "incomingDamageFlat": 6
@@ -3883,7 +3883,7 @@ export const skills: readonly SkillDefinition[] = [
       "mobility",
       "aoe"
     ],
-    "cooldown": 5,
+    "cooldown": 8,
     "targetType": "tile",
     "range": 4,
     "effectsByRank": [
@@ -3935,7 +3935,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "ranged"
     ],
-    "cooldown": 3,
+    "cooldown": 5,
     "targetType": "actor",
     "range": 4,
     "effectsByRank": [
@@ -4005,7 +4005,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "ranged"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "actor",
     "range": 5,
     "effectsByRank": [
@@ -4113,7 +4113,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 6,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -4184,7 +4184,7 @@ export const skills: readonly SkillDefinition[] = [
       "finesse",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 6,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -4390,7 +4390,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 6,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -4398,7 +4398,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "reckless",
-          "durationTurns": 2,
+          "durationTurns": 3,
           "target": "self",
           "adjustments": {
             "acBonus": -2,
@@ -4420,7 +4420,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "reckless",
-          "durationTurns": 2,
+          "durationTurns": 4,
           "target": "self",
           "adjustments": {
             "acBonus": -2,
@@ -4443,7 +4443,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "reckless",
-          "durationTurns": 2,
+          "durationTurns": 5,
           "target": "self",
           "adjustments": {
             "acBonus": -2,
@@ -4506,7 +4506,8 @@ export const skills: readonly SkillDefinition[] = [
       "healing",
       "utility"
     ],
-    "cooldown": 5,
+    "cooldown": 0,
+    "maxUsesPerFloor": 1,
     "targetType": "none",
     "effectsByRank": [
       [
@@ -4543,7 +4544,7 @@ export const skills: readonly SkillDefinition[] = [
       "mobility",
       "stealth"
     ],
-    "cooldown": 4,
+    "cooldown": 8,
     "targetType": "tile",
     "range": 4,
     "maintainsStealth": true,
@@ -4560,7 +4561,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "stealth",
-          "durationTurns": 1,
+          "durationTurns": 3,
           "target": "self"
         }
       ],
@@ -4571,7 +4572,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "stealth",
-          "durationTurns": 2,
+          "durationTurns": 5,
           "target": "self"
         }
       ]
@@ -4629,15 +4630,10 @@ export const skills: readonly SkillDefinition[] = [
       "buff",
       "spell"
     ],
-    "cooldown": 5,
+    "cooldown": 0,
+    "maxUsesPerFloor": 1,
     "targetType": "none",
     "effectsByRank": [
-      [
-        {
-          "type": "apply_shield",
-          "amount": 10
-        }
-      ],
       [
         {
           "type": "apply_shield",
@@ -4647,7 +4643,13 @@ export const skills: readonly SkillDefinition[] = [
       [
         {
           "type": "apply_shield",
-          "amount": 20
+          "amount": 25
+        }
+      ],
+      [
+        {
+          "type": "apply_shield",
+          "amount": 35
         }
       ]
     ]
@@ -4665,7 +4667,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 4,
+    "cooldown": 7,
     "targetType": "actor",
     "range": 1,
     "effectsByRank": [
@@ -4772,7 +4774,7 @@ export const skills: readonly SkillDefinition[] = [
       "utility",
       "aoe"
     ],
-    "cooldown": 5,
+    "cooldown": 8,
     "targetType": "tile",
     "range": 4,
     "effectsByRank": [
@@ -4780,7 +4782,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 2,
+          "durationTurns": 4,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -4789,7 +4791,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 3,
+          "durationTurns": 5,
           "target": "aoe",
           "aoeRadiusTiles": 1
         }
@@ -4798,7 +4800,7 @@ export const skills: readonly SkillDefinition[] = [
         {
           "type": "apply_status",
           "statusId": "rooted",
-          "durationTurns": 3,
+          "durationTurns": 5,
           "target": "aoe",
           "aoeRadiusTiles": 2
         }
@@ -4863,7 +4865,7 @@ export const skills: readonly SkillDefinition[] = [
       "spell",
       "ranged"
     ],
-    "cooldown": 3,
+    "cooldown": 5,
     "targetType": "actor",
     "range": 4,
     "effectsByRank": [
@@ -4907,7 +4909,7 @@ export const skills: readonly SkillDefinition[] = [
       "stealth",
       "utility"
     ],
-    "cooldown": 5,
+    "cooldown": 10,
     "targetType": "none",
     "maintainsStealth": true,
     "effectsByRank": [
@@ -4984,7 +4986,7 @@ export const skills: readonly SkillDefinition[] = [
       "weapon_attack",
       "melee_attack"
     ],
-    "cooldown": 3,
+    "cooldown": 6,
     "targetType": "none",
     "effectsByRank": [
       [

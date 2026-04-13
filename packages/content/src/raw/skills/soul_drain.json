@@ -6,7 +6,7 @@
 	"icon": "Warlock_37_nobg.png",
 	"school": "arcane",
 	"tags": ["damage", "healing", "spell", "ranged"],
-	"cooldown": 3,
+	"cooldown": 5,
 	"targetType": "actor",
 	"range": 4,
 	"effectsByRank": [

@@ -6,7 +6,7 @@
 	"icon": "Skill_BattleCry_nb.png",
 	"school": "martial",
 	"tags": ["buff", "debuff", "control", "utility"],
-	"cooldown": 5,
+	"cooldown": 10,
 	"targetType": "none",
 	"effectsByRank": [
 		[
@@ -14,7 +14,7 @@
 				"type": "apply_status",
 				"statusId": "rallied",
 				"target": "self",
-				"durationTurns": 3,
+				"durationTurns": 6,
 				"adjustments": {
 					"attackRollDiceBonus": "1d4"
 				}
@@ -24,7 +24,7 @@
 				"statusId": "frightened",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 2
+				"durationTurns": 5
 			}
 		],
 		[
@@ -32,7 +32,7 @@
 				"type": "apply_status",
 				"statusId": "rallied",
 				"target": "self",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"adjustments": {
 					"attackRollDiceBonus": "1d4"
 				}
@@ -42,7 +42,7 @@
 				"statusId": "frightened",
 				"target": "aoe",
 				"aoeRadiusTiles": 2,
-				"durationTurns": 3
+				"durationTurns": 6
 			}
 		],
 		[
@@ -50,7 +50,7 @@
 				"type": "apply_status",
 				"statusId": "rallied",
 				"target": "self",
-				"durationTurns": 4,
+				"durationTurns": 8,
 				"adjustments": {
 					"attackRollDiceBonus": "1d6"
 				}
@@ -60,7 +60,7 @@
 				"statusId": "frightened",
 				"target": "aoe",
 				"aoeRadiusTiles": 3,
-				"durationTurns": 3
+				"durationTurns": 7
 			}
 		]
 	]
