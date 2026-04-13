@@ -8,6 +8,7 @@
  *   - All other skills are disabled and non-interactive.
  */
 
+import { useEffect, useRef } from "react";
 import { skillsById } from "@app/content";
 import type { ActiveSkillDefinition } from "@app/content";
 import {
@@ -146,6 +147,25 @@ export function SkillHotbar() {
 	const activeSkillDef = useTargetingStore((s) => s.skillDef);
 	const opacityMask = useMapStore((s) => s.opacityMask);
 
+	// Refs keep the keydown handler stable (registered once) while always
+	// seeing the latest values. Must come before any early returns (Rules of Hooks).
+	const handleSkillClickRef = useRef<(skillId: string) => void>(() => {});
+	const skillIdsRef = useRef<string[]>([]);
+
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement;
+			if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+			const slot = parseInt(e.key);
+			if (isNaN(slot) || slot < 1 || slot > 5) return;
+			const skillId = skillIdsRef.current[slot - 1];
+			if (!skillId) return;
+			handleSkillClickRef.current(skillId);
+		};
+		document.addEventListener("keydown", handler);
+		return () => document.removeEventListener("keydown", handler);
+	}, []);
+
 	if (!state) return null;
 
 	const hero = getHero(state);
@@ -250,6 +270,10 @@ export function SkillHotbar() {
 		return def?.skillType === "active";
 	});
 
+	// Update refs on every render so the keydown handler always sees current state.
+	handleSkillClickRef.current = handleSkillClick;
+	skillIdsRef.current = skillEntries.map(([id]) => id);
+
 	if (skillEntries.length === 0) return null;
 
 	const armorLocked = !hero.armorProficient;
@@ -260,7 +284,7 @@ export function SkillHotbar() {
 			role="toolbar"
 			aria-label="Active skills"
 		>
-			{skillEntries.map(([skillId, skillState]) => {
+			{skillEntries.map(([skillId, skillState], slotIndex) => {
 				const skillDef = skillsById[skillId as keyof typeof skillsById] as
 					| ActiveSkillDefinition
 					| undefined;
@@ -350,6 +374,15 @@ export function SkillHotbar() {
 							>
 								{rankGlyph}
 							</span>
+							{/* Keybind hint — bottom left, shown for slots 1–5 when not in targeting mode for this skill */}
+							{slotIndex < 5 && !isActiveTargetSkill && (
+								<span
+									aria-hidden
+									className="pointer-events-none absolute bottom-0 left-0 px-0.5 text-text-bright text-xs leading-none bg-bg-base/80"
+								>
+									{slotIndex + 1}
+								</span>
+							)}
 							{/* Cancel badge — bottom left, shown only for the active targeting skill */}
 							{isActiveTargetSkill && (
 								<span
