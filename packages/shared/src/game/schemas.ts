@@ -136,6 +136,8 @@ export const ActiveEffectSchema = z.object({
 	 * ID-driven hooks (poisoned, stealth) leave this undefined.
 	 */
 	adjustments: CombatAdjustmentsSchema.optional(),
+	/** The actor that applied this effect. Used for CHARMED/FRIGHTENED hero-side enforcement. */
+	sourceActorId: z.string(),
 	/**
 	 * The skill that applied this effect. Set for data-driven statuses applied via
 	 * `apply_status` effect descriptors. Undefined for STATUS_HOOKS applied directly

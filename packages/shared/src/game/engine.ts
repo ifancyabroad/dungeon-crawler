@@ -19,6 +19,7 @@ import {
 	applyRerollSkillChoice,
 	applySelectSkillChoice,
 	applyUseSkill,
+	applyWait,
 } from "./actions";
 
 // ---------------------------------------------------------------------------
@@ -89,6 +90,8 @@ export function applyAction(
 			return applyPickupItem(action, state, context);
 		case "leave_loot":
 			return applyLeaveLoot(action, state);
+		case "wait":
+			return applyWait(action, state, context);
 		case "unknown":
 			return { ok: false, reason: "unknown_action" };
 		default: {

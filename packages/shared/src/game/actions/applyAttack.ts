@@ -51,6 +51,14 @@ export function applyAttack(
 	const defender = getActorAtIdx(floor.state, target.newIdx);
 	if (!defender) return { ok: false, reason: "attack_no_target" };
 
+	// CHARMED: hero cannot attack the actor that charmed them.
+	const charmedEffect = hero.activeEffects.find(
+		(e) => e.id === STATUS_HOOKS.CHARMED && e.remainingTurns > 0,
+	);
+	if (charmedEffect && defender.id === charmedEffect.sourceActorId) {
+		return { ok: false, reason: "hero_charmed" };
+	}
+
 	const { rng, getState: getRngState } = createRngFromState(state.rngState);
 	const events: GameEvent[] = [];
 

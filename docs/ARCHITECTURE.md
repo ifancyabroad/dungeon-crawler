@@ -180,7 +180,7 @@ Every entity on the map (hero and NPCs) is an `Actor`. Position is stored as a f
 
 ### Actions
 
-Actions represent player intent only — never outcomes. The `Action` discriminated union covers movement, attacks, skill use, and level-up skill selection. All variants have co-located Zod schemas in `packages/shared/src/game/actions.ts` and are exported from `@app/shared`.
+Actions represent player intent only — never outcomes. The `Action` discriminated union covers movement, attacks, skill use, waiting (pass turn), and level-up skill selection. All variants have co-located Zod schemas in `packages/shared/src/game/actions.ts` and are exported from `@app/shared`.
 
 ### Events
 
@@ -215,7 +215,7 @@ In other words: a vault layout made of walls on its entire boundary may become i
 
 ## Combat
 
-Turn-based melee. After every player action, all living NPCs on the current floor take a turn in deterministic order (sorted by actor ID). Stunned actors (hero or NPC) skip their entire turn.
+Turn-based melee. After every player action, all living NPCs on the current floor take a turn in deterministic order (sorted by actor ID). A stunned NPC skips its entire turn. A stunned hero cannot move, attack, or use skills, but can always `wait` (pass turn) — this is the designed escape hatch for all blocking status conditions.
 
 - **Attack roll**: `d20 + STR modifier + flat attack bonus (passive skills) + flat attack bonus (equipped items) + dice bonus/penalty (status effects)` vs. effective target AC (target's base AC ± AC adjustments from active effects and equipped items). Advantage (roll 2d20, take higher) and disadvantage (take lower) from active status effects are resolved first; they cancel each other out if both apply.
 - **Critical hit**: natural roll ≥ crit threshold (default 20, can be lowered by passive skills) — double damage dice.
@@ -233,7 +233,7 @@ Skills are split into two types, both defined in `packages/content/src/raw/skill
 
 Skill effect descriptor schemas are defined in `packages/shared` and are the single source of truth; `packages/content` re-exports them for JSON validation. TypeScript types are derived from those schemas — no manual interface mirroring is needed.
 
-Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`). Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (NPC vision suppression), `STUNNED` (skip turn), `CHARMED` (flip faction so NPCs attack their former allies and follow the hero when idle), and `FRIGHTENED` (override combat behaviour so the NPC flees from visible enemies).
+Active status effects fall into two categories. **Data-driven** effects define their numeric adjustments (e.g. bonus damage, AC adjustment, attack roll dice bonus/penalty, saving throw dice bonus/penalty, advantage/disadvantage flags) inline in the skill JSON via `CombatAdjustments`; the engine reads those values directly from the active effect at resolution time — no engine code is needed for new numeric modifiers. **ID-driven** effects require engine-wired behaviour at a specific lifecycle moment; these are registered in `packages/shared/src/config/skills.ts` (`STATUS_HOOKS`). Currently registered hooks include: `POISONED` (DoT), `REGENERATING` (HoT), `STEALTH` (NPC vision suppression), `STUNNED` (NPC: skip turn; hero: all actions except `wait` are blocked), `CHARMED` (NPC: flip faction so NPCs attack their former allies and follow the hero when idle; hero: cannot attack the actor that charmed them), and `FRIGHTENED` (NPC: override combat behaviour so the NPC flees from visible enemies; hero: cannot move closer to the fear source — restriction lifts automatically if the source dies).
 
 Active skill attacks (`single_target_damage`, `multi_strike`) support an optional `onHitStatus` field. When set, the named status is applied to the target on every successful hit — regardless of whether damage was dealt (e.g. a hit that was fully resisted still triggers the status).
 

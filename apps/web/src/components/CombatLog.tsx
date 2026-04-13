@@ -7,6 +7,14 @@ const SKILL_NAMES: Record<string, string> = Object.fromEntries(
 	Object.values(skillsById).map((s) => [s.id, s.name]),
 );
 
+const ACTION_BLOCKED_MESSAGES: Record<string, string> = {
+	hero_stunned: "You are stunned and cannot act!",
+	hero_rooted: "You are rooted and cannot move!",
+	hero_silenced: "You are silenced and cannot use skills!",
+	hero_charmed: "You cannot bring yourself to attack your charmer!",
+	hero_frightened: "Fear holds you back — you cannot move closer!",
+};
+
 function damageBreakdown(packets: { damageType: string; effectiveAmount: number }[]): string {
 	if (packets.length <= 1) return "";
 	return ` (${packets.map((p) => `${capitalize(p.damageType)}:${p.effectiveAmount}`).join(", ")})`;
@@ -100,6 +108,10 @@ function formatEvent(event: GameEvent, actorNames: Record<string, string>): stri
 		return `${autoPrefix}${subject(event.defenderId)}'s ${capitalize(event.saveAbility)} save ${outcome} ${dc}.`;
 	}
 
+	if (event.type === "action_blocked") {
+		return ACTION_BLOCKED_MESSAGES[event.reason] ?? "";
+	}
+
 	return "";
 }
 
@@ -127,6 +139,7 @@ function eventColorClass(event: GameEvent): string {
 	if (event.type === "status_applied") return "text-secondary";
 	if (event.type === "shield_absorbed") return "text-sky-400";
 	if (event.type === "dot_damage") return "text-green-500";
+	if (event.type === "action_blocked") return "text-text-muted";
 	if (event.type === "saving_throw") return event.success ? "text-primary" : "text-text-muted";
 	return "text-text";
 }

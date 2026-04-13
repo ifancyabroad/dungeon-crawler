@@ -70,13 +70,13 @@ const STATUS_HOOK_META: Record<string, StatusEffectMeta> = {
 	},
 	frightened: {
 		name: "Frightened",
-		description: "Fleeing from the source of fear.",
+		description: "Cannot move toward the source of fear.",
 		category: "debuff",
 		statusIcon: "Fear.png",
 	},
 	charmed: {
 		name: "Charmed",
-		description: "Temporarily fighting for the player's side.",
+		description: "Cannot attack the charmer. Regards them as a friendly acquaintance.",
 		category: "neutral",
 		statusIcon: "Aura_KissLove_nb.png",
 	},

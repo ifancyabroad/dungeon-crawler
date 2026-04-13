@@ -80,6 +80,12 @@ export const LeaveLootActionSchema = z.object({
 
 export type LeaveLootAction = z.infer<typeof LeaveLootActionSchema>;
 
+export const WaitActionSchema = z.object({
+	type: z.literal("wait"),
+});
+
+export type WaitAction = z.infer<typeof WaitActionSchema>;
+
 /** Reserved for exhaustiveness; engine returns unknown_action. Not emitted by valid clients. */
 const UnknownActionSchema = z.object({ type: z.literal("unknown") });
 
@@ -91,6 +97,7 @@ export const ActionSchema = z.discriminatedUnion("type", [
 	RerollSkillChoiceActionSchema,
 	PickupItemActionSchema,
 	LeaveLootActionSchema,
+	WaitActionSchema,
 	UnknownActionSchema,
 ]);
 

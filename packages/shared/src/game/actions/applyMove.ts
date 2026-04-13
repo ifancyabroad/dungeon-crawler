@@ -41,6 +41,26 @@ export function applyMove(
 	const target = computeTargetCell(hero.idx, action.direction, width, height);
 	if (!target) return { ok: false, reason: "move_out_of_bounds" };
 	const { nx, ny, newIdx } = target;
+
+	// FRIGHTENED: hero cannot willingly move closer to the source of fear.
+	// Uses Chebyshev distance (max of |dx|, |dy|) to match 8-directional movement.
+	// Restriction lifts automatically when the fear source dies.
+	const frightenedEffect = hero.activeEffects.find(
+		(e) => e.id === STATUS_HOOKS.FRIGHTENED && e.remainingTurns > 0,
+	);
+	if (frightenedEffect) {
+		const fearSource = floor.state.actorsById[frightenedEffect.sourceActorId];
+		if (fearSource?.alive) {
+			const { x: hx, y: hy } = idxToXY(hero.idx, width);
+			const { x: fx, y: fy } = idxToXY(fearSource.idx, width);
+			const currentDist = Math.max(Math.abs(hx - fx), Math.abs(hy - fy));
+			const newDist = Math.max(Math.abs(nx - fx), Math.abs(ny - fy));
+			if (newDist < currentDist) {
+				return { ok: false, reason: "hero_frightened" };
+			}
+		}
+	}
+
 	if (newIdx < 0 || newIdx >= size || mask[newIdx] !== 1) {
 		return { ok: false, reason: "move_blocked" };
 	}

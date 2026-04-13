@@ -191,9 +191,15 @@ export class MouseMovementController {
 		const isKnown = explored[tileIdx] === 1 || (visible !== null && visible[tileIdx] === 1);
 		if (!isKnown) return;
 
-		// Check if clicked tile is adjacent and has a hostile → attack.
+		// Clicking the hero's own tile → wait / pass turn.
 		const dx = tileX - heroPos.x;
 		const dy = tileY - heroPos.y;
+		if (dx === 0 && dy === 0) {
+			useGameStore.getState().sendAction({ type: "wait" });
+			return;
+		}
+
+		// Check if clicked tile is adjacent and has a hostile → attack.
 		if (Math.abs(dx) <= 1 && Math.abs(dy) <= 1 && (dx !== 0 || dy !== 0)) {
 			const occupant = getActorAtIdx(floor.state, tileIdx);
 			if (

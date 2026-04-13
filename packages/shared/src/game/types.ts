@@ -119,6 +119,12 @@ export interface ActiveEffect {
 	 * by the engine (e.g. environmental effects, NPC attacks).
 	 */
 	sourceSkillId?: string;
+	/**
+	 * The actor that applied this effect (e.g. the NPC that cast Charm or Fear,
+	 * or the caster themselves for self-applied buffs).
+	 * Used to enforce hero-side restrictions for CHARMED and FRIGHTENED.
+	 */
+	sourceActorId: string;
 }
 
 /** Definition reference: hero (classId from content) or NPC (npcId from content). */
@@ -419,7 +425,12 @@ export type GameEvent =
 	/** Emitted when the hero collects gold (auto-collected whenever the hero steps onto a tile with gold). */
 	| { type: "gold_collected"; actorId: ActorId; amount: number; tileIdx: number }
 	/** Emitted when the hero equips an item from a loot pile. */
-	| { type: "item_looted"; actorId: ActorId; item: ItemInstance; slot: string };
+	| { type: "item_looted"; actorId: ActorId; item: ItemInstance; slot: string }
+	/**
+	 * Emitted client-side when a hero action is blocked by a status effect.
+	 * Never emitted by the server — used only for combat log feedback.
+	 */
+	| { type: "action_blocked"; reason: string };
 
 /**
  * The subset of `GameEvent` that represents direct damage output from a skill cast:

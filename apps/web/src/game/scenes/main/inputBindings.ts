@@ -25,13 +25,21 @@ export function attachKeyboardOnline(scene: Phaser.Scene, onDirectionKey?: () =>
 		sendAction(action);
 	};
 
+	const waitAction = () => {
+		if (useTargetingStore.getState().active) return;
+		useGameStore.getState().sendAction({ type: "wait" });
+	};
+
 	// WASD — cardinal directions
 	scene.input.keyboard?.on("keydown-W", () => directionAction("up"));
 	scene.input.keyboard?.on("keydown-S", () => directionAction("down"));
 	scene.input.keyboard?.on("keydown-A", () => directionAction("left"));
 	scene.input.keyboard?.on("keydown-D", () => directionAction("right"));
 
-	// Numpad — 8 directions (5 = wait, not bound)
+	// Space — wait / pass turn
+	scene.input.keyboard?.on("keydown-SPACE", waitAction);
+
+	// Numpad — 8 directions + 5 for wait
 	scene.input.keyboard?.on("keydown-NUMPAD_EIGHT", () => directionAction("up"));
 	scene.input.keyboard?.on("keydown-NUMPAD_TWO", () => directionAction("down"));
 	scene.input.keyboard?.on("keydown-NUMPAD_FOUR", () => directionAction("left"));
@@ -40,6 +48,7 @@ export function attachKeyboardOnline(scene: Phaser.Scene, onDirectionKey?: () =>
 	scene.input.keyboard?.on("keydown-NUMPAD_NINE", () => directionAction("up-right"));
 	scene.input.keyboard?.on("keydown-NUMPAD_ONE", () => directionAction("down-left"));
 	scene.input.keyboard?.on("keydown-NUMPAD_THREE", () => directionAction("down-right"));
+	scene.input.keyboard?.on("keydown-NUMPAD_FIVE", waitAction);
 }
 
 export function attachTargetingEscapeKey(scene: Phaser.Scene): void {

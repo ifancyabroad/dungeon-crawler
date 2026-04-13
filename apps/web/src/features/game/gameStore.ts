@@ -52,6 +52,14 @@ interface BufferedAction {
 /** Maximum combat log entries retained. */
 const MAX_COMBAT_LOG = 50;
 
+const STATUS_BLOCK_REASONS = new Set([
+	"hero_stunned",
+	"hero_rooted",
+	"hero_silenced",
+	"hero_charmed",
+	"hero_frightened",
+]);
+
 interface GameStoreState {
 	gameId: string | null;
 	turn: number;
@@ -391,6 +399,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			: applyActionWithDerivedContext(state, action);
 		if (!result.ok) {
 			set({ lastInvalidMoveAt: getNow() });
+			// Surface status-effect blocks as combat log entries so the player
+			// understands why their action was rejected.
+			if (STATUS_BLOCK_REASONS.has(result.reason)) {
+				const currentLog = get().combatLog;
+				const blockEvent = { type: "action_blocked" as const, reason: result.reason };
+				set({ combatLog: [...currentLog, blockEvent].slice(-MAX_COMBAT_LOG) });
+			}
 			return;
 		}
 

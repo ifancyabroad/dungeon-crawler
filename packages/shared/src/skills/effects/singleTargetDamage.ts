@@ -234,6 +234,7 @@ export function applySingleTargetDamage(
 				{
 					id: effect.onHitStatus.statusId,
 					remainingTurns: effect.onHitStatus.durationTurns,
+					sourceActorId: caster.id,
 					value: effect.onHitStatus.value,
 				},
 			],

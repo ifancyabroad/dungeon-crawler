@@ -120,6 +120,7 @@ const ActiveEffectSchema = new Schema(
 	{
 		id: { type: String, required: true },
 		remainingTurns: { type: Number, required: true },
+		sourceActorId: { type: String, required: true },
 		value: Number,
 		adjustments: { type: CombatAdjustmentsSchema, default: undefined },
 		sourceSkillId: String,

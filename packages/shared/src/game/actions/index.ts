@@ -6,3 +6,4 @@ export { applyPickupItem } from "./applyPickupItem";
 export { applyRerollSkillChoice } from "./applyRerollSkillChoice";
 export { applySelectSkillChoice } from "./applySelectSkillChoice";
 export { applyUseSkill } from "./applyUseSkill";
+export { applyWait } from "./applyWait";

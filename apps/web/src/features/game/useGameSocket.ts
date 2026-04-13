@@ -25,6 +25,8 @@ const SILENT_ERROR_REASONS = new Set([
 	"attack_no_target",
 	"attack_out_of_bounds",
 	"turn_mismatch",
+	"hero_charmed",
+	"hero_frightened",
 ]);
 export function useGameSocket(gameId: string | null) {
 	const joinedRef = useRef(false);
