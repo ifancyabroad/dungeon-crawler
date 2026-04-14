@@ -168,11 +168,11 @@ All core types are defined in `packages/shared/src/game/types.ts` and `packages/
 
 `GameState` is the top-level serializable snapshot of a run. It holds the turn counter, the hero's current floor index, RNG state, and an array of `Floor` objects — each pairing an immutable `FloorConfig` with a mutable `FloorState`.
 
-When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and `use_skill` actions are rejected by the engine until the interaction is resolved. Current interaction types: `skill_choice` (level-up offer) and `loot_pickup` (item pile). This is the general mechanism for any future blocking interaction (shrines, NPC dialogue, etc.).
+When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and `use_skill` actions are rejected by the engine until the interaction is resolved. Current interaction types: `skill_choice` (level-up offer) and `loot_pickup` (item pile or chest). This is the general mechanism for any future blocking interaction (shrines, NPC dialogue, etc.).
 
 ### FloorState
 
-`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, loot piles (`lootByIdx`), spawn position, and exit position. It changes on every turn; `FloorConfig` does not.
+`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, loot piles (`lootByIdx`), unopened chests (`chestsByIdx`), opened chests (`openedChestsByIdx`), spawn position, and exit position. It changes on every turn; `FloorConfig` does not.
 
 ### Actor
 

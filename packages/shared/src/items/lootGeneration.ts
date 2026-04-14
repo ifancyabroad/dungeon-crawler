@@ -1,10 +1,11 @@
 /**
- * Deterministic loot generation for NPC death drops.
+ * Deterministic loot generation for NPC death drops and chest openings.
  *
  * All functions accept an `rng: () => number` (float in [0, 1)) sourced from the engine's
  * serializable RNG state — ensuring replay integrity.
  */
 
+import type { ChestType } from "../game/types";
 import type { Actor } from "../game/types";
 import type { AffixDef, ItemDef, ItemInstance, ItemRarity, LootDrop } from "./types";
 import { RARITY_AFFIX_COUNT, RARITY_ENHANCEMENT } from "./types";
@@ -186,5 +187,60 @@ export function rollLootDrop(
 
 	// Only return a drop if there's something in it.
 	if (!drop.gold && drop.items.length === 0) return null;
+	return drop;
+}
+
+// ---------------------------------------------------------------------------
+// Chest loot rolling
+// ---------------------------------------------------------------------------
+
+interface ChestLootConfig {
+	gold: { min: number; max: number };
+	itemCount: { min: number; max: number };
+	rarityWeights: Record<ItemRarity, number>;
+}
+
+const CHEST_CONFIG: Record<ChestType, ChestLootConfig> = {
+	regular: {
+		gold: { min: 5, max: 25 },
+		itemCount: { min: 1, max: 2 },
+		rarityWeights: { common: 55, uncommon: 28, rare: 14, epic: 3, unique: 0 },
+	},
+	rare: {
+		gold: { min: 15, max: 50 },
+		itemCount: { min: 1, max: 3 },
+		rarityWeights: { common: 20, uncommon: 30, rare: 35, epic: 12, unique: 3 },
+	},
+};
+
+/**
+ * Generate loot for a chest when it is first opened.
+ * Item selection draws from the full item pool; rarity scales with floor depth.
+ * The returned LootDrop lives only in pendingInteraction — it is never written to lootByIdx.
+ */
+export function rollChestLoot(
+	chestType: ChestType,
+	floorDepth: number,
+	rng: () => number,
+	itemsById: Record<string, ItemDef>,
+	affixesById: Record<string, AffixDef>,
+): LootDrop {
+	const config = CHEST_CONFIG[chestType];
+	const drop: LootDrop = { items: [] };
+
+	drop.gold = randomInt(config.gold.min, config.gold.max, rng);
+
+	const itemPool = Object.entries(itemsById);
+	if (itemPool.length > 0) {
+		const count = randomInt(config.itemCount.min, config.itemCount.max, rng);
+		const affixPool = Object.values(affixesById);
+		for (let i = 0; i < count; i++) {
+			const [baseItemId, baseDef] = itemPool[Math.floor(rng() * itemPool.length)]!;
+			const rarity = rollRarity(config.rarityWeights, floorDepth, rng);
+			const instance = generateItemInstance(baseItemId, baseDef, rarity, rng, affixPool);
+			drop.items.push(instance);
+		}
+	}
+
 	return drop;
 }

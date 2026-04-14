@@ -108,6 +108,7 @@ export function injectVaults(
 
 		// Stamp the vault: mutates ground and wall in place
 		const markerCells: Record<string, number[]> = {};
+		const chestSpawns: Record<string, "regular" | "rare"> = {};
 		const groundOverrides: Record<number, number> = {};
 		const wallOverrides: Record<number, number> = {};
 		const decorationOverrides: Record<number, number> = {};
@@ -146,10 +147,18 @@ export function injectVaults(
 			}
 		}
 
+		// Resolve chest spawns from vault spawn entries
+		for (const spawn of pick.spawns ?? []) {
+			if (spawn.chestType) {
+				chestSpawns[spawn.marker] = spawn.chestType;
+			}
+		}
+
 		placements.push({
 			vaultId: pick.id,
 			originIdx: originY * width + originX,
 			markerCells,
+			chestSpawns,
 			groundOverrides,
 			wallOverrides,
 			decorationOverrides,

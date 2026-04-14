@@ -452,6 +452,8 @@ export function isSkillDamageEvent(e: GameEvent): e is SkillDamageEvent {
 	return e.type === "skill_hit" || e.type === "area_hit";
 }
 
+export type ChestType = "regular" | "rare";
+
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;
 	actorsById: Record<ActorId, Actor>;
@@ -465,8 +467,20 @@ export interface FloorState {
 	 * Loot drops on this floor, keyed by flat tile index (as string).
 	 * Populated when an NPC dies with a loot table. Cleared when the hero picks up all items
 	 * or leaves the pile. The corresponding tileOverrides entry (tile 825 or 827) is kept in sync.
+	 * Chest loot is NOT stored here — it lives only in pendingInteraction while the modal is open.
 	 */
 	lootByIdx: Record<string, LootDrop>;
+	/**
+	 * Unopened chests on this floor, keyed by flat tile index (as string).
+	 * Deleted when the hero steps onto the chest and opens it.
+	 */
+	chestsByIdx: Record<string, ChestType>;
+	/**
+	 * Opened chests on this floor, keyed by flat tile index (as string).
+	 * Written when the hero opens a chest (moved from chestsByIdx). Persisted so the open
+	 * sprite is shown on revisit. The renderer derives the tile ID from the ChestType value.
+	 */
+	openedChestsByIdx: Record<string, ChestType>;
 }
 
 /** Single floor: config + dynamic state. No parallel arrays. */
@@ -514,6 +528,11 @@ export type PendingInteraction =
 			loot: LootDrop;
 			/** Gold auto-collected when the hero stepped onto this tile, if any. */
 			collectedGold?: number;
+			/**
+			 * Where this loot came from. "chest" loot is never written to lootByIdx — it exists
+			 * only in pendingInteraction and is permanently lost if the player leaves without taking it.
+			 */
+			source: "pile" | "chest";
 	  }
 	| null;
 

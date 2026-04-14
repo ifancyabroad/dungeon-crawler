@@ -1,5 +1,10 @@
 export { applyEquipment, buildEquipmentSlots } from "./applyEquipment";
-export { rollLootDrop, generateItemInstance, generateItemName } from "./lootGeneration";
+export {
+	rollLootDrop,
+	rollChestLoot,
+	generateItemInstance,
+	generateItemName,
+} from "./lootGeneration";
 export type {
 	AffixDef,
 	ItemDef,

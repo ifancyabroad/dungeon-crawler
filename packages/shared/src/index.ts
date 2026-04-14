@@ -134,6 +134,7 @@ export {
 	type AttackAction,
 	type ClassSkillPools,
 	type BaseLayerFloor,
+	type ChestType,
 	type FloorState,
 	type GameEvent,
 	type GameSessionDoc,

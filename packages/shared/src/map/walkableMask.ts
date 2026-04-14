@@ -7,7 +7,11 @@
 import type { BaseLayerFloor } from "./baseLayers";
 import { isCellWalkable } from "./walkability";
 
-/** Loot pile tile IDs — ground items the hero can walk onto to trigger pickup. */
+/**
+ * Tile IDs that are walkable when placed as tile overrides.
+ * Loot piles (825, 827) are passable so the hero can step onto them to trigger pickup.
+ * Chests are placed on floor cells and are always walkable via underlying terrain.
+ */
 const WALKABLE_OVERRIDE_TILES = new Set([825, 827]);
 
 /**

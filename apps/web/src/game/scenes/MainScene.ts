@@ -26,6 +26,7 @@ import { ActorSpriteSync } from "./main/actorSpriteSync";
 import { createFloorFx, destroyFloorFx } from "./main/mainSceneFxLifecycle";
 import type { FloorFxRefs } from "./main/mainSceneFxLifecycle";
 import { LootLayerManager } from "./main/LootLayerManager";
+import { ChestLayerManager } from "./main/ChestLayerManager";
 import { dispatchFxAndSync as dispatchFxPipeline } from "./main/fxOrchestrator";
 import { FogOfWarRenderer } from "./main/fogOfWarRenderer";
 import { attachKeyboardOnline, attachTargetingEscapeKey } from "./main/inputBindings";
@@ -59,6 +60,7 @@ export default class MainScene extends Phaser.Scene {
 	private targetingSystem: TargetingSystem | null = null;
 	private actorEffectVisuals: ActorEffectVisualManager | null = null;
 	private lootLayerManager: LootLayerManager | null = null;
+	private chestLayerManager: ChestLayerManager | null = null;
 
 	private fogRenderer = new FogOfWarRenderer(DEFAULT_MAP_WIDTH, DEFAULT_MAP_HEIGHT);
 	private actorSpriteSync = new ActorSpriteSync();
@@ -171,6 +173,8 @@ export default class MainScene extends Phaser.Scene {
 		this.assignFloorFx(createFloorFx(this, this.mapWidth));
 		this.lootLayerManager?.destroyAll();
 		this.lootLayerManager = new LootLayerManager(this, this.mapWidth, this.fogRenderer);
+		this.chestLayerManager?.destroyAll();
+		this.chestLayerManager = new ChestLayerManager(this, this.mapWidth, this.fogRenderer);
 
 		const currentState = useGameStore.getState().state;
 		if (currentState) {
@@ -279,6 +283,9 @@ export default class MainScene extends Phaser.Scene {
 		const floor = gameState.floors[gameState.heroFloorIndex];
 		if (floor && this.lootLayerManager) {
 			this.lootLayerManager.sync(floor.state.lootByIdx);
+		}
+		if (floor && this.chestLayerManager) {
+			this.chestLayerManager.sync(floor.state.chestsByIdx, floor.state.openedChestsByIdx);
 		}
 	}
 

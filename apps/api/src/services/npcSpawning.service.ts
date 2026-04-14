@@ -19,6 +19,7 @@ import {
 	type NpcDefinition,
 } from "@app/content";
 import type { PassiveSkillDefinition } from "@app/shared";
+import { placeChestsForFloor } from "./chestSpawning.service";
 
 const MIN_RANDOM_SPAWN_DISTANCE = 4;
 
@@ -202,6 +203,7 @@ export function spawnNpcsForFloor(
 			if (!vaultDef?.spawns) continue;
 
 			for (const vaultSpawn of vaultDef.spawns) {
+				if (!vaultSpawn.encounterId) continue; // chest-only spawn — handled by chestSpawning.service
 				const markerIndices = placement.markerCells[vaultSpawn.marker];
 				if (!markerIndices?.length) continue;
 
@@ -400,5 +402,7 @@ export function applyDescendSideEffects(
 		walkMask = computeWalkableMaskForFloor(base, floor.state.tileOverrides);
 	}
 
-	return spawnNpcsForFloor(state, toFloor, walkMask, npcsById, encountersById, base);
+	let next = spawnNpcsForFloor(state, toFloor, walkMask, npcsById, encountersById, base);
+	next = placeChestsForFloor(next, toFloor, base);
+	return next;
 }

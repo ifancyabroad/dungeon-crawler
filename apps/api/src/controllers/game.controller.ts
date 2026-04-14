@@ -31,6 +31,7 @@ import { env } from "../config/env";
 import { runTransaction } from "../config/db";
 import { getCookie } from "../lib/cookies";
 import { spawnNpcsForFloor } from "../services/npcSpawning.service";
+import { placeChestsForFloor } from "../services/chestSpawning.service";
 
 const COOKIE_OPTS = {
 	httpOnly: true,
@@ -114,6 +115,7 @@ export const createGame: RequestHandler = async (req, res) => {
 		state.floors[0].state.tileOverrides,
 	);
 	state = spawnNpcsForFloor(state, 0, walkMask, npcsById, encountersById, baseLayers[0]);
+	state = placeChestsForFloor(state, 0, baseLayers[0]!);
 
 	const persistedState = gameStateToPersisted(state);
 	PersistedDynamicStateSchema.parse(persistedState);

@@ -24,8 +24,13 @@ Common step-by-step workflows for this repository. For package responsibilities 
 3. Treat entrances as part of the content contract:
     - vault perimeter wall tiles can seal the vault once stamped
     - include at least one perimeter walkable cell/doorway so the stamped vault remains reachable from the surrounding room
-4. Regenerate typed lookups with `pnpm --filter @app/content generate`.
-5. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
+4. To place a chest at a marker cell, add a spawn entry with `chestType` instead of `encounterId`:
+    ```json
+    { "marker": "vault_chest", "chestType": "rare" }
+    ```
+    The chest is placed by `chestSpawning.service.ts` when the floor is first visited; `npcSpawning.service.ts` ignores entries without `encounterId`.
+5. Regenerate typed lookups with `pnpm --filter @app/content generate`.
+6. Verify: `pnpm typecheck && pnpm lint && pnpm test`.
 
 ---
 

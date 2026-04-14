@@ -11,6 +11,7 @@ const TILE_ITEM_PILE = 827;
 /**
  * Manages loot pile sprites on the current floor.
  * One sprite per occupied loot tile, hidden by fog of war via fogRenderer registration.
+ * Chest loot is never stored in lootByIdx, so no filtering is required here.
  */
 export class LootLayerManager {
 	private sprites = new Map<number, Phaser.GameObjects.Sprite>();
@@ -27,7 +28,7 @@ export class LootLayerManager {
 	sync(lootByIdx: Record<string, LootDrop>): void {
 		const activeIdxs = new Set(Object.keys(lootByIdx).map(Number));
 
-		// Remove sprites for tiles no longer in lootByIdx.
+		// Remove sprites for tiles no longer in lootByIdx (or now handled by ChestLayerManager).
 		for (const [idx, sprite] of this.sprites) {
 			if (!activeIdxs.has(idx)) {
 				sprite.destroy();
@@ -36,9 +37,9 @@ export class LootLayerManager {
 		}
 
 		// Create sprites for new loot tiles.
-		for (const [key, loot] of Object.entries(lootByIdx)) {
-			const idx = Number(key);
+		for (const idx of activeIdxs) {
 			if (this.sprites.has(idx)) continue;
+			const loot = lootByIdx[String(idx)]!;
 
 			const { x, y } = idxToXY(idx, this.mapWidth);
 			const px = x * TILE_WIDTH + TILE_WIDTH / 2;

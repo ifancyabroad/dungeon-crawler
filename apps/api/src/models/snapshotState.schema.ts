@@ -236,6 +236,8 @@ const FloorStateSchema = new Schema(
 		spawnIdx: { type: Number, required: true },
 		exitIdx: { type: Number, default: null },
 		lootByIdx: { type: Map, of: LootDropSchema },
+		chestsByIdx: { type: Map, of: String },
+		openedChestsByIdx: { type: Map, of: String },
 	},
 	{ _id: false },
 );
@@ -277,6 +279,7 @@ const PendingInteractionSchema = new Schema(
 		tileIdx: Number,
 		loot: { type: LootDropSchema, default: undefined },
 		collectedGold: Number,
+		source: String,
 	},
 	{ _id: false },
 );

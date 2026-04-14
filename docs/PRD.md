@@ -87,6 +87,7 @@ A boss encounter placeholder is in place on the final floor.
 - Procedural item generation: base items + up to 3 affixes depending on rarity (Common–Epic); Unique items are hand-crafted.
 - Affix effects: bonus damage dice, flat damage bonus, attack roll bonus, AC bonus. Definitions in `packages/content/src/raw/affixes/`.
 - NPC loot tables: drop chance, gold range, weighted item list, rarity weights. Evaluated deterministically on death.
+- Chests: two types (regular, rare) spawn randomly on each floor and via vault placements. Walking onto a closed chest opens it and triggers the loot pickup modal. Gold is auto-collected on open; items require confirmation. Unopened chests survive floor revisits; loot left behind is permanently lost.
 - Gold currency: auto-collected on gold-only tiles; collected via modal on item tiles. Displayed in sidebar. Spent on skill rerolls (15 gold).
 - Loot pickup modal: per-item equip with swap confirmation; leave all.
 - Inventory modal: all 9 slots with rarity colours and stat summaries.

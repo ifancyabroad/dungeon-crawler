@@ -21,6 +21,15 @@
 import type { FloorTheme } from "@app/shared";
 import { classes, npcs } from "@app/content";
 
+// Chest tile IDs — theme-independent sprites from the shared tileset.
+// Regular chest: 556 (closed), 557 (open). Rare chest: 554 (closed), 555 (open).
+const CHEST_TILE = {
+	regular_closed: 556,
+	regular_open: 557,
+	rare_closed: 554,
+	rare_open: 555,
+} as const;
+
 // ---------------------------------------------------------------------------
 // Tilemap constants
 // ---------------------------------------------------------------------------
@@ -127,6 +136,8 @@ export const ENTITY_TILES = {
 		yellow_forest: 533,
 		dark_forest: 533,
 	} satisfies Record<FloorTheme, number>,
+	/** Chest sprites — theme-independent, shared across all floor themes. */
+	chests: CHEST_TILE,
 } as const;
 
 /** Resolve sprite tile for a hero class. Falls back to warrior for unknown ids. */

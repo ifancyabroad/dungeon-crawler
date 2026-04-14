@@ -64,6 +64,8 @@ function buildInitialFloorState(
 			spawnIdx,
 			exitIdx,
 			lootByIdx: {},
+			chestsByIdx: {},
+			openedChestsByIdx: {},
 		};
 	}
 
@@ -138,6 +140,8 @@ function buildInitialFloorState(
 		spawnIdx,
 		exitIdx,
 		lootByIdx: {},
+		chestsByIdx: {},
+		openedChestsByIdx: {},
 	};
 }
 

@@ -17,6 +17,8 @@ export function createEmptyFloorState(): FloorState {
 		spawnIdx: 0,
 		exitIdx: null,
 		lootByIdx: {},
+		chestsByIdx: {},
+		openedChestsByIdx: {},
 	};
 }
 

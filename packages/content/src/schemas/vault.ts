@@ -13,10 +13,10 @@ export const VaultLegendEntrySchema = z.object({
 	collision: z.boolean().optional(),
 });
 
-export const VaultSpawnEntrySchema = z.object({
-	marker: z.string(),
-	encounterId: z.string(),
-});
+export const VaultSpawnEntrySchema = z.union([
+	z.object({ marker: z.string(), encounterId: z.string() }),
+	z.object({ marker: z.string(), chestType: z.enum(["regular", "rare"]) }),
+]);
 
 export const VaultDefSchema = z.object({
 	id: z.string(),

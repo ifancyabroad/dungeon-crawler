@@ -8,6 +8,7 @@ export type {
 	ActorDef,
 	ActorId,
 	ActorSkillState,
+	ChestType,
 	Floor,
 	FloorConfig,
 	FloorState,

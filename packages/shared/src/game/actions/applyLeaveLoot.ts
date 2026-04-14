@@ -12,6 +12,8 @@ export function applyLeaveLoot(action: LeaveLootAction, state: GameState): Apply
 	if (!floor) return { ok: false, reason: "no_floor" };
 
 	const idxKey = String(pi.tileIdx);
+	// For chest loot, neither lootByIdx nor tileOverrides was ever written to — both deletes
+	// are no-ops. For pile loot, both deletes correctly clean up the entry and tile override.
 	const clearedLootByIdx = { ...floor.state.lootByIdx };
 	delete clearedLootByIdx[idxKey];
 	const clearedTileOverrides = { ...floor.state.tileOverrides };

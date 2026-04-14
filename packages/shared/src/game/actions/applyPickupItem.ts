@@ -78,9 +78,16 @@ export function applyPickupItem(
 	if (pileEmpty) {
 		updatedLootByIdx = { ...floor.state.lootByIdx };
 		delete updatedLootByIdx[idxKey];
+		// For chest loot, neither lootByIdx nor tileOverrides was ever written to — both deletes
+		// are no-ops. The open chest state is tracked in openedChestsByIdx.
 		updatedTileOverrides = { ...floor.state.tileOverrides };
 		delete updatedTileOverrides[idxKey];
 		newPendingInteraction = null;
+	} else if (pi.source === "chest") {
+		// Chest loot is never written to lootByIdx — it exists only in pendingInteraction.
+		updatedLootByIdx = floor.state.lootByIdx;
+		updatedTileOverrides = floor.state.tileOverrides;
+		newPendingInteraction = { ...pi, loot: updatedLoot };
 	} else {
 		updatedLootByIdx = { ...floor.state.lootByIdx, [idxKey]: updatedLoot };
 		// Update tile to gold-only if items are all taken but gold remains.

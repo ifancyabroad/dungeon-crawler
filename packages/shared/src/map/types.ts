@@ -129,7 +129,10 @@ export interface VaultLegendEntry {
 
 export interface VaultSpawnEntry {
 	marker: string;
-	encounterId: string;
+	/** Encounter to place at this marker. Mutually exclusive with chestType. */
+	encounterId?: string;
+	/** Chest to place at this marker. Mutually exclusive with encounterId. */
+	chestType?: "regular" | "rare";
 }
 
 export interface VaultDef {
@@ -151,6 +154,8 @@ export interface VaultPlacement {
 	originIdx: number;
 	/** Marker → flat tile index, for downstream encounter seeding. */
 	markerCells: Record<string, number[]>;
+	/** Marker → chest type, for downstream chest placement. */
+	chestSpawns: Record<string, "regular" | "rare">;
 	/** Flat tile index → tileset tile ID for ground layer overrides. */
 	groundOverrides: Record<number, number>;
 	/** Flat tile index → tileset tile ID for wall layer overrides. */
