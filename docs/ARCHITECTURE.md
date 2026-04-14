@@ -172,7 +172,7 @@ When `pendingInteraction` is non-null the game is paused: `move`, `attack`, and 
 
 ### FloorState
 
-`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, loot piles (`lootByIdx`), unopened chests (`chestsByIdx`), opened chests (`openedChestsByIdx`), spawn position, and exit position. It changes on every turn; `FloorConfig` does not.
+`FloorState` is the mutable per-turn state of one floor: the actors map, fog-of-war exploration mask, tile overrides, loot piles (`lootByIdx`), chests (`chestsByIdx` — a unified map of `{ rarity, opened }` covering both closed and opened chests), spawn position, and exit position. It changes on every turn; `FloorConfig` does not.
 
 ### Actor
 

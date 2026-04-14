@@ -285,7 +285,7 @@ export default class MainScene extends Phaser.Scene {
 			this.lootLayerManager.sync(floor.state.lootByIdx);
 		}
 		if (floor && this.chestLayerManager) {
-			this.chestLayerManager.sync(floor.state.chestsByIdx, floor.state.openedChestsByIdx);
+			this.chestLayerManager.sync(floor.state.chestsByIdx);
 		}
 	}
 

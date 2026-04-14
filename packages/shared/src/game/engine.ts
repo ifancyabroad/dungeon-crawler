@@ -35,7 +35,9 @@ export {
 	getAdjacentIndices8,
 	getHero,
 	idxToXY,
+	isInteractableTile,
 	isSqueezeBlocked,
+	shouldBumpTile,
 	xyToIdx,
 } from "./engineUtils";
 export {

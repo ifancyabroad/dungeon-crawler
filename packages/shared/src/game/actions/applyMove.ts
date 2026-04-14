@@ -14,6 +14,7 @@ import {
 	idxToXY,
 	computeTargetCell,
 	tickSkillCooldowns,
+	shouldBumpTile,
 } from "../engineUtils";
 import { processEnemyTurns } from "../engineEnemyTurns";
 import { VISION_RADIUS } from "../../config/game";
@@ -61,6 +62,68 @@ export function applyMove(
 				return { ok: false, reason: "hero_frightened" };
 			}
 		}
+	}
+
+	// Chest bump: hero tries to step onto a closed chest — open it without moving.
+	const bumpChest = floor.state.chestsByIdx[String(newIdx)];
+	if (shouldBumpTile(floor.state, newIdx)) {
+		const { rng: chestRng, getState: getChestRngState } = createRngFromState(state.rngState);
+		const loot = rollChestLoot(
+			bumpChest!.rarity,
+			floor.config.floorDepth,
+			chestRng,
+			context.itemsById ?? {},
+			context.affixesById ?? {},
+		);
+		const chestRngState = getChestRngState();
+
+		// Strip gold immediately and award it; keep only items for the modal.
+		let collectedGold: number | undefined;
+		let lootForModal = loot;
+		let heroAfterGold = hero;
+		const chestEvents: GameEvent[] = [];
+		if (loot.gold) {
+			collectedGold = loot.gold;
+			lootForModal = { ...loot, gold: undefined };
+			heroAfterGold = { ...hero, gold: hero.gold + collectedGold };
+			chestEvents.push({
+				type: "gold_collected",
+				actorId: state.heroId,
+				amount: collectedGold,
+				tileIdx: newIdx,
+			});
+		}
+
+		// Mark chest as opened in place — no delete/re-insert across two maps.
+		// Chest loot is NOT written to lootByIdx; it lives only in pendingInteraction.
+		const openedFloorState: FloorState = {
+			...floor.state,
+			actorsById: { ...floor.state.actorsById, [state.heroId]: heroAfterGold },
+			chestsByIdx: {
+				...floor.state.chestsByIdx,
+				[String(newIdx)]: { rarity: bumpChest!.rarity, opened: true },
+			},
+		};
+
+		const pausedFloors = state.floors.slice();
+		pausedFloors[fi] = { ...floor, state: openedFloorState };
+		return {
+			ok: true,
+			state: {
+				...state,
+				turn: state.turn + 1,
+				rngState: chestRngState,
+				floors: pausedFloors,
+				pendingInteraction: {
+					type: "loot_pickup",
+					tileIdx: newIdx,
+					loot: lootForModal,
+					collectedGold,
+					source: "chest",
+				},
+			},
+			events: chestEvents,
+		};
 	}
 
 	if (newIdx < 0 || newIdx >= size || mask[newIdx] !== 1) {
@@ -153,74 +216,13 @@ export function applyMove(
 		}
 	}
 
-	// Chest detection: hero stepped onto a closed chest tile.
-	const chestType = newFloorState.chestsByIdx[String(newIdx)];
-	let chestRngState = state.rngState;
-	if (!movePendingInteraction && chestType) {
-		const { rng: chestRng, getState: getChestRngState } = createRngFromState(state.rngState);
-		const loot = rollChestLoot(
-			chestType,
-			floor.config.floorDepth,
-			chestRng,
-			context.itemsById ?? {},
-			context.affixesById ?? {},
-		);
-		chestRngState = getChestRngState();
-
-		// Strip gold from loot immediately and award it; keep only items for the modal.
-		let collectedGold: number | undefined;
-		let lootForModal = loot;
-		if (loot.gold) {
-			collectedGold = loot.gold;
-			lootForModal = { ...loot, gold: undefined };
-			const heroWithGold: Actor = {
-				...updatedHero,
-				gold: updatedHero.gold + collectedGold,
-			};
-			newFloorState = {
-				...newFloorState,
-				actorsById: { ...newFloorState.actorsById, [state.heroId]: heroWithGold },
-			};
-			moveEvents.push({
-				type: "gold_collected",
-				actorId: state.heroId,
-				amount: collectedGold,
-				tileIdx: newIdx,
-			});
-		}
-
-		const updatedChestsByIdx = { ...newFloorState.chestsByIdx };
-		delete updatedChestsByIdx[String(newIdx)];
-
-		// Chest loot is NOT written to lootByIdx — it lives only in pendingInteraction and is
-		// permanently lost if the player leaves without taking it.
-		// Move chest from chestsByIdx to openedChestsByIdx; renderer derives tile IDs from there.
-		newFloorState = {
-			...newFloorState,
-			chestsByIdx: updatedChestsByIdx,
-			openedChestsByIdx: {
-				...newFloorState.openedChestsByIdx,
-				[String(newIdx)]: chestType,
-			},
-		};
-
-		movePendingInteraction = {
-			type: "loot_pickup",
-			tileIdx: newIdx,
-			loot: lootForModal,
-			collectedGold,
-			source: "chest",
-		};
-	}
-
-	// Skip enemy turns and paused processing if hero stepped on a loot pile or chest.
+	// Skip enemy turns and paused processing if hero stepped on a loot pile.
 	if (movePendingInteraction) {
 		const pausedFloors = state.floors.slice();
 		pausedFloors[fi] = { ...floor, state: newFloorState };
 		const pausedState: GameState = {
 			...state,
 			turn: state.turn + 1,
-			rngState: chestRngState,
 			floors: pausedFloors,
 			pendingInteraction: movePendingInteraction,
 		};

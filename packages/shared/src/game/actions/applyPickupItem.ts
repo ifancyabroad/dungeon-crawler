@@ -79,7 +79,7 @@ export function applyPickupItem(
 		updatedLootByIdx = { ...floor.state.lootByIdx };
 		delete updatedLootByIdx[idxKey];
 		// For chest loot, neither lootByIdx nor tileOverrides was ever written to — both deletes
-		// are no-ops. The open chest state is tracked in openedChestsByIdx.
+		// are no-ops. The opened chest state is tracked via chestsByIdx[idx].opened.
 		updatedTileOverrides = { ...floor.state.tileOverrides };
 		delete updatedTileOverrides[idxKey];
 		newPendingInteraction = null;

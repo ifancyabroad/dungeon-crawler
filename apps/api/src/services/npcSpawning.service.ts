@@ -203,7 +203,7 @@ export function spawnNpcsForFloor(
 			if (!vaultDef?.spawns) continue;
 
 			for (const vaultSpawn of vaultDef.spawns) {
-				if (!vaultSpawn.encounterId) continue; // chest-only spawn — handled by chestSpawning.service
+				if (!("encounterId" in vaultSpawn)) continue; // chest-only spawn — handled by chestSpawning.service
 				const markerIndices = placement.markerCells[vaultSpawn.marker];
 				if (!markerIndices?.length) continue;
 

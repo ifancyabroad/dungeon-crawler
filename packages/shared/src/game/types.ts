@@ -454,6 +454,9 @@ export function isSkillDamageEvent(e: GameEvent): e is SkillDamageEvent {
 
 export type ChestType = "regular" | "rare";
 
+/** Unified chest state: rarity + whether the hero has opened it. */
+export type ChestState = { rarity: ChestType; opened: boolean };
+
 export interface FloorState {
 	tileOverrides: Record<string, TileId>;
 	actorsById: Record<ActorId, Actor>;
@@ -471,16 +474,12 @@ export interface FloorState {
 	 */
 	lootByIdx: Record<string, LootDrop>;
 	/**
-	 * Unopened chests on this floor, keyed by flat tile index (as string).
-	 * Deleted when the hero steps onto the chest and opens it.
+	 * All chests on this floor, keyed by flat tile index (as string).
+	 * Closed chests block movement (bump-to-open). When the hero bumps a closed chest the engine
+	 * sets opened: true in place; the renderer derives closed vs open sprites from that flag.
+	 * Persisted so opened chest sprites survive floor revisits.
 	 */
-	chestsByIdx: Record<string, ChestType>;
-	/**
-	 * Opened chests on this floor, keyed by flat tile index (as string).
-	 * Written when the hero opens a chest (moved from chestsByIdx). Persisted so the open
-	 * sprite is shown on revisit. The renderer derives the tile ID from the ChestType value.
-	 */
-	openedChestsByIdx: Record<string, ChestType>;
+	chestsByIdx: Record<string, ChestState>;
 }
 
 /** Single floor: config + dynamic state. No parallel arrays. */

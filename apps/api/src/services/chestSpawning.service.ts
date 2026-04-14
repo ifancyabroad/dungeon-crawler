@@ -2,6 +2,7 @@ import {
 	computeWalkableMaskForFloor,
 	createRng,
 	type BaseLayerFloor,
+	type ChestState,
 	type ChestType,
 	type GameState,
 } from "@app/shared";
@@ -39,7 +40,7 @@ export function placeChestsForFloor(
 	const floorDepth = floor.config.floorDepth;
 	const rng = createRng(state.seed + floorIndex + 2000);
 
-	const newChestsByIdx: Record<string, ChestType> = { ...floor.state.chestsByIdx };
+	const newChestsByIdx: Record<string, ChestState> = { ...floor.state.chestsByIdx };
 
 	// --- Vault chest spawns ---
 	for (const placement of base.vaultPlacements) {
@@ -47,7 +48,7 @@ export function placeChestsForFloor(
 			const indices = placement.markerCells[marker];
 			if (!indices?.length) continue;
 			for (const idx of indices) {
-				newChestsByIdx[String(idx)] = chestType;
+				newChestsByIdx[String(idx)] = { rarity: chestType, opened: false };
 			}
 		}
 	}
@@ -95,7 +96,7 @@ export function placeChestsForFloor(
 
 		const rareChance = Math.min(0.1 * floorDepth, 0.5);
 		const chestType: ChestType = rng() < rareChance ? "rare" : "regular";
-		newChestsByIdx[String(pick)] = chestType;
+		newChestsByIdx[String(pick)] = { rarity: chestType, opened: false };
 	}
 
 	const newFloors = state.floors.slice();

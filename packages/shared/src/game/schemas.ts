@@ -290,8 +290,9 @@ export const FloorStateSchema = z.object({
 	spawnIdx: z.number(),
 	exitIdx: z.number().nullable(),
 	lootByIdx: z.record(z.string(), LootDropSchema).default({}),
-	chestsByIdx: z.record(z.string(), z.enum(["regular", "rare"])).default({}),
-	openedChestsByIdx: z.record(z.string(), z.enum(["regular", "rare"])).default({}),
+	chestsByIdx: z
+		.record(z.string(), z.object({ rarity: z.enum(["regular", "rare"]), opened: z.boolean() }))
+		.default({}),
 });
 
 export const SkillOfferSchema = z.object({

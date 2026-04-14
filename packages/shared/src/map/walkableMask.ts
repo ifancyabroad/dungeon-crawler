@@ -4,13 +4,13 @@
  * No boolean[][] allocation; override tiles are treated as not walkable (single place).
  */
 
+import type { ChestState } from "../game/types";
 import type { BaseLayerFloor } from "./baseLayers";
 import { isCellWalkable } from "./walkability";
 
 /**
  * Tile IDs that are walkable when placed as tile overrides.
  * Loot piles (825, 827) are passable so the hero can step onto them to trigger pickup.
- * Chests are placed on floor cells and are always walkable via underlying terrain.
  */
 const WALKABLE_OVERRIDE_TILES = new Set([825, 827]);
 
@@ -24,13 +24,17 @@ function isTileIdWalkable(tileId: number): boolean {
 }
 
 /**
- * Compute the walkable mask for one floor from base layers and optional tile overrides.
- * Cell index = y * width + x. tileOverrides uses string keys only (canonical form).
+ * Compute the walkable mask for one floor from base layers, tile overrides, and chest state.
+ * Cell index = y * width + x. tileOverrides and chestsByIdx use string keys (canonical form).
  * Returns Uint8Array of length width*height; 1 = walkable, 0 = blocked.
+ *
+ * All chests (opened or closed) block movement so NPCs cannot path through them and
+ * the hero must bump a closed chest to open it (bump-to-interact pattern).
  */
 export function computeWalkableMaskForFloor(
 	base: BaseLayerFloor,
 	tileOverrides: Record<string, number>,
+	chestsByIdx?: Record<string, ChestState>,
 ): Uint8Array {
 	const { ground, wall, blockedMask, width, height } = base;
 	const mask = new Uint8Array(width * height);
@@ -43,6 +47,12 @@ export function computeWalkableMaskForFloor(
 					? isTileIdWalkable(overrideTile)
 					: isCellWalkable(ground, wall, blockedMask, x, y);
 			mask[idx] = walkable ? 1 : 0;
+		}
+	}
+	// All chests block movement, whether opened or closed.
+	if (chestsByIdx) {
+		for (const idxStr of Object.keys(chestsByIdx)) {
+			mask[Number(idxStr)] = 0;
 		}
 	}
 	return mask;

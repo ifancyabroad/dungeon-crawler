@@ -169,6 +169,15 @@ const ItemInstanceSchema = new Schema(
 	{ _id: false },
 );
 
+/** Mirrors ChestState in packages/shared/src/game/types.ts. */
+const ChestStateSchema = new Schema(
+	{
+		rarity: { type: String, required: true },
+		opened: { type: Boolean, required: true },
+	},
+	{ _id: false },
+);
+
 /** Mirrors LootDrop in packages/shared/src/game/types.ts. */
 const LootDropSchema = new Schema(
 	{
@@ -236,8 +245,7 @@ const FloorStateSchema = new Schema(
 		spawnIdx: { type: Number, required: true },
 		exitIdx: { type: Number, default: null },
 		lootByIdx: { type: Map, of: LootDropSchema },
-		chestsByIdx: { type: Map, of: String },
-		openedChestsByIdx: { type: Map, of: String },
+		chestsByIdx: { type: Map, of: ChestStateSchema },
 	},
 	{ _id: false },
 );

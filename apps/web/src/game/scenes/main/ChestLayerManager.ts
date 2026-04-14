@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { idxToXY, type ChestType } from "@app/shared";
+import { idxToXY, type ChestState, type ChestType } from "@app/shared";
 import { TILESET_KEY, TILE_WIDTH, TILE_HEIGHT, ENTITY_TILES } from "../../tiles/tilesetRegistry";
 import type { FogOfWarRenderer } from "./fogOfWarRenderer";
 
@@ -11,8 +11,7 @@ function tileIdForChest(chestType: ChestType, open: boolean): number {
 
 /**
  * Manages chest sprites for the current floor.
- * Reads semantic state (chestsByIdx for closed, openedChestsByIdx for opened)
- * and derives tile IDs via ENTITY_TILES.chests — the engine never needs to know tile IDs.
+ * Reads the unified chestsByIdx map and derives closed/open tile IDs from chest.opened.
  */
 export class ChestLayerManager {
 	private sprites = new Map<number, Phaser.GameObjects.Sprite>();
@@ -26,17 +25,11 @@ export class ChestLayerManager {
 		this.fogRenderer = fogRenderer;
 	}
 
-	sync(
-		chestsByIdx: Record<string, ChestType>,
-		openedChestsByIdx: Record<string, ChestType>,
-	): void {
-		// Build a complete map of idx → tileId from both semantic sources.
+	sync(chestsByIdx: Record<string, ChestState>): void {
+		// Build a complete map of idx → tileId from the unified chest state.
 		const current = new Map<number, number>();
-		for (const [key, chestType] of Object.entries(chestsByIdx)) {
-			current.set(Number(key), tileIdForChest(chestType, false));
-		}
-		for (const [key, chestType] of Object.entries(openedChestsByIdx)) {
-			current.set(Number(key), tileIdForChest(chestType, true));
+		for (const [key, chest] of Object.entries(chestsByIdx)) {
+			current.set(Number(key), tileIdForChest(chest.rarity, chest.opened));
 		}
 
 		// Remove sprites for chests no longer present.

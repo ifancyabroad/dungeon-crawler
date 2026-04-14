@@ -19,6 +19,8 @@ import {
 	computeVisibility,
 	getActorAtIdx,
 	idxToXY,
+	isInteractableTile,
+	shouldBumpTile,
 	xyToIdx,
 	VISION_RADIUS,
 	type Direction,
@@ -151,7 +153,8 @@ export class MouseMovementController {
 		}
 
 		const isWalkable = walkableMask ? walkableMask[tileIdx] === 1 : false;
-		this.tileMarker?.setTile(tileX, tileY, isWalkable ? "valid" : "invalid");
+		const isInteractable = isInteractableTile(floor.state, tileIdx);
+		this.tileMarker?.setTile(tileX, tileY, isWalkable || isInteractable ? "valid" : "invalid");
 	}
 
 	private onPointerDown(pointer: Phaser.Input.Pointer): void {
@@ -214,6 +217,13 @@ export class MouseMovementController {
 					return;
 				}
 			}
+		}
+
+		// Interactable (non-walkable) tile: allow clicking to path toward and bump.
+		if (isInteractableTile(floor.state, tileIdx)) {
+			this.destinationIdx = tileIdx;
+			this.tryAdvance(true);
+			return;
 		}
 
 		const walkableMask = walkableByFloor?.[state.heroFloorIndex];
@@ -308,6 +318,45 @@ export class MouseMovementController {
 		for (let i = 0; i < exploredWalkable.length; i++) {
 			exploredWalkable[i] =
 				walkableMask[i] === 1 && (explored[i] === 1 || visible[i] === 1) ? 1 : 0;
+		}
+
+		// Interactable (non-walkable) destination: temporarily enable it in the BFS mask so
+		// the pathfinder can route all the way to the tile. When BFS returns destinationIdx
+		// itself as the next step the hero is already adjacent — clear destination FIRST
+		// (so a rejected bump never triggers a retry) then send the bump if applicable.
+		if (isInteractableTile(floor.state, destinationIdx)) {
+			exploredWalkable[destinationIdx] = 1;
+			const nextIdxToward = bfsNextStep(
+				hero.idx,
+				destinationIdx,
+				exploredWalkable,
+				floor.state,
+				this.mapWidth,
+				this.mapHeight,
+			);
+			if (nextIdxToward === undefined) {
+				this.destinationIdx = null;
+				return;
+			}
+			if (nextIdxToward === destinationIdx) {
+				// Adjacent — send bump (if applicable) and stop travel.
+				const { x: destX, y: destY } = idxToXY(destinationIdx, this.mapWidth);
+				const bumpDir = DELTA_TO_DIR[`${destX - heroPos.x},${destY - heroPos.y}`];
+				this.destinationIdx = null;
+				if (bumpDir && shouldBumpTile(floor.state, destinationIdx)) {
+					useGameStore.getState().sendAction({ type: "move", direction: bumpDir });
+				}
+				return;
+			}
+			const { x: tx, y: ty } = idxToXY(nextIdxToward, this.mapWidth);
+			const approachDir = DELTA_TO_DIR[`${tx - heroPos.x},${ty - heroPos.y}`];
+			if (!approachDir) {
+				this.destinationIdx = null;
+				return;
+			}
+			if (hostileVisible) this.destinationIdx = null;
+			useGameStore.getState().sendAction({ type: "move", direction: approachDir });
+			return;
 		}
 
 		const nextIdx = bfsNextStep(

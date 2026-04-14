@@ -207,7 +207,11 @@ function buildMasks(state: GameState): Pick<GameStoreState, "walkableByFloor" | 
 	);
 	return {
 		walkableByFloor: baseLayers.map((base, i) =>
-			computeWalkableMaskForFloor(base, state.floors[i]?.state.tileOverrides ?? {}),
+			computeWalkableMaskForFloor(
+				base,
+				state.floors[i]?.state.tileOverrides ?? {},
+				state.floors[i]?.state.chestsByIdx,
+			),
 		),
 		opacityByFloor: baseLayers.map((base) =>
 			computeOpacityMask(base.wall, base.width, base.height),

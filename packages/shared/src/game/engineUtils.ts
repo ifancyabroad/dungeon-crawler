@@ -205,6 +205,24 @@ export function tickSkillCooldowns(state: GameState): GameState {
 }
 
 /**
+ * Returns true if the tile is a non-walkable target the hero can path toward and interact
+ * with by bumping. The hero cannot stand on these tiles but can approach from adjacent.
+ * Extend here when new interactable tile types are added (doors, levers, etc.).
+ */
+export function isInteractableTile(floorState: FloorState, tileIdx: number): boolean {
+	return String(tileIdx) in floorState.chestsByIdx;
+}
+
+/**
+ * Returns true if bumping into the tile should send a move action.
+ * Only closed chests trigger an interaction; opened chests are already spent.
+ */
+export function shouldBumpTile(floorState: FloorState, tileIdx: number): boolean {
+	const chest = floorState.chestsByIdx[String(tileIdx)];
+	return chest !== undefined && !chest.opened;
+}
+
+/**
  * Find a walkable, unoccupied tile adjacent to `originIdx`.
  * Returns undefined if none available.
  */
