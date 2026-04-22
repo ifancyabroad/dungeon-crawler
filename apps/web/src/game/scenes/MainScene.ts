@@ -179,8 +179,8 @@ export default class MainScene extends Phaser.Scene {
 		const currentState = useGameStore.getState().state;
 		if (currentState) {
 			const explored = currentState.floors[currentState.heroFloorIndex]?.state.explored ?? [];
-			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
 			this.syncActors(currentState);
+			this.applyFogOfWar(explored, this.playerTileX, this.playerTileY);
 		}
 
 		const syncState: SyncState = {
