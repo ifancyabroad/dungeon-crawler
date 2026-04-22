@@ -6,18 +6,20 @@
  * Decision tree:
  * 1. No enemies visible and no last-known position → idle.
  * 2. Adjacent enemy → attempt to flee one step away; fall back to melee attack if stuck.
- * 3. Visible enemy: find the best off-cooldown ranged skill (range >= 2). If the enemy is
- *    within that skill's range, use it. Prefer actor-targeted skills over tile-targeted.
- * 4. Visible enemy but no skill ready or enemy out of range → move toward ideal distance
- *    (IDEAL_RANGE tiles), stopping short if already close enough.
+ * 3. Visible enemy → delegate skill selection to evaluateNpcSkill. If a skill fires, use it.
+ * 4. Visible enemy but no skill ready → reposition toward ideal stand-off distance.
  * 5. Last-known enemy position → BFS toward it; clear on arrival or if path blocked.
  * 6. Idle (hand off to idle strategy).
+ *
+ * All skill selection (ranged damage, self-buffs, AoE, approach) is handled by
+ * evaluateNpcSkill so this strategy focuses purely on stand-off positioning.
  */
 
-import type { AIContext, AIResult, AITurnResult, NpcAIState } from "./types";
+import type { AIContext, AITurnResult, NpcAIState } from "./types";
 import { getAdjacentIndices } from "../engine";
 import { bfsNextStep } from "../../map/pathfinding";
 import { GAME_CONFIG } from "../../config";
+import { evaluateNpcSkill, findFleeStep } from "./skillEvaluator";
 
 /** Preferred stand-off distance in tiles (Chebyshev). */
 const IDEAL_RANGE = GAME_CONFIG.ai.ranged.idealRange;
@@ -55,9 +57,7 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 
 	const adjacent = getAdjacentIndices(npc.idx, width, height);
 
-	// -----------------------------------------------------------------------
-	// Step 2: Adjacent enemy — try to flee one step, otherwise fall back to attack
-	// -----------------------------------------------------------------------
+	// Step 2: Adjacent enemy — try to flee one step, otherwise fall back to attack.
 	const adjacentEnemy = enemies.find((a) => adjacent.includes(a.idx));
 	if (adjacentEnemy) {
 		const fleeStep = findFleeStep(
@@ -71,72 +71,48 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 		if (fleeStep !== undefined) {
 			return { result: { kind: "move", toIdx: fleeStep }, newAIState };
 		}
-		// Cornered — can't flee, attack instead
+		// Cornered — can't flee, attack instead.
 		return { result: { kind: "attack", targetActorId: adjacentEnemy.id }, newAIState };
 	}
 
-	// -----------------------------------------------------------------------
-	// Step 3 & 4: Visible enemies
-	// -----------------------------------------------------------------------
+	// Steps 3 & 4: Visible enemies.
 	const visibleEnemies = enemies.filter((a) => visibleFromNpc[a.idx] === 1);
 
 	if (visibleEnemies.length > 0) {
-		// Pick the nearest visible enemy as primary target
 		const nearest = visibleEnemies.reduce((best, a) =>
 			chebyshev(npc.idx, a.idx) < chebyshev(npc.idx, best.idx) ? a : best,
 		);
 		newAIState.lastKnownEnemyIdx = nearest.idx;
 
-		// Find the best ranged skill: off-cooldown, range >= 2, active
-		type RangedSkillInfo = { skillId: string; range: number; targetType: string };
-		let bestSkill: RangedSkillInfo | undefined;
-
-		if (getSkillDef) {
-			for (const [skillId, skillState] of Object.entries(npc.skills ?? {})) {
-				if (skillState.cooldownRemaining !== 0) continue;
-				const def = getSkillDef(skillId);
-				if (!def || def.skillType !== "active") continue;
-				if ((def.range ?? 0) < GAME_CONFIG.ai.ranged.minRangedSkillRange) continue;
-				if (def.targetType === "none") continue;
-				// Prefer higher range, then actor-targeted over tile-targeted
-				if (
-					!bestSkill ||
-					(def.range ?? 0) > bestSkill.range ||
-					(def.range === bestSkill.range &&
-						def.targetType === "actor" &&
-						bestSkill.targetType !== "actor")
-				) {
-					bestSkill = { skillId, range: def.range ?? 0, targetType: def.targetType };
-				}
-			}
-		}
-
 		const dist = chebyshev(npc.idx, nearest.idx);
 
-		if (bestSkill && dist <= bestSkill.range) {
-			// Enemy is within skill range — fire
-			const skillResult: AIResult =
-				bestSkill.targetType === "actor"
-					? { kind: "skill", skillId: bestSkill.skillId, targetActorId: nearest.id }
-					: { kind: "skill", skillId: bestSkill.skillId, targetTileIdx: nearest.idx };
-			return { result: skillResult, newAIState };
+		// Delegate all skill decisions to the shared evaluator.
+		if (getSkillDef) {
+			const skillResult = evaluateNpcSkill(
+				npc,
+				getSkillDef,
+				nearest,
+				dist,
+				floorState,
+				walkableMask,
+				width,
+				height,
+			);
+			if (skillResult) return { result: skillResult, newAIState };
 		}
 
-		// Skill on cooldown or enemy out of range — reposition toward ideal distance
+		// No skill fired — reposition toward ideal stand-off distance.
 		if (dist > IDEAL_RANGE) {
-			// Too far — move closer
 			const step = bfsNextStep(npc.idx, nearest.idx, walkableMask, floorState, width, height);
 			if (step !== undefined) {
 				return { result: { kind: "move", toIdx: step }, newAIState };
 			}
 		}
-		// Already at ideal range or can't move closer — hold position and wait for cooldown
+		// At ideal range or can't move closer — hold position and wait for cooldown.
 		return { result: { kind: "idle" }, newAIState };
 	}
 
-	// -----------------------------------------------------------------------
-	// Step 5: Last-known enemy position
-	// -----------------------------------------------------------------------
+	// Step 5: Last-known enemy position.
 	if (newAIState.lastKnownEnemyIdx !== undefined) {
 		const target = newAIState.lastKnownEnemyIdx;
 		if (npc.idx === target) {
@@ -151,51 +127,4 @@ export function runRangedAI(ctx: AIContext): AITurnResult {
 	}
 
 	return { result: { kind: "idle" }, newAIState };
-}
-
-/**
- * Find a single BFS step that moves `from` away from `threatIdx`.
- * Returns the step index if one is found, or undefined if the NPC is cornered.
- */
-function findFleeStep(
-	from: number,
-	threatIdx: number,
-	walkableMask: Uint8Array,
-	floorState: { actorsById: Record<string, { idx: number; alive: boolean }> },
-	width: number,
-	height: number,
-): number | undefined {
-	const occupied = new Set(
-		Object.values(floorState.actorsById)
-			.filter((a) => a.alive && a.idx !== from)
-			.map((a) => a.idx),
-	);
-
-	const threatX = threatIdx % width;
-	const threatY = Math.floor(threatIdx / width);
-	const fromX = from % width;
-
-	const chebyshev = (idx: number) =>
-		Math.max(Math.abs((idx % width) - threatX), Math.abs(Math.floor(idx / width) - threatY));
-
-	const currentDist = chebyshev(from);
-
-	// Try all four cardinal directions, picking the one furthest from the threat
-	const cardinals = [
-		from - width, // north
-		from + width, // south
-		from - 1, // west
-		from + 1, // east
-	].filter((idx) => {
-		if (idx < 0 || idx >= width * height) return false;
-		// Prevent east/west wrap-around
-		if (Math.abs((idx % width) - fromX) > 1) return false;
-		return walkableMask[idx] === 1 && !occupied.has(idx);
-	});
-
-	const best = cardinals
-		.filter((idx) => chebyshev(idx) > currentDist)
-		.sort((a, b) => chebyshev(b) - chebyshev(a))[0];
-
-	return best;
 }

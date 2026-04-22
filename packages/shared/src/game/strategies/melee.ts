@@ -7,15 +7,21 @@
  * with zero extra code.
  *
  * Decision tree:
- * 1. An enemy actor is adjacent → attack it.
- * 2. An enemy actor is in LoS → record lastKnownEnemyIdx, BFS one step toward the nearest one.
+ * 1. An enemy actor is adjacent → delegate skill selection to evaluateNpcSkill;
+ *    fall back to basic attack if no skill fires.
+ * 2. An enemy actor is in LoS → evaluateNpcSkill for approach/combat skills,
+ *    then BFS one step toward the nearest visible enemy if nothing fires.
  * 3. lastKnownEnemyIdx is set → BFS toward it; clear on arrival or if path blocked.
  * 4. Otherwise → { kind: "idle" } to hand off to the idle strategy.
+ *
+ * All skill selection logic (targeting, HP thresholds, approach skills, AoE) is
+ * handled by evaluateNpcSkill so this strategy focuses purely on positioning.
  */
 
 import type { AIContext, AITurnResult, NpcAIState } from "./types";
 import { getAdjacentIndices8 } from "../engineUtils";
 import { bfsNextStep } from "../../map/pathfinding";
+import { evaluateNpcSkill } from "./skillEvaluator";
 
 export function runMeleeAI(ctx: AIContext): AITurnResult {
 	const {
@@ -27,6 +33,7 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 		floorState,
 		width,
 		height,
+		getSkillDef,
 	} = ctx;
 	const newAIState: NpcAIState = { ...aiState };
 
@@ -49,39 +56,55 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 
 	const adjacent = getAdjacentIndices8(npc.idx, width, height);
 
-	// 1. Adjacent enemy → use an off-cooldown skill if available, otherwise attack
+	// 1. Adjacent enemy → evaluate skills then fall back to basic attack.
 	const adjacentEnemy = enemies.find((a) => adjacent.includes(a.idx));
 	if (adjacentEnemy) {
-		const availableSkillId = Object.entries(npc.skills ?? {}).find(
-			([, state]) => state.cooldownRemaining === 0,
-		)?.[0];
-		if (availableSkillId) {
-			return {
-				result: {
-					kind: "skill",
-					skillId: availableSkillId,
-					targetActorId: adjacentEnemy.id,
-				},
-				newAIState,
-			};
+		if (getSkillDef) {
+			const skillResult = evaluateNpcSkill(
+				npc,
+				getSkillDef,
+				adjacentEnemy,
+				1,
+				floorState,
+				walkableMask,
+				width,
+				height,
+			);
+			if (skillResult) return { result: skillResult, newAIState };
 		}
 		return { result: { kind: "attack", targetActorId: adjacentEnemy.id }, newAIState };
 	}
 
-	// 2. Enemy in LoS → update last-known position, BFS toward nearest visible enemy
+	// 2. Enemy in LoS → evaluate approach/combat skills, then BFS toward nearest.
 	const visibleEnemies = enemies.filter((a) => visibleFromNpc[a.idx] === 1);
 	if (visibleEnemies.length > 0) {
 		const nearest = visibleEnemies.reduce((best, a) =>
 			chebyshev(npc.idx, a.idx) < chebyshev(npc.idx, best.idx) ? a : best,
 		);
 		newAIState.lastKnownEnemyIdx = nearest.idx;
+
+		if (getSkillDef) {
+			const dist = chebyshev(npc.idx, nearest.idx);
+			const skillResult = evaluateNpcSkill(
+				npc,
+				getSkillDef,
+				nearest,
+				dist,
+				floorState,
+				walkableMask,
+				width,
+				height,
+			);
+			if (skillResult) return { result: skillResult, newAIState };
+		}
+
 		const step = bfsNextStep(npc.idx, nearest.idx, walkableMask, floorState, width, height);
 		if (step !== undefined) {
 			return { result: { kind: "move", toIdx: step }, newAIState };
 		}
 	}
 
-	// 3. Last known enemy position → BFS toward it; clear on arrival or path blocked
+	// 3. Last known enemy position → BFS toward it; clear on arrival or path blocked.
 	if (newAIState.lastKnownEnemyIdx !== undefined) {
 		const target = newAIState.lastKnownEnemyIdx;
 		if (npc.idx === target) {
@@ -95,6 +118,6 @@ export function runMeleeAI(ctx: AIContext): AITurnResult {
 		}
 	}
 
-	// 4. Nothing to do — defer to idle strategy
+	// 4. Nothing to do — defer to idle strategy.
 	return { result: { kind: "idle" }, newAIState };
 }

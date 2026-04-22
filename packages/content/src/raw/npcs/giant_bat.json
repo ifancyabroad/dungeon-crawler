@@ -24,7 +24,7 @@
 	"challengeRating": 1,
 	"savingThrowProficiencies": ["dexterity"],
 	"bloodColor": "#4a0000",
-	"activeSkills": [{ "id": "mighty_leap", "rank": 1 }],
+	"activeSkills": [{ "id": "poison_bite", "rank": 1 }],
 	"passiveSkills": [{ "id": "evasion", "rank": 1 }],
 	"startingEquipment": [],
 	"weaponProficiencies": [],

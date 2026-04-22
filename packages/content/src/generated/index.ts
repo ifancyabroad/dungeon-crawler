@@ -505,7 +505,7 @@ export const npcs: readonly NpcDefinition[] = [
     "bloodColor": "#4a0000",
     "activeSkills": [
       {
-        "id": "mighty_leap",
+        "id": "poison_bite",
         "rank": 1
       }
     ],

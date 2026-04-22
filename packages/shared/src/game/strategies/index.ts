@@ -25,6 +25,7 @@ import type {
 import { runMeleeAI } from "./melee";
 import { runFrightenedAI } from "./frightened";
 import { runRangedAI } from "./ranged";
+import { runSkirmisherAI } from "./skirmisher";
 import { runStationaryAI } from "./stationary";
 import { runRoamAI } from "./roam";
 import { runFollowAI } from "./follow";
@@ -36,6 +37,7 @@ const COMBAT_STRATEGIES: Record<CombatStrategyTag, CombatStrategyFn> = {
 	melee: runMeleeAI,
 	frightened: runFrightenedAI,
 	ranged: runRangedAI,
+	skirmisher: runSkirmisherAI,
 };
 
 const IDLE_STRATEGIES: Record<IdleStrategyTag, IdleStrategyFn> = {

@@ -9,7 +9,7 @@ import type { Rng } from "../../rng";
 import type { SkillDefinition } from "../../skills";
 
 /** Combat behaviours: what the NPC does when it has enemies to fight. */
-export type CombatStrategyTag = "melee" | "frightened" | "ranged";
+export type CombatStrategyTag = "melee" | "frightened" | "ranged" | "skirmisher";
 
 /** Idle behaviours: what the NPC does when it has nothing to fight. */
 export type IdleStrategyTag = "stationary" | "roam" | "follow";

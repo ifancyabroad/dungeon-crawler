@@ -239,10 +239,50 @@ export function processEnemyTurns(
 						if (heroAfterSkill) currentHero = heroAfterSkill;
 						if (!currentHero.alive) break;
 					} else {
-						actorsById = {
-							...actorsById,
-							[mid]: { ...npc, aiState: persistedAIState },
-						};
+						// Skill resolution failed — fall back to a basic melee attack so the
+						// turn is never silently wasted and broken skills cannot be retried forever.
+						const fallbackTargetId = result.targetActorId ?? heroId;
+						const fallbackTarget = actorsById[fallbackTargetId];
+						if (fallbackTarget?.alive) {
+							const attackResult = resolveAttack(
+								npc,
+								fallbackTarget,
+								rng,
+								npc.equippedWeaponDice,
+								computeAttackMod(npc),
+								computeWeaponProficiencyBonus(npc),
+							);
+							events.push({
+								type: "attack",
+								attackerId: mid,
+								defenderId: fallbackTargetId,
+								result: attackResult,
+							});
+							if (attackResult.hit) {
+								const { updatedActor: damagedTarget, events: dmgEvents } =
+									applyDamageToActor(fallbackTarget, attackResult.damage);
+								events.push(...dmgEvents);
+								if (fallbackTargetId === heroId) currentHero = damagedTarget;
+								actorsById = {
+									...actorsById,
+									[fallbackTargetId]: damagedTarget,
+									[mid]: { ...npc, aiState: persistedAIState },
+								};
+								if (!damagedTarget.alive) {
+									events.push({ type: "death", actorId: fallbackTargetId });
+								}
+							} else {
+								actorsById = {
+									...actorsById,
+									[mid]: { ...npc, aiState: persistedAIState },
+								};
+							}
+						} else {
+							actorsById = {
+								...actorsById,
+								[mid]: { ...npc, aiState: persistedAIState },
+							};
+						}
 					}
 				} else {
 					// Skill on cooldown or unknown — fall back to idle
