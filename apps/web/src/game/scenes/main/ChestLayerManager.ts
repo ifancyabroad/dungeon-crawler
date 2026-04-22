@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { idxToXY, type ChestState, type ChestType } from "@app/shared";
 import { TILESET_KEY, TILE_WIDTH, TILE_HEIGHT, ENTITY_TILES } from "../../tiles/tilesetRegistry";
-import type { FogOfWarRenderer } from "./fogOfWarRenderer";
+import { applyFogState, type FogOfWarRenderer } from "./fogOfWarRenderer";
 
 function tileIdForChest(chestType: ChestType, open: boolean): number {
 	return open
@@ -12,6 +12,8 @@ function tileIdForChest(chestType: ChestType, open: boolean): number {
 /**
  * Manages chest sprites for the current floor.
  * Reads the unified chestsByIdx map and derives closed/open tile IDs from chest.opened.
+ * Fog state is applied directly from fogRenderer.getDisplayState() on each sync,
+ * matching the pull model used by ActorSpriteSync for NPCs.
  */
 export class ChestLayerManager {
 	private sprites = new Map<number, Phaser.GameObjects.Sprite>();
@@ -26,6 +28,8 @@ export class ChestLayerManager {
 	}
 
 	sync(chestsByIdx: Record<string, ChestState>): void {
+		const displayState = this.fogRenderer.getDisplayState();
+
 		// Build a complete map of idx → tileId from the unified chest state.
 		const current = new Map<number, number>();
 		for (const [key, chest] of Object.entries(chestsByIdx)) {
@@ -42,20 +46,21 @@ export class ChestLayerManager {
 
 		// Create or update sprites for current chests.
 		for (const [idx, tileId] of current) {
+			const state = displayState?.[idx] ?? 0;
 			const existing = this.sprites.get(idx);
 			if (existing) {
-				// Update frame if the chest transitioned from closed to open.
 				if (existing.frame.name !== String(tileId)) {
 					existing.setFrame(tileId);
 				}
+				applyFogState(existing, state);
 			} else {
 				const { x, y } = idxToXY(idx, this.mapWidth);
 				const px = x * TILE_WIDTH + TILE_WIDTH / 2;
 				const py = y * TILE_HEIGHT + TILE_HEIGHT / 2;
 				const sprite = this.scene.add.sprite(px, py, TILESET_KEY, tileId);
 				sprite.setDepth(2);
+				applyFogState(sprite, state);
 				this.sprites.set(idx, sprite);
-				this.fogRenderer.registerFoggedSprite(sprite, idx);
 			}
 		}
 	}

@@ -4,6 +4,18 @@ import type { FoggedSprite } from "./types";
 
 const FOG_TINT = 0x555555;
 
+export function applyFogState(sprite: Phaser.GameObjects.Sprite, state: number): void {
+	if (state === 2) {
+		sprite.setAlpha(1);
+		sprite.setTint(0xffffff);
+	} else if (state === 1) {
+		sprite.setAlpha(1);
+		sprite.setTint(FOG_TINT);
+	} else {
+		sprite.setAlpha(0);
+	}
+}
+
 export class FogOfWarRenderer {
 	private mapWidth: number;
 	private mapHeight: number;
@@ -33,6 +45,10 @@ export class FogOfWarRenderer {
 
 	getVisibleMask(): Uint8Array | null {
 		return this.visibleMask;
+	}
+
+	getDisplayState(): Uint8Array | null {
+		return this.tileDisplayState;
 	}
 
 	registerFoggedSprite(sprite: Phaser.GameObjects.Sprite, idx: number): void {
@@ -98,16 +114,7 @@ export class FogOfWarRenderer {
 		this.tileDisplayBuffer = prev ?? new Uint8Array(size);
 
 		for (const { sprite, idx } of this.foggedSprites) {
-			const state = next[idx];
-			if (state === 2) {
-				sprite.setAlpha(1);
-				sprite.setTint(0xffffff);
-			} else if (state === 1) {
-				sprite.setAlpha(1);
-				sprite.setTint(FOG_TINT);
-			} else {
-				sprite.setAlpha(0);
-			}
+			applyFogState(sprite, next[idx]);
 		}
 	}
 }
