@@ -26,12 +26,37 @@ export interface ActorSpriteSyncDeps {
 export class ActorSpriteSync {
 	private npcSprites = new Map<string, Phaser.GameObjects.Sprite>();
 	private npcEffectHandles = new Map<string, Map<string, ActorOverlayHandle>>();
+	private scene: Phaser.Scene | null = null;
+	private onUpdateBound: (() => void) | null = null;
 
 	getNpcSprites(): Map<string, Phaser.GameObjects.Sprite> {
 		return this.npcSprites;
 	}
 
+	private setupUpdateListener(scene: Phaser.Scene): void {
+		if (this.scene === scene) return;
+		if (this.scene && this.onUpdateBound) {
+			this.scene.events.off("update", this.onUpdateBound);
+		}
+		this.scene = scene;
+		this.onUpdateBound = () => {
+			for (const [actorId, handles] of this.npcEffectHandles) {
+				const sprite = this.npcSprites.get(actorId);
+				if (!sprite) continue;
+				for (const handle of handles.values()) {
+					handle.reposition(sprite.x, sprite.y);
+				}
+			}
+		};
+		scene.events.on("update", this.onUpdateBound);
+	}
+
 	clearAndDestroy(): void {
+		if (this.scene && this.onUpdateBound) {
+			this.scene.events.off("update", this.onUpdateBound);
+			this.scene = null;
+			this.onUpdateBound = null;
+		}
 		for (const sprite of this.npcSprites.values()) {
 			sprite.destroy();
 		}
@@ -79,13 +104,12 @@ export class ActorSpriteSync {
 			} else if (!shouldBeActive && isCurrentlyActive) {
 				handles.get(effect.id)!.destroy();
 				handles.delete(effect.id);
-			} else if (isCurrentlyActive) {
-				handles.get(effect.id)!.reposition(sprite.x, sprite.y);
 			}
 		}
 	}
 
 	sync(gameState: GameState, deps: ActorSpriteSyncDeps): void {
+		this.setupUpdateListener(deps.scene);
 		const floor = gameState.floors[gameState.heroFloorIndex];
 		if (!floor) return;
 		const actorsById = floor.state.actorsById;
