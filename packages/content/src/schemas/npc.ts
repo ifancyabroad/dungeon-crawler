@@ -33,7 +33,7 @@ export const NpcSchema = z.object({
 	armorClass: z.number(),
 	tileId: z.number(),
 	xpReward: z.number(),
-	combatStrategy: z.enum(["melee", "ranged"]),
+	combatStrategy: z.enum(["melee", "ranged", "skirmisher"]),
 	/** Idle behaviour when the NPC has no enemies to fight. Defaults to stationary. */
 	idleStrategy: z.enum(["stationary", "roam", "follow"]).default("stationary"),
 	/** Challenge rating used to approximate NPC proficiency bonus. */

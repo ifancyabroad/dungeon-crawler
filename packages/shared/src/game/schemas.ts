@@ -177,7 +177,7 @@ export const ActorDefSchema = z.discriminatedUnion("type", [
 ]);
 
 export const NpcAIStateSchema = z.object({
-	combatStrategy: z.enum(["melee", "frightened", "ranged"]),
+	combatStrategy: z.enum(["melee", "frightened", "ranged", "skirmisher"]),
 	idleStrategy: z.enum(["stationary", "roam", "follow"]),
 	lastKnownEnemyIdx: z.number().optional(),
 	followTargetId: z.string().optional(),
