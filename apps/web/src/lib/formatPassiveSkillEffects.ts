@@ -13,6 +13,13 @@ function humanizeId(id: string): string {
 		.join(" ");
 }
 
+const ATTACK_SCOPE_LABEL: Record<string, string> = {
+	weapon_attack: "weapon",
+	spell: "spell",
+	impact: "impact",
+	any: "all",
+};
+
 /**
  * Single-line summary of one passive effect entry at a given rank (from content).
  */
@@ -31,7 +38,7 @@ export function formatPassiveSkillEffectLine(effect: PassiveSkillEffectDescripto
 		case "add_damage_immunity":
 			return `Immunity to ${titleCaseWord(effect.damageType)}`;
 		case "add_damage_dice": {
-			const scope = effect.appliesTo;
+			const scope = ATTACK_SCOPE_LABEL[effect.appliesTo] ?? humanizeId(effect.appliesTo);
 			const crit = effect.onCritOnly ? " (critical hits only)" : "";
 			return `+${effect.dice} ${titleCaseWord(effect.damageType)} on ${scope} attacks${crit}`;
 		}
@@ -56,7 +63,7 @@ export function formatPassiveSkillEffectLine(effect: PassiveSkillEffectDescripto
 		case "add_dot_amplify_flat":
 			return `+${effect.amount} to DoT damage you apply`;
 		case "add_flat_damage_bonus": {
-			const scope = effect.appliesTo;
+			const scope = ATTACK_SCOPE_LABEL[effect.appliesTo] ?? humanizeId(effect.appliesTo);
 			if (effect.requiredDamageType) {
 				return `+${effect.amount} ${titleCaseWord(effect.damageType)} damage to ${titleCaseWord(effect.requiredDamageType)} attacks`;
 			}

@@ -68,7 +68,7 @@ export function LootItemCard({
 					}
 					side="right"
 				>
-					<p className="font-mono text-sm px-3 py-0.5 cursor-default">
+					<p className="font-mono px-3 py-0.5 cursor-default">
 						<span className="text-text-label">Equipped: </span>
 						<span className={RARITY_TEXT[equippedInSlot.rarity]}>
 							{equippedInSlot.generatedName}
