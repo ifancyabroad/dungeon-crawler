@@ -1257,7 +1257,7 @@ export const npcs: readonly NpcDefinition[] = [
     "armorClass": 18,
     "tileId": 698,
     "xpReward": 600,
-    "combatStrategy": "melee",
+    "combatStrategy": "skirmisher",
     "idleStrategy": "stationary",
     "challengeRating": 9,
     "savingThrowProficiencies": [
