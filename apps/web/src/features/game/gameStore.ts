@@ -96,9 +96,12 @@ interface GameStoreState {
 	/** Debug mirror from server; used to keep optimistic simulation aligned. */
 	debugGodMode: boolean;
 	/**
-	 * Session-only defeat overlay: set true when we observe an authoritative alive→dead transition
-	 * for this gameId. Cleared on revive, game switch, or clearGameId. Not set on initial load/reload
-	 * (prev lastConfirmedState was null) so refresh shows deceased in sidebar instead.
+	 * Session-only defeat overlay: set true when the hero transitions alive→dead during this
+	 * session for this gameId — detected via checkHeroDeath across all display-state update paths
+	 * (optimistic sendAction, pending-action replay, server confirmation). Dismissed on revive,
+	 * game switch, or clearGameId.
+	 * Not triggered on initial load/reload (prevDisplayState null) so a refresh while already
+	 * dead shows the deceased sidebar state instead of re-opening the modal.
 	 */
 	showDefeatModal: boolean;
 }
@@ -153,31 +156,27 @@ function heroFromState(state: GameState): { floorIndex: number; idx: number } {
 	return { floorIndex: state.heroFloorIndex, idx: hero.idx };
 }
 
-/** After accepting an authoritative snapshot (same gameId as store). */
-function updateShowDefeatModal(
-	prevConfirmed: GameState | null,
-	nextConfirmed: GameState,
-	payloadGameId: string,
-	storeGameId: string | null,
+/**
+ * Set showDefeatModal when the hero transitions alive→dead in the display state.
+ * Only fires when prevDisplayState is non-null — guards against triggering on initial
+ * page load where the hero may already be dead (show deceased sidebar instead of modal).
+ * Called after every display-state update that can produce a death: optimistic sendAction,
+ * pending-action replay, and server-confirmed normal path.
+ */
+function checkHeroDeath(
+	prevDisplayState: GameState | null,
+	nextDisplayState: GameState,
 	set: (partial: Partial<GameStoreState>) => void,
 ): void {
-	if (payloadGameId !== storeGameId) {
-		set({ showDefeatModal: false });
-		return;
-	}
-	if (prevConfirmed === null) {
-		set({ showDefeatModal: false });
-		return;
-	}
-	const hPrev = getHero(prevConfirmed);
-	const hNext = getHero(nextConfirmed);
+	if (prevDisplayState == null) return;
+	const hPrev = getHero(prevDisplayState);
+	const hNext = getHero(nextDisplayState);
 	if (hPrev?.alive && hNext && !hNext.alive) {
 		set({ showDefeatModal: true });
-	} else if (hNext?.alive) {
-		set({ showDefeatModal: false });
 	}
 }
 
+/** Write the canonical display state fields. */
 function applyStateUpdate(
 	set: (partial: Partial<GameStoreState>) => void,
 	payload: { gameId: string; turn: number; state: GameState; debugGodMode?: boolean },
@@ -192,9 +191,7 @@ function applyStateUpdate(
 	if (typeof payload.debugGodMode === "boolean") {
 		next.debugGodMode = payload.debugGodMode;
 	}
-	set({
-		...next,
-	});
+	set(next);
 }
 
 /** Compute and return walkable + opacity masks for all floors. Static for the session lifetime. */
@@ -236,16 +233,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		const {
 			gameId: currentGameId,
 			turn: currentTurn,
+			state: prevDisplayState,
 			pendingActions,
 			lastConfirmedState,
 			combatLog,
 			lastOptimisticEventTurn,
 		} = get();
-		const prevConfirmed = lastConfirmedState;
-		const confirmedTurn = prevConfirmed?.turn ?? -1;
+		const confirmedTurn = lastConfirmedState?.turn ?? -1;
 		if (payload.turn >= confirmedTurn) {
 			set({ lastConfirmedState: payload.state });
-			updateShowDefeatModal(prevConfirmed, payload.state, payload.gameId, currentGameId, set);
 		}
 		if (typeof payload.debugGodMode === "boolean") {
 			set({ debugGodMode: payload.debugGodMode });
@@ -307,6 +303,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 				state: nextState,
 				debugGodMode: payload.debugGodMode,
 			});
+			checkHeroDeath(prevDisplayState, nextState, set);
 			// Masks are static for this game session; no recomputation needed on state replay.
 			set({ pendingActions: [] });
 			if (gameSocketRef) {
@@ -325,6 +322,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		// Masks are static for this game session; no recomputation needed on routine state updates.
 		if (payload.turn >= currentTurn) {
 			applyStateUpdate(set, payload);
+			checkHeroDeath(prevDisplayState, payload.state, set);
 		}
 
 		// On page refresh the gameId is pre-loaded from localStorage before the socket responds,
@@ -432,6 +430,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			state: guarded.state,
 			debugGodMode,
 		});
+		checkHeroDeath(state, guarded.state, set);
 
 		const inFlightAfterApply = guarded.state.turn - confirmedTurn - unsentMoves.length;
 		if (gameSocketRef) {
