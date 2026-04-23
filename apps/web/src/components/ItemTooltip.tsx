@@ -1,7 +1,8 @@
-import type { ItemInstance, WeaponItemDef, BodyArmorItemDef } from "@app/shared";
+import { getHero, type ItemInstance, type WeaponItemDef, type BodyArmorItemDef } from "@app/shared";
 import type { ItemDefinition, AffixDefinition } from "@app/content";
 import { formatPassiveSkillEffectLine } from "../lib/formatPassiveSkillEffects";
 import { RARITY_TEXT } from "../lib/rarityColors";
+import { useGameStore } from "../features/game/gameStore";
 
 type ItemTooltipProps = {
 	instance: ItemInstance;
@@ -86,6 +87,19 @@ function AffixLines({ affixDefs }: { affixDefs: AffixDefinition[] }) {
 export function ItemTooltip({ instance, def, affixDefs }: ItemTooltipProps) {
 	const rarity = instance.rarity;
 	const rarityText = RARITY_TEXT[rarity] ?? "text-white";
+
+	const hero = useGameStore((s) => (s.state ? getHero(s.state) : undefined));
+
+	// Determine proficiency: only relevant for body armor and weapons.
+	// Non-proficient body armor disables all skills; non-proficient weapons lose attack bonus.
+	let proficient: boolean | null = null;
+	if (hero) {
+		if (def.type === "armor" && def.slot === "body") {
+			proficient = hero.armorProficiencies.includes(def.armorCategory);
+		} else if (def.type === "weapon") {
+			proficient = hero.weaponProficiencies.includes(def.weaponCategory);
+		}
+	}
 
 	// Build bullet list based on item type
 	function renderBullets() {
@@ -227,6 +241,15 @@ export function ItemTooltip({ instance, def, affixDefs }: ItemTooltipProps) {
 
 			{/* Footer metadata */}
 			{renderFooter()}
+
+			{/* Proficiency warning */}
+			{proficient === false && (
+				<p className="text-error">
+					{def.type === "armor"
+						? "Not proficient — skills are disabled while wearing this armor"
+						: "Not proficient — no proficiency bonus to attacks"}
+				</p>
+			)}
 		</div>
 	);
 }
