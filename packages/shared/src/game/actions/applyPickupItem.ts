@@ -44,15 +44,41 @@ export function applyPickupItem(
 	}
 	if (!targetSlot) return { ok: false, reason: "item_slot_unknown" };
 
+	// Determine any slots that must be cleared due to two-handed weapon rules.
+	const clearedSlots: (keyof EquipmentSlots)[] = [];
+
+	if (
+		baseDef.type === "weapon" &&
+		baseDef.properties.includes("two_handed") &&
+		hero.equipment.offHand
+	) {
+		clearedSlots.push("offHand");
+	}
+
+	if (targetSlot === "offHand" && hero.equipment.mainHand) {
+		const mhId = hero.equipment.mainHand;
+		const mhBaseId = hero.itemInstances[mhId]?.baseItemId ?? mhId;
+		const mhDef = context.itemsById[mhBaseId];
+		if (mhDef?.type === "weapon" && mhDef.properties.includes("two_handed")) {
+			clearedSlots.push("mainHand");
+		}
+	}
+
 	// Update hero's equipment and instance registry.
 	const updatedEquipment: EquipmentSlots = {
 		...hero.equipment,
 		[targetSlot]: instance.instanceId,
 	};
+	for (const slot of clearedSlots) delete updatedEquipment[slot];
+
 	const updatedInstances: Record<string, ItemInstance> = {
 		...hero.itemInstances,
 		[instance.instanceId]: instance,
 	};
+	for (const slot of clearedSlots) {
+		const slotVal = hero.equipment[slot];
+		if (slotVal && hero.itemInstances[slotVal]) delete updatedInstances[slotVal];
+	}
 	let heroAfterEquip: Actor = {
 		...hero,
 		equipment: updatedEquipment,

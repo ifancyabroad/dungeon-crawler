@@ -20,9 +20,11 @@ type PendingEquip = {
 	incomingInstance: ItemInstance;
 	incomingDef: ItemDefinition;
 	incomingAffixDefs: AffixDefinition[];
-	equippedInstance: ItemInstance;
-	equippedDef: ItemDefinition;
+	equippedInstance?: ItemInstance;
+	equippedDef?: ItemDefinition;
 	equippedAffixDefs: AffixDefinition[];
+	sideEffectInstance?: ItemInstance;
+	sideEffectDef?: ItemDefinition;
 };
 
 function resolveAffixes(instance: ItemInstance): AffixDefinition[] {
@@ -43,6 +45,24 @@ export function LootPickupModal() {
 	const { tileIdx, loot } = pi;
 	const hero = state ? getHero(state) : undefined;
 
+	// Resolves the instance currently occupying a slot, handling both looted items (instanceId in
+	// slot) and starting equipment (base item ID stored directly in slot with no ItemInstance).
+	function resolveSlotInstance(slotId: string): ItemInstance | null {
+		if (!hero) return null;
+		const inst = hero.itemInstances[slotId];
+		if (inst) return inst;
+		const def = itemsById[slotId as keyof typeof itemsById];
+		if (!def) return null;
+		return {
+			instanceId: slotId,
+			baseItemId: slotId,
+			rarity: "common",
+			enhancementBonus: 0,
+			affixIds: [],
+			generatedName: def.name,
+		};
+	}
+
 	function getEquippedInSlot(instance: ItemInstance): ItemInstance | null {
 		const baseDef = itemsById[instance.baseItemId as keyof typeof itemsById];
 		if (!baseDef || !hero) return null;
@@ -60,45 +80,66 @@ export function LootPickupModal() {
 		}
 
 		if (!slotId) return null;
+		return resolveSlotInstance(slotId);
+	}
 
-		// Looted items are stored as instance IDs in the slot.
-		const equippedInstance = hero.itemInstances[slotId];
-		if (equippedInstance) return equippedInstance;
+	function getSideEffectSlot(instance: ItemInstance): ItemInstance | null {
+		if (!hero) return null;
+		const incomingDef = itemsById[instance.baseItemId as keyof typeof itemsById];
+		if (!incomingDef) return null;
 
-		// Starting equipment stores the base item ID directly in the slot (no ItemInstance created).
-		// Synthesise a minimal instance for display, matching the pattern in InventoryModal.
-		const equippedBaseDef = itemsById[slotId as keyof typeof itemsById];
-		if (!equippedBaseDef) return null;
-		return {
-			instanceId: slotId,
-			baseItemId: slotId,
-			rarity: "common",
-			enhancementBonus: 0,
-			affixIds: [],
-			generatedName: equippedBaseDef.name,
-		};
+		if (incomingDef.type === "weapon" && incomingDef.properties.includes("two_handed")) {
+			// Two-handed weapon being equipped: offHand will be cleared
+			return hero.equipment.offHand ? resolveSlotInstance(hero.equipment.offHand) : null;
+		}
+
+		if (incomingDef.type === "shield") {
+			// Offhand being equipped: mainHand will be cleared if it holds a two-handed weapon
+			const mainHandId = hero.equipment.mainHand;
+			if (!mainHandId) return null;
+			const mainHandInst = hero.itemInstances[mainHandId];
+			const mainHandBaseId = mainHandInst?.baseItemId ?? mainHandId;
+			const mainHandDef = itemsById[mainHandBaseId as keyof typeof itemsById];
+			if (mainHandDef?.type !== "weapon" || !mainHandDef.properties.includes("two_handed"))
+				return null;
+			return resolveSlotInstance(mainHandId);
+		}
+
+		return null;
 	}
 
 	function handleEquip(instance: ItemInstance) {
-		const equipped = getEquippedInSlot(instance);
-		if (equipped) {
-			const incomingDef = itemsById[instance.baseItemId as keyof typeof itemsById];
-			const equippedDef = itemsById[equipped.baseItemId as keyof typeof itemsById];
-			if (!incomingDef || !equippedDef) {
-				sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
-				return;
-			}
-			setPendingEquip({
-				incomingInstance: instance,
-				incomingDef,
-				incomingAffixDefs: resolveAffixes(instance),
-				equippedInstance: equipped,
-				equippedDef,
-				equippedAffixDefs: resolveAffixes(equipped),
-			});
-		} else {
+		const incomingDef = itemsById[instance.baseItemId as keyof typeof itemsById];
+		if (!incomingDef) {
 			sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
+			return;
 		}
+
+		const equipped = getEquippedInSlot(instance);
+		const sideEffectInstance = getSideEffectSlot(instance);
+
+		if (!equipped && !sideEffectInstance) {
+			sendAction({ type: "pickup_item", tileIdx, instanceId: instance.instanceId });
+			return;
+		}
+
+		const equippedDef = equipped
+			? itemsById[equipped.baseItemId as keyof typeof itemsById]
+			: undefined;
+		const sideEffectDef = sideEffectInstance
+			? itemsById[sideEffectInstance.baseItemId as keyof typeof itemsById]
+			: undefined;
+
+		setPendingEquip({
+			incomingInstance: instance,
+			incomingDef,
+			incomingAffixDefs: resolveAffixes(instance),
+			equippedInstance: equipped ?? undefined,
+			equippedDef,
+			equippedAffixDefs: equipped ? resolveAffixes(equipped) : [],
+			sideEffectInstance: sideEffectInstance ?? undefined,
+			sideEffectDef,
+		});
 	}
 
 	function handleConfirmReplace() {

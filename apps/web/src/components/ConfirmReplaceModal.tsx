@@ -10,12 +10,38 @@ type ConfirmReplaceModalProps = {
 	incomingInstance: ItemInstance;
 	incomingDef: ItemDefinition;
 	incomingAffixDefs: AffixDefinition[];
-	equippedInstance: ItemInstance;
-	equippedDef: ItemDefinition;
-	equippedAffixDefs: AffixDefinition[];
+	equippedInstance?: ItemInstance;
+	equippedDef?: ItemDefinition;
+	equippedAffixDefs?: AffixDefinition[];
+	sideEffectInstance?: ItemInstance;
+	sideEffectDef?: ItemDefinition;
 	onConfirm: () => void;
 	onCancel: () => void;
 };
+
+function ItemSpan({
+	instance,
+	def,
+	affixDefs,
+}: {
+	instance: ItemInstance;
+	def: ItemDefinition;
+	affixDefs: AffixDefinition[];
+}) {
+	return (
+		<Tooltip
+			content={<ItemTooltip instance={instance} def={def} affixDefs={affixDefs} />}
+			side="top"
+			inline
+		>
+			<span
+				className={`${RARITY_TEXT[instance.rarity]} cursor-default underline decoration-dotted`}
+			>
+				{instance.generatedName}
+			</span>
+		</Tooltip>
+	);
+}
 
 export function ConfirmReplaceModal({
 	incomingInstance,
@@ -24,6 +50,8 @@ export function ConfirmReplaceModal({
 	equippedInstance,
 	equippedDef,
 	equippedAffixDefs,
+	sideEffectInstance,
+	sideEffectDef,
 	onConfirm,
 	onCancel,
 }: ConfirmReplaceModalProps) {
@@ -43,43 +71,37 @@ export function ConfirmReplaceModal({
 				</>
 			}
 		>
-			<p className="font-mono leading-relaxed">
+			<p className="font-mono leading-relaxed text-text">
 				Replace{" "}
-				<Tooltip
-					content={
-						<ItemTooltip
+				{equippedInstance && equippedDef && (
+					<>
+						<ItemSpan
 							instance={equippedInstance}
 							def={equippedDef}
-							affixDefs={equippedAffixDefs}
+							affixDefs={equippedAffixDefs ?? []}
 						/>
-					}
-					side="top"
-					inline
-				>
-					<span
-						className={`${RARITY_TEXT[equippedInstance.rarity]} cursor-default underline decoration-dotted`}
-					>
-						{equippedInstance.generatedName}
-					</span>
-				</Tooltip>{" "}
+						{sideEffectInstance && sideEffectDef && (
+							<>
+								{" "}
+								and{" "}
+								<ItemSpan
+									instance={sideEffectInstance}
+									def={sideEffectDef}
+									affixDefs={[]}
+								/>
+							</>
+						)}
+					</>
+				)}
+				{!equippedInstance && sideEffectInstance && sideEffectDef && (
+					<ItemSpan instance={sideEffectInstance} def={sideEffectDef} affixDefs={[]} />
+				)}{" "}
 				with{" "}
-				<Tooltip
-					content={
-						<ItemTooltip
-							instance={incomingInstance}
-							def={incomingDef}
-							affixDefs={incomingAffixDefs}
-						/>
-					}
-					side="top"
-					inline
-				>
-					<span
-						className={`${RARITY_TEXT[incomingInstance.rarity]} cursor-default underline decoration-dotted`}
-					>
-						{incomingInstance.generatedName}
-					</span>
-				</Tooltip>
+				<ItemSpan
+					instance={incomingInstance}
+					def={incomingDef}
+					affixDefs={incomingAffixDefs}
+				/>
 				?
 			</p>
 		</Modal>
