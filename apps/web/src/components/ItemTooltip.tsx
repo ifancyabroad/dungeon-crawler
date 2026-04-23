@@ -16,7 +16,7 @@ function titleCase(s: string): string {
 
 const WEAPON_PROP_LABEL: Record<string, string> = {
 	finesse: "Finesse",
-	two_handed: "Two-handed",
+	two_handed: "Two-Handed",
 	thrown: "Thrown",
 	light: "Light",
 	ranged: "Ranged",
@@ -31,12 +31,8 @@ function WeaponStats({ def, instance }: { def: WeaponItemDef; instance: ItemInst
 		lines.push(`+${instance.enhancementBonus} to attack rolls`);
 	}
 
-	for (const prop of def.properties) {
-		if (prop === "versatile") {
-			lines.push(`Versatile (${def.damageDice} / ${def.versatileDice ?? "?"})`);
-		} else if (WEAPON_PROP_LABEL[prop]) {
-			lines.push(WEAPON_PROP_LABEL[prop]);
-		}
+	if (def.properties.includes("versatile")) {
+		lines.push(`Versatile (${def.damageDice} / ${def.versatileDice ?? "?"})`);
 	}
 
 	return (
@@ -162,11 +158,17 @@ export function ItemTooltip({ instance, def, affixDefs }: ItemTooltipProps) {
 		let typeLabel = "";
 		let slotLabel = "";
 		let categoryLabel: string | null = null;
+		let propertiesLabel: string | null = null;
 
 		if (def.type === "weapon") {
 			typeLabel = "Weapon";
-			slotLabel = "Main Hand";
+			slotLabel = def.properties.includes("two_handed") ? "Both Hands" : "Main Hand";
 			categoryLabel = titleCase(def.weaponCategory);
+
+			const props = def.properties
+				.filter((p) => p in WEAPON_PROP_LABEL)
+				.map((p) => WEAPON_PROP_LABEL[p]);
+			if (props.length > 0) propertiesLabel = props.join(", ");
 		} else if (def.type === "armor" && def.slot === "body") {
 			typeLabel = "Armor";
 			slotLabel = "Body";
@@ -192,6 +194,12 @@ export function ItemTooltip({ instance, def, affixDefs }: ItemTooltipProps) {
 					<>
 						<dt className="text-text-label">Category</dt>
 						<dd className="text-text">{categoryLabel}</dd>
+					</>
+				)}
+				{propertiesLabel && (
+					<>
+						<dt className="text-text-label">Properties</dt>
+						<dd className="text-text">{propertiesLabel}</dd>
 					</>
 				)}
 			</dl>
