@@ -156,6 +156,9 @@ export function SkillHotbar() {
 		const handler = (e: KeyboardEvent) => {
 			const target = e.target as HTMLElement;
 			if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+			// Exclude numpad keys — they drive movement and should not trigger hotbar slots.
+			// e.code is "Digit1"–"Digit5" for the number row and "Numpad1"–"Numpad5" for the numpad.
+			if (!e.code.startsWith("Digit")) return;
 			const slot = parseInt(e.key);
 			if (isNaN(slot) || slot < 1 || slot > 5) return;
 			const skillId = skillIdsRef.current[slot - 1];
