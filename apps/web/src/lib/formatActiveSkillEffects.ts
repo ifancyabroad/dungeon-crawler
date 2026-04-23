@@ -17,6 +17,21 @@ function scalingSuffix(stat?: string): string {
 	return stat ? ` + ${stat} modifier` : "";
 }
 
+function onHitSuffix(s?: { statusId: string; durationTurns: number }): string {
+	if (!s) return "";
+	return `, applies ${humanizeId(s.statusId)} (${s.durationTurns} turn${s.durationTurns !== 1 ? "s" : ""}) on hit`;
+}
+
+function saveSuffix(s?: { saveAbility: string; successDamageMultiplier?: number }): string {
+	if (!s) return "";
+	return ` (${titleCaseWord(s.saveAbility)} save for half)`;
+}
+
+function bonusDmgSuffix(dice?: string, damageType?: string): string {
+	if (!dice || !damageType) return "";
+	return ` + ${dice} ${titleCaseWord(damageType)}`;
+}
+
 /**
  * Single-line summary of one active skill effect descriptor.
  */
@@ -28,21 +43,21 @@ export function formatActiveSkillEffectLine(effect: ActiveSkillEffectDescriptor)
 	}
 	switch (effect.type) {
 		case "single_target_damage":
-			return `${dmg(effect.dice, effect.damageType)} damage${scalingSuffix(effect.scalingStat)}`;
+			return `${dmg(effect.dice, effect.damageType)}${bonusDmgSuffix(effect.bonusDice, effect.bonusDamageType)} damage${scalingSuffix(effect.scalingStat)}${saveSuffix(effect.savingThrow)}${onHitSuffix(effect.onHitStatus)}`;
 		case "area_damage":
-			return `${dmg(effect.dice, effect.damageType)} damage (radius ${effect.radiusTiles})${scalingSuffix(effect.scalingStat)}`;
+			return `${dmg(effect.dice, effect.damageType)}${bonusDmgSuffix(effect.bonusDice, effect.bonusDamageType)} damage (radius ${effect.radiusTiles})${scalingSuffix(effect.scalingStat)}${saveSuffix(effect.savingThrow)}`;
 		case "cone_damage":
-			return `${dmg(effect.dice, effect.damageType)} damage in a cone${scalingSuffix(effect.scalingStat)}`;
+			return `${dmg(effect.dice, effect.damageType)}${bonusDmgSuffix(effect.bonusDice, effect.bonusDamageType)} damage in a cone${scalingSuffix(effect.scalingStat)}${saveSuffix(effect.savingThrow)}`;
 		case "line_damage":
-			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage in a line${scalingSuffix(effect.scalingStat)}`;
+			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage in a line${scalingSuffix(effect.scalingStat)}${saveSuffix(effect.savingThrow)}`;
 		case "leap_attack":
-			return `Leap up to ${effect.maxRangeTiles} tiles — ${dmg(effect.dice, effect.damageType)} on landing${scalingSuffix(effect.scalingStat)}`;
+			return `Leap up to ${effect.maxRangeTiles} tiles — ${dmg(effect.dice, effect.damageType)}${bonusDmgSuffix(effect.bonusDice, effect.bonusDamageType)} on landing${scalingSuffix(effect.scalingStat)}`;
 		case "charge_attack":
 			return `Charge up to ${effect.maxRangeTiles} tiles — +${effect.bonusDice} ${titleCaseWord(effect.bonusDamageType)} bonus damage`;
 		case "sneak_attack":
 			return `${effect.dice} bonus weapon damage`;
 		case "multi_strike":
-			return `${effect.strikeCount}\u00d7 ${dmg(effect.dice, effect.damageType)} damage${scalingSuffix(effect.scalingStat)}`;
+			return `${effect.strikeCount}\u00d7 ${dmg(effect.dice, effect.damageType)}${bonusDmgSuffix(effect.bonusDice, effect.bonusDamageType)} damage${scalingSuffix(effect.scalingStat)}${onHitSuffix(effect.onHitStatus)}`;
 		case "drain_life":
 			return `${effect.dice} ${titleCaseWord(effect.damageType)} damage, heal ${effect.healDice}`;
 		case "heal_self":
