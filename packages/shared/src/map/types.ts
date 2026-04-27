@@ -141,7 +141,6 @@ export interface VaultDef {
 	height: number;
 	/** Room tags this vault is eligible to stamp into. */
 	tags: RoomTag[];
-	minDepth?: number;
 	/** ASCII layout rows. Each character must have an entry in legend. */
 	layout: string[];
 	legend: Record<string, VaultLegendEntry>;
@@ -220,4 +219,11 @@ export interface RawMap {
 	shapeMask: boolean[][];
 	/** Hero spawn cell. */
 	spawn: { x: number; y: number };
+	/**
+	 * Explicit BSP room rectangles stamped by the algorithm.
+	 * Empty for cave/arena algorithms. Always present (never undefined).
+	 * Used by roomAnalysis to pre-seed per-room regions so vault fitting
+	 * and boss room selection work correctly on BSP and hybrid maps.
+	 */
+	bspRooms: ReadonlyArray<{ x: number; y: number; w: number; h: number }>;
 }

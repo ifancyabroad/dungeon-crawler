@@ -103,5 +103,5 @@ export function generateCave(config: FloorConfig, rng: Rng): RawMap {
 	}
 
 	const spawn = closestCell(component, cx, cy);
-	return { ground, wall, spawn, pathLayer, shapeMask: mask };
+	return { ground, wall, spawn, pathLayer, shapeMask: mask, bspRooms: [] };
 }

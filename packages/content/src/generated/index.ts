@@ -1414,10 +1414,8 @@ export const vaults: readonly VaultDefinition[] = [
     "width": 9,
     "height": 9,
     "tags": [
-      "boss",
       "chamber"
     ],
-    "minDepth": 3,
     "layout": [
       "####.####",
       "#.......#",
@@ -1452,7 +1450,6 @@ export const vaults: readonly VaultDefinition[] = [
       "treasure",
       "alcove"
     ],
-    "minDepth": 1,
     "layout": [
       ".......",
       "...dd..",

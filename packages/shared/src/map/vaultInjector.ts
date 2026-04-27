@@ -5,16 +5,16 @@
  * from the API layer — shared never imports @app/content directly.
  *
  * Injection rules:
- * - A vault is eligible if its `tags` overlap with the target room's tag, and
- *   the floor's depth >= vault's minDepth.
- * - The vault must fit within the room's bounding box.
- * - Eligible vaults are sorted by id (alphabetically) before RNG selection
- *   to maintain determinism.
+ * - A vault is eligible if its `tags` overlap with the target room's tag.
+ * - Depth eligibility is controlled entirely by FloorConfig.vaultIds — no minDepth on VaultDef.
+ * - The vault must fit within the room's bounding box (VOID cells reject; wall/floor cells accept).
+ * - The spawn room is always skipped — stamping a vault there would enclose the hero.
+ * - Eligible vaults are sorted by id (alphabetically) before RNG selection for determinism.
  * - At most one vault is injected per room.
  * - Vault tiles overwrite existing floor/wall tiles in the raw map.
  *
  * The injector does NOT modify blockedMask. Callers (baseLayers.ts) apply vault prop
- * collision after injection using the `collision` flag on each decorationOverride entry.
+ * collision after injection using the `collision` flag on each legend entry.
  */
 
 import { TILE_TYPE } from "../config/map";
@@ -31,24 +31,26 @@ export function injectVaults(
 	const placements: VaultPlacement[] = [];
 	const { ground, wall } = rawMap;
 	const width = ground[0]?.length ?? 0;
-	const depth = config.floorDepth;
 	const usedRoomIds = new Set<number>();
 
 	// Only consider vaults referenced by this floor's config
 	const eligibleVaultIds = new Set(config.vaultIds);
 	const candidates = vaultDefs
 		.filter((v) => eligibleVaultIds.has(v.id))
-		.filter((v) => (v.minDepth ?? 1) <= depth)
 		.filter((v) => validateVaultDef(v))
 		.sort((a, b) => a.id.localeCompare(b.id, "en"));
 
 	if (candidates.length === 0) return placements;
+
+	// Never stamp into the hero's starting room — player would spawn inside the vault.
+	const spawnFlatIdx = rawMap.spawn.y * width + rawMap.spawn.x;
 
 	// Sort rooms by id for stable iteration order
 	const sortedRooms = [...rooms].sort((a, b) => a.id - b.id);
 
 	for (const room of sortedRooms) {
 		if (usedRoomIds.has(room.id)) continue;
+		if (room.cells.includes(spawnFlatIdx)) continue;
 
 		// Find eligible vaults for this room's tag
 		const matching = candidates.filter((v) => v.tags.includes(room.tag));
@@ -63,7 +65,6 @@ export function injectVaults(
 
 		// Check that the vault fits in the room bbox before trying anchors.
 		if (pick.width > bbox.w || pick.height > bbox.h) continue;
-		const roomCellSet = new Set(room.cells);
 		const anchors = buildPlacementCandidates(bbox, pick.width, pick.height);
 		let originX = -1;
 		let originY = -1;
@@ -78,7 +79,6 @@ export function injectVaults(
 				for (let vx = 0; vx < pick.width && fits; vx++) {
 					const mx = candidateX + vx;
 					const my = candidateY + vy;
-					const flatIdx = my * width + mx;
 					const ch = row[vx];
 					if (ch === undefined || !pick.legend[ch]) {
 						fits = false;
@@ -88,11 +88,8 @@ export function injectVaults(
 						fits = false;
 						break;
 					}
+					// Void cells are outside the playable boundary — vault cannot stamp here.
 					if (ground[my][mx] === TILE_TYPE.VOID) {
-						fits = false;
-						break;
-					}
-					if (!roomCellSet.has(flatIdx)) {
 						fits = false;
 						break;
 					}

@@ -3,7 +3,6 @@
 	"width": 7,
 	"height": 7,
 	"tags": ["chamber", "treasure", "alcove"],
-	"minDepth": 1,
 	"layout": [".......", "...dd..", ".fdddd.", ".ddAdd.", ".dddde.", "..dd...", "......."],
 	"legend": {
 		".": { "tile": "floor" },

@@ -65,5 +65,5 @@ export function generateArena(config: FloorConfig, rng: Rng): RawMap {
 	floorSet.add(`${icx},${icy}`);
 
 	const spawn = { x: icx, y: icy };
-	return { ground, wall, spawn, pathLayer, shapeMask };
+	return { ground, wall, spawn, pathLayer, shapeMask, bspRooms: [] };
 }

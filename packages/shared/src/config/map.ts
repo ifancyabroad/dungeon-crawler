@@ -94,9 +94,9 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		],
 		enemyDensity: 0.3,
 		itemDensity: 0.0,
-		vaultIds: ["boss_chamber"],
+		vaultIds: [],
 		specialRoomFrequency: 0.2,
-		bossRules: { npcId: "forest_guardian", preferredRoomTag: "boss" },
+		bossRules: { npcId: "forest_guardian", preferredRoomTag: "chamber" },
 	},
 	{
 		theme: "orange_forest",
@@ -116,9 +116,9 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		],
 		enemyDensity: 0.4,
 		itemDensity: 0.0,
-		vaultIds: ["goblin_shrine", "boss_chamber"],
+		vaultIds: ["goblin_shrine"],
 		specialRoomFrequency: 0.25,
-		bossRules: { npcId: "minotaur", preferredRoomTag: "boss" },
+		bossRules: { npcId: "minotaur", preferredRoomTag: "chamber" },
 	},
 	{
 		theme: "dark_forest",
@@ -144,7 +144,7 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		itemDensity: 0.0,
 		vaultIds: ["boss_chamber"],
 		specialRoomFrequency: 0.3,
-		bossRules: { npcId: "reaper", preferredRoomTag: "boss" },
+		bossRules: { npcId: "reaper", preferredRoomTag: "chamber" },
 	},
 	{
 		theme: "yellow_forest",
@@ -166,7 +166,7 @@ export const FLOOR_CONFIGS: FloorConfig[] = [
 		itemDensity: 0.0,
 		vaultIds: ["boss_chamber"],
 		specialRoomFrequency: 0.35,
-		bossRules: { npcId: "red_dragon", preferredRoomTag: "boss" },
+		bossRules: { npcId: "red_dragon", preferredRoomTag: "chamber" },
 	},
 ];
 

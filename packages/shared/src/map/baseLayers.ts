@@ -50,6 +50,12 @@ export interface RegenerateOptions {
 }
 
 const MIN_FLOOR_SIDE = 7;
+/**
+ * Minimum number of reachable walkable cells for a floor to be considered non-degenerate.
+ * If a cave CA collapses below this threshold the pipeline retries generation with a
+ * deterministically perturbed seed (up to 3 attempts).
+ */
+const MIN_ACCEPTABLE_WALKABLE = 25;
 
 interface ReachabilityResult {
 	reachable: Set<number>;
@@ -199,6 +205,50 @@ function tagSpawnAndExitRooms(rooms: AnalyzedRoom[], spawnIdx: number, exitIdx: 
 }
 
 /**
+ * Count open cells reachable from the spawn point in a raw map (no blockedMask).
+ * Used to detect degenerate cave collapses before the full pipeline runs.
+ */
+function estimateRawReachability(rawMap: RawMap): number {
+	const { ground, wall, spawn } = rawMap;
+	const height = ground.length;
+	const width = ground[0]?.length ?? 0;
+	if (width === 0 || height === 0) return 0;
+	const startIdx = spawn.y * width + spawn.x;
+	if (
+		ground[spawn.y]?.[spawn.x] !== TILE_TYPE.FLOOR ||
+		wall[spawn.y]?.[spawn.x] === TILE_TYPE.WALL
+	) {
+		return 0;
+	}
+	const visited = new Uint8Array(width * height);
+	visited[startIdx] = 1;
+	const queue: number[] = [startIdx];
+	let count = 0;
+	for (let head = 0; head < queue.length; head++) {
+		const idx = queue[head];
+		count++;
+		const x = idx % width;
+		const y = Math.floor(idx / width);
+		for (const [dx, dy] of [
+			[1, 0],
+			[-1, 0],
+			[0, 1],
+			[0, -1],
+		] as const) {
+			const nx = x + dx;
+			const ny = y + dy;
+			if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
+			const nIdx = ny * width + nx;
+			if (visited[nIdx]) continue;
+			if (ground[ny]?.[nx] !== TILE_TYPE.FLOOR || wall[ny]?.[nx] === TILE_TYPE.WALL) continue;
+			visited[nIdx] = 1;
+			queue.push(nIdx);
+		}
+	}
+	return count;
+}
+
+/**
  * Deterministic regeneration of all floor base layers from seed + configs.
  * The last floor gets exitIdx = -1 (no exit).
  *
@@ -225,8 +275,17 @@ export function regenerateBaseMaps(
 		validateFloorConfig(config);
 		const rng = createRng(seed + i);
 
-		// Stage 1: algorithm
-		const rawMap: RawMap = generateMap(config, rng);
+		// Stage 1: algorithm (with retry for degenerate cave collapses)
+		let rawMap: RawMap = generateMap(config, rng);
+
+		// Cave CA can collapse to a tiny connected component. Retry up to 3 times
+		// using deterministically perturbed seeds so results remain reproducible.
+		for (let attempt = 1; attempt <= 3; attempt++) {
+			const reachableCount = estimateRawReachability(rawMap);
+			if (reachableCount >= MIN_ACCEPTABLE_WALKABLE) break;
+			rawMap = generateMap(config, createRng(seed + i + 500 * attempt));
+		}
+
 		const { ground, wall, spawn, pathLayer } = rawMap;
 		const width = config.width;
 		const height = config.height;
@@ -276,6 +335,19 @@ export function regenerateBaseMaps(
 			config.decorationWeights,
 			config.scatterChance,
 		);
+
+		// Stage 5b: clear any blocking decorations that landed on vault marker cells.
+		// Vault markers are designated spawn points and must always remain walkable.
+		for (const placement of vaultPlacements) {
+			for (const markerIndices of Object.values(placement.markerCells)) {
+				for (const flatIdx of markerIndices) {
+					const mx = flatIdx % width;
+					const my = Math.floor(flatIdx / width);
+					blockedMask[my][mx] = false;
+					decorationGrid[my][mx] = "";
+				}
+			}
+		}
 
 		// Stage 6: apply vault collision cells to blockedMask
 		for (const placement of vaultPlacements) {
@@ -355,13 +427,21 @@ export function regenerateBaseMaps(
 		// Apply boss room tag based on floor's bossRules
 		if (config.bossRules) {
 			const preferredTag = config.bossRules.preferredRoomTag;
-			// Pick the largest room with the preferred tag (if any); else largest non-start/exit room
+			// Tier 1: largest room with the preferred tag
 			let bossRoom = rooms
 				.filter((r) => r.tag === preferredTag)
 				.sort((a, b) => b.area - a.area)[0];
 			if (!bossRoom) {
+				// Tier 2: largest non-corridor room that isn't spawn or exit
 				bossRoom = rooms
-					.filter((r) => r.tag !== "start" && r.tag !== "exit")
+					.filter((r) => r.tag !== "start" && r.tag !== "exit" && r.tag !== "corridor")
+					.sort((a, b) => b.area - a.area)[0];
+			}
+			if (!bossRoom) {
+				// Tier 3 (last resort): largest non-corridor room, even if tagged start/exit.
+				// Corridors are always excluded — the boss must never occupy a narrow passage.
+				bossRoom = rooms
+					.filter((r) => r.tag !== "corridor")
 					.sort((a, b) => b.area - a.area)[0];
 			}
 			if (bossRoom) bossRoom.tag = "boss";

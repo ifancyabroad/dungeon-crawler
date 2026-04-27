@@ -2,10 +2,10 @@
  * Room analysis: flood-fill detection and classification of distinct regions in a generated map.
  *
  * Rooms are classified by area and connectivity:
- * - chamber:  large open room (area >= CHAMBER_THRESHOLD)
- * - alcove:   small dead-end (1 connection, area < CHAMBER_THRESHOLD)
+ * - chamber:  large open room (non-corridor region, area >= CHAMBER_THRESHOLD)
+ * - alcove:   small dead-end (non-corridor, 1 connection, area < CHAMBER_THRESHOLD)
  * - treasure: promoted dead-end based on specialRoomFrequency
- * - corridor: narrow connecting passage (area < CORRIDOR_THRESHOLD, >1 connection)
+ * - corridor: narrow connecting passage (all degree ≤ 2 regions, any length)
  * - generic:  everything else
  *
  * Tags "start", "exit", and "boss" are assigned externally (by baseLayers.ts) after spawn/exit selection.
@@ -18,7 +18,6 @@ import type { Rng } from "../rng";
 import type { AnalyzedRoom, FloorConfig, RawMap, RoomTag } from "./types";
 
 const CHAMBER_THRESHOLD = 30;
-const CORRIDOR_THRESHOLD = 16;
 const CONNECT_SAMPLE_DIRECTIONS = [
 	[1, 0],
 	[-1, 0],
@@ -59,6 +58,31 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 	let nextId = 0;
 	const regionCells: number[][] = [];
 	const regionIsCorridor: boolean[] = [];
+
+	// Pre-seed explicit BSP room rectangles as their own regions.
+	// This is critical for BSP and hybrid maps: degree-based flood fill excludes
+	// degree-2 corner cells, so room regions would miss them without pre-seeding.
+	// It also prevents BSP room interiors from merging into one giant cave region
+	// on hybrid maps, which would leave no separate boss room candidates.
+	if (rawMap.bspRooms.length > 0) {
+		for (const room of rawMap.bspRooms) {
+			const cells: number[] = [];
+			for (let ry = room.y; ry < room.y + room.h; ry++) {
+				for (let rx = room.x; rx < room.x + room.w; rx++) {
+					if (rx < 0 || rx >= width || ry < 0 || ry >= height) continue;
+					const idx = ry * width + rx;
+					if (openMask[idx] !== 1 || regionMap[idx] !== -1) continue;
+					regionMap[idx] = nextId;
+					cells.push(idx);
+				}
+			}
+			if (cells.length > 0) {
+				regionCells.push(cells);
+				regionIsCorridor.push(false); // BSP rooms are never corridors
+				nextId++;
+			}
+		}
+	}
 
 	for (let y = 0; y < height; y++) {
 		for (let x = 0; x < width; x++) {
@@ -142,7 +166,9 @@ export function analyzeRooms(rawMap: RawMap, config: FloorConfig, rng: Rng): Ana
 	const specialFreq = Math.max(0, Math.min(1, config.specialRoomFrequency));
 	for (const room of rooms) {
 		const isCorridor = regionIsCorridor[room.id] ?? false;
-		if (isCorridor && room.area <= CORRIDOR_THRESHOLD) {
+		if (isCorridor) {
+			// All degree-≤-2 regions are narrow passages regardless of length.
+			// A 40-cell straight corridor is still a corridor.
 			room.tag = "corridor";
 			continue;
 		}

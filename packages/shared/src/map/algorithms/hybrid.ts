@@ -189,5 +189,5 @@ export function generateHybrid(config: FloorConfig, rng: Rng): RawMap {
 	}
 
 	const spawn = closestCell(floorSet, cx, cy);
-	return { ground, wall, spawn, pathLayer, shapeMask: mask };
+	return { ground, wall, spawn, pathLayer, shapeMask: mask, bspRooms: rooms };
 }

@@ -167,5 +167,5 @@ export function generateBsp(config: FloorConfig, rng: Rng): RawMap {
 	}
 	if (!spawn) spawn = closestCell(floor, cx, cy);
 
-	return { ground, wall, spawn, pathLayer, shapeMask: mask };
+	return { ground, wall, spawn, pathLayer, shapeMask: mask, bspRooms: rooms };
 }

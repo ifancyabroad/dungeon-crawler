@@ -2,8 +2,7 @@
 	"id": "boss_chamber",
 	"width": 9,
 	"height": 9,
-	"tags": ["boss", "chamber"],
-	"minDepth": 3,
+	"tags": ["chamber"],
 	"layout": [
 		"####.####",
 		"#.......#",

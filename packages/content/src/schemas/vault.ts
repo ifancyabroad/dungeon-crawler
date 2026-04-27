@@ -25,7 +25,6 @@ export const VaultDefSchema = z.object({
 	tags: z.array(
 		z.enum(["start", "exit", "boss", "treasure", "corridor", "chamber", "alcove", "generic"]),
 	),
-	minDepth: z.number().int().positive().optional(),
 	layout: z.array(z.string()),
 	legend: z.record(z.string(), VaultLegendEntrySchema),
 	spawns: z.array(VaultSpawnEntrySchema).optional(),
