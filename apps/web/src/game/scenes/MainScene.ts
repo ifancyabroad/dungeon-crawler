@@ -59,6 +59,7 @@ export default class MainScene extends Phaser.Scene {
 	private skillAnimController: SkillAnimationController | null = null;
 	private targetingSystem: TargetingSystem | null = null;
 	private actorEffectVisuals: ActorEffectVisualManager | null = null;
+	private footprintTrail: import("../fx/FootprintTrail").FootprintTrail | null = null;
 	private lootLayerManager: LootLayerManager | null = null;
 	private chestLayerManager: ChestLayerManager | null = null;
 
@@ -207,6 +208,10 @@ export default class MainScene extends Phaser.Scene {
 				dispatchFxAndSync: (events, gs, floor) => this.dispatchFxAndSync(events, gs, floor),
 				skillAnimController: this.skillAnimController,
 			});
+			if (!storeState.actionInProgress && this.mouseMovement) {
+				const path = this.mouseMovement.consumeTravelPath();
+				if (path.length > 0) this.footprintTrail?.show(path);
+			}
 		});
 	}
 
@@ -278,6 +283,7 @@ export default class MainScene extends Phaser.Scene {
 			moveTweens: this.moveTweens,
 			healthBars: this.healthBars,
 			actorEffectVisuals: this.actorEffectVisuals,
+			instantTravel: this.mouseMovement?.isInstantTravel() ?? false,
 		});
 
 		const floor = gameState.floors[gameState.heroFloorIndex];
@@ -299,8 +305,9 @@ export default class MainScene extends Phaser.Scene {
 		const toX = x * TILE_WIDTH + TILE_WIDTH / 2;
 		const toY = y * TILE_HEIGHT + TILE_HEIGHT / 2;
 		const diagonal = prevX !== x && prevY !== y;
+		const instant = this.mouseMovement?.isInstantTravel() ?? false;
 		if (this.moveTweens) {
-			this.moveTweens.moveHero(this.player, toX, toY, diagonal);
+			this.moveTweens.moveHero(this.player, toX, toY, diagonal, instant);
 		} else {
 			this.player.setPosition(toX, toY);
 		}
@@ -325,6 +332,7 @@ export default class MainScene extends Phaser.Scene {
 				goldFx: this.goldFx,
 				skillAnimController: this.skillAnimController,
 				actorEffectVisuals: this.actorEffectVisuals,
+				footprintTrail: this.footprintTrail,
 			}),
 		);
 	}
@@ -338,5 +346,6 @@ export default class MainScene extends Phaser.Scene {
 		this.goldFx = refs.goldFx;
 		this.skillAnimController = refs.skillAnimController;
 		this.actorEffectVisuals = refs.actorEffectVisuals;
+		this.footprintTrail = refs.footprintTrail;
 	}
 }

@@ -21,6 +21,7 @@ export interface ActorSpriteSyncDeps {
 	moveTweens: MoveTweenManager | null;
 	healthBars: HealthBarManager | null;
 	actorEffectVisuals: ActorEffectVisualManager | null;
+	instantTravel?: boolean;
 }
 
 export class ActorSpriteSync {
@@ -142,7 +143,7 @@ export class ActorSpriteSync {
 				const prevTileX = Math.round((existing.x - TILE_WIDTH / 2) / TILE_WIDTH);
 				const prevTileY = Math.round((existing.y - TILE_HEIGHT / 2) / TILE_HEIGHT);
 				const diagonal = prevTileX !== x && prevTileY !== y;
-				deps.moveTweens?.moveNpc(id, existing, px, py, diagonal);
+				deps.moveTweens?.moveNpc(id, existing, px, py, diagonal, deps.instantTravel);
 				existing.setFrame(tileFrame);
 				existing.setVisible(isVisible);
 				existing.setTint(resolveActorTint(actor));

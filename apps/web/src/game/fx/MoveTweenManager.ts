@@ -17,10 +17,23 @@ export class MoveTweenManager {
 	}
 
 	/**
-	 * Tween the hero sprite to a new pixel position and block input until complete.
+	 * Move the hero sprite to a new pixel position.
+	 * When instant=true the sprite snaps immediately; actionInProgress is managed externally by
+	 * the travel loop in MouseMovementController. Otherwise a tween runs and blocks input.
 	 */
-	moveHero(sprite: Phaser.GameObjects.Sprite, toX: number, toY: number, diagonal = false): void {
+	moveHero(
+		sprite: Phaser.GameObjects.Sprite,
+		toX: number,
+		toY: number,
+		diagonal = false,
+		instant = false,
+	): void {
 		this.killTween("hero");
+		if (instant) {
+			sprite.x = toX;
+			sprite.y = toY;
+			return;
+		}
 		useGameStore.getState().setActionInProgress(true);
 		const tween = this.scene.tweens.add({
 			targets: sprite,
@@ -37,7 +50,8 @@ export class MoveTweenManager {
 	}
 
 	/**
-	 * Tween an NPC sprite to a new pixel position (visual-only, no input blocking).
+	 * Move an NPC sprite to a new pixel position (visual-only, no input blocking).
+	 * When instant=true the sprite snaps immediately with no tween.
 	 */
 	moveNpc(
 		id: string,
@@ -45,8 +59,14 @@ export class MoveTweenManager {
 		toX: number,
 		toY: number,
 		diagonal = false,
+		instant = false,
 	): void {
 		this.killTween(id);
+		if (instant) {
+			sprite.x = toX;
+			sprite.y = toY;
+			return;
+		}
 		const tween = this.scene.tweens.add({
 			targets: sprite,
 			x: toX,

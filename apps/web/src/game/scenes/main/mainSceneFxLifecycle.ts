@@ -8,6 +8,7 @@ import { GoldFxManager } from "../../fx/GoldFxManager";
 import { SkillAnimationController } from "../../skills/SkillAnimationController";
 import { ActorEffectVisualManager } from "../../fx/ActorEffectVisualManager";
 import { ALL_ACTOR_OVERLAY_EFFECTS } from "../../fx/actorOverlays";
+import { FootprintTrail } from "../../fx/FootprintTrail";
 
 export interface FloorFxRefs {
 	moveTweens: MoveTweenManager | null;
@@ -18,6 +19,7 @@ export interface FloorFxRefs {
 	goldFx: GoldFxManager | null;
 	skillAnimController: SkillAnimationController | null;
 	actorEffectVisuals: ActorEffectVisualManager | null;
+	footprintTrail: FootprintTrail | null;
 }
 
 export function createFloorFx(scene: Phaser.Scene, mapWidth: number): FloorFxRefs {
@@ -32,6 +34,7 @@ export function createFloorFx(scene: Phaser.Scene, mapWidth: number): FloorFxRef
 	for (const effect of ALL_ACTOR_OVERLAY_EFFECTS) {
 		actorEffectVisuals.register(effect);
 	}
+	const footprintTrail = new FootprintTrail(scene);
 	return {
 		moveTweens,
 		attackAnimator,
@@ -41,6 +44,7 @@ export function createFloorFx(scene: Phaser.Scene, mapWidth: number): FloorFxRef
 		goldFx,
 		skillAnimController,
 		actorEffectVisuals,
+		footprintTrail,
 	};
 }
 
@@ -58,5 +62,6 @@ export function destroyFloorFx(refs: FloorFxRefs): FloorFxRefs {
 		goldFx: null,
 		skillAnimController: null,
 		actorEffectVisuals: null,
+		footprintTrail: null,
 	};
 }

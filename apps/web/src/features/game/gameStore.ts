@@ -117,7 +117,7 @@ interface GameStoreActions {
 	}) => void;
 	setGameId: (id: string | null) => void;
 	/** Send a player action (move or attack). Direction-based: client determines action type. */
-	sendAction: (action: Action) => void;
+	sendAction: (action: Action, travelMode?: boolean) => void;
 	/** Called by the scene when an action's feedback starts (true) or completes (false). Blocks sendAction while true. */
 	setActionInProgress: (active: boolean) => void;
 	/** Revert to last confirmed state and return error reason for UI. */
@@ -360,7 +360,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 		set({ actionInProgress: active });
 	},
 
-	sendAction: (action) => {
+	sendAction: (action, travelMode = false) => {
 		const {
 			gameId,
 			state,
@@ -372,7 +372,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
 			debugGodMode,
 		} = get();
 		if (!gameId) return;
-		if (!canSendAction(get())) return;
+		if (travelMode) {
+			if (!state) return;
+		} else {
+			if (!canSendAction(get())) return;
+		}
 		if (!state) {
 			if (gameSocketRef)
 				gameSocketRef.emit("action", { gameId, action, expectedTurn: get().turn });

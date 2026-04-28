@@ -52,6 +52,9 @@ export class MouseMovementController {
 	/** Guard: prevents re-entrant tryAdvance calls from the store subscription. */
 	private advancing = false;
 
+	private _instantTravel = false;
+	private _lastTravelPath: { x: number; y: number }[] = [];
+
 	private unsubStore: (() => void) | null = null;
 	private disposed = false;
 
@@ -87,6 +90,17 @@ export class MouseMovementController {
 
 	cancelTravel(): void {
 		this.destinationIdx = null;
+	}
+
+	isInstantTravel(): boolean {
+		return this._instantTravel;
+	}
+
+	/** Returns the tile positions visited during the last instant travel, then clears the list. */
+	consumeTravelPath(): { x: number; y: number }[] {
+		const path = this._lastTravelPath;
+		this._lastTravelPath = [];
+		return path;
 	}
 
 	destroy(): void {
@@ -256,8 +270,7 @@ export class MouseMovementController {
 	}
 
 	private doAdvance(singleStep: boolean): void {
-		const destinationIdx = this.destinationIdx;
-		if (destinationIdx === null) return;
+		if (this.destinationIdx === null) return;
 
 		const { state, actionInProgress, walkableByFloor, opacityByFloor } =
 			useGameStore.getState();
@@ -289,7 +302,6 @@ export class MouseMovementController {
 			VISION_RADIUS,
 		);
 
-		// Check whether any live hostile is currently visible.
 		let hostileVisible = false;
 		for (const actor of Object.values(floor.state.actorsById)) {
 			if (actor.id === state.heroId || !actor.alive) continue;
@@ -299,36 +311,142 @@ export class MouseMovementController {
 			}
 		}
 
-		// Auto-travel guard: abort if a hostile is visible.
-		// Explicit clicks (singleStep) bypass this so the player can still step one tile.
-		if (hostileVisible && !singleStep) {
+		// Branch A — no hostiles visible: run all steps synchronously in one frame.
+		if (!hostileVisible) {
+			this._instantTravel = true;
+			this._lastTravelPath = [];
+			useGameStore.getState().setActionInProgress(true);
+
+			while (this.destinationIdx !== null) {
+				const {
+					state: s,
+					walkableByFloor: wbf,
+					opacityByFloor: obf,
+				} = useGameStore.getState();
+				if (!s) break;
+
+				const f = s.floors[s.heroFloorIndex];
+				const h = f?.state.actorsById[s.heroId];
+				const om = obf?.[s.heroFloorIndex];
+				if (!f || !h || !om) break;
+
+				const hPos = idxToXY(h.idx, this.mapWidth);
+				const vis = computeVisibility(
+					hPos.x,
+					hPos.y,
+					this.mapWidth,
+					this.mapHeight,
+					om,
+					VISION_RADIUS,
+				);
+
+				let hostile = false;
+				for (const actor of Object.values(f.state.actorsById)) {
+					if (actor.id === s.heroId || !actor.alive) continue;
+					if (actor.faction === "hostile" && vis[actor.idx] === 1) {
+						hostile = true;
+						break;
+					}
+				}
+				if (hostile) {
+					this.destinationIdx = null;
+					break;
+				}
+
+				if (h.idx === this.destinationIdx) {
+					this.destinationIdx = null;
+					break;
+				}
+
+				const wm = wbf?.[s.heroFloorIndex];
+				if (!wm) break;
+				const exploredWalkable = buildExploredWalkableMask(wm, f.state.explored, vis);
+
+				if (isInteractableTile(f.state, this.destinationIdx)) {
+					exploredWalkable[this.destinationIdx] = 1;
+				}
+
+				const nextIdx = bfsNextStep(
+					h.idx,
+					this.destinationIdx,
+					exploredWalkable,
+					f.state,
+					this.mapWidth,
+					this.mapHeight,
+				);
+				if (nextIdx === undefined) {
+					this.destinationIdx = null;
+					break;
+				}
+
+				// Adjacent interactable bump: clear destination, send bump if applicable, stop.
+				if (
+					nextIdx === this.destinationIdx &&
+					isInteractableTile(f.state, this.destinationIdx)
+				) {
+					const { x: dx, y: dy } = idxToXY(this.destinationIdx, this.mapWidth);
+					const bumpDir = DELTA_TO_DIR[`${dx - hPos.x},${dy - hPos.y}`];
+					this.destinationIdx = null;
+					if (bumpDir && shouldBumpTile(f.state, nextIdx)) {
+						useGameStore
+							.getState()
+							.sendAction({ type: "move", direction: bumpDir }, true);
+					}
+					break;
+				}
+
+				const nextPos = idxToXY(nextIdx, this.mapWidth);
+				const dir = DELTA_TO_DIR[`${nextPos.x - hPos.x},${nextPos.y - hPos.y}`];
+				if (!dir) {
+					this.destinationIdx = null;
+					break;
+				}
+
+				const occupant = getActorAtIdx(f.state, nextIdx);
+				if (
+					occupant &&
+					occupant.id !== s.heroId &&
+					occupant.faction === "hostile" &&
+					occupant.alive
+				) {
+					this.destinationIdx = null;
+					useGameStore.getState().sendAction({ type: "attack", direction: dir }, true);
+					break;
+				}
+
+				const invalidAtBefore = useGameStore.getState().lastInvalidMoveAt;
+				useGameStore.getState().sendAction({ type: "move", direction: dir }, true);
+				if (useGameStore.getState().lastInvalidMoveAt !== invalidAtBefore) break;
+				this._lastTravelPath.push(hPos);
+			}
+
+			this._instantTravel = false;
+			useGameStore.getState().setActionInProgress(false);
+			return;
+		}
+
+		// Branch B — hostile visible: explicit single click bypass; one step, then stop.
+		if (!singleStep) {
 			this.destinationIdx = null;
 			return;
 		}
 
-		// Arrived.
-		if (hero.idx === destinationIdx) {
+		if (hero.idx === this.destinationIdx) {
 			this.destinationIdx = null;
 			return;
 		}
 
-		// Build exploration-constrained walkable mask: only traverse explored/visible tiles.
-		const explored = floor.state.explored;
-		const exploredWalkable = new Uint8Array(walkableMask.length);
-		for (let i = 0; i < exploredWalkable.length; i++) {
-			exploredWalkable[i] =
-				walkableMask[i] === 1 && (explored[i] === 1 || visible[i] === 1) ? 1 : 0;
-		}
+		const exploredWalkable = buildExploredWalkableMask(
+			walkableMask,
+			floor.state.explored,
+			visible,
+		);
 
-		// Interactable (non-walkable) destination: temporarily enable it in the BFS mask so
-		// the pathfinder can route all the way to the tile. When BFS returns destinationIdx
-		// itself as the next step the hero is already adjacent — clear destination FIRST
-		// (so a rejected bump never triggers a retry) then send the bump if applicable.
-		if (isInteractableTile(floor.state, destinationIdx)) {
-			exploredWalkable[destinationIdx] = 1;
+		if (isInteractableTile(floor.state, this.destinationIdx)) {
+			exploredWalkable[this.destinationIdx] = 1;
 			const nextIdxToward = bfsNextStep(
 				hero.idx,
-				destinationIdx,
+				this.destinationIdx,
 				exploredWalkable,
 				floor.state,
 				this.mapWidth,
@@ -338,12 +456,11 @@ export class MouseMovementController {
 				this.destinationIdx = null;
 				return;
 			}
-			if (nextIdxToward === destinationIdx) {
-				// Adjacent — send bump (if applicable) and stop travel.
-				const { x: destX, y: destY } = idxToXY(destinationIdx, this.mapWidth);
+			if (nextIdxToward === this.destinationIdx) {
+				const { x: destX, y: destY } = idxToXY(this.destinationIdx, this.mapWidth);
 				const bumpDir = DELTA_TO_DIR[`${destX - heroPos.x},${destY - heroPos.y}`];
 				this.destinationIdx = null;
-				if (bumpDir && shouldBumpTile(floor.state, destinationIdx)) {
+				if (bumpDir && shouldBumpTile(floor.state, nextIdxToward)) {
 					useGameStore.getState().sendAction({ type: "move", direction: bumpDir });
 				}
 				return;
@@ -354,35 +471,31 @@ export class MouseMovementController {
 				this.destinationIdx = null;
 				return;
 			}
-			if (hostileVisible) this.destinationIdx = null;
+			this.destinationIdx = null;
 			useGameStore.getState().sendAction({ type: "move", direction: approachDir });
 			return;
 		}
 
 		const nextIdx = bfsNextStep(
 			hero.idx,
-			destinationIdx,
+			this.destinationIdx,
 			exploredWalkable,
 			floor.state,
 			this.mapWidth,
 			this.mapHeight,
 		);
-
 		if (nextIdx === undefined) {
 			this.destinationIdx = null;
 			return;
 		}
 
 		const nextPos = idxToXY(nextIdx, this.mapWidth);
-		const stepDx = nextPos.x - heroPos.x;
-		const stepDy = nextPos.y - heroPos.y;
-		const dir = DELTA_TO_DIR[`${stepDx},${stepDy}`];
+		const dir = DELTA_TO_DIR[`${nextPos.x - heroPos.x},${nextPos.y - heroPos.y}`];
 		if (!dir) {
 			this.destinationIdx = null;
 			return;
 		}
 
-		// If next tile has a hostile, attack and stop.
 		const occupant = getActorAtIdx(floor.state, nextIdx);
 		if (
 			occupant &&
@@ -395,9 +508,19 @@ export class MouseMovementController {
 			return;
 		}
 
-		// If a hostile is visible, don't auto-continue after this step.
-		if (hostileVisible) this.destinationIdx = null;
-
+		this.destinationIdx = null;
 		useGameStore.getState().sendAction({ type: "move", direction: dir });
 	}
+}
+
+function buildExploredWalkableMask(
+	walkableMask: Uint8Array,
+	explored: number[],
+	visible: Uint8Array,
+): Uint8Array {
+	const result = new Uint8Array(walkableMask.length);
+	for (let i = 0; i < result.length; i++) {
+		result[i] = walkableMask[i] === 1 && (explored[i] === 1 || visible[i] === 1) ? 1 : 0;
+	}
+	return result;
 }
