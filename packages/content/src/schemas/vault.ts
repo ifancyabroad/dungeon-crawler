@@ -18,6 +18,10 @@ export const VaultSpawnEntrySchema = z.union([
 	z.object({ marker: z.string(), chestType: z.enum(["regular", "rare"]) }),
 ]);
 
+export const VaultPlacementHintsSchema = z.object({
+	keepFromSpawn: z.boolean().optional(),
+});
+
 export const VaultDefSchema = z.object({
 	id: z.string(),
 	width: z.number().int().positive(),
@@ -28,6 +32,7 @@ export const VaultDefSchema = z.object({
 	layout: z.array(z.string()),
 	legend: z.record(z.string(), VaultLegendEntrySchema),
 	spawns: z.array(VaultSpawnEntrySchema).optional(),
+	placementHints: VaultPlacementHintsSchema.optional(),
 });
 
 export type VaultDefinition = z.infer<typeof VaultDefSchema>;

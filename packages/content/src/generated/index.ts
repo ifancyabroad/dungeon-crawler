@@ -1439,7 +1439,10 @@ export const vaults: readonly VaultDefinition[] = [
         "marker": "boss_spawn"
       }
     },
-    "spawns": []
+    "spawns": [],
+    "placementHints": {
+      "keepFromSpawn": true
+    }
   },
   {
     "id": "goblin_shrine",

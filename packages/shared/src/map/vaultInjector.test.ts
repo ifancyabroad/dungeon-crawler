@@ -34,6 +34,7 @@ const BOSS_CHAMBER_VAULT: VaultDef = {
 		B: { tile: "floor", marker: "boss_spawn" },
 	},
 	spawns: [],
+	placementHints: { keepFromSpawn: true },
 };
 
 // Hybrid maps produce a large cave body that is reliably tagged "chamber"

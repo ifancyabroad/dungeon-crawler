@@ -13,6 +13,12 @@
  * - At most one vault is injected per room.
  * - Vault tiles overwrite existing floor/wall tiles in the raw map.
  *
+ * Placement hints:
+ * - `keepFromSpawn: true` — vault is placed in two-pass order: these vaults are processed first,
+ *   with rooms sorted by descending distance from spawn. Any room whose bounding box contains the
+ *   spawn cell is additionally excluded (stricter than the cells-include check). Normal vaults are
+ *   processed in a second pass with rooms sorted by id (original behaviour).
+ *
  * The injector does NOT modify blockedMask. Callers (baseLayers.ts) apply vault prop
  * collision after injection using the `collision` flag on each legend entry.
  */
@@ -42,136 +48,205 @@ export function injectVaults(
 
 	if (candidates.length === 0) return placements;
 
-	// Never stamp into the hero's starting room — player would spawn inside the vault.
 	const spawnFlatIdx = rawMap.spawn.y * width + rawMap.spawn.x;
+	const spawnX = rawMap.spawn.x;
+	const spawnY = rawMap.spawn.y;
 
-	// Sort rooms by id for stable iteration order
-	const sortedRooms = [...rooms].sort((a, b) => a.id - b.id);
+	// Split into two groups based on placement hints
+	const keepFarVaults = candidates.filter((v) => v.placementHints?.keepFromSpawn);
+	const normalVaults = candidates.filter((v) => !v.placementHints?.keepFromSpawn);
 
-	for (const room of sortedRooms) {
-		if (usedRoomIds.has(room.id)) continue;
-		if (room.cells.includes(spawnFlatIdx)) continue;
+	// Pass 1: keepFromSpawn vaults — prefer rooms far from hero spawn.
+	// Rooms are sorted by descending distance so the vault lands as far away as the
+	// map allows. Rooms whose bounding box contains the spawn cell are also excluded
+	// (stricter than the cells-include check) so the vault footprint cannot overlap spawn
+	// even on maps where the spawn cell belongs to a different flood-fill region.
+	if (keepFarVaults.length > 0) {
+		const farRooms = [...rooms]
+			.filter((r) => !r.cells.includes(spawnFlatIdx))
+			.filter((r) => {
+				const bbox = boundingBox(r.cells, width);
+				if (!bbox) return false;
+				return (
+					spawnX < bbox.x ||
+					spawnX >= bbox.x + bbox.w ||
+					spawnY < bbox.y ||
+					spawnY >= bbox.y + bbox.h
+				);
+			})
+			.sort((a, b) => {
+				const da = roomDistFromSpawn(a, spawnX, spawnY, width);
+				const db = roomDistFromSpawn(b, spawnX, spawnY, width);
+				if (db !== da) return db - da; // farthest first
+				return a.id - b.id; // stable tiebreaker
+			});
 
-		// Find eligible vaults for this room's tag
-		const matching = candidates.filter((v) => v.tags.includes(room.tag));
-		if (matching.length === 0) continue;
-
-		// Pick a vault
-		const pick = matching[Math.floor(rng() * matching.length)];
-
-		// Find the room's bounding box
-		const bbox = boundingBox(room.cells, width);
-		if (!bbox) continue;
-
-		// Check that the vault fits in the room bbox before trying anchors.
-		if (pick.width > bbox.w || pick.height > bbox.h) continue;
-		const anchors = buildPlacementCandidates(bbox, pick.width, pick.height);
-		let originX = -1;
-		let originY = -1;
-		for (const [candidateX, candidateY] of anchors) {
-			let fits = true;
-			for (let vy = 0; vy < pick.height && fits; vy++) {
-				const row = pick.layout[vy];
-				if (!row) {
-					fits = false;
-					break;
-				}
-				for (let vx = 0; vx < pick.width && fits; vx++) {
-					const mx = candidateX + vx;
-					const my = candidateY + vy;
-					const ch = row[vx];
-					if (ch === undefined || !pick.legend[ch]) {
-						fits = false;
-						break;
-					}
-					if (mx < 0 || mx >= width || my < 0 || my >= ground.length) {
-						fits = false;
-						break;
-					}
-					// Void cells are outside the playable boundary — vault cannot stamp here.
-					if (ground[my][mx] === TILE_TYPE.VOID) {
-						fits = false;
-						break;
-					}
-				}
-			}
-			if (fits) {
-				originX = candidateX;
-				originY = candidateY;
-				break;
+		for (const room of farRooms) {
+			if (usedRoomIds.has(room.id)) continue;
+			const placement = tryPlaceVaultInRoom(room, keepFarVaults, ground, wall, width, rng);
+			if (placement) {
+				placements.push(placement);
+				usedRoomIds.add(room.id);
 			}
 		}
-		if (originX < 0 || originY < 0) continue;
+	}
 
-		// Stamp the vault: mutates ground and wall in place
-		const markerCells: Record<string, number[]> = {};
-		const chestSpawns: Record<string, "regular" | "rare"> = {};
-		const groundOverrides: Record<number, number> = {};
-		const wallOverrides: Record<number, number> = {};
-		const decorationOverrides: Record<number, number> = {};
-		const collisionCells = new Set<number>();
-
-		for (let vy = 0; vy < pick.height; vy++) {
-			const row = pick.layout[vy];
-			if (!row) continue;
-			for (let vx = 0; vx < pick.width; vx++) {
-				const ch = row[vx];
-				if (ch === undefined) continue;
-				const entry = pick.legend[ch];
-				if (!entry) continue;
-				const mx = originX + vx;
-				const my = originY + vy;
-				const flatIdx = my * width + mx;
-
-				if (entry.tile === "wall" || entry.wallTileId !== undefined) {
-					ground[my][mx] = TILE_TYPE.FLOOR;
-					wall[my][mx] = TILE_TYPE.WALL;
-				} else {
-					ground[my][mx] = TILE_TYPE.FLOOR;
-					wall[my][mx] = TILE_TYPE.EMPTY;
-				}
-
-				if (entry.marker) {
-					if (!markerCells[entry.marker]) markerCells[entry.marker] = [];
-					markerCells[entry.marker].push(flatIdx);
-				}
-
-				if (entry.groundTileId !== undefined) groundOverrides[flatIdx] = entry.groundTileId;
-				if (entry.wallTileId !== undefined) wallOverrides[flatIdx] = entry.wallTileId;
-				if (entry.decorationTileId !== undefined)
-					decorationOverrides[flatIdx] = entry.decorationTileId;
-				if (entry.collision) collisionCells.add(flatIdx);
+	// Pass 2: normal vaults — original room-id ordering.
+	if (normalVaults.length > 0) {
+		const roomsById = [...rooms].sort((a, b) => a.id - b.id);
+		for (const room of roomsById) {
+			if (usedRoomIds.has(room.id)) continue;
+			if (room.cells.includes(spawnFlatIdx)) continue;
+			const placement = tryPlaceVaultInRoom(room, normalVaults, ground, wall, width, rng);
+			if (placement) {
+				placements.push(placement);
+				usedRoomIds.add(room.id);
 			}
 		}
-
-		// Resolve chest spawns from vault spawn entries
-		for (const spawn of pick.spawns ?? []) {
-			if (spawn.chestType) {
-				chestSpawns[spawn.marker] = spawn.chestType;
-			}
-		}
-
-		placements.push({
-			vaultId: pick.id,
-			originIdx: originY * width + originX,
-			markerCells,
-			chestSpawns,
-			groundOverrides,
-			wallOverrides,
-			decorationOverrides,
-			collisionCells: [...collisionCells],
-		});
-		usedRoomIds.add(room.id);
 	}
 
 	return placements;
 }
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
 
 interface BBox {
 	x: number;
 	y: number;
 	w: number;
 	h: number;
+}
+
+/**
+ * Try to fit and stamp one vault from `vaultCandidates` into `room`.
+ * Returns a VaultPlacement on success, null if no candidate fits.
+ * Mutates `ground` and `wall` in place on success.
+ */
+function tryPlaceVaultInRoom(
+	room: AnalyzedRoom,
+	vaultCandidates: VaultDef[],
+	ground: number[][],
+	wall: number[][],
+	width: number,
+	rng: Rng,
+): VaultPlacement | null {
+	const matching = vaultCandidates.filter((v) => v.tags.includes(room.tag));
+	if (matching.length === 0) return null;
+
+	const pick = matching[Math.floor(rng() * matching.length)]!;
+	const bbox = boundingBox(room.cells, width);
+	if (!bbox) return null;
+	if (pick.width > bbox.w || pick.height > bbox.h) return null;
+
+	const anchors = buildPlacementCandidates(bbox, pick.width, pick.height);
+	let originX = -1;
+	let originY = -1;
+	for (const [candidateX, candidateY] of anchors) {
+		let fits = true;
+		for (let vy = 0; vy < pick.height && fits; vy++) {
+			const row = pick.layout[vy];
+			if (!row) {
+				fits = false;
+				break;
+			}
+			for (let vx = 0; vx < pick.width && fits; vx++) {
+				const mx = candidateX + vx;
+				const my = candidateY + vy;
+				const ch = row[vx];
+				if (ch === undefined || !pick.legend[ch]) {
+					fits = false;
+					break;
+				}
+				if (mx < 0 || mx >= width || my < 0 || my >= ground.length) {
+					fits = false;
+					break;
+				}
+				// Void cells are outside the playable boundary — vault cannot stamp here.
+				if (ground[my]![mx] === TILE_TYPE.VOID) {
+					fits = false;
+					break;
+				}
+			}
+		}
+		if (fits) {
+			originX = candidateX;
+			originY = candidateY;
+			break;
+		}
+	}
+	if (originX < 0 || originY < 0) return null;
+
+	// Stamp the vault: mutates ground and wall in place
+	const markerCells: Record<string, number[]> = {};
+	const chestSpawns: Record<string, "regular" | "rare"> = {};
+	const groundOverrides: Record<number, number> = {};
+	const wallOverrides: Record<number, number> = {};
+	const decorationOverrides: Record<number, number> = {};
+	const collisionCells = new Set<number>();
+
+	for (let vy = 0; vy < pick.height; vy++) {
+		const row = pick.layout[vy];
+		if (!row) continue;
+		for (let vx = 0; vx < pick.width; vx++) {
+			const ch = row[vx];
+			if (ch === undefined) continue;
+			const entry = pick.legend[ch];
+			if (!entry) continue;
+			const mx = originX + vx;
+			const my = originY + vy;
+			const flatIdx = my * width + mx;
+
+			if (entry.tile === "wall" || entry.wallTileId !== undefined) {
+				ground[my]![mx] = TILE_TYPE.FLOOR;
+				wall[my]![mx] = TILE_TYPE.WALL;
+			} else {
+				ground[my]![mx] = TILE_TYPE.FLOOR;
+				wall[my]![mx] = TILE_TYPE.EMPTY;
+			}
+
+			if (entry.marker) {
+				if (!markerCells[entry.marker]) markerCells[entry.marker] = [];
+				markerCells[entry.marker]!.push(flatIdx);
+			}
+
+			if (entry.groundTileId !== undefined) groundOverrides[flatIdx] = entry.groundTileId;
+			if (entry.wallTileId !== undefined) wallOverrides[flatIdx] = entry.wallTileId;
+			if (entry.decorationTileId !== undefined)
+				decorationOverrides[flatIdx] = entry.decorationTileId;
+			if (entry.collision) collisionCells.add(flatIdx);
+		}
+	}
+
+	for (const spawn of pick.spawns ?? []) {
+		if (spawn.chestType) {
+			chestSpawns[spawn.marker] = spawn.chestType;
+		}
+	}
+
+	return {
+		vaultId: pick.id,
+		originIdx: originY * width + originX,
+		markerCells,
+		chestSpawns,
+		groundOverrides,
+		wallOverrides,
+		decorationOverrides,
+		collisionCells: [...collisionCells],
+	};
+}
+
+/** Euclidean distance from a room's centroid to the spawn cell. */
+function roomDistFromSpawn(
+	room: AnalyzedRoom,
+	spawnX: number,
+	spawnY: number,
+	width: number,
+): number {
+	const cx = room.center % width;
+	const cy = Math.floor(room.center / width);
+	return Math.sqrt((cx - spawnX) ** 2 + (cy - spawnY) ** 2);
 }
 
 function validateVaultDef(vault: VaultDef): boolean {

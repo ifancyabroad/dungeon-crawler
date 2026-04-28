@@ -161,6 +161,8 @@ export function findExitIdx(
 
 /**
  * Find the nearest walkable cell to (originX, originY) by expanding outward in rings.
+ * Cells in `excludeSet` (flat indices) are skipped even if walkable — used to avoid
+ * relocating spawn into a vault footprint.
  * Returns undefined if no walkable cell is found within the map bounds.
  */
 function findNearestWalkable(
@@ -171,9 +173,11 @@ function findNearestWalkable(
 	originY: number,
 	width: number,
 	height: number,
+	excludeSet?: ReadonlySet<number>,
 ): number | undefined {
-	if (isCellWalkable(ground, wall, blockedMask, originX, originY))
-		return originY * width + originX;
+	const originIdx = originY * width + originX;
+	if (!excludeSet?.has(originIdx) && isCellWalkable(ground, wall, blockedMask, originX, originY))
+		return originIdx;
 	for (let radius = 1; radius < Math.max(width, height); radius++) {
 		for (let dy = -radius; dy <= radius; dy++) {
 			for (let dx = -radius; dx <= radius; dx++) {
@@ -181,7 +185,9 @@ function findNearestWalkable(
 				const x = originX + dx;
 				const y = originY + dy;
 				if (x < 0 || x >= width || y < 0 || y >= height) continue;
-				if (isCellWalkable(ground, wall, blockedMask, x, y)) return y * width + x;
+				const idx = y * width + x;
+				if (excludeSet?.has(idx)) continue;
+				if (isCellWalkable(ground, wall, blockedMask, x, y)) return idx;
 			}
 		}
 	}
@@ -358,7 +364,28 @@ export function regenerateBaseMaps(
 			}
 		}
 
-		// Stage 7: relocate spawn if vault injection placed a collision tile on it
+		// Build vault footprint set — every cell covered by a vault's rectangular stamp.
+		// Used in Stage 7 to ensure spawn is never relocated into a vault interior.
+		const vaultFootprintCells = new Set<number>();
+		for (const placement of vaultPlacements) {
+			const ox = placement.originIdx % width;
+			const oy = Math.floor(placement.originIdx / width);
+			const vaultDef = vaultDefs.find((v) => v.id === placement.vaultId);
+			if (!vaultDef) continue;
+			for (let vy = 0; vy < vaultDef.height; vy++) {
+				for (let vx = 0; vx < vaultDef.width; vx++) {
+					vaultFootprintCells.add((oy + vy) * width + (ox + vx));
+				}
+			}
+		}
+
+		// Stage 7: relocate spawn if vault injection stamped over it or placed a collision
+		// tile on it. When spawn is inside a vault footprint, exclude the entire footprint
+		// from the search so the player cannot be placed inside the vault structure.
+		const rawSpawnIdx = spawn.y * width + spawn.x;
+		const spawnExcludeSet = vaultFootprintCells.has(rawSpawnIdx)
+			? vaultFootprintCells
+			: undefined;
 		let safeSpawnIdx = findNearestWalkable(
 			ground,
 			wall,
@@ -367,6 +394,7 @@ export function regenerateBaseMaps(
 			spawn.y,
 			width,
 			height,
+			spawnExcludeSet,
 		);
 		if (safeSpawnIdx === undefined) {
 			// Last-resort deterministic repair for degenerate floors.

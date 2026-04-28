@@ -135,6 +135,16 @@ export interface VaultSpawnEntry {
 	chestType?: "regular" | "rare";
 }
 
+export interface VaultPlacementHints {
+	/**
+	 * When true the injector prefers rooms far from the hero spawn and also
+	 * excludes any room whose bounding box contains the spawn cell.
+	 * Use for high-stakes vaults (boss chambers) that should never be adjacent
+	 * to where the player enters the floor.
+	 */
+	keepFromSpawn?: boolean;
+}
+
 export interface VaultDef {
 	id: string;
 	width: number;
@@ -145,6 +155,7 @@ export interface VaultDef {
 	layout: string[];
 	legend: Record<string, VaultLegendEntry>;
 	spawns?: VaultSpawnEntry[];
+	placementHints?: VaultPlacementHints;
 }
 
 export interface VaultPlacement {

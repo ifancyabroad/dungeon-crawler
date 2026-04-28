@@ -19,5 +19,6 @@
 		".": { "tile": "floor" },
 		"B": { "tile": "floor", "marker": "boss_spawn" }
 	},
-	"spawns": []
+	"spawns": [],
+	"placementHints": { "keepFromSpawn": true }
 }
