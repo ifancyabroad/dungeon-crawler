@@ -1,0 +1,19 @@
+{
+	"id": "bone_pit",
+	"width": 7,
+	"height": 7,
+	"tags": ["chamber", "treasure"],
+	"layout": ["###.###", "#b...b#", "#.....#", "#..G..#", "#.s.s.#", "#..C..#", "#######"],
+	"legend": {
+		"#": { "tile": "wall" },
+		".": { "tile": "floor" },
+		"b": { "tile": "floor", "decorationTileId": 595, "collision": true },
+		"s": { "tile": "floor", "decorationTileId": 598, "collision": true },
+		"G": { "tile": "floor", "marker": "guard_spawn" },
+		"C": { "tile": "floor", "marker": "chest_spawn" }
+	},
+	"spawns": [
+		{ "marker": "guard_spawn", "encounterId": "skeleton_patrol" },
+		{ "marker": "chest_spawn", "chestType": "regular" }
+	]
+}

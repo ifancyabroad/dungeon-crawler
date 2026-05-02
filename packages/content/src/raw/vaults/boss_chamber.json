@@ -6,19 +6,21 @@
 	"layout": [
 		"####.####",
 		"#.......#",
-		"#.......#",
+		"#.P...P.#",
 		"#...B...#",
 		".........",
 		"#.......#",
-		"#.......#",
-		"#.......#",
+		"#...C...#",
+		"#.P...P.#",
 		"####.####"
 	],
 	"legend": {
 		"#": { "tile": "wall" },
 		".": { "tile": "floor" },
-		"B": { "tile": "floor", "marker": "boss_spawn" }
+		"P": { "tile": "floor", "decorationTileId": 516, "collision": true },
+		"B": { "tile": "floor", "marker": "boss_spawn" },
+		"C": { "tile": "floor", "marker": "boss_chest" }
 	},
-	"spawns": [],
+	"spawns": [{ "marker": "boss_chest", "chestType": "rare" }],
 	"placementHints": { "keepFromSpawn": true }
 }

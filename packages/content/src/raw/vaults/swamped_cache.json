@@ -1,0 +1,18 @@
+{
+	"id": "swamped_cache",
+	"width": 7,
+	"height": 7,
+	"tags": ["chamber", "treasure"],
+	"layout": [".......", "....lwl", "...lwww", "...lwwl", "....l..", "..G....", "...C..."],
+	"legend": {
+		"w": { "tile": "floor", "groundTileId": 299, "collision": true },
+		"l": { "tile": "floor", "groundTileId": 299, "decorationTileId": 155, "collision": true },
+		".": { "tile": "floor" },
+		"G": { "tile": "floor", "marker": "guard_spawn" },
+		"C": { "tile": "floor", "marker": "chest_spawn" }
+	},
+	"spawns": [
+		{ "marker": "guard_spawn", "encounterId": "insect_nest" },
+		{ "marker": "chest_spawn", "chestType": "regular" }
+	]
+}

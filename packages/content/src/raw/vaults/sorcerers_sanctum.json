@@ -1,0 +1,20 @@
+{
+	"id": "sorcerers_sanctum",
+	"width": 7,
+	"height": 7,
+	"tags": ["chamber", "treasure"],
+	"layout": ["###.###", "#r.p.r#", "#.pmp.#", "#p.G.p#", "#.pmp.#", "#r.C.r#", "#######"],
+	"legend": {
+		"#": { "tile": "wall" },
+		".": { "tile": "floor", "groundTileId": 268 },
+		"p": { "tile": "floor", "groundTileId": 258 },
+		"r": { "tile": "floor", "groundTileId": 268, "decorationTileId": 216, "collision": true },
+		"m": { "tile": "floor", "groundTileId": 268, "decorationTileId": 512 },
+		"G": { "tile": "floor", "groundTileId": 268, "marker": "guard_spawn" },
+		"C": { "tile": "floor", "groundTileId": 268, "marker": "chest_spawn" }
+	},
+	"spawns": [
+		{ "marker": "guard_spawn", "encounterId": "imp_swarm" },
+		{ "marker": "chest_spawn", "chestType": "rare" }
+	]
+}

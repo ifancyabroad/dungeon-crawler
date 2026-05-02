@@ -1410,6 +1410,60 @@ export const npcsById: Record<NpcId, NpcDefinition> = _npcsById;
 
 export const vaults: readonly VaultDefinition[] = [
   {
+    "id": "bone_pit",
+    "width": 7,
+    "height": 7,
+    "tags": [
+      "chamber",
+      "treasure"
+    ],
+    "layout": [
+      "###.###",
+      "#b...b#",
+      "#.....#",
+      "#..G..#",
+      "#.s.s.#",
+      "#..C..#",
+      "#######"
+    ],
+    "legend": {
+      "#": {
+        "tile": "wall"
+      },
+      ".": {
+        "tile": "floor"
+      },
+      "b": {
+        "tile": "floor",
+        "decorationTileId": 595,
+        "collision": true
+      },
+      "s": {
+        "tile": "floor",
+        "decorationTileId": 598,
+        "collision": true
+      },
+      "G": {
+        "tile": "floor",
+        "marker": "guard_spawn"
+      },
+      "C": {
+        "tile": "floor",
+        "marker": "chest_spawn"
+      }
+    },
+    "spawns": [
+      {
+        "marker": "guard_spawn",
+        "encounterId": "skeleton_patrol"
+      },
+      {
+        "marker": "chest_spawn",
+        "chestType": "regular"
+      }
+    ]
+  },
+  {
     "id": "boss_chamber",
     "width": 9,
     "height": 9,
@@ -1419,12 +1473,12 @@ export const vaults: readonly VaultDefinition[] = [
     "layout": [
       "####.####",
       "#.......#",
-      "#.......#",
+      "#.P...P.#",
       "#...B...#",
       ".........",
       "#.......#",
-      "#.......#",
-      "#.......#",
+      "#...C...#",
+      "#.P...P.#",
       "####.####"
     ],
     "legend": {
@@ -1434,12 +1488,26 @@ export const vaults: readonly VaultDefinition[] = [
       ".": {
         "tile": "floor"
       },
+      "P": {
+        "tile": "floor",
+        "decorationTileId": 516,
+        "collision": true
+      },
       "B": {
         "tile": "floor",
         "marker": "boss_spawn"
+      },
+      "C": {
+        "tile": "floor",
+        "marker": "boss_chest"
       }
     },
-    "spawns": [],
+    "spawns": [
+      {
+        "marker": "boss_chest",
+        "chestType": "rare"
+      }
+    ],
     "placementHints": {
       "keepFromSpawn": true
     }
@@ -1500,6 +1568,120 @@ export const vaults: readonly VaultDefinition[] = [
       {
         "marker": "shrine_center",
         "encounterId": "goblin_guard"
+      }
+    ]
+  },
+  {
+    "id": "sorcerers_sanctum",
+    "width": 7,
+    "height": 7,
+    "tags": [
+      "chamber",
+      "treasure"
+    ],
+    "layout": [
+      "###.###",
+      "#r.p.r#",
+      "#.pmp.#",
+      "#p.G.p#",
+      "#.pmp.#",
+      "#r.C.r#",
+      "#######"
+    ],
+    "legend": {
+      "#": {
+        "tile": "wall"
+      },
+      ".": {
+        "tile": "floor",
+        "groundTileId": 268
+      },
+      "p": {
+        "tile": "floor",
+        "groundTileId": 258
+      },
+      "r": {
+        "tile": "floor",
+        "groundTileId": 268,
+        "decorationTileId": 216,
+        "collision": true
+      },
+      "m": {
+        "tile": "floor",
+        "groundTileId": 268,
+        "decorationTileId": 512
+      },
+      "G": {
+        "tile": "floor",
+        "marker": "guard_spawn",
+        "groundTileId": 268
+      },
+      "C": {
+        "tile": "floor",
+        "marker": "chest_spawn",
+        "groundTileId": 268
+      }
+    },
+    "spawns": [
+      {
+        "marker": "guard_spawn",
+        "encounterId": "imp_swarm"
+      },
+      {
+        "marker": "chest_spawn",
+        "chestType": "rare"
+      }
+    ]
+  },
+  {
+    "id": "swamped_cache",
+    "width": 7,
+    "height": 7,
+    "tags": [
+      "chamber",
+      "treasure"
+    ],
+    "layout": [
+      ".......",
+      "....lwl",
+      "...lwww",
+      "...lwwl",
+      "....l..",
+      "..G....",
+      "...C..."
+    ],
+    "legend": {
+      "w": {
+        "tile": "floor",
+        "groundTileId": 299,
+        "collision": true
+      },
+      "l": {
+        "tile": "floor",
+        "groundTileId": 299,
+        "decorationTileId": 155,
+        "collision": true
+      },
+      ".": {
+        "tile": "floor"
+      },
+      "G": {
+        "tile": "floor",
+        "marker": "guard_spawn"
+      },
+      "C": {
+        "tile": "floor",
+        "marker": "chest_spawn"
+      }
+    },
+    "spawns": [
+      {
+        "marker": "guard_spawn",
+        "encounterId": "insect_nest"
+      },
+      {
+        "marker": "chest_spawn",
+        "chestType": "regular"
       }
     ]
   }
